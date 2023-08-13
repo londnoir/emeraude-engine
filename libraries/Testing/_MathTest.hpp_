@@ -1,0 +1,448 @@
+/*
+ * LibTests/MathTest.hpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#pragma once
+
+/* C/C++ standard libraries */
+#include <iostream>
+
+/* Local inclusions */
+#include <Math/Math.hpp>
+#include <Math/LineFormula.hpp>
+#include <Math/DeterminantAverage.hpp>
+
+using namespace Libraries;
+using namespace Libraries::Math;
+
+template< typename type_t >
+void
+displayMathConstantExpression () noexcept
+{
+	std::cout << std::fixed << std::setprecision(51) << '\n' <<
+		"Phi = " << (Phi< type_t >) << '\n' <<
+		"getPhi() = " << getPhi< type_t >() << '\n' <<
+		"Pi = " << (Pi< type_t >) << '\n' <<
+		"getPi() = " << getPi< type_t >() << '\n' <<
+		"e = " << (e< type_t >) << '\n' <<
+		"getE() = " << getE< type_t >() << '\n' <<
+		"Vector2 origin : " << Vector< 2, type_t >::origin() << '\n' <<
+		"Vector3 origin : " << Vector< 3, type_t >::origin() << '\n' <<
+		"Vector4 origin : " << Vector< 4, type_t >::origin() << '\n' <<
+		"Matrix2 identity : " << Matrix< 2, type_t >::identity() << '\n' <<
+		"Matrix3 identity : " << Matrix< 3, type_t >::identity() << '\n' <<
+		"Matrix4 identity : " << Matrix< 4, type_t >::identity() << '\n' <<
+		"Orthographic projection matrix (16³): " << Matrix< 4, type_t >::orthographicProjection(-16, 16, -16, 16, -16, 16) << '\n' <<
+		"Perspective projection matrix (fov=85°, ar=4:3, depth=[1-1024]): " << Matrix< 4, type_t >::perspectiveProjection(85, (4 / 3), 1, 1024) << '\n' <<
+		std::endl;
+
+	/* Radian <-> Degree conversion */
+	{
+		std::cout << std::fixed << std::setprecision(51) <<
+			"Radian(30°) = " <<  Radian< type_t >(30) << '\n' <<
+			"Radian(85°) = " << Radian< type_t >(85) << '\n' <<
+			"Degree(0.5[...]Rad) = " << Degree< type_t >(0.52359879016876220703125) << '\n' <<
+			"Degree(1.4[...]Rad) = " << Degree< type_t >(1.483529864195180181241084937937557697296142578125) << '\n' <<
+			std::endl;
+	}
+
+	/* Ratio test */
+	{
+		type_t a = 6528;
+		type_t b = 2681;
+		type_t percent = Utility::ratio(a, b, static_cast< type_t >(100));
+
+		std::cout << std::fixed << std::setprecision(7);
+
+		for ( auto i = 0UL; i < 8; i++ )
+			std::cout << a << " / " << b << " = " << Utility::round(percent, i) << "% (precision " << i << ")\n";
+	}
+
+	std::cout << std::endl;
+}
+
+template< std::size_t dim_t, typename type_t >
+bool
+testBaseVectorMatrix () noexcept
+{
+	auto errors = 0UL;
+
+	std::cout << "\n=== Vector" << dim_t << "/Matrix" << dim_t << " ===\n" << std::endl;
+
+	Vector< dim_t, type_t > vecA, vecB;
+	Matrix< dim_t, type_t > matA, matB;
+
+	/* The two distinct vectors should be initialized at the same data. */
+	if ( vecA != vecB )
+	{
+		std::cerr <<
+			"Vector" << dim_t << " initialization failed !" << '\n' <<
+			"Vector A : " << vecA << '\n' <<
+			"Vector B : " << vecB <<
+			std::endl;
+
+		errors++;
+	}
+
+	/* Check cross-product. */
+	if constexpr ( dim_t > 2  )
+	{
+		vecA = Vector< dim_t, type_t >::positiveX();
+		vecB = Vector< dim_t, type_t >::positiveY();
+
+		if ( Vector< dim_t, type_t >::crossProduct(vecA, vecB) != Vector< dim_t, type_t >::positiveZ() )
+		{
+			std::cerr << "Vector" << dim_t << " cross-product failed !" << std::endl;
+
+			errors++;
+		}
+
+		if ( Vector< dim_t, type_t >::crossProduct(vecB, vecA) != Vector< dim_t, type_t >::negativeZ() )
+		{
+			std::cerr << "Vector" << dim_t << " cross-product failed !" << std::endl;
+
+			errors++;
+		}
+	}
+
+	/* The two distinct matrixes should be the identity. */
+	if ( matA != matB )
+	{
+		std::cerr <<
+			"Matrix" << dim_t << " initialization failed !" << '\n' <<
+			"Matrix A : " << matA << '\n' <<
+			"Matrix B : " << matB <<
+			std::endl;
+
+		errors++;
+	}
+
+	/* Vector multiplied by an identity matrix should gives the same result. */
+	vecA = matA * vecB;
+
+	if ( vecA != vecB )
+	{
+		std::cerr <<
+			"Matrix" << dim_t << " (identity) * Vector" << dim_t << " failed !" << '\n' <<
+			"Matrix A : " << matA << '\n' <<
+			"Vector A : " << vecA << '\n' <<
+			"Vector B : " << vecB <<
+			std::endl;
+
+		errors++;
+	}
+
+	/* Matrix inversion test. */
+	{
+		Matrix< dim_t, type_t > matrix;
+
+		type_t correctDeterminant = 0;
+
+		if constexpr ( dim_t == 2 )
+		{
+			matrix.setColumn(0, {15.2, -3.8});
+			matrix.setColumn(1, {65, -9});
+
+			correctDeterminant = 110.2;
+		}
+
+		if constexpr ( dim_t == 3 )
+		{
+			matrix.setColumn(0, {-2, 7.3, 9.6});
+			matrix.setColumn(1, {4.1, -1, 0.2});
+			matrix.setColumn(2, {8.9, 3.2, 22.0});
+
+			correctDeterminant = -388.794;
+		}
+
+		if constexpr ( dim_t == 4 )
+		{
+			matrix.setColumn(0, {-56, 7.0, 9.1, -4.0});
+			matrix.setColumn(1, {4.1, 1.2, 0.0, 7.58});
+			matrix.setColumn(2, {13.5, 3.1, -2.5, -52.2});
+			matrix.setColumn(3, {1.645, -6.54, 0.0, 3.54});
+
+			correctDeterminant = -12946.25;
+		}
+
+		type_t determinant = matrix.determinant();
+
+		if ( Utility::different(determinant, correctDeterminant) )
+		{
+			std::cerr << std::fixed << std::setprecision(16) <<
+				"Determinant calculation fails, determinant should be " << correctDeterminant << " !" <<
+				"(invalid:" << determinant << ")" <<
+				std::endl;
+
+			errors++;
+		}
+
+		auto inversedMatrix = matrix.inverse();
+		auto originalMatrix = inversedMatrix.inverse();
+
+		if ( !originalMatrix.equal(matrix, 0.01) )
+		{
+			std::cerr <<
+				"Matrix inversion fails !" << '\n' <<
+				"Source matrix : " << matrix << '\n' <<
+				"Recombined matrix : " << originalMatrix <<
+				std::endl;
+
+			errors++;
+		}
+	}
+
+	return errors ? false : true;
+}
+
+template< typename type_t >
+bool
+test3DMatrixManipulationTest () noexcept
+{
+	auto errors = 0UL;
+
+	Coordinates< type_t > coordinates;
+
+	/* Check initial coordinates */
+	if ( coordinates.modelMatrix() != Matrix< 4, type_t >::identity() )
+	{
+		std::cerr <<
+			"Origin local coords to model matrix is not the identity !" << '\n' <<
+			"Origin local coordinates : " << coordinates <<
+			std::endl;
+
+		errors++;
+	}
+
+	/* Model matrix from coordinates */
+	{
+		coordinates.setScaleVector(3.5);
+		coordinates.setPosition(-35, 5, 95);
+		coordinates.pitch(Radian< type_t >(+30));
+		coordinates.yaw(Radian< type_t >(-85));
+
+		auto inverseModelMatrix = coordinates.modelMatrix().inverse();
+		auto fastInverseModelMatrix = coordinates.inversedModelMatrix();
+
+		if ( Matrix< 4, type_t >::different(inverseModelMatrix, fastInverseModelMatrix, 0.1) )
+		{
+			std::cerr <<
+				"Inverse model matrix test fails !" << '\n' <<
+				"Inverse model matrix from MathLib : " << inverseModelMatrix << '\n' <<
+				"Inverse model matrix from Coordinates : " << fastInverseModelMatrix <<
+				std::endl;
+
+			errors++;
+		}
+	}
+
+	return errors ? false : true;
+}
+
+template< typename type_t >
+bool
+checkLineFormula ()
+{
+	LineFormula< type_t > algorithm{{
+		{0.25, 0.33},
+		{0.69, 0.95},
+		{1.324, 1.964},
+		{1.99, 2.01},
+		{3.2, 3.151},
+		{3.95, 3.9555},
+		{4.225, 4.1015}
+	}};
+
+	if ( !algorithm.compute() )
+		return false;
+
+	std::cout <<
+		"Slope : " << algorithm.getSlope() << "\n"
+		"R² : " << algorithm.getCoefficientDetermination() << "\n"
+		"Y intercept : " << algorithm.getYIntersect() << "\n"
+		"Robustness : " << algorithm.getRobustness() << "\n"
+		<< std::endl;
+
+	return true;
+}
+
+template< typename type_t >
+bool
+checkAverageDetermination ()
+{
+	DeterminantAverage< type_t > algorithm{{49.2, 39.5, 95.45, 1.2, 19.5, 23.4, 0.1, 100.5, 50.1, 52.1}, 0.5};
+
+	if ( !algorithm.compute() )
+		return false;
+
+	std::cout << "Values : ";
+	for ( const auto value : algorithm.getValues() )
+		std::cout << value << " ";
+	std::cout <<
+		"\n"
+		"Tolerance : " << algorithm.getTolerance() * 100 << " %" "\n"
+		"Is value removed ? " << ( algorithm.isValueRemoved() ? "yes" : "no" ) << "\n"
+		"Is all values removed ? " << ( algorithm.isAllValuesRemoved() ? "yes" : "no" ) << "\n"
+		"Value removed count : " << algorithm.getRemovedValueCount() << "\n"
+		"Retained values : ";
+	for ( const auto value : algorithm.getRetainedValues() )
+		std::cout << value << " ";
+	std::cout <<
+		"\n"
+		"Average : " << algorithm.getAverage() << "\n"
+		<< std::endl;
+
+	return true;
+}
+
+template< typename type_t >
+void
+launchMathTests (size_t & errors, bool constant, bool base, bool manipulation) noexcept
+{
+	std::cout << "\n\n\n====== Launching math tests ======\n\n\n" << std::endl;
+
+	/* Simple human display test. */
+	if ( constant )
+	{
+		displayMathConstantExpression< type_t >();
+	}
+
+	if ( base )
+	{
+		if ( testBaseVectorMatrix< 2, type_t >() )
+		{
+			std::cout << "Vector2/Matrix2 base test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "Vector2/Matrix2 base test fails !\n" << std::endl;
+
+			errors++;
+		}
+
+		if ( testBaseVectorMatrix< 3, type_t >() )
+		{
+			std::cout << "Vector3/Matrix3 base test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "Vector3/Matrix3 base test fails !\n" << std::endl;
+
+			errors++;
+		}
+
+		if ( testBaseVectorMatrix< 4, type_t >() )
+		{
+			std::cout << "Vector4/Matrix4 base test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "Vector4/Matrix4 base test fails !\n" << std::endl;
+
+			errors++;
+		}
+	}
+
+	if ( manipulation )
+	{
+		if ( test3DMatrixManipulationTest< type_t >() )
+		{
+			std::cout << "3D matrix manipulation test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "3D matrix manipulation test fails !\n" << std::endl;
+
+			errors++;
+		}
+
+		if ( checkLineFormula< type_t >() )
+		{
+			std::cout << "Line formula test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "Line formula test fails !\n" << std::endl;
+
+			errors++;
+		}
+
+		if ( checkAverageDetermination< type_t >() )
+		{
+			std::cout << "Average determination test passing with success !\n" << std::endl;
+		}
+		else
+		{
+			std::cerr << "Average determination test fails !\n" << std::endl;
+
+			errors++;
+		}
+	}
+}
+
+template< typename type_t, std::size_t dim_t >
+bool
+checkConversion () noexcept
+{
+	Vector< dim_t, type_t > source;
+
+	source[X] = 1.1f;
+	source[Y] = 2.2f;
+	if constexpr ( dim_t == 3 || dim_t == 4 )
+		source[Z] = 3.3f;
+	if constexpr ( dim_t == 4 )
+		source[W] = 4.4f;
+
+	Vector< 2, type_t > copy2;
+	Vector< 3, type_t > copy3;
+	Vector< 4, type_t > copy4;
+
+	copy2 = source;
+	copy3 = source;
+	copy4 = source;
+
+	std::cout <<
+		"Source : " << source << '\n' <<
+		"Vector2 copy constructor : " << Vector< 2, type_t >{source} << '\n' <<
+		"Vector3 copy constructor : " << Vector< 3, type_t >{source} << '\n' <<
+		"Vector4 copy constructor : " << Vector< 4, type_t >{source} << '\n' <<
+		"Vector2 assignement : " << copy2 << '\n' <<
+		"Vector3 assignement : " << copy3 << '\n' <<
+		"Vector4 assignement : " << copy4 << '\n';
+
+	if constexpr ( dim_t != 2 )
+		std::cout << "toVector2() : " << source.toVector2() << '\n';
+
+	if constexpr ( dim_t != 3 )
+		std::cout << "toVector3() : " << source.toVector3() << '\n';
+
+	if constexpr ( dim_t != 4 )
+		std::cout << "toVector4() : " << source.toVector4() << '\n';
+
+	std::cout << std::endl;
+
+	return true;
+}

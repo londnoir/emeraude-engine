@@ -1,0 +1,200 @@
+/*
+ * LibTests/PixelFactoryTest.hpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#pragma once
+
+/* C/C++ standard libraries */
+#include <iostream>
+
+/* Local inclusions */
+#include <PixelFactory/PixelFactory.hpp>
+#include <PixelFactory/FileReader.hpp>
+#include <PixelFactory/FileWriter.hpp>
+
+#define TEST_BASE_PATH "/home/sebastien/"
+
+using namespace std;
+using namespace Libraries;
+using namespace Libraries::Math;
+using namespace Libraries::PixelFactory;
+
+template< typename colorData_t >
+void
+checkColorPrecision () noexcept
+{
+	Color< colorData_t > color{1.0, 0.5, 1.0 / 3.0};
+
+	std::cout << "int8_t : " << color.template redInteger< int8_t >() << ", " << color.template greenInteger< int8_t >() << ", " << color.template blueInteger< int8_t >() << std::endl;
+	std::cout << "uint8_t : " << color.template redInteger< uint8_t >() << ", " << color.template greenInteger< uint8_t >() << ", " << color.template blueInteger< uint8_t >() << std::endl;
+	std::cout << "int16_t : " << color.template redInteger< int16_t >() << ", " << color.template greenInteger< int16_t >() << ", " << color.template blueInteger< int16_t >() << std::endl;
+	std::cout << "uint16_t : " << color.template redInteger< uint16_t >() << ", " << color.template greenInteger< uint16_t >() << ", " << color.template blueInteger< uint16_t >() << std::endl;
+	std::cout << "int32_t : " << color.template redInteger< int32_t >() << ", " << color.template greenInteger< int32_t >() << ", " << color.template blueInteger< int32_t >() << std::endl;
+	std::cout << "uint32_t : " << color.template redInteger< uint32_t >() << ", " << color.template greenInteger< uint32_t >() << ", " << color.template blueInteger< uint32_t >() << std::endl;
+	std::cout << "int64_t : " << color.template redInteger< int64_t >() << ", " << color.template greenInteger< int64_t >() << ", " << color.template blueInteger< int64_t >() << std::endl;
+	std::cout << "uint64_t : " << color.template redInteger< uint64_t >() << ", " << color.template greenInteger< uint64_t >() << ", " << color.template blueInteger< uint64_t >() << std::endl;
+}
+
+template< typename input_t, typename output_t >
+bool
+pixmapDataConversion (const Color< float > & color = {1.0F, 0.5F, 0.33333333333333F}) noexcept
+{
+	Pixmap< input_t > input{256, 256, ChannelMode::RGB, color};
+
+	std::cout <<
+		"Initial color : " << color << "\n"
+		"Input " << input <<
+		"Input pixel #0 : " << input.pixel(0) << "\n"
+		"Input pixel #1 : " << input.pixel(1) << "\n"
+		"Input pixel #35 : " << input.pixel(35) << "\n" << std::endl;
+
+	auto output = dataConversion< output_t >(input);
+
+	std::cout << "\n" <<
+		"Output " << output <<
+		"Output pixel #0 : " << output.pixel(0) << "\n"
+		"Output pixel #1 : " << output.pixel(1) << "\n"
+		"Output pixel #35 : " << output.pixel(35) << std::endl;
+
+	return color == output.pixel(0);
+}
+
+template< typename pixmapData_t, typename colorData_t >
+void
+launchPixelFactoryTests (size_t & errors) noexcept
+{
+	std::cout << "\n\n\n====== Launching PixelFactory tests ======\n\n\n" << std::endl;
+
+	if ( false )
+	{
+		checkColorPrecision< float >();
+		checkColorPrecision< double >();
+		checkColorPrecision< long double >();
+
+		if ( !pixmapDataConversion< uint64_t, float >() )
+		{
+			std::cerr << "Color conversion error !" << std::endl;
+
+			errors++;
+		}
+	}
+
+	auto sourceA = PixmapReader< pixmapData_t >::readFile(TEST_BASE_PATH "Images/a.jpg");
+	auto sourceB = PixmapReader< pixmapData_t >::readFile(TEST_BASE_PATH "Images/b.png");
+	auto sourceC = PixmapReader< pixmapData_t >::readFile(TEST_BASE_PATH "Images/c.tga");
+	auto blend = PixmapReader< pixmapData_t >::readFile(TEST_BASE_PATH "Images/blend.png");
+
+	if ( !sourceA.isValid() || !sourceB.isValid() || !sourceC.isValid() || !blend.isValid())
+	{
+		std::cerr << "No source pixmap for testing !" << std::endl;
+
+		return;
+	}
+
+	auto cropped = Processor< pixmapData_t >::crop(sourceC, {0, 0, 64, 96});
+	auto resized = Processor< pixmapData_t >::resize(cropped, 512, 512, FilteringMode::Linear);
+
+	/* Blit */
+	if ( false )
+	{
+		auto output = sourceB;
+
+		Processor proc{output};
+
+		proc.blit(resized, output.area(0, 0), resized.area(16, 16));
+
+		if ( !PixmapWriter< pixmapData_t >::writeFile(output, TEST_BASE_PATH "test-blit.png") )
+			errors++;
+	}
+
+	/* Blend over RGB. */
+	if ( false )
+	{
+		//auto output = sourceB;
+		Pixmap< pixmapData_t > output{1024, 1024, ChannelMode::RGBA, TranslucentGreen};
+
+		auto mode = DrawPixelMode::Lighten;
+
+		Processor proc{output};
+		proc.copy(resized, {35, 480, 358, 256}, mode);
+		proc.copy(resized, {435, 480, 358, 256}, mode, 0.5F);
+		proc.copy(blend, 128, 128, mode);
+		proc.copy(blend, 328, 128, mode, 0.5F);
+		//proc.scale(8.0F, Channel::Blue);
+
+		/*for ( auto n = 0; n < 4096; n++ )
+		{
+			const auto pointA = Vector< 2, int >{Utility::random< int >(0, 1024), Utility::random< int >(0, 1024)};
+			const auto pointB = Vector< 2, int >{Utility::random< int >(0, 1024), Utility::random< int >(0, 1024)};
+			const auto color = Color< float >::random();
+
+			proc.drawSegment(pointA, pointB, color);
+		}*/
+
+		//proc.drawCircle({512, 512}, 354, White);
+		//proc.drawSquare({32, 64, 384, 212}, Red);
+		//proc.drawCross({32, 64, 384, 212}, Red);
+		//proc.drawStraightCross({32, 64, 384, 212}, Red);
+		//proc.drawSquare(output.area(), Green);
+
+		if ( !PixmapWriter< pixmapData_t >::writeFile(output, TEST_BASE_PATH "test-blend-a.png") )
+			errors++;
+
+		auto channel = proc.inverseColors();
+
+		if ( !PixmapWriter< pixmapData_t >::writeFile(channel, TEST_BASE_PATH "test-extract.png") )
+			errors++;
+	}
+
+	/* Blend over RGBA. */
+	if ( false )
+	{
+		auto output = blend;
+
+		{
+			Processor proc{output};
+
+			Pixmap< uint8_t > blendB{192, 192, ChannelMode::RGBA, TranslucentRed};
+
+			proc.copy(blendB, {0, 0, 192, 192}, DrawPixelMode::Normal, 1.0F);
+		}
+
+		if ( !PixmapWriter< pixmapData_t >::writeFile(output, TEST_BASE_PATH "test-blend-b.png") )
+			errors++;
+	}
+
+	/* Shifts */
+	if ( true )
+	{
+		Processor proc{sourceB};
+
+		if ( !proc.shiftTextArea(-256) )
+			errors++;
+
+		if ( !PixmapWriter< pixmapData_t >::writeFile(sourceB, TEST_BASE_PATH "test-shift.png") )
+			errors++;
+	}
+}

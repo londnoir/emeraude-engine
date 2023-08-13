@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+if [ "${1}" = "-clang" ]; then
+	export CC=/usr/bin/clang
+	export CXX=/usr/bin/clang++
+
+	COMPILER="Clang"
+else
+	export CC=/usr/bin/gcc
+	export CXX=/usr/bin/g++
+
+	COMPILER="GCC"
+fi
+
+BUILD_TYPE="Release"
+BUILD_DIR="/var/tmp/LibrariesTest/${COMPILER}/${BUILD_TYPE}"
+
+echo "Testing libraries (${BUILD_TYPE}) using ${COMPILER} from temp directory '${BUILD_DIR}' ..."
+
+echo "Configuring the cmake build directory '${BUILD_DIR}' ..."
+cmake -S ./libraries -B ${BUILD_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_LIBRARIES_TESTING=On -G Ninja
+echo "======= DONE ======"
+
+echo "Compiling (${COMPILER}) ..."
+cmake --build ${BUILD_DIR} --config ${BUILD_TYPE}
+echo "======= DONE ======"
+
+echo "Running tests ..."
+ctest --test-dir ${BUILD_DIR}
+echo "======= DONE ======"

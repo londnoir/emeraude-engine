@@ -1,0 +1,442 @@
+/*
+ * Emeraude/Audio/Effects/Reverb.cpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "Reverb.hpp"
+
+/* Local inclusions */
+#include "Tracer.hpp"
+#include <Audio/OpenAL.EFX.hpp>
+#include "Audio/Utility.hpp"
+
+namespace Emeraude::Audio::Effects
+{
+	using namespace Libraries;
+
+	Reverb::Reverb () noexcept
+		: Abstract()
+	{
+		if ( this->identifier() == 0 )
+			return;
+
+		EFX::alEffecti(this->identifier(), AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+
+		if ( alGetErrors("alEffecti()", __FILE__, __LINE__) )
+			Tracer::error(ClassId, "Unable to generate OpenAL Reverb effect !");
+	}
+
+	void
+	Reverb::resetProperties () noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_DENSITY, AL_REVERB_DEFAULT_DENSITY);
+		EFX::alEffectf(this->identifier(), AL_REVERB_DIFFUSION, AL_REVERB_DEFAULT_DIFFUSION);
+		EFX::alEffectf(this->identifier(), AL_REVERB_GAIN, AL_REVERB_DEFAULT_GAIN);
+		EFX::alEffectf(this->identifier(), AL_REVERB_GAINHF, AL_REVERB_DEFAULT_GAINHF);
+		EFX::alEffectf(this->identifier(), AL_REVERB_DECAY_TIME, AL_REVERB_DEFAULT_DECAY_TIME);
+		EFX::alEffectf(this->identifier(), AL_REVERB_DECAY_HFRATIO, AL_REVERB_DEFAULT_DECAY_HFRATIO);
+		EFX::alEffectf(this->identifier(), AL_REVERB_REFLECTIONS_GAIN, AL_REVERB_DEFAULT_REFLECTIONS_GAIN);
+		EFX::alEffectf(this->identifier(), AL_REVERB_REFLECTIONS_DELAY, AL_REVERB_DEFAULT_REFLECTIONS_DELAY);
+		EFX::alEffectf(this->identifier(), AL_REVERB_LATE_REVERB_GAIN, AL_REVERB_DEFAULT_LATE_REVERB_GAIN);
+		EFX::alEffectf(this->identifier(), AL_REVERB_LATE_REVERB_DELAY, AL_REVERB_DEFAULT_LATE_REVERB_DELAY);
+		EFX::alEffectf(this->identifier(), AL_REVERB_AIR_ABSORPTION_GAINHF, AL_REVERB_DEFAULT_AIR_ABSORPTION_GAINHF);
+		EFX::alEffectf(this->identifier(), AL_REVERB_ROOM_ROLLOFF_FACTOR, AL_REVERB_DEFAULT_ROOM_ROLLOFF_FACTOR);
+		EFX::alEffecti(this->identifier(), AL_REVERB_DECAY_HFLIMIT, AL_REVERB_DEFAULT_DECAY_HFLIMIT);
+	}
+
+	void
+	Reverb::setDensity (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_DENSITY || value > AL_REVERB_MAX_DENSITY )
+		{
+			Tracer::warning(ClassId, Blob() << "Density must be between " << AL_REVERB_MIN_DENSITY << " and " << AL_REVERB_MAX_DENSITY << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_DENSITY, value);
+	}
+
+	void
+	Reverb::setDiffusion (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_DIFFUSION || value > AL_REVERB_MAX_DIFFUSION )
+		{
+			Tracer::warning(ClassId, Blob() << "Diffusion must be between " << AL_REVERB_MIN_DIFFUSION << " and " << AL_REVERB_MAX_DIFFUSION << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_DIFFUSION, value);
+	}
+
+	void
+	Reverb::setGain (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_GAIN || value > AL_REVERB_MAX_GAIN )
+		{
+			Tracer::warning(ClassId, Blob() << "Gain must be between " << AL_REVERB_MIN_GAIN << " and " << AL_REVERB_MAX_GAIN << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_GAIN, value);
+	}
+
+	void
+	Reverb::setGainHF (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_GAINHF || value > AL_REVERB_MAX_GAINHF )
+		{
+			Tracer::warning(ClassId, Blob() << "Gain HF must be between " << AL_REVERB_MIN_GAINHF << " and " << AL_REVERB_MAX_GAINHF << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_GAINHF, value);
+	}
+
+	void
+	Reverb::setDecayTime (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_DECAY_TIME || value > AL_REVERB_MAX_DECAY_TIME )
+		{
+			Tracer::warning(ClassId, Blob() << "Decay time must be between " << AL_REVERB_MIN_DECAY_TIME << " and " << AL_REVERB_MAX_DECAY_TIME << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_DECAY_TIME, value);
+	}
+
+	void
+	Reverb::setDecayHFRatio (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_DECAY_HFRATIO || value > AL_REVERB_MAX_DECAY_HFRATIO )
+		{
+			Tracer::warning(ClassId, Blob() << "Decay HF ratio must be between " << AL_REVERB_MIN_DECAY_HFRATIO << " and " << AL_REVERB_MAX_DECAY_HFRATIO << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_DECAY_HFRATIO, value);
+	}
+
+	void
+	Reverb::setReflectionsGain (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_REFLECTIONS_GAIN || value > AL_REVERB_MAX_REFLECTIONS_GAIN )
+		{
+			Tracer::warning(ClassId, Blob() << "Reflections gain must be between " << AL_REVERB_MIN_REFLECTIONS_GAIN << " and " << AL_REVERB_MAX_REFLECTIONS_GAIN << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_REFLECTIONS_GAIN, value);
+	}
+
+	void
+	Reverb::setReflectionsDelay (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_REFLECTIONS_DELAY || value > AL_REVERB_MAX_REFLECTIONS_DELAY )
+		{
+			Tracer::warning(ClassId, Blob() << "Reflections gain must be between " << AL_REVERB_MIN_REFLECTIONS_DELAY << " and " << AL_REVERB_MAX_REFLECTIONS_DELAY << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_REFLECTIONS_DELAY, value);
+	}
+
+	void
+	Reverb::setLateGain (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_LATE_REVERB_GAIN || value > AL_REVERB_MAX_LATE_REVERB_GAIN )
+		{
+			Tracer::warning(ClassId, Blob() << "Late reverb gain must be between " << AL_REVERB_MIN_LATE_REVERB_GAIN << " and " << AL_REVERB_MAX_LATE_REVERB_GAIN << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_LATE_REVERB_GAIN, value);
+	}
+
+	void
+	Reverb::setLateDelay (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_LATE_REVERB_DELAY || value > AL_REVERB_MAX_LATE_REVERB_DELAY )
+		{
+			Tracer::warning(ClassId, Blob() << "Late reverb delay must be between " << AL_REVERB_MIN_LATE_REVERB_DELAY << " and " << AL_REVERB_MAX_LATE_REVERB_DELAY << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_LATE_REVERB_DELAY, value);
+	}
+
+	void
+	Reverb::setAirAbsorptionGainHF (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_AIR_ABSORPTION_GAINHF || value > AL_REVERB_MAX_AIR_ABSORPTION_GAINHF )
+		{
+			Tracer::warning(ClassId, Blob() << "Air absorption gain HF must be between " << AL_REVERB_MIN_AIR_ABSORPTION_GAINHF << " and " << AL_REVERB_MAX_AIR_ABSORPTION_GAINHF << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_AIR_ABSORPTION_GAINHF, value);
+	}
+
+	void
+	Reverb::setRoomRollOffFactor (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_REVERB_MIN_ROOM_ROLLOFF_FACTOR || value > AL_REVERB_MAX_ROOM_ROLLOFF_FACTOR )
+		{
+			Tracer::warning(ClassId, Blob() << "Room roll-off factor must be between " << AL_REVERB_MIN_ROOM_ROLLOFF_FACTOR << " and " << AL_REVERB_MAX_ROOM_ROLLOFF_FACTOR << ".");
+
+			return;
+		}
+
+
+		EFX::alEffectf(this->identifier(), AL_REVERB_ROOM_ROLLOFF_FACTOR, value);
+	}
+
+	void
+	Reverb::setDecayHFLimit (bool state) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		EFX::alEffecti(this->identifier(), AL_REVERB_DECAY_HFLIMIT, state ? AL_TRUE : AL_FALSE);
+	}
+
+	float
+	Reverb::density () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_DENSITY, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::diffusion () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_DIFFUSION, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::gain () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_GAIN, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::gainHF () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_GAINHF, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::decayTime () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_DECAY_TIME, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::decayHFRatio () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_DECAY_HFRATIO, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::reflectionsGain () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_REFLECTIONS_GAIN, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::reflectionsDelay () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_REFLECTIONS_DELAY, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::lateGain () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_LATE_REVERB_GAIN, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::lateDelay () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_LATE_REVERB_DELAY, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::airAbsorptionGainHF () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_AIR_ABSORPTION_GAINHF, &value);
+
+		return value;
+	}
+
+	float
+	Reverb::roomRollOffFactor () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_REVERB_ROOM_ROLLOFF_FACTOR, &value);
+
+		return value;
+	}
+
+	bool
+	Reverb::decayHFLimit () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return false;
+
+		ALint value;
+
+		EFX::alGetEffecti(this->identifier(), AL_REVERB_DECAY_HFLIMIT, &value);
+
+		return value > 0;
+	}
+}

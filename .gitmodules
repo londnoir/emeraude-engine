@@ -1,0 +1,24 @@
+[submodule "dependencies/jsoncpp"]
+	path = dependencies/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "dependencies/SDL_GameControllerDB"]
+	path = dependencies/SDL_GameControllerDB
+	url = https://github.com/gabomdq/SDL_GameControllerDB.git
+[submodule "dependencies/imgui"]
+	path = dependencies/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "dependencies/glfw"]
+	path = dependencies/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "dependencies/eigen"]
+	path = dependencies/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "dependencies/glm"]
+	path = dependencies/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "dependencies/googletest"]
+	path = dependencies/googletest
+	url = https://github.com/google/googletest.git
+[submodule "dependencies/glslang"]
+	path = dependencies/glslang
+	url = https://github.com/KhronosGroup/glslang.git

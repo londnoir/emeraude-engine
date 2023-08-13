@@ -1,0 +1,10 @@
+Improve the model UBO to get proper matrices completed when rendering between fixed view and dynamic view.
+Add a possibility to get fake fixed lighting.
+Re-enable ligt set.
+Re-Enable light model code generation.
+Finish the basic material.
+Unload properly Vulkan last objects.
+============================================
+Fix texture loading. (UINT->UNORM) Convert data before ? or not ?
+Use of separated image from sampler in GLSL when useful.
+Make standard material working.

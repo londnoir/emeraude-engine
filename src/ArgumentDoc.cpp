@@ -1,0 +1,100 @@
+/*
+ * Emeraude/ArgumentDoc.cpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "ArgumentDoc.hpp"
+
+/* C/C++ standard libraries. */
+#include <sstream>
+
+namespace Emeraude
+{
+	ArgumentDoc::ArgumentDoc (std::string description, std::string longName, char shortName, const std::vector< std::string > & options) noexcept
+			: AbstractDoc(std::move(description)), m_longName(std::move(longName)), m_shortName(shortName), m_options(options)
+	{
+
+	}
+
+	const std::string &
+	ArgumentDoc::longName () const noexcept
+	{
+		return m_longName;
+	}
+
+	char
+	ArgumentDoc::shortName () const noexcept
+	{
+		return m_shortName;
+	}
+
+	const std::vector< std::string > &
+	ArgumentDoc::options () const noexcept
+	{
+		return m_options;
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const ArgumentDoc & obj)
+	{
+		const auto shortPresent = obj.shortName() != 0;
+		const auto longPresent = !obj.longName().empty();
+
+		if ( shortPresent )
+		{
+			out << '-' << obj.shortName();
+		}
+		else
+		{
+			out << '\t';
+		}
+
+		if ( longPresent )
+		{
+			if ( shortPresent )
+			{
+				out << ", ";
+			}
+
+			out << "--" << obj.longName();
+		}
+
+		if ( !obj.options().empty() )
+		{
+			for ( const auto &option: obj.options() )
+			{
+				out << " [" << option << "]";
+			}
+		}
+
+		return out << " : " << obj.description();
+	}
+
+	std::string
+	to_string (const ArgumentDoc & obj) noexcept
+	{
+		return (std::stringstream{} << obj).str();
+	}
+}

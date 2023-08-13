@@ -1,0 +1,325 @@
+/*
+ * Emeraude/Graphics/TextureResource/TextureCubemap.cpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "TextureCubemap.hpp"
+
+/* C/C++ standard libraries. */
+#include <fstream>
+
+/* Local inclusions */
+#include "Graphics/CubemapResource.hpp"
+#include "Graphics/Renderer.hpp"
+#include "Resources/Manager.hpp"
+#include "Tracer.hpp"
+#include "Vulkan/Image.hpp"
+#include "Vulkan/ImageView.hpp"
+#include "Vulkan/Sampler.hpp"
+#include "Vulkan/TransferManager.hpp"
+
+/* Defining the resource manager class id. */
+template<>
+const char * const Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::TextureCubemap >::ClassId{"TextureCubemapContainer"};
+
+/* Defining the resource manager ClassUID. */
+template<>
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::TextureCubemap >::ClassUID{Observable::getClassUID()};
+
+namespace Emeraude::Graphics::TextureResource
+{
+	using namespace Libraries;
+	using namespace Vulkan;
+
+	const size_t TextureCubemap::ClassUID{Observable::getClassUID()};
+
+	TextureCubemap::TextureCubemap (const std::string & name, uint32_t resourceFlagBits) noexcept
+		: Abstract(name, resourceFlagBits)
+	{
+
+	}
+
+	TextureCubemap::~TextureCubemap ()
+	{
+		this->destroyFromHardware();
+	}
+
+	bool
+	TextureCubemap::isCreated () const noexcept
+	{
+		if ( m_image == nullptr || !m_image->isCreated() )
+			return false;
+
+		if ( m_imageView == nullptr || !m_imageView->isCreated() )
+			return false;
+
+		if ( m_sampler == nullptr || !m_sampler->isCreated() )
+			return false;
+
+		return true;
+	}
+
+	bool
+	TextureCubemap::createOnHardware () noexcept
+	{
+		auto transferManager = TransferManager::instance(TransferType::Graphics);
+
+		/* Create a Vulkan image. */
+		m_image = std::make_shared< Image >(
+			transferManager->device(),
+			VK_IMAGE_TYPE_2D,
+			Image::getFormat(m_localData->data(0)),
+			VkExtent3D{static_cast< uint32_t >(m_localData->size()), static_cast< uint32_t >(m_localData->size()), 1U},
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, /* flags */
+			1, /* mipLevels */
+			6, /* arrayLayers */
+			VK_SAMPLE_COUNT_1_BIT,
+			VK_IMAGE_TILING_OPTIMAL
+		);
+		m_image->setIdentifier(this->name() + "-Main-Image");
+
+		if ( !m_image->create(*transferManager, m_localData) )
+		{
+			Tracer::error(ClassId, "Unable to create an image !");
+
+			m_image.reset();
+
+			return false;
+		}
+
+		/* Create a Vulkan image view. */
+		m_imageView = std::make_shared< ImageView >(
+			m_image,
+			VK_IMAGE_VIEW_TYPE_CUBE,
+			VkImageSubresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel = 0,
+				.levelCount = m_image->createInfo().mipLevels,
+				.baseArrayLayer = 0,
+				.layerCount = m_image->createInfo().arrayLayers
+			}
+		);
+		m_imageView->setIdentifier(this->name() + "-Main-ImageView");
+
+		if ( !m_imageView->createOnHardware() )
+		{
+			Tracer::error(ClassId, "Unable to create an image view !");
+
+			return false;
+		}
+
+		/* Get a Vulkan sampler. */
+		m_sampler = Renderer::instance()->getSampler(0, 0);
+		m_sampler->setIdentifier(this->name() + "-Main-Sampler");
+
+		if ( m_sampler == nullptr )
+		{
+			Tracer::error(ClassId, "Unable to get a sampler !");
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
+	TextureCubemap::destroyFromHardware () noexcept
+	{
+		if ( m_image != nullptr )
+		{
+			m_image->destroyFromHardware();
+			m_image.reset();
+		}
+
+		if ( m_imageView != nullptr )
+		{
+			m_imageView->destroyFromHardware();
+			m_imageView.reset();
+		}
+
+		if ( m_sampler != nullptr )
+		{
+			m_sampler->destroyFromHardware();
+			m_sampler.reset();
+		}
+
+		return true;
+	}
+
+	bool
+	TextureCubemap::is (size_t classUID) const noexcept
+	{
+		if ( ClassUID == 0UL )
+		{
+			Tracer::error(ClassId, "The unique class identifier has not been set !");
+
+			return false;
+		}
+
+		return classUID == ClassUID;
+	}
+
+	bool
+	TextureCubemap::isGrayScale () const noexcept
+	{
+		if ( !this->isLoaded() )
+			return false;
+
+		return m_localData->isGrayScale();
+	}
+
+	PixelFactory::Color< float >
+	TextureCubemap::averageColor () const noexcept
+	{
+		if ( !this->isLoaded() )
+			return PixelFactory::Black;
+
+		return m_localData->averageColor();
+	}
+
+	uint32_t
+	TextureCubemap::dimensions () const noexcept
+	{
+		return 3;
+	}
+
+	bool
+	TextureCubemap::isCubemapTexture () const noexcept
+	{
+		return true;
+	}
+
+	size_t
+	TextureCubemap::frameCount () const noexcept
+	{
+		if ( !this->isLoaded() )
+			return 0;
+
+		return 6;
+	}
+
+	size_t
+	TextureCubemap::duration () const noexcept
+	{
+		return 0;
+	}
+
+	const std::shared_ptr< Image > &
+	TextureCubemap::image () const noexcept
+	{
+		return m_image;
+	}
+
+	const std::shared_ptr< ImageView > &
+	TextureCubemap::imageView () const noexcept
+	{
+		return m_imageView;
+	}
+
+	const std::shared_ptr< Sampler > &
+	TextureCubemap::sampler () const noexcept
+	{
+		return m_sampler;
+	}
+
+	const char *
+	TextureCubemap::classLabel () const noexcept
+	{
+		return ClassId;
+	}
+
+	bool
+	TextureCubemap::load () noexcept
+	{
+		if ( !this->beginLoading() )
+			return false;
+
+		m_localData = CubemapResource::getDefault();
+
+		if ( !this->addDependency(m_localData.get()) )
+			return this->setLoadSuccess(false);
+
+		return this->setLoadSuccess(true);
+	}
+
+	bool
+	TextureCubemap::load (const Path::File & filepath) noexcept
+	{
+		/* ie: "/foo/bar/datastores/Cubemaps/test.png" -> "Cubemaps/test.png" */
+		const auto filename = String::right(to_string(filepath), std::string("Cubemaps") + Path::Separator);
+		const auto imageName = String::removeFileExtension(filename);
+
+		return this->load(CubemapResource::get(imageName, this->isDirectLoading()));
+	}
+
+	bool
+	TextureCubemap::load (const Json::Value &) noexcept
+	{
+		/* NOTE: This resouce has no local store,
+		 * so this method won't be called from a resource container ! */
+		Tracer::error(ClassId, "This type of resource is not intended to be loaded this way !");
+
+		return false;
+	}
+
+	bool
+	TextureCubemap::load (const std::shared_ptr< CubemapResource > & cubemapResource) noexcept
+	{
+		if ( !this->beginLoading() )
+			return false;
+
+		if ( cubemapResource == nullptr )
+		{
+			Tracer::error(ClassId, "The cubemap resource is an empty smart pointer !");
+
+			return this->setLoadSuccess(false);
+		}
+
+		m_localData = cubemapResource;
+
+		if ( !this->addDependency(m_localData.get()) )
+		{
+			TraceError{ClassId} << "Unable to add the cubemap '" << cubemapResource->name() << "' as dependency !";
+
+			return this->setLoadSuccess(false);
+		}
+
+		return this->setLoadSuccess(true);
+	}
+
+	std::shared_ptr< TextureCubemap >
+	TextureCubemap::get (const std::string & resourceName, bool directLoad) noexcept
+	{
+		return Resources::Manager::instance()->textureCubemaps().getResource(resourceName, directLoad);
+	}
+
+	std::shared_ptr< TextureCubemap >
+	TextureCubemap::getDefault () noexcept
+	{
+		return Resources::Manager::instance()->textureCubemaps().getDefaultResource();
+	}
+}

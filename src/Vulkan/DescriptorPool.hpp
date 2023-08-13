@@ -1,0 +1,155 @@
+/*
+ * Emeraude/Vulkan/DescriptorPool.hpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#pragma once
+
+/* C/C++ standard libraries. */
+#include <memory>
+#include <mutex>
+#include <vector>
+
+/* Local inclusions for inheritances. */
+#include "AbstractDeviceDependentObject.hpp"
+
+/* Local inclusions for usages. */
+#include "DescriptorSetLayout.hpp"
+
+namespace Emeraude::Vulkan
+{
+	/**
+	 * @brief The DescriptorPool class
+	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This vulkan object needs a device.
+	 */
+	class DescriptorPool final : public AbstractDeviceDependentObject
+	{
+		public:
+
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"VulkanDescriptorPool"};
+
+			/**
+			 * @brief Constructs a descriptor pool.
+			 * @param device A reference to a smart pointer of a device.
+			 * @param descriptorPoolSizes A reference to a list of descriptor pool sizes.
+			 * @param maxSets The max sets.
+			 * @param createFlags The create info flags. Default none.
+			 */
+			DescriptorPool (const std::shared_ptr< Device > & device, const std::vector< VkDescriptorPoolSize > & descriptorPoolSizes, uint32_t maxSets, VkDescriptorPoolCreateFlags createFlags = 0) noexcept;
+
+			/**
+			 * @brief Constructs a descriptor pool with create info.
+			 * @param device A reference to a smart pointer of a device.
+			 * @param createInfo A reference to a create info.
+			 */
+			DescriptorPool (const std::shared_ptr< Device > & device, const VkDescriptorPoolCreateInfo & createInfo) noexcept;
+
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			DescriptorPool (const DescriptorPool & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			DescriptorPool (DescriptorPool && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 */
+			DescriptorPool & operator= (const DescriptorPool & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 */
+			DescriptorPool & operator= (DescriptorPool && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the descriptor pool.
+			 */
+			~DescriptorPool () override;
+
+			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			bool createOnHardware () noexcept override;
+
+			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			bool destroyFromHardware () noexcept override;
+
+			/**
+			 * @brief Returns the descriptor pool handle.
+			 * @return VkDescriptorPool
+			 */
+			[[nodiscard]]
+			VkDescriptorPool handle () const noexcept;
+
+			/**
+			 * @brief Returns the descriptor pool create info.
+			 * @return VkDescriptorPoolCreateInfo
+			 */
+			[[nodiscard]]
+			VkDescriptorPoolCreateInfo createInfo () const noexcept;
+
+			/**
+			 * @brief Returns the list of descriptor pool sizes.
+			 * @return const std::vector< VkDescriptorPoolSize > &
+			 */
+			[[nodiscard]]
+			const std::vector< VkDescriptorPoolSize > & descriptorPoolSizes () const noexcept;
+
+			/**
+			 * @brief Returns the max sets.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t maxSets () const noexcept;
+
+			/**
+			 * @brief Allocates one descriptor set.
+			 * @param descriptorSetLayout A reference to a descriptor set layout.
+			 * @return VkDescriptorSet
+			 */
+			[[nodiscard]]
+			VkDescriptorSet allocateDescriptorSet (const DescriptorSetLayout & descriptorSetLayout) noexcept;
+
+			/**
+			 * @brief Frees one descriptor set.
+			 * @param descriptorSetHandle A Vulkan handle to the descriptor set.
+			 * @return bool
+			 */
+			bool freeDescriptorSet (VkDescriptorSet descriptorSetHandle) noexcept;
+
+		private:
+
+			VkDescriptorPool m_handle{VK_NULL_HANDLE};
+			VkDescriptorPoolCreateInfo m_createInfo{};
+			std::vector< VkDescriptorPoolSize > m_descriptorPoolSizes;
+			mutable std::mutex m_allocationMutex{};
+	};
+}

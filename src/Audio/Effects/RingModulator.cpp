@@ -1,0 +1,171 @@
+/*
+ * Emeraude/Audio/Effects/RingModulator.cpp
+ * This file is part of Emeraude
+ *
+ * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude
+ * 
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "RingModulator.hpp"
+
+/* Local inclusions */
+#include "Tracer.hpp"
+#include <Audio/OpenAL.EFX.hpp>
+#include "Audio/Utility.hpp"
+
+namespace Emeraude::Audio::Effects
+{
+	using namespace Libraries;
+
+	RingModulator::RingModulator () noexcept
+		: Abstract()
+	{
+		if ( this->identifier() == 0 )
+			return;
+
+		EFX::alEffecti(this->identifier(), AL_EFFECT_TYPE, AL_EFFECT_RING_MODULATOR);
+
+		if ( alGetErrors("alEffecti()", __FILE__, __LINE__) )
+			Tracer::error(ClassId, "Unable to generate OpenAL Ring Modulator effect !");
+	}
+
+	void
+	RingModulator::resetProperties () noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		EFX::alEffectf(this->identifier(), AL_RING_MODULATOR_FREQUENCY, AL_RING_MODULATOR_DEFAULT_FREQUENCY);
+		EFX::alEffectf(this->identifier(), AL_RING_MODULATOR_HIGHPASS_CUTOFF, AL_RING_MODULATOR_DEFAULT_HIGHPASS_CUTOFF);
+		EFX::alEffecti(this->identifier(), AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_DEFAULT_WAVEFORM);
+	}
+
+	void
+	RingModulator::setFrequency (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_RING_MODULATOR_MIN_FREQUENCY || value > AL_RING_MODULATOR_MAX_FREQUENCY )
+		{
+			Tracer::warning(ClassId, Blob() << "Frequency must be between " << AL_RING_MODULATOR_MIN_FREQUENCY << " and " << AL_RING_MODULATOR_MAX_FREQUENCY << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_RING_MODULATOR_FREQUENCY, value);
+	}
+
+	void
+	RingModulator::setHighPassCutOff (float value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		if ( value < AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF || value > AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF )
+		{
+			Tracer::warning(ClassId, Blob() << "HighPass CutOff must be between " << AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF << " and " << AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF << ".");
+
+			return;
+		}
+
+		EFX::alEffectf(this->identifier(), AL_RING_MODULATOR_HIGHPASS_CUTOFF, value);
+	}
+
+	void
+	RingModulator::setWaveForm (WaveForm value) noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return;
+
+		ALint def;
+
+		switch ( value )
+		{
+			case WaveForm::Sinusoid :
+				def = AL_RING_MODULATOR_SINUSOID;
+				break;
+
+			case WaveForm::SawTooth :
+				def = AL_RING_MODULATOR_SAWTOOTH;
+				break;
+
+			case WaveForm::Square :
+				def = AL_RING_MODULATOR_SQUARE;
+				break;
+		}
+
+		EFX::alEffecti(this->identifier(), AL_RING_MODULATOR_WAVEFORM, def);
+	}
+
+	float
+	RingModulator::frequency () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_RING_MODULATOR_FREQUENCY, &value);
+
+		return value;
+	}
+
+	float
+	RingModulator::highPassCutOff () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return 0.0F;
+
+		ALfloat value;
+
+		EFX::alGetEffectf(this->identifier(), AL_RING_MODULATOR_HIGHPASS_CUTOFF, &value);
+
+		return value;
+	}
+
+	RingModulator::WaveForm
+	RingModulator::waveForm () const noexcept
+	{
+		if ( !EFX::isAvailable() )
+			return WaveForm::Sinusoid;
+
+		ALint value;
+
+		EFX::alGetEffecti(this->identifier(), AL_RING_MODULATOR_WAVEFORM, &value);
+
+		switch ( value )
+		{
+			case AL_RING_MODULATOR_SINUSOID :
+				return WaveForm::Sinusoid;
+
+			case AL_RING_MODULATOR_SAWTOOTH :
+				return WaveForm::SawTooth;
+
+			case AL_RING_MODULATOR_SQUARE :
+				return WaveForm::Square;
+
+			default:
+				return WaveForm::Sinusoid;
+		}
+	}
+}
