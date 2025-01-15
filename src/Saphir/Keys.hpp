@@ -1,33 +1,33 @@
 /*
- * Emeraude/Saphir/Keys.hpp
- * This file is part of Emeraude
+ * src/Saphir/Keys.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <string>
 
 namespace Emeraude::Saphir
@@ -72,9 +72,20 @@ namespace Emeraude::Saphir
 				static constexpr auto GLCompatibilityProfile = "GL_compatibility_profile";
 			}
 
+			namespace Primitive
+			{
+				static constexpr auto Points = "points";
+				static constexpr auto Lines = "lines";
+				static constexpr auto LineAdjacency = "lines_adjacency";
+				static constexpr auto LineStrip = "line_strip";
+				static constexpr auto Triangles = "triangles";
+				static constexpr auto TrianglesAdjacency = "triangles_adjacency";
+				static constexpr auto TriangleStrip = "triangle_strip";
+			}
+
 			/* Flow controls */
 			static constexpr auto Break = "break";
-			static constexpr auto Vontinue = "continue";
+			static constexpr auto Continue = "continue";
 			static constexpr auto Do = "do";
 			static constexpr auto For = "for";
 			static constexpr auto While = "while";
@@ -94,9 +105,9 @@ namespace Emeraude::Saphir
 			static constexpr auto InOut = "inout";
 			static constexpr auto Buffer = "buffer";
 			static constexpr auto Shared = "shared";
-				static constexpr auto Packed = "packed";
-				static constexpr auto Std140 = "std140";
-				static constexpr auto Std430 = "std430";
+			static constexpr auto Packed = "packed";
+			static constexpr auto Std140 = "std140";
+			static constexpr auto Std430 = "std430";
 			static constexpr auto Attribute = "attribute";
 			static constexpr auto Varying = "varying";
 			static constexpr auto Coherent = "coherent";
@@ -540,15 +551,6 @@ namespace Emeraude::Saphir
 					static constexpr auto IndexedClipDistance = "gl_in[index].gl_ClipDistance";
 					static constexpr auto PrimitiveIDIn = "gl_PrimitiveIDIn";
 					static constexpr auto InvocationID = "gl_InvocationID";
-
-					namespace Primitive
-					{
-						static constexpr auto Points = "points";
-						static constexpr auto Lines = "lines";
-						static constexpr auto Adjacency = "lines_adjacency";
-						static constexpr auto Triangles = "triangles";
-						static constexpr auto TrianglesAdjacency = "triangles_adjacency";
-					}
 				}
 				/*
 					out gl_PerVertex
@@ -569,13 +571,6 @@ namespace Emeraude::Saphir
 					static constexpr auto PrimitiveID = "gl_PrimitiveID";
 					static constexpr auto Layer = "gl_Layer";
 					static constexpr auto ViewportIndex = "gl_ViewportIndex";
-
-					namespace Primitive
-					{
-						static constexpr auto Points = "points";
-						static constexpr auto LineStrip = "line_strip";
-						static constexpr auto TriangleStrip = "triangle_strip";
-					}
 				}
 
 				namespace Function
@@ -639,150 +634,159 @@ namespace Emeraude::Saphir
 		 * @note See Emeraude::Graphics::VertexAttributeType for predefined vertex attribute in geometry.
 		 * Use Emeraude::Saphir::getVertexAttributeVariableName() to convert a attribute type to one of these variables.
 		 */
-		namespace Attributes
+		namespace Attribute
 		{
-			static constexpr auto Position = "sva_Vertex"; /* gl_Vertex */
-			static constexpr auto Tangent = "sva_Tangent";
-			static constexpr auto Binormal = "sva_Binormal";
-			static constexpr auto Normal = "sva_Normal"; /* gl_Normal */
-			static constexpr auto Color = "sva_Color"; /* gl_Color */
-			static constexpr auto Primary2DTextureCoordinates = "sva_2DTexCoord0"; /* gl_MultiTexCoord0 */
-			static constexpr auto Primary3DTextureCoordinates = "sva_3DTexCoord0";
-			static constexpr auto Secondary2DTextureCoordinates = "sva_2DTexCoord1"; /* gl_MultiTexCoord1 */
-			static constexpr auto Secondary3DTextureCoordinates = "sva_3DTexCoord1";
-			static constexpr auto ModelMatrix = "sva_ModelMatrix";
-			static constexpr auto NormalModelMatrix = "sva_NormalModelMatrix";
+			static constexpr auto Position{"vaVertex"};
+			static constexpr auto Tangent{"vaTangent"};
+			static constexpr auto Binormal{"vaBinormal"};
+			static constexpr auto Normal{"vaNormal"};
+			static constexpr auto Color{"vaColor"};
+			static constexpr auto Primary2DTextureCoordinates{"va2DTexCoord0"};
+			static constexpr auto Primary3DTextureCoordinates{"va3DTexCoord0"};
+			static constexpr auto Secondary2DTextureCoordinates{"va2DTexCoord1"};
+			static constexpr auto Secondary3DTextureCoordinates{"va3DTexCoord1"};
+			static constexpr auto ModelMatrix{"vaModelMatrix"};
+			static constexpr auto NormalModelMatrix{"vaNormalModelMatrix"};
+			static constexpr auto ModelPosition{"vaModelPosition"};
+			static constexpr auto ModelScaling{"vaModelScaling"};
 		}
 
-		/** Uniforms naming convention. */
-		namespace Uniforms
+		/** @brief Structures naming convention. */
+		namespace Struct
 		{
-			static constexpr auto PrimaryColor = "su_PrimaryColor";
-			static constexpr auto SecondaryColor = "su_SecondaryColor";
-			static constexpr auto ProjectionMatrix = "su_ProjectionMatrix"; /* gl_ProjectionMatrix */
-			static constexpr auto ViewProjectionMatrix = "su_ViewProjectionMatrix";
-			static constexpr auto ModelMatrix = "su_ModelMatrix";
-			static constexpr auto NormalModelMatrix = "su_NormalModelMatrix";
-			static constexpr auto ModelViewMatrix = "su_ModelViewMatrix"; /* gl_ModelViewMatrix */
-			static constexpr auto NormalMatrix = "su_NormalMatrix"; /* gl_NormalMatrix */
-			static constexpr auto ModelViewProjectionMatrix = "su_ModelViewProjectionMatrix"; /* gl_ModelViewProjectionMatrix */
-			static constexpr auto ModelLightMatrix = "su_ModelLightMatrix";
-			static constexpr auto NearFar = "su_NearFar";
-			static constexpr auto LightPosition = "su_LightPosition";
-			static constexpr auto AmbientLight = "su_AmbientLight";
-			static constexpr auto PrimaryTexture = "su_PrimaryTexture";
-			static constexpr auto SecondaryTexture = "su_SecondaryTexture";
-			static constexpr auto ShadowMap = "su_ShadowMap";
-
-			static constexpr auto Albedo = "su_Albedo";
-			static constexpr auto Ambient = "su_Ambient";
-			static constexpr auto Diffuse = "su_Diffuse";
-			static constexpr auto Specular = "su_Specular";
-			static constexpr auto Shininess = "su_Shininess";
-			static constexpr auto Normal = "su_Normal";
-			static constexpr auto NormalScale = "su_NormalScale";
-			static constexpr auto Displacement = "su_Displacement";
-			static constexpr auto DisplacementScale = "su_DisplacementScale";
-			static constexpr auto Opacity = "su_Opacity";
-			static constexpr auto OpacityAmount = "su_OpacityAmount";
-			static constexpr auto AutoIllumination = "su_AutoIllumination";
-			static constexpr auto AutoIlluminationAmount = "su_AutoIlluminationAmount";
-			static constexpr auto Reflection = "su_Reflection";
-			static constexpr auto ReflectionAmount = "su_ReflectionAmount";
-			static constexpr auto Roughness = "su_Roughness";
-			static constexpr auto Metalness = "su_Metalness";
+			static constexpr auto CubemapFace{"CubemapFace"};
 		}
 
-		/** Common names for buffer-backed interface block. */
-		namespace BufferBackedBlocks
+		/** @brief Uniforms naming convention. */
+		namespace Uniform
 		{
-			static constexpr auto View = "sbb_ViewUniformBlock";
-			static constexpr auto Model = "sbb_ModelUniformBlock";
-			static constexpr auto Light = "sbb_LightUniformBlock";
-			static constexpr auto Material = "sbb_MaterialUniformBlock";
+			/* Generic */
+			static constexpr auto PrimarySampler{"uPrimarySampler"};
+			static constexpr auto SecondarySampler{"uSecondarySampler"};
+			/* Material specific */
+			static constexpr auto AmbientSampler{"uAmbientSampler"};
+			static constexpr auto DiffuseSampler{"uDiffuseSampler"};
+			static constexpr auto SpecularSampler{"uSpecularSampler"};
+			static constexpr auto AutoIlluminationSampler{"uAutoIlluminationSampler"};
+			static constexpr auto NormalSampler{"uNormalSampler"};
+			static constexpr auto ReflectionSampler{"uReflectionSampler"};
+			static constexpr auto OpacitySampler{"uOpacitySampler"};
+			static constexpr auto ShadowMapSampler{"uShadowMapSampler"};
 		}
 
-		/** Interstage variables naming convention. */
-		namespace ShaderVariables
+		/** @brief Uniforms block variables naming convention. */
+		namespace UniformBlock
 		{
-			static constexpr auto PositionWorldSpace = "ssv_PositionWorldSpace";
-			static constexpr auto GLPositionWorldSpace = "gl_Position@WorldSpace"; /* NOTE: Must never appear in real code. */
-			static constexpr auto PositionViewSpace = "ssv_PositionViewSpace";
-			static constexpr auto PositionTextureSpace = "ssv_PositionTextureSpace";
-			static constexpr auto Color = "ssv_Color";
-			static constexpr auto Primary2DTextureCoordinates = "ssv_2DTexCoord0";
-			static constexpr auto Primary3DTextureCoordinates = "ssv_3DTexCoord0";
-			static constexpr auto Secondary2DTextureCoordinates = "ssv_2DTexCoord1";
-			static constexpr auto Secondary3DTextureCoordinates = "ssv_3DTexCoord1";
-			static constexpr auto TangentWorldSpace = "ssv_TangentWorldSpace";
-			static constexpr auto TangentViewSpace = "ssv_TangentViewSpace";
-			static constexpr auto BinormalWorldSpace = "ssv_BinormalWorldSpace";
-			static constexpr auto BinormalViewSpace = "ssv_BinormalViewSpace";
-			static constexpr auto NormalWorldSpace = "ssv_NormalWorldSpace";
-			static constexpr auto NormalViewSpace = "ssv_NormalViewSpace";
-			static constexpr auto ModelViewMatrix = "ssv_ModelViewMatrix"; /* gl_ModelViewMatrix */
-			static constexpr auto NormalMatrix = "ssv_NormalMatrix"; /* gl_NormalMatrix */
-			static constexpr auto ModelViewProjectionMatrix = "ssv_ModelViewProjectionMatrix"; /* gl_ModelViewProjectionMatrix */
-			static constexpr auto WorldTBNMatrix = "ssv_WorldTBNMatrix";
-			static constexpr auto ViewTBNMatrix = "ssv_ViewTBNMatrix";
-			static constexpr auto WorldToTangentMatrix = "ssv_WorldToTangent";
-			static constexpr auto OutputFragment = "ssv_OutputFragment";
-			static constexpr auto FragCoord = "ssv_FragCoord";
-			static constexpr auto Light = "ssv_Light";
-			static constexpr auto DiffuseFactor = "ssv_DiffuseFactor";
-			static constexpr auto SpecularFactor = "ssv_SpecularFactor";
-		}
+			static constexpr auto View{"ubView"};
+			static constexpr auto Material{"ubMaterial"};
+			static constexpr auto Light{"ubLight"};
 
-		/** Structures naming convention. */
-		namespace Structs
-		{
-			static constexpr auto CubemapFace = "CubemapFace";
-		}
-
-		/** UBO and SSBO link naming convention. */
-		namespace UniformBlocks
-		{
-			static constexpr auto View = "ViewUniformBlock";
-			static constexpr auto Model = "ModelUniformBlock";
-			static constexpr auto Light = "LightUniformBlock";
-			static constexpr auto Material = "MaterialUniformBlock";
+			namespace Type
+			{
+				static constexpr auto View{"View"};
+				static constexpr auto CubemapView{"CubemapView"};
+				static constexpr auto BasicMaterial{"BasicMaterial"};
+				static constexpr auto StandardMaterial{"StandardMaterial"};
+				static constexpr auto DirectionalLight{"DirectionalLight"};
+				static constexpr auto PointLight{"PointLight"};
+				static constexpr auto SpotLight{"SpotLight"};
+			}
 
 			namespace Component
 			{
-				static constexpr auto Instance = "instance";
-				static constexpr auto DiffuseColor = "diffuseColor";
-				static constexpr auto SpecularColor = "specularColor";
-				static constexpr auto PositionWorldSpace = "positionWorldSpace";
-				static constexpr auto PositionViewSpace = "positionViewSpace";
-				static constexpr auto DirectionWorldSpace = "directionWorldSpace";
-				static constexpr auto DirectionViewSpace = "directionViewSpace";
-				static constexpr auto Radius = "radius";
-				static constexpr auto InnerCosAngle = "innerCosAngle";
-				static constexpr auto OuterCosAngle = "outerCosAngle";
+				/* Generic */
+				static constexpr auto Instance{"instance"};
+				static constexpr auto Amount{"amount"};
+				static constexpr auto Scale{"scale"};
+				/* View specific */
+				static constexpr auto ProjectionMatrix{"projectionMatrix"};
+				static constexpr auto PositionWorldSpace{"positionWorldSpace"};
 				static constexpr auto Velocity = "velocity";
-				static constexpr auto ViewMatrix = "viewMatrix";
-				static constexpr auto ProjectionMatrix = "projectionMatrix"; /* gl_ProjectionMatrix */
-				static constexpr auto ViewProjectionMatrix = "viewProjectionMatrix"; /* (projectionMatrix * viewMatrix) result */
-				static constexpr auto ViewProperties = "viewProperties";
-				static constexpr auto LightMatrix = "lightMatrix";
-				static constexpr auto ModelMatrix = "modelMatrix";
-				static constexpr auto NormalModelMatrix = "normalModelMatrix";
-				static constexpr auto ModelViewMatrix = "modelViewMatrix"; /* gl_ModelViewMatrix */
-				static constexpr auto NormalMatrix = "normalMatrix"; /* gl_NormalMatrix */
-				static constexpr auto ModelViewProjectionMatrix = "modelViewProjectionMatrix"; /* gl_ModelViewProjectionMatrix */
-				static constexpr auto ModelLightMatrix = "modelLightMatrix";
-				static constexpr auto Color = "color";
-				static constexpr auto Opacity = "opacity";
-				static constexpr auto Shininess = "shininess";
-				static constexpr auto AutoIllumination = "autoIllumination";
+				static constexpr auto ViewProperties{"viewProperties"};
+				static constexpr auto AmbientLightColor{"ambientLightColor"};
+				static constexpr auto AmbientLightIntensity{"ambientLightIntensity"};
+				/* Material specific */
+				static constexpr auto AmbientColor{"ambientColor"};
+				static constexpr auto DiffuseColor{"diffuseColor"};
+				static constexpr auto SpecularColor{"specularColor"};
+				static constexpr auto Shininess{"shininess"};
+				static constexpr auto AutoIlluminationColor{"autoIlluminationColor"};
+				static constexpr auto AutoIlluminationAmount{"autoIlluminationAmount"};
+				static constexpr auto Opacity{"opacity"};
+				static constexpr auto NormalScale{"normalScale"};
+				static constexpr auto ReflectionAmount{"reflectionAmount"};
+				/* Light specific */
+				static constexpr auto Color{"color"};
+				//static constexpr auto PositionWorldSpace{"positionWorldSpace"}; // Shared with View
+				static constexpr auto DirectionWorldSpace{"directionWorldSpace"};
+				static constexpr auto Intensity{"intensity"};
+				static constexpr auto Radius{"radius"};
+				static constexpr auto InnerCosAngle{"innerCosAngle"};
+				static constexpr auto OuterCosAngle{"outerCosAngle"};
+				static constexpr auto ViewProjectionMatrix{"viewProjectionMatrix"};
 			}
 		}
 
-		/** Shader blocks naming convention. */
-		namespace ShaderBlocks
+		/** @brief Push constant variables naming convention. */
+		namespace PushConstant
 		{
-			static constexpr auto Light = "LightShaderBlock";
+			static constexpr auto Matrices{"pcMatrices"};
+			static constexpr auto Overlay{"pcOverlay"};
 
+			namespace Type
+			{
+				static constexpr auto Matrices{"Matrices"};
+				static constexpr auto Overlay{"Overlay"};
+			}
+
+			namespace Component
+			{
+				/* NOTE : Regular 3D rendering. */
+				static constexpr auto ViewMatrix{"viewMatrix"};
+				static constexpr auto ModelMatrix{"modelMatrix"};
+				static constexpr auto ViewProjectionMatrix{"viewProjectionMatrix"};
+				static constexpr auto ModelViewProjectionMatrix{"modelViewProjectionMatrix"};
+				/* NOTE : Specific (overlay, ...) rendering. */
+				static constexpr auto TransformationMatrix{"transformationMatrix"};
+			}
+		}
+
+		/** @brief Interstage variables naming convention. */
+		namespace ShaderVariable
+		{
+			static constexpr auto PositionWorldSpace{"svPositionWorldSpace"};
+			static constexpr auto GLPositionWorldSpace{"gl_Position@WorldSpace"}; /* NOTE: Must never appear in real code. */
+			static constexpr auto PositionViewSpace{"svPositionViewSpace"};
+			static constexpr auto PositionTextureSpace{"svPositionTextureSpace"};
+			static constexpr auto PositionScreenSpace{"gl_Position"};
+			static constexpr auto PrimaryVertexColor{"svPrimaryVertexColor"};
+			static constexpr auto SecondaryVertexColor{"svSecondaryVertexColor"};
+			static constexpr auto Primary2DTextureCoordinates{"sv2DTexCoord0"};
+			static constexpr auto Primary3DTextureCoordinates{"sv3DTexCoord0"};
+			static constexpr auto Secondary2DTextureCoordinates{"sv2DTexCoord1"};
+			static constexpr auto Secondary3DTextureCoordinates{"sv3DTexCoord1"};
+			static constexpr auto ReflectionTextureCoordinates{"svReflectionTexCoord"};
+			static constexpr auto TangentWorldSpace{"svTangentWorldSpace"};
+			static constexpr auto TangentViewSpace{"svTangentViewSpace"};
+			static constexpr auto BinormalWorldSpace{"svBinormalWorldSpace"};
+			static constexpr auto BinormalViewSpace{"svBinormalViewSpace"};
+			static constexpr auto NormalWorldSpace{"svNormalWorldSpace"};
+			static constexpr auto NormalViewSpace{"svNormalViewSpace"};
+			static constexpr auto SpriteModelMatrix{"svSpriteModelMatrix"};
+			static constexpr auto ModelViewMatrix{"svModelViewMatrix"};
+			static constexpr auto NormalMatrix{"svNormalMatrix"};
+			static constexpr auto ModelViewProjectionMatrix{"svModelViewProjectionMatrix"};
+			static constexpr auto WorldTBNMatrix{"svWorldTBNMatrix"};
+			static constexpr auto ViewTBNMatrix{"svViewTBNMatrix"};
+			static constexpr auto WorldToTangentMatrix{"svWorldToTangent"};
+			static constexpr auto OutputFragment{"svOutputFragment"};
+			static constexpr auto FragCoord{"svFragCoord"};
+			static constexpr auto Light{"svLight"};
+		}
+
+		/** @brief Shader block variables naming convention. */
+		namespace ShaderBlock
+		{
 			namespace Component
 			{
 				static constexpr auto AttenuationFactor = "AttenuationFactor";
@@ -795,4 +799,56 @@ namespace Emeraude::Saphir
 			}
 		}
 	}
+
+	/**
+	* @brief Returns a variable from the current matrix push constant.
+	* @param componentName The push constant component name. See Keys::PushConstant::Component.
+	* @return std::string
+	*/
+	[[nodiscard]]
+	std::string
+	MatrixPC (const char * componentName) noexcept;
+
+	/**
+	* @brief Returns a variable from the current overlay push constant.
+	* @param componentName The push constant component name. See Keys::PushConstant::Component.
+	* @return std::string
+	*/
+	[[nodiscard]]
+	std::string
+	OverlayPC (const char * componentName) noexcept;
+
+	/**
+	 * @brief Returns the full variable name from a view uniform block.
+	 * @param componentName The uniform block component name. See Keys::UniformBlock::Component.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	std::string ViewUB (const char * componentName) noexcept;
+
+	/**
+	 * @brief Returns the full variable name from an indexed view uniform block.
+	 * @param memberName The uniform block component name. See Keys::UniformBlock::Component.
+	 * @param indexVariableName The index in the array.
+	 * @param componentName The uniform block component name. See Keys::UniformBlock::Component.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	std::string CubeViewUB (const char * memberName, const char * indexVariableName, const char * componentName) noexcept;
+
+	/**
+	 * @brief Returns the full variable name from a material uniform block.
+	 * @param componentName The uniform block component name. See Keys::UniformBlock::Component.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	std::string MaterialUB (const char * componentName) noexcept;
+
+	/**
+	 * @brief Returns a variable from the current light uniform block.
+	 * @param componentName The uniform block component name. See Keys::UniformBlock::Component.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	std::string LightUB (const char * componentName) noexcept;
 }

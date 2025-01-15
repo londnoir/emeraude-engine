@@ -1,44 +1,48 @@
 /*
- * Emeraude/Vulkan/CommandPool.hpp
- * This file is part of Emeraude
+ * src/Vulkan/CommandPool.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 #include <mutex>
-#include <vector>
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "AbstractDeviceDependentObject.hpp"
 
+/* Forward declarations. */
 namespace Emeraude::Vulkan
 {
 	class CommandBuffer;
+}
 
+namespace Emeraude::Vulkan
+{
 	/**
 	 * @brief The CommandPool class.
 	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
@@ -89,7 +93,6 @@ namespace Emeraude::Vulkan
 			 */
 			CommandPool & operator= (CommandPool && copy) noexcept = delete;
 
-
 			/**
 			 * @brief Destructs the command pool.
 			 */
@@ -106,21 +109,33 @@ namespace Emeraude::Vulkan
 			 * @return VkCommandPool
 			 */
 			[[nodiscard]]
-			VkCommandPool handle () const noexcept;
+			VkCommandPool
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the command pool create info.
-			 * @return VkCommandPoolCreateInfo
+			 * @return const VkCommandPoolCreateInfo &
 			 */
 			[[nodiscard]]
-			VkCommandPoolCreateInfo createInfo () const noexcept;
+			const VkCommandPoolCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the queue family index used at creation.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t queueFamilyIndex () const noexcept;
+			uint32_t
+			queueFamilyIndex () const noexcept
+			{
+				return m_createInfo.queueFamilyIndex;
+			}
 
 			/**
 			 * @brief Allocates one command buffer from this pool.
@@ -141,6 +156,6 @@ namespace Emeraude::Vulkan
 
 			VkCommandPool m_handle{VK_NULL_HANDLE};
 			VkCommandPoolCreateInfo m_createInfo{};
-			mutable std::mutex m_allocationMutex{};
+			mutable std::mutex m_allocationMutex;
 	};
 }

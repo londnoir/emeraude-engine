@@ -1,38 +1,42 @@
 /*
- * Emeraude/Graphics/FontResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/FontResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <string>
 
-/* Local inclusions */
-#include "PixelFactory/Pixmap.hpp"
+/* Local inclusions. */
+#include "Libraries/PixelFactory/Area.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/ResourceTrait.hpp"
 
@@ -54,6 +58,10 @@ namespace Emeraude::Graphics
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
+			static constexpr auto ASCIIGlyphCount{256UL};
+			static constexpr auto DefaultSize{32UL};
+			static constexpr auto BitmapSection{16UL};
+
 			/**
 			 * @brief Constructs a font resource.
 			 * @param name A reference to a string for resource name.
@@ -61,19 +69,23 @@ namespace Emeraude::Graphics
 			 */
 			explicit FontResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
@@ -134,15 +146,15 @@ namespace Emeraude::Graphics
 			 * @return Libraries::PixelFactory::Area< size_t >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Area< size_t > getUsableWidth (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) const noexcept;
+			static Libraries::PixelFactory::Area< size_t > getUsableWidth (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
 
 			/**
 			 * @brief Parses a bitmap to create the font.
-			 * @param filepath A reference to file.
+			 * @param filepath A reference to filesystem path.
 			 * @param desiredHeight The height of the font.
 			 * @return bool
 			 */
-			bool parseBitmap (const Libraries::Path::File & filepath, size_t desiredHeight) noexcept;
+			bool parseBitmap (const std::filesystem::path & filepath, size_t desiredHeight) noexcept;
 
 			/**
 			 * @brief Parses a bitmap to create the font.
@@ -154,15 +166,15 @@ namespace Emeraude::Graphics
 
 			/**
 			 * @brief Parses a font file to create the font.
-			 * @param filepath A reference to a file.
+			 * @param filepath A reference to a filesystem path.
 			 * @param desiredHeight The height of the font.
 			 * @return bool
 			 */
-			bool parseFontFile (const Libraries::Path::File & filepath, size_t desiredHeight) noexcept;
+			bool parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept;
 
-			std::array< Libraries::PixelFactory::Pixmap< uint8_t >, 256 > m_glyphs;
-			size_t m_lineHeight = 0UL;
-			size_t m_spacing = 0UL;
+			std::array< Libraries::PixelFactory::Pixmap< uint8_t >, ASCIIGlyphCount > m_glyphs;
+			size_t m_lineHeight{0UL};
+			size_t m_spacing{0UL};
 	};
 }
 

@@ -1,35 +1,35 @@
 /*
- * Emeraude/Scenes/SphericalInfluenceArea.cpp
- * This file is part of Emeraude
+ * src/Scenes/SphericalInfluenceArea.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "SphericalInfluenceArea.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
 #include "AbstractEntity.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Scenes
 {
@@ -59,21 +59,19 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	SphericalInfluenceArea::isUnderInfluence (const Physics::MovableTrait & movable) const noexcept
+	SphericalInfluenceArea::isUnderInfluence (const CartesianFrame< float > & worldCoordinates, const Sphere< float > & worldBoundingSphere) const noexcept
 	{
-		/* FIXME: This method don't use the AABB. */
-		const auto range = m_outerRadius + movable.getWorldBoundingSphere().radius();
+		const auto range = m_outerRadius + worldBoundingSphere.radius();
 
-		return ( (movable.getWorldCoordinates().position() - m_parentEntity->getWorldCoordinates().position()).length() <= range );
+		return (worldCoordinates.position() - m_parentEntity->getWorldCoordinates().position()).length() <= range;
 	}
 
 	float
-	SphericalInfluenceArea::influenceStrength (const Physics::MovableTrait & movable) const noexcept
+	SphericalInfluenceArea::influenceStrength (const CartesianFrame< float > & worldCoordinates, const Sphere< float > & worldBoundingSphere) const noexcept
 	{
-		/* FIXME: This method don't use the AABB. */
-		const auto distance = (movable.getWorldCoordinates().position() - m_parentEntity->getWorldCoordinates().position()).length();
+		const auto distance = (worldCoordinates.position() - m_parentEntity->getWorldCoordinates().position()).length();
 
-		const auto targetBoundingRadius = movable.getWorldBoundingSphere().radius();
+		const auto targetBoundingRadius = worldBoundingSphere.radius();
 
 		/* Outside the outer radius, so no influence at all. */
 		if ( distance > m_outerRadius + targetBoundingRadius )
@@ -91,6 +89,20 @@ namespace Emeraude::Scenes
 		const auto falloutDistance = m_outerRadius - m_innerRadius;
 
 		return (distance + targetBoundingRadius - m_innerRadius) / falloutDistance;
+	}
+
+	bool
+	SphericalInfluenceArea::isUnderInfluence (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
+	{
+		/* FIXME: TODO ! */
+		return false;
+	}
+
+	float
+	SphericalInfluenceArea::influenceStrength (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
+	{
+		/* FIXME: TODO ! */
+		return 0.0F;
 	}
 
 	void

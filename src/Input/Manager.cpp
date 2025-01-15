@@ -1,69 +1,69 @@
 /*
- * Emeraude/Input/Manager.cpp
- * This file is part of Emeraude
+ * src/Input/Manager.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Manager.hpp"
 
-/* C/C++ standard libraries. */
-#include <iostream>
+/* STL inclusions. */
 #include <algorithm>
+#include <iostream>
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "Arguments.hpp"
-#include "FileSystem.hpp"
-#include "Settings.hpp"
-#include "Window.hpp"
-#include "Path/File.hpp"
-#include "KeyboardController.hpp"
-#include "PointerController.hpp"
-#include "JoystickController.hpp"
+/* Third-party libraries */
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
+
+/* Local inclusions. */
+#include "Libraries/Utility.hpp"
+#include "Libraries/IO.hpp"
 #include "GamepadController.hpp"
+#include "JoystickController.hpp"
+#include "PrimaryServices.hpp"
+#include "Window.hpp"
 
 namespace Emeraude::Input
 {
 	using namespace Libraries;
 	using namespace Vulkan;
 
-	const size_t Manager::ClassUID{Observable::getClassUID()};
-	Manager * Manager::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t Manager::ClassUID{getClassUID(ClassId)};
+	Manager * Manager::s_instance{nullptr};
 
-	Manager::Manager (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, Window & window) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_fileSystem(fileSystem), m_coreSettings(coreSettings), m_window(window)
+	Manager::Manager (PrimaryServices & primaryServices, Window & window) noexcept
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices),
+		m_window(window)
 	{
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
 
 		s_instance = this;
-
-		this->observe(&m_window);
 	}
 
 	Manager::~Manager ()
@@ -71,73 +71,198 @@ namespace Emeraude::Input
 		s_instance = nullptr;
 	}
 
-	Manager *
-	Manager::instance () noexcept
+	void
+	Manager::linkWindowCallbacks (bool enableKeyboard, bool enablePointer) noexcept
 	{
-		return s_instance;
-	}
+		auto * window = m_window.handle();
 
-	bool
-	Manager::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
+		/* Keyboard listeners. */
+		if ( enableKeyboard )
 		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
+			glfwSetKeyCallback(window, keyCallback);
+			glfwSetCharCallback(window, charCallback);
 
-			return false;
+			/* TODO: Make it optional */
+			glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+			glfwSetInputMode(window, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
+
+			m_flags[IsListeningKeyboard] = true;
 		}
 
-		return classUID == ClassUID;
+		/* Pointer listeners. */
+		if ( enablePointer )
+		{
+			glfwSetMouseButtonCallback(window, mouseButtonCallback);
+			glfwSetCursorPosCallback(window, cursorPositionCallback);
+			glfwSetCursorEnterCallback(window, cursorEnterCallback);
+			glfwSetScrollCallback(window, scrollCallback);
+
+			/* TODO: Make it optional */
+			glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+
+			m_flags[IsListeningPointer] = true;
+		}
+
+		/* Misc. listeners. */
+		/* TODO: Make it optional */
+		glfwSetDropCallback(window, dropCallback);
+		glfwSetJoystickCallback(joystickCallback);
+
+		m_flags[WindowLinked] = true;
 	}
 
 	void
-	Manager::enableDirectQuery (bool state) noexcept
+	Manager::unlinkWindowCallbacks () noexcept
 	{
-		m_flags[DirectQueryEnabled] = state;
+		auto * window = m_window.handle();
+
+		/* Keyboard listeners. */
+		glfwSetKeyCallback(window, nullptr);
+		glfwSetCharCallback(window, nullptr);
+
+		/* Pointer listeners. */
+		glfwSetMouseButtonCallback(window, nullptr);
+		glfwSetCursorPosCallback(window, nullptr);
+		glfwSetCursorEnterCallback(window, nullptr);
+		glfwSetScrollCallback(window, nullptr);
+
+		/* Misc. listeners. */
+		glfwSetDropCallback(window, nullptr);
+		glfwSetJoystickCallback(nullptr);
+
+		m_flags[WindowLinked] = false;
 	}
 
-	bool
-	Manager::isDirectQueryEnabled () const noexcept
+	void
+	Manager::enableKeyboardListening (bool state) noexcept
 	{
-		return m_flags[DirectQueryEnabled];
+		if ( m_flags[IsListeningKeyboard] == state )
+		{
+			return;
+		}
+
+		if ( !m_window.usable() )
+		{
+			Tracer::error(ClassId, "The window is not usable ! Unable to link callbacks to it.");
+
+			return;
+		}
+
+		auto * window = m_window.handle();
+
+		if ( state )
+		{
+			glfwSetKeyCallback(window, keyCallback);
+			glfwSetCharCallback(window, charCallback);
+		}
+		else
+		{
+			glfwSetKeyCallback(window, nullptr);
+			glfwSetCharCallback(window, nullptr);
+		}
+
+		m_flags[IsListeningKeyboard] = state;
+	}
+
+	void
+	Manager::enablePointerListening (bool state) noexcept
+	{
+		if ( m_flags[IsListeningPointer] == state )
+		{
+			return;
+		}
+
+		if ( !m_window.usable() )
+		{
+			Tracer::error(ClassId, "The window is not usable ! Unable to link callbacks to it.");
+
+			return;
+		}
+
+		auto * window = m_window.handle();
+
+		if ( state )
+		{
+			glfwSetMouseButtonCallback(window, mouseButtonCallback);
+			glfwSetCursorPosCallback(window, cursorPositionCallback);
+			glfwSetCursorEnterCallback(window, cursorEnterCallback);
+			glfwSetScrollCallback(window, scrollCallback);
+		}
+		else
+		{
+			glfwSetMouseButtonCallback(window, nullptr);
+			glfwSetCursorPosCallback(window, nullptr);
+			glfwSetCursorEnterCallback(window, nullptr);
+			glfwSetScrollCallback(window, nullptr);
+		}
+
+		m_flags[IsListeningPointer] = state;
+	}
+
+	std::array< float, 2 >
+	Manager::getPointerLocation (GLFWwindow * window) noexcept
+	{
+		/* NOTE : If the pointer is locked (mouse view), we don't care about computing the position. */
+		if ( s_instance->isPointerLocked() )
+		{
+			return {0.5F, 0.5F};
+		}
+
+		double xPosition = 0.0;
+		double yPosition = 0.0;
+
+		glfwGetCursorPos(window, &xPosition, &yPosition);
+
+		if ( s_instance->m_flags[PointerCoordinatesScalingEnabled] )
+		{
+			xPosition *= s_instance->m_pointerScalingFactors[0];
+			yPosition *= s_instance->m_pointerScalingFactors[1];
+		}
+
+		return {static_cast< float >(xPosition), static_cast< float >(yPosition)};
 	}
 
 	void
 	Manager::keyCallback (GLFWwindow * /*handle*/, int key, int scancode, int action, int modifiers) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Keyboard input detected ! Key:" << key << ", ScanCode:" << scancode << ", action: " << action << ", modifiers:" << modifiers << "\n";
+#ifdef KEYBOARD_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:KEYBOARD] Keyboard input detected !" "\n"
+			"Key: " << key << "\n"
+			"ScanCode: " << scancode << "\n"
+			"Action: " << ( action == GLFW_RELEASE ? "Release" : "Press") << "\n"
+			"Repeat: " << ( action == GLFW_REPEAT ? "On" : "Off") << "\n"
+			"Keyboard modifiers: " << getModifierListString(modifiers) << "\n";
 #endif
 
-		if ( !s_instance->isKeyboardEnabled() )
+		for ( const auto & listener : s_instance->m_keyboardListeners )
 		{
-			return;
-		}
+			if ( !listener->isListeningKeyboard() )
+			{
+				continue;
+			}
 
-		for ( auto & listener : s_instance->m_keyboardListeners )
-		{
-			auto processed = false;
+			auto eventProcessed = false;
 
 			switch ( action )
 			{
 				case GLFW_PRESS :
-					processed = listener->onKeyPress(key, scancode, modifiers, false);
+					eventProcessed = listener->onKeyPress(key, scancode, modifiers, false);
 					break;
 
 				case GLFW_REPEAT :
-					processed = listener->onKeyPress(key, scancode, modifiers, true);
+					eventProcessed = listener->onKeyPress(key, scancode, modifiers, true);
 					break;
 
 				case GLFW_RELEASE :
-					processed = listener->onKeyRelease(key, scancode, modifiers);
+					eventProcessed = listener->onKeyRelease(key, scancode, modifiers);
 					break;
 
 				default:
 					break;
 			}
-
-			/* If this listener captures events, we stop the loop. */
-			if ( processed && listener->isOpaque() )
+			
+			if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
 			{
 				break;
 			}
@@ -147,24 +272,22 @@ namespace Emeraude::Input
 	void
 	Manager::charCallback (GLFWwindow * /*handle*/, unsigned int codepoint) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Unicode input detected ! Unicode:" << codepoint << "\n";
+#ifdef KEYBOARD_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:KEYBOARD] Unicode input detected (no modifier) !" "\n"
+			"Unicode: " << codepoint << "\n";
 #endif
 
-		if ( !s_instance->isKeyboardEnabled() )
+		for ( const auto & listener : s_instance->m_keyboardListeners )
 		{
-			return;
-		}
-
-		for ( auto & listener : s_instance->m_keyboardListeners )
-		{
-			if ( !listener->isTextModeEnabled() )
+			if ( !listener->isListeningKeyboard() || !listener->isTextModeEnabled() )
 			{
 				continue;
 			}
 
-			/* If this listener captures events, we stop the loop. */
-			if ( listener->onCharacterType(codepoint, 0) && listener->isOpaque() )
+			const auto eventProcessed = listener->onCharacterType(codepoint);
+
+			if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
 			{
 				break;
 			}
@@ -174,24 +297,23 @@ namespace Emeraude::Input
 	void
 	Manager::charModsCallback (GLFWwindow * /*handle*/, unsigned int codepoint, int modifiers) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Unicode input detected ! Unicode:" << codepoint << ", modifiers:" << modifiers << "\n";
+#ifdef KEYBOARD_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:KEYBOARD] Unicode input detected !" "\n"
+			"Unicode: " << codepoint << "\n"
+			"Keyboard modifiers: " << getModifierListString(modifiers) << "\n";
 #endif
 
-		if ( !s_instance->isKeyboardEnabled() )
+		for ( const auto & listener : s_instance->m_keyboardListeners )
 		{
-			return;
-		}
-
-		for ( auto & listener : s_instance->m_keyboardListeners )
-		{
-			if ( !listener->isTextModeEnabled() )
+			if ( !listener->isListeningKeyboard() || !listener->isTextModeEnabled() )
 			{
 				continue;
 			}
 
-			/* If this listener captures events, we stop the loop. */
-			if ( listener->onCharacterType(codepoint, modifiers) && listener->isOpaque() )
+			const auto eventProcessed = listener->onCharacterType(codepoint);
+
+			if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
 			{
 				break;
 			}
@@ -199,66 +321,69 @@ namespace Emeraude::Input
 	}
 
 	void
-	Manager::cursorPositionCallback (GLFWwindow * window, double xPosition, double yPosition) noexcept
+	Manager::dispatchRelativePointerPosition (double xPosition, double yPosition) noexcept
 	{
-		if ( !s_instance->isPointerEnabled() )
+		/* NOTE: Compute the relative position from the last one. */
+		const auto deltaX = static_cast< float >(xPosition - s_instance->m_lastPointerCoordinates[0]);
+		const auto deltaY = static_cast< float >(yPosition - s_instance->m_lastPointerCoordinates[1]);
+
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout << "[RelativeMode] X:" << deltaX << ", Y:" << deltaY << "\n";
+#endif
+
+		if ( s_instance->m_moveEventsTracking != nullptr )
 		{
-			return;
+			s_instance->m_moveEventsTracking->onPointerMove(deltaX, deltaY);
 		}
-
-		const auto pointerX = static_cast< float >(xPosition);
-		const auto pointerY = static_cast< float >(yPosition);
-
-		/* If the mouse is used to look in 3D world. */
-		if ( s_instance->isPointerLocked() )
+		else
 		{
-			int width = 0;
-			int height = 0;
-
-			/* FIXME: check with https://www.glfw.org/docs/latest/input_guide.html#cursor_mode */
-			glfwGetWindowSize(window, &width, &height);
-
-			const auto halfWidth = static_cast< float >(width) * 0.5F;
-			const auto halfHeight = static_cast< float >(height) * 0.5F;
-
-			for ( auto & listener : s_instance->m_pointerListeners )
+			for ( const auto & listener : s_instance->m_pointerListeners )
 			{
-				if ( listener->isAbsoluteModeEnabled() )
+				/* NOTE: If the listener is disabled or in absolute mode, we jump to the next listener. */
+				if ( !listener->isListeningPointer() || listener->isAbsoluteModeEnabled() )
 				{
 					continue;
 				}
 
-				/* If this listener captures events, we stop the loop. */
-				if ( listener->onPointerMove(pointerX - halfWidth, pointerY - halfHeight) && listener->isOpaque() )
+				/* NOTE: If the event is processed and the listener blocks events propagation, we stop the loop. */
+				if ( listener->onPointerMove(deltaX, deltaY) && !listener->isPropagatingProcessedEvents() )
 				{
 					break;
 				}
 			}
+		}
 
-			/* Recenter the pointer in the middle of the screen. */
-			{
-				/* We don't want process any pointer move during the centering. */
-				auto previousPointerState = s_instance->isPointerEnabled();
+		/* Save the last position. */
+		s_instance->m_lastPointerCoordinates[0] = xPosition;
+		s_instance->m_lastPointerCoordinates[1] = yPosition;
+	}
 
-				s_instance->enablePointer(false);
+	void
+	Manager::dispatchAbsolutePointerPosition (double xPosition, double yPosition) noexcept
+	{
+		const auto pointerX = static_cast< float >(xPosition);
+		const auto pointerY = static_cast< float >(yPosition);
 
-				glfwSetCursorPos(window, static_cast< double >(halfWidth),static_cast< double >(halfHeight));
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout << "[AbsoluteMode] X:" << xPosition << ", Y:" << yPosition << "\n";
+#endif
 
-				/* Gets back the pointer to previous state. */
-				s_instance->enablePointer(previousPointerState);
-			}
+		if ( s_instance->m_moveEventsTracking != nullptr )
+		{
+			s_instance->m_moveEventsTracking->onPointerMove(pointerX, pointerY);
 		}
 		else
 		{
-			for ( auto & listener : s_instance->m_pointerListeners )
+			for ( const auto & listener : s_instance->m_pointerListeners )
 			{
-				if ( !listener->isAbsoluteModeEnabled() )
+				/* NOTE: If the listener is disabled or in relative mode, we jump to the next listener. */
+				if ( !listener->isListeningPointer() || listener->isRelativeModeEnabled() )
 				{
 					continue;
 				}
 
-				/* If this listener captures events, we stop the loop. */
-				if ( listener->onPointerMove(pointerX, pointerY) && listener->isOpaque() )
+				/* NOTE: If the event is processed and the listener blocks events propagation, we stop the loop. */
+				if ( listener->onPointerMove(pointerX, pointerY) && !listener->isPropagatingProcessedEvents() )
 				{
 					break;
 				}
@@ -267,33 +392,73 @@ namespace Emeraude::Input
 	}
 
 	void
-	Manager::cursorEnterCallback (GLFWwindow * window, int entered) noexcept
+	Manager::cursorPositionCallback (GLFWwindow * /*window*/, double xPosition, double yPosition) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Mouse " << ( entered ? "entering" : "leaving" ) << " the handle !" << "\n";
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout << "[DEBUG:POINTER] Pointer move detected !" "\n";
 #endif
 
-		if ( !s_instance->isPointerEnabled() )
+		if ( s_instance->m_flags[PointerCoordinatesScalingEnabled] )
 		{
+			xPosition *= s_instance->m_pointerScalingFactors[0];
+			yPosition *= s_instance->m_pointerScalingFactors[1];
+		}
+
+		/* If the pointer is locked, we serve the listener in relative mode ('mouse look' like an FPS). */
+		if ( s_instance->isPointerLocked() )
+		{
+			Manager::dispatchRelativePointerPosition(xPosition, yPosition);
+		}
+		else
+		{
+			Manager::dispatchAbsolutePointerPosition(xPosition, yPosition);
+		}
+	}
+
+	void
+	Manager::cursorEnterCallback (GLFWwindow * window, int entered) noexcept
+	{
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:POINTER] Pointer window interaction detected !" "\n"
+			"Action: " << ( entered == GLFW_TRUE ? "entering" : "leaving" ) <<  "\n";
+#endif
+
+		/* NOTE : Retrieve the pointer position to set the entering/leaving coordinates. */
+		const auto position = getPointerLocation(window);
+
+		/* NOTE: This must always be processed to avoid bug. */
+		if ( s_instance->m_moveEventsTracking != nullptr )
+		{
+			if ( entered == GLFW_TRUE )
+			{
+				s_instance->m_moveEventsTracking->onPointerEnter(position[0], position[1]);
+
+				if ( !s_instance->m_pointerController.isAnyButtonPressed() )
+				{
+					s_instance->m_moveEventsTracking = nullptr;
+				}
+			}
+			else
+			{
+				s_instance->m_moveEventsTracking->onPointerLeave(position[0], position[1]);
+			}
+
 			return;
 		}
 
-		double xPosition = 0.0;
-		double yPosition = 0.0;
-
-		glfwGetCursorPos(window, &xPosition, &yPosition);
-
-		const auto pointerX = static_cast< float >(xPosition);
-		const auto pointerY = static_cast< float >(yPosition);
-
-		for ( auto & listener : s_instance->m_pointerListeners )
+		for ( const auto & listener : s_instance->m_pointerListeners )
 		{
-			auto isProcessed = ( entered == GLFW_TRUE ) ?
-				listener->onPointerEnter(pointerX, pointerY) :
-				listener->onPointerLeave(pointerX, pointerY);
+			if ( !listener->isListeningPointer() )
+			{
+				continue;
+			}
 
-			/* If this listener captures events, we stop the loop. */
-			if ( isProcessed && listener->isOpaque() )
+			const auto eventProcessed = entered == GLFW_TRUE ?
+				listener->onPointerEnter(position[0], position[1]) :
+				listener->onPointerLeave(position[0], position[1]);
+
+			if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
 			{
 				break;
 			}
@@ -303,31 +468,51 @@ namespace Emeraude::Input
 	void
 	Manager::mouseButtonCallback (GLFWwindow * window, int button, int action, int modifiers) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Mouse input detected ! Button:" << button << ", Action:" << action << ", modifiers:" << modifiers << "\n";
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:POINTER] Pointer click detected !" "\n"
+			"Button number:" << button << "\n"
+			"Action:" << ( action == GLFW_PRESS ? "Press" : "Release" ) << "\n"
+			"Keyboard modifiers: " << getModifierListString(modifiers) << "\n";
 #endif
 
-		if ( !s_instance->isPointerEnabled() )
+		/* NOTE : Retrieve the pointer position to set the click coordinates. */
+		const auto position = Manager::getPointerLocation(window);
+
+		/* NOTE: On release, automatically stop the tracking. */
+		if ( s_instance->m_moveEventsTracking != nullptr && action == GLFW_RELEASE )
 		{
+			s_instance->m_moveEventsTracking->onButtonRelease(position[0], position[1], button, modifiers);
+			s_instance->m_moveEventsTracking = nullptr;
+
 			return;
 		}
 
-		double xPosition = 0.0;
-		double yPosition = 0.0;
-
-		glfwGetCursorPos(window, &xPosition, &yPosition);
-
-		const auto pointerX = static_cast< float >(xPosition);
-		const auto pointerY = static_cast< float >(yPosition);
-
-		for ( auto & listener : s_instance->m_pointerListeners )
+		for ( const auto & listener : s_instance->m_pointerListeners )
 		{
-			auto isProcessed = ( action == GLFW_PRESS ) ?
-					listener->onButtonPress(pointerX, pointerY, button, modifiers) :
-					listener->onButtonRelease(pointerX, pointerY, button, modifiers);
+			if ( !listener->isListeningPointer() )
+			{
+				continue;
+			}
 
-			/* If this listener captures events, we stop the loop. */
-			if ( isProcessed && listener->isOpaque() )
+			auto eventProcessed = false;
+
+			if ( action == GLFW_PRESS )
+			{
+				/* NOTE: Check if we need to lock this listener to track move events. */
+				if ( !listener->isAbsoluteModeEnabled() && listener->isListenerLockedOnMoveEvents() )
+				{
+					s_instance->m_moveEventsTracking = listener;
+				}
+
+				eventProcessed = listener->onButtonPress(position[0], position[1], button, modifiers);
+			}
+			else
+			{
+				eventProcessed = listener->onButtonRelease(position[0], position[1], button, modifiers);
+			}
+
+			if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
 			{
 				break;
 			}
@@ -337,32 +522,38 @@ namespace Emeraude::Input
 	void
 	Manager::scrollCallback (GLFWwindow * window, double xOffset, double yOffset) noexcept
 	{
-#ifdef DEBUG_INPUT_LAYER
-		std::cout << "Mouse scrolling detected ! X:" << xOffset << ", Y:" << yOffset << "\n";
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:POINTER] Scrolling detected !" "\n"
+			"Offset X:" << xOffset << ", Y:" << yOffset <<  "\n";
 #endif
 
-		if ( !s_instance->isPointerEnabled() )
+		/* NOTE : Retrieve the pointer position to set the scroll coordinates. */
+		const auto position = getPointerLocation(window);
+
+		const auto xOffsetF = static_cast< float >(xOffset);
+		const auto yOffsetF = static_cast< float >(yOffset);
+
+		if ( s_instance->m_moveEventsTracking != nullptr )
 		{
-			return;
+			/* NOTE: If the move is locked on one listener, checks for listening or relative mode is already done. */
+			s_instance->m_moveEventsTracking->onMouseWheel(position[0], position[1], xOffsetF, yOffsetF);
 		}
-
-		double xPosition = 0.0;
-		double yPosition = 0.0;
-
-		glfwGetCursorPos(window, &xPosition, &yPosition);
-
-		const auto pointerX = static_cast< float >(xPosition);
-		const auto pointerY = static_cast< float >(yPosition);
-
-		const auto sXOffset = static_cast< float >(xOffset);
-		const auto sYOffset = static_cast< float >(yOffset);
-
-		for ( auto & listener : s_instance->m_pointerListeners )
+		else
 		{
-			/* If this listener captures events, we stop the loop. */
-			if ( listener->onMouseWheel(pointerX, pointerY, sXOffset, sYOffset) && listener->isOpaque() )
+			for ( const auto & listener : s_instance->m_pointerListeners )
 			{
-				return;
+				if ( !listener->isListeningPointer() )
+				{
+					continue;
+				}
+
+				const auto eventProcessed = listener->onMouseWheel(position[0], position[1], xOffsetF, yOffsetF);
+
+				if ( eventProcessed && !listener->isPropagatingProcessedEvents() )
+				{
+					break;
+				}
 			}
 		}
 	}
@@ -370,17 +561,20 @@ namespace Emeraude::Input
 	void
 	Manager::dropCallback (GLFWwindow * /*handle*/, int count, const char * * paths) noexcept
 	{
-		std::vector< Path::File > filePaths{};
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] " << count << " files has been dropped into the window." "\n";
+#endif
+
+		std::vector< std::filesystem::path > filePaths;
 		filePaths.reserve(count);
 
 		for ( auto i = 0; i < count; i++ )
 		{
-			const std::string path{paths[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-			const Path::File filepath{path};
+			const std::filesystem::path filepath{paths[i]};
 
-			if ( !filepath.exists() )
+			if ( !IO::fileExists(filepath) )
 			{
-				TraceError{ClassId} << "File '" << path << "' doesn't exists !";
+				TraceError{ClassId} << "File '" << filepath << "' doesn't exists !";
 
 				continue;
 			}
@@ -394,6 +588,12 @@ namespace Emeraude::Input
 	void
 	Manager::joystickCallback (int jid, int event) noexcept
 	{
+#ifdef POINTER_INPUT_DEBUG_ENABLED
+		std::cout <<
+			"[DEBUG:POINTER] Joystick/gamepad configuration changed !" "\n"
+			"Device ID #" << jid << " is " << ( event == GLFW_CONNECTED ? "connected" : "disconnected" ) << "." "\n";
+#endif
+
 		switch ( event )
 		{
 			case GLFW_CONNECTED :
@@ -401,13 +601,13 @@ namespace Emeraude::Input
 				{
 					TraceInfo{ClassId} << "Gamepad '" << glfwGetGamepadName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") connected at slot #" << jid << " !";
 
-					s_instance->m_gamepadID.emplace(jid);
+					s_instance->m_gamepadIDs.emplace(jid);
 				}
 				else
 				{
 					TraceInfo{ClassId} << "Joystick '" << glfwGetJoystickName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") connected at slot #" << jid << " !";
 
-					s_instance->m_joystickID.emplace(jid);
+					s_instance->m_joystickIDs.emplace(jid);
 				}
 				break;
 
@@ -423,8 +623,8 @@ namespace Emeraude::Input
 				GamepadController::clearDeviceState(jid);
 
 				/* We remove the ID from both ID set. */
-				s_instance->m_joystickID.erase(jid);
-				s_instance->m_gamepadID.erase(jid);
+				s_instance->m_joystickIDs.erase(jid);
+				s_instance->m_gamepadIDs.erase(jid);
 			}
 				break;
 
@@ -433,135 +633,11 @@ namespace Emeraude::Input
 		}
 	}
 
-	void
-	Manager::setWindowLink (GLFWwindow * window, bool state) noexcept
-	{
-		glfwSetKeyCallback(window, state ? keyCallback : nullptr);
-		if ( m_flags[EnableModifiersWithText] )
-		{
-			glfwSetCharModsCallback(window, state ? charModsCallback : nullptr);
-		}
-		else
-		{
-			glfwSetCharCallback(window, state ? charCallback : nullptr);
-		}
-		glfwSetMouseButtonCallback(window, state ? mouseButtonCallback : nullptr);
-		glfwSetCursorPosCallback(window, state ? cursorPositionCallback : nullptr);
-		glfwSetCursorEnterCallback(window, state ? cursorEnterCallback : nullptr);
-		glfwSetScrollCallback(window, state ? scrollCallback : nullptr);
-		glfwSetDropCallback(window, state ? dropCallback : nullptr);
-		glfwSetJoystickCallback(state ? joystickCallback : nullptr);
-
-		m_flags[WindowLinked] = state;
-
-		glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-		glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-	}
-
-	bool
-	Manager::onNotification (const Observable * observable, int notificationCode, const std::any & /*data*/) noexcept
-	{
-		if ( observable == &m_window )
-		{
-			switch ( notificationCode )
-			{
-				case Window::Created :
-					if ( m_window.usable() )
-					{
-						Tracer::success(ClassId, "InputManager linked to the current Window for events callbacks !");
-
-						this->setWindowLink(m_window.handle(), true);
-					}
-					else
-					{
-						Tracer::error(ClassId, "Try to link InputManager linked to a nullptr Window !");
-					}
-					break;
-
-				case Window::Destroyed :
-				case Window::Centered :
-				case Window::OSNotifiesWindowGetFocus :
-				case Window::OSNotifiesWindowLostFocus :
-				case Window::OSNotifiesWindowMovedTo :
-				case Window::OSNotifiesWindowVisible :
-				case Window::OSNotifiesWindowHidden :
-				case Window::OSNotifiesWindowSizeMaximized :
-				case Window::OSNotifiesWindowSizeMinimized :
-				case Window::OSNotifiesWindowResized :
-				case Window::OSNotifiesFramebufferResized :
-				case Window::OSRequestsToRescaleContentBy :
-				case Window::OSRequestsToRefreshContent :
-				case Window::OSRequestsToTerminate :
-				default :
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from the window ignored.";
-					break;
-			}
-
-			return true;
-		}
-
-#ifdef DEBUG
-		/* NOTE: Don't know what is it, goodbye ! */
-		TraceInfo{ClassId} <<
-			"Received an unhandled event from observable @" << observable << " (code:" << notificationCode << ") ! "
-			"Forgetting it ...";
-#endif
-
-		return false;
-	}
-
-	void
-	Manager::enableKeyboard (bool state) noexcept
-	{
-		m_flags[KeyboardEnabled] = state;
-	}
-
-	void
-	Manager::toggleKeyboardState () noexcept
-	{
-		m_flags[KeyboardEnabled] = !m_flags[KeyboardEnabled];
-	}
-
-	bool
-	Manager::isKeyboardEnabled () const noexcept
-	{
-		return m_flags[KeyboardEnabled];
-	}
-
-
-	void
-	Manager::enablePointer (bool state) noexcept
-	{
-		m_flags[PointerEnabled] = state;
-	}
-
-	bool
-	Manager::isPointerEnabled () const noexcept
-	{
-		return m_flags[PointerEnabled];
-	}
-
-	void
-	Manager::togglePointerState () noexcept
-	{
-		m_flags[PointerEnabled] = !m_flags[PointerEnabled];
-	}
-
-	bool
-	Manager::usable () const noexcept
-	{
-		return m_window.usable();
-	}
-
-	bool
-	Manager::isPointerLocked () const noexcept
-	{
-		return m_flags[PointerLocked];
-	}
-
 	bool
 	Manager::onInitialize () noexcept
 	{
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(InputShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+
 		if ( !m_window.usable() )
 		{
 			Tracer::error(ClassId, "No handle available, cannot link input listeners !");
@@ -569,25 +645,23 @@ namespace Emeraude::Input
 			return false;
 		}
 
-		this->setWindowLink(m_window.handle(), true);
+		this->linkWindowCallbacks(true, true);
 
 		/* Update gamepad database. */
-		std::string devicesDatabase{};
+		std::string devicesDatabase;
 
-		const auto & list = m_fileSystem.dataDirectoriesList();
-
-		for ( const auto & path : list )
+		for ( auto filepath : m_primaryServices.fileSystem().dataDirectories() )
 		{
-			const auto filepath = Path::File{path, GameControllersFile};
+			filepath.append(GameControllerDBFile);
 
-			if ( !filepath.exists() )
+			if ( !IO::fileExists(filepath) )
 			{
 				TraceInfo{ClassId} << "The file '" << filepath << "' is not present !";
 
 				continue;
 			}
 
-			if ( !Utility::fileGetContents(filepath, devicesDatabase) )
+			if ( !IO::fileGetContents(filepath, devicesDatabase) )
 			{
 				TraceError{ClassId} << "Unable to read '" << filepath << "' !";
 
@@ -601,12 +675,15 @@ namespace Emeraude::Input
 				continue;
 			}
 
-			TraceSuccess{ClassId} << "Update input devices from '" << filepath << "' succeed !";
+			if ( m_flags[ShowInformation] )
+			{
+				TraceSuccess{ClassId} << "Update input devices from '" << filepath << "' succeed !";
+			}
 		}
 
 		if ( devicesDatabase.empty() )
 		{
-			TraceWarning{ClassId} << "There was no '" << GameControllersFile << "' file available !";
+			TraceWarning{ClassId} << "There was no '" << GameControllerDBFile << "' file available !";
 		}
 
 		/* Checks every device connected. */
@@ -621,17 +698,25 @@ namespace Emeraude::Input
 			/* If present, determine if it's a gamepad or a joystick. */
 			if ( glfwJoystickIsGamepad(jid) == GLFW_TRUE )
 			{
-				m_gamepadID.emplace(jid);
+				m_gamepadIDs.emplace(jid);
 
-				TraceSuccess{ClassId} << "Gamepad '" << glfwGetGamepadName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") available at slot #" << jid;
+				if ( m_flags[ShowInformation] )
+				{
+					TraceSuccess{ClassId} << "Gamepad '" << glfwGetGamepadName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") available at slot #" << jid;
+				}
 			}
 			else
 			{
-				m_joystickID.emplace(jid);
+				m_joystickIDs.emplace(jid);
 
-				TraceSuccess{ClassId} << "Joystick '" << glfwGetJoystickName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") available at slot #" << jid;
+				if ( m_flags[ShowInformation] )
+				{
+					TraceSuccess{ClassId} << "Joystick '" << glfwGetJoystickName(jid) << "' (GUID:" <<  glfwGetJoystickGUID(jid) << ") available at slot #" << jid;
+				}
 			}
 		}
+
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -639,29 +724,55 @@ namespace Emeraude::Input
 	bool
 	Manager::onTerminate () noexcept
 	{
-		if ( m_window.usable() )
-		{
-			/* Disables every callback. */
-			this->setWindowLink(m_window.handle(), false);
-		}
-		else
+		m_flags[ServiceInitialized] = false;
+
+		if ( !m_window.usable() )
 		{
 			Tracer::warning(ClassId, "No handle was available !");
 
 			return false;
 		}
 
+		/* Disables every callback. */
+		this->unlinkWindowCallbacks();
+
 		return true;
 	}
 
 	void
-	Manager::pollSystemEvents () noexcept // NOLINT(*-convert-member-functions-to-static)
+	Manager::pollSystemEvents () const noexcept
 	{
+		if ( m_flags[CopyKeyboardStateEnabled] )
+		{
+			KeyboardController::readDeviceState(m_window);
+		}
+
+		if ( m_flags[CopyPointerStateEnabled] )
+		{
+			PointerController::readDeviceState(m_window);
+		}
+
+		if ( m_flags[CopyJoysticksStateEnabled] )
+		{
+			for ( const auto & joystickID : m_joystickIDs )
+			{
+				JoystickController::readDeviceState(joystickID);
+			}
+		}
+
+		if ( m_flags[CopyGamepadsStateEnabled] )
+		{
+			for ( const auto & gamepadID : m_gamepadIDs )
+			{
+				GamepadController::readDeviceState(gamepadID);
+			}
+		}
+
 		glfwPollEvents();
 	}
 
 	void
-	Manager::waitSystemEvents (double until) noexcept // NOLINT(*-convert-member-functions-to-static)
+	Manager::waitSystemEvents (double until) noexcept
 	{
 		/* This function is blocking the
 		 * process by waiting an event from system. */
@@ -678,14 +789,12 @@ namespace Emeraude::Input
 	void
 	Manager::addKeyboardListener (KeyboardListenerInterface * listener) noexcept
 	{
-		if ( std::binary_search(m_keyboardListeners.cbegin(), m_keyboardListeners.cend(), listener) )
+		if ( std::ranges::binary_search(std::as_const(m_keyboardListeners), listener) )
 		{
-			TraceInfo{ClassId} << "Listener @" << listener << " already added !";
+			TraceWarning{ClassId} << "Listener @" << listener << " already added !";
 
 			return;
 		}
-
-		Tracer::info(ClassId, "Keyboard input listener registered.");
 
 		m_keyboardListeners.emplace(m_keyboardListeners.begin(), listener);
 	}
@@ -693,7 +802,7 @@ namespace Emeraude::Input
 	void
 	Manager::removeKeyboardListener (KeyboardListenerInterface * listener) noexcept
 	{
-		m_keyboardListeners.erase(std::remove(m_keyboardListeners.begin(), m_keyboardListeners.end(), listener), m_keyboardListeners.end());
+		m_keyboardListeners.erase(std::ranges::remove(m_keyboardListeners, listener).begin(), m_keyboardListeners.end());
 	}
 
 	void
@@ -705,14 +814,12 @@ namespace Emeraude::Input
 	void
 	Manager::addPointerListener (PointerListenerInterface * listener) noexcept
 	{
-		if ( std::binary_search(m_pointerListeners.cbegin(), m_pointerListeners.cend(), listener) )
+		if ( std::ranges::binary_search(std::as_const(m_pointerListeners), listener) )
 		{
-			TraceInfo{ClassId} << "Listener @" << listener << " already added !";
+			TraceWarning{ClassId} << "Listener @" << listener << " already added !";
 
 			return;
 		}
-
-		Tracer::info(ClassId, "Pointer input listener registered.");
 
 		m_pointerListeners.emplace(m_pointerListeners.begin(), listener);
 	}
@@ -720,37 +827,13 @@ namespace Emeraude::Input
 	void
 	Manager::removePointerListener (PointerListenerInterface * listener) noexcept
 	{
-		m_pointerListeners.erase(std::remove(m_pointerListeners.begin(), m_pointerListeners.end(), listener), m_pointerListeners.end());
+		m_pointerListeners.erase(std::ranges::remove(m_pointerListeners, listener).begin(), m_pointerListeners.end());
 	}
 
 	void
 	Manager::removeAllPointerListeners () noexcept
 	{
 		m_pointerListeners.clear();
-	}
-
-	void
-	Manager::getInputsState () noexcept
-	{
-		if ( !m_flags[DirectQueryEnabled] )
-		{
-			return;
-		}
-
-		auto * window = m_window.handle();
-
-		KeyboardController::readDeviceState(window);
-
-		PointerController::readDeviceState(window);
-
-		for ( const auto & joystickID : m_joystickID )
-		{
-			JoystickController::readDeviceState(window, joystickID);
-		}
-		for ( const auto & joystickID : m_gamepadID )
-		{
-			GamepadController::readDeviceState(window, joystickID);
-		}
 	}
 
 	void
@@ -762,6 +845,8 @@ namespace Emeraude::Input
 
 		if ( glfwRawMouseMotionSupported() == GLFW_TRUE )
 		{
+			TraceSuccess{ClassId} << "Raw mouse motion enabled !";
+
 			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		}
 
@@ -781,34 +866,5 @@ namespace Emeraude::Input
 		}
 
 		m_flags[PointerLocked] = false;
-	}
-
-	void
-	Manager::enableModifiersWithText (bool state) noexcept
-	{
-		m_flags[EnableModifiersWithText] = state;
-
-		if ( m_flags[WindowLinked] )
-		{
-			auto * window = m_window.handle();
-
-			if ( this->isModifiersWithTextEnabled() )
-			{
-				glfwSetCharCallback(window, nullptr);
-				glfwSetCharModsCallback(window, charModsCallback);
-
-			}
-			else
-			{
-				glfwSetCharCallback(window, charCallback);
-				glfwSetCharModsCallback(window, nullptr);
-			}
-		}
-	}
-
-	bool
-	Manager::isModifiersWithTextEnabled () const noexcept
-	{
-		return m_flags[EnableModifiersWithText];
 	}
 }

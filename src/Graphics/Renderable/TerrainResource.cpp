@@ -1,36 +1,36 @@
 /*
- * Emeraude/Graphics/Renderable/TerrainResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/TerrainResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "TerrainResource.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Resources/Manager.hpp"
-#include "Scenes/Node.hpp"
+#include "Graphics/Material/StandardResource.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -38,7 +38,7 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderabl
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::TerrainResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::TerrainResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Renderable
 {
@@ -47,25 +47,24 @@ namespace Emeraude::Graphics::Renderable
 	using namespace Libraries::VertexFactory;
 	using namespace Scenes;
 
-	const size_t TerrainResource::ClassUID{Observable::getClassUID()};
+	const size_t TerrainResource::ClassUID{getClassUID(ClassId)};
 
 	TerrainResource::TerrainResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: AbstractSceneArea(name, resourceFlagBits),
+		: SceneAreaInterface(name, resourceFlagBits),
 		  m_geometry(std::make_unique< Geometry::AdaptiveVertexGridResource >(name + "AdaptiveGrid"))
 	{
 
 	}
 
+	size_t
+	TerrainResource::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	TerrainResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -76,10 +75,12 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	TerrainResource::isOpaque (size_t) const noexcept
+	TerrainResource::isOpaque (size_t /*layerIndex*/) const noexcept
 	{
 		if ( m_material != nullptr )
+		{
 			return m_material->isOpaque();
+		}
 
 		return true;
 	}
@@ -91,9 +92,15 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	const Material::Interface *
-	TerrainResource::material (size_t) const noexcept
+	TerrainResource::material (size_t /*layerIndex*/) const noexcept
 	{
 		return m_material.get();
+	}
+
+	const RasterizationOptions *
+	TerrainResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
+	{
+		return nullptr;
 	}
 
 	const Cuboid< float > &
@@ -109,9 +116,9 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	/*void
-	Terrain::updateVisibility (const Coordinates< float > & coordinates) noexcept
+	Terrain::updateVisibility (const CartesianFrame< float > & coordinates) noexcept
 	{
-		/ * Checks if the current position still close to the center of subdata. * /
+		/ * Checks if the current position still close to the center of sub-data. * /
 		const auto position = coordinates.position();
 
 		/ * Creates a new visible grid if position overlap the limit of the existing one. * /
@@ -127,7 +134,7 @@ namespace Emeraude::Graphics::Renderable
 			}
 			else
 			{
-				Tracer::warning(ClassId, "A new grid is already currently loading. Maybe the dimension of the active grid is to small !");
+				Tracer::warning(ClassId, "A new grid is already currently loading. Maybe the dimension of the active grid is too small !");
 			}
 		}
 
@@ -142,9 +149,9 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	Vector< 3, float >
-	TerrainResource::getLevelAt (float x, float z, float delta) const noexcept
+	TerrainResource::getLevelAt (float positionX, float positionZ, float deltaY) const noexcept
 	{
-		return {x, m_localData.getHeightAt(x, z) + delta, z};
+		return {positionX, m_localData.getHeightAt(positionX, positionZ) + deltaY, positionZ};
 	}
 
 	Vector< 3, float >
@@ -154,25 +161,16 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	TerrainResource::isOnGround (Node & node) const noexcept
-	{
-		/* Gets the absolute position to test against the scene boundaries. */
-		auto worldPosition = node.getWorldCoordinates().position();
-
-		return Libraries::Utility::equal(worldPosition[Y], this->getLevelAt(worldPosition));
-	}
-
-	bool
 	TerrainResource::setGeometry (const std::shared_ptr< Geometry::AdaptiveVertexGridResource > & geometryResource) noexcept
 	{
 		if ( geometryResource == nullptr )
 		{
-			Tracer::error(ClassId, Blob() << "Geometry smart pointer attached to Renderable '" << this->name() << "' " << this << " is null !");
+			Tracer::error(ClassId, BlobTrait() << "Geometry smart pointer attached to Renderable '" << this->name() << "' " << this << " is null !");
 
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		/* Change the material. */
 		m_geometry = geometryResource;
@@ -186,12 +184,12 @@ namespace Emeraude::Graphics::Renderable
 	{
 		if ( materialResource == nullptr )
 		{
-			Tracer::error(ClassId, Blob() << "Material smart pointer attached to Renderable '" << this->name() << "' " << this << " is null !");
+			Tracer::error(ClassId, BlobTrait() << "Material smart pointer attached to Renderable '" << this->name() << "' " << this << " is null !");
 
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		/* Change the material. */
 		m_material = materialResource;
@@ -207,7 +205,7 @@ namespace Emeraude::Graphics::Renderable
 
 		Tracer::info(ClassId, "Update process started...");
 
-		/* This will update local data from AdaptiveGridGeometry. */
+		/* This will processLogics local data from AdaptiveGridGeometry. */
 		if ( m_geometry->updateLocalData(m_localData, m_lastUpdatePosition) )
 		{
 			//this->setRequestingVideoMemoryUpdate();
@@ -237,9 +235,6 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		/* 3. Set scene area volume and boundaries. */
-		this->setBoundary(m_localData.squaredSize() * 0.5F);
-
 		return true;
 	}
 
@@ -253,10 +248,14 @@ namespace Emeraude::Graphics::Renderable
 	TerrainResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( !this->prepareGeometry(DefaultSize, DefaultDivision) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		if ( !this->setMaterial(Material::StandardResource::getDefault()) )
 		{
@@ -269,19 +268,19 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	TerrainResource::load (const Path::File & filepath) noexcept
+	TerrainResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		Json::CharReaderBuilder builder;
+		const Json::CharReaderBuilder builder{};
 
-		std::ifstream json(to_string(filepath), std::ifstream::binary);
+		std::ifstream json(filepath, std::ifstream::binary);
 
-		Json::Value root;
+		Json::Value root{};
 
-		std::string errors;
+		std::string errors{};
 
 		if ( !Json::parseFromStream(builder, json, &root, &errors) )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to parse JSON file ! Errors :\n" << errors);
+			Tracer::error(ClassId, BlobTrait() << "Unable to parse JSON file ! Errors :\n" << errors);
 
 			return this->setLoadSuccess(false);
 		}
@@ -291,7 +290,7 @@ namespace Emeraude::Graphics::Renderable
 
 		if ( !root.isMember(DefinitionResource::SceneAreaKey) )
 		{
-			Tracer::error(ClassId, Blob() << "The key '" << DefinitionResource::SceneAreaKey << "' is not present !");
+			Tracer::error(ClassId, BlobTrait() << "The key '" << DefinitionResource::SceneAreaKey << "' is not present !");
 
 			return this->setLoadSuccess(false);
 		}
@@ -300,14 +299,14 @@ namespace Emeraude::Graphics::Renderable
 
 		if ( !sceneAreaObject.isMember(FastJSON::TypeKey) && !sceneAreaObject[FastJSON::TypeKey].isString() )
 		{
-			Tracer::error(ClassId, Blob() << "The key '" << FastJSON::TypeKey << "' is not present or not a string !");
+			Tracer::error(ClassId, BlobTrait() << "The key '" << FastJSON::TypeKey << "' is not present or not a string !");
 
 			return this->setLoadSuccess(false);
 		}
 
 		if ( sceneAreaObject[FastJSON::TypeKey].asString() != ClassId || !sceneAreaObject.isMember(FastJSON::DataKey) )
 		{
-			Tracer::error(ClassId, Blob() << "This file doesn't contains a Terrain definition !");
+			Tracer::error(ClassId, BlobTrait() << "This file doesn't contains a Terrain definition !");
 
 			return this->setLoadSuccess(false);
 		}
@@ -319,23 +318,24 @@ namespace Emeraude::Graphics::Renderable
 	TerrainResource::load (const Json::Value & data) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		auto * resources = Resources::Manager::instance();
 
 		/* First, we check every key from JSON data. */
 
 		/* Checks size and division options... */
-		auto size = FastJSON::getFloat(data, FastJSON::SizeKey, DefaultSize);
-
-		auto division = FastJSON::getUnsignedInteger(data, FastJSON::DivisionKey, DefaultDivision);
+		const auto size = FastJSON::getNumber< float >(data, FastJSON::SizeKey, DefaultSize);
+		const auto division = FastJSON::getNumber< size_t >(data, FastJSON::DivisionKey, DefaultDivision);
 
 		/* Checks material type. */
-		auto materialType = FastJSON::getString(data, MaterialTypeKey);
+		const auto materialType = FastJSON::getString(data, MaterialTypeKey);
 
 		if ( materialType.empty() || materialType != Material::StandardResource::ClassId )
 		{
-			Tracer::error(ClassId, Blob() << "Material resource type '" << materialType << "' is not handled yet !");
+			Tracer::error(ClassId, BlobTrait() << "Material resource type '" << materialType << "' is not handled yet !");
 
 			return this->setLoadSuccess(false);
 		}
@@ -396,7 +396,7 @@ namespace Emeraude::Graphics::Renderable
 
 		auto & materials = resources->standardMaterials();
 
-		auto materialName = FastJSON::getString(data, MaterialNameKey);
+		const auto materialName = FastJSON::getString(data, MaterialNameKey);
 
 		if ( materialName.empty() )
 		{
@@ -418,12 +418,12 @@ namespace Emeraude::Graphics::Renderable
 
 		if ( !this->setMaterial(materialResource) )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to use material for Terrain '" << this->name() << "' !");
+			Tracer::error(ClassId, BlobTrait() << "Unable to use material for Terrain '" << this->name() << "' !");
 
 			return this->setLoadSuccess(false);
 		}
 
-		/* After we check after optionnal parameters. */
+		/* After we check after optional parameters. */
 
 		/* Checks for geometry relief generation options. */
 		if ( data.isMember(HeightMapKey) )
@@ -438,7 +438,7 @@ namespace Emeraude::Graphics::Renderable
 
 					if ( imageName.empty() )
 					{
-						Tracer::warning(ClassId, Blob() << "The key '" << ImageNameKey << "' is not present or not a string !");
+						Tracer::warning(ClassId, BlobTrait() << "The key '" << ImageNameKey << "' is not present or not a string !");
 
 						continue;
 					}
@@ -447,19 +447,19 @@ namespace Emeraude::Graphics::Renderable
 
 					if ( imageResource == nullptr )
 					{
-						Tracer::warning(ClassId, Blob() << "Image '" << imageName << "' is not available in data stores !");
+						Tracer::warning(ClassId, BlobTrait() << "Image '" << imageName << "' is not available in data stores !");
 
 						continue;
 					}
 
 					/* Color inversion if requested. */
-					auto inverse = FastJSON::getBoolean(iteration, InverseKey, false);
+					const auto inverse = FastJSON::getBoolean(iteration, InverseKey, false);
 
 					/* Checks for scaling. */
-					auto scale = FastJSON::getFloat(iteration, FastJSON::ScaleKey, 1.0F);
+					const auto scale = FastJSON::getNumber< float >(iteration, FastJSON::ScaleKey, 1.0F);
 
 					/* Checks the mode for leveling the vertices. */
-					auto mode = Grid< float >::getMode(FastJSON::getString(iteration, FastJSON::ModeKey));
+					const auto mode = Grid< float >::getMode(FastJSON::getString(iteration, FastJSON::ModeKey));
 
 					/* Applies the height map on the geometry. */
 					m_localData.applyDisplacementMapping(imageResource->data(), inverse ? -scale : scale, mode);
@@ -469,7 +469,7 @@ namespace Emeraude::Graphics::Renderable
 			}
 			else
 			{
-				Tracer::warning(ClassId, Blob() << "The key '" << HeightMapKey << "' is not an array !");
+				Tracer::warning(ClassId, BlobTrait() << "The key '" << HeightMapKey << "' is not an array !");
 			}
 		}
 
@@ -482,14 +482,14 @@ namespace Emeraude::Graphics::Renderable
 			{
 				for ( const auto & iteration : noiseFiltering )
 				{
-					/* Size parameter for perling noise. */
-					auto perlinSize = FastJSON::getFloat(iteration, FastJSON::SizeKey);
+					/* Size parameter for perlin noise. */
+					const auto perlinSize = FastJSON::getNumber< float >(iteration, FastJSON::SizeKey);
 
 					/* Height scaling parameter. */
-					auto perlinScale = FastJSON::getFloat(iteration, FastJSON::ScaleKey, 1.0F);
+					const auto perlinScale = FastJSON::getNumber< float >(iteration, FastJSON::ScaleKey, 1.0F);
 
 					/* Checks the mode for leveling the vertices. */
-					auto perlinMode = Grid< float >::getMode(FastJSON::getString(iteration, FastJSON::ModeKey));
+					const auto perlinMode = Grid< float >::getMode(FastJSON::getString(iteration, FastJSON::ModeKey));
 
 					m_localData.applyPerlinNoise(perlinSize, perlinScale, perlinMode);
 
@@ -498,12 +498,12 @@ namespace Emeraude::Graphics::Renderable
 			}
 			else
 			{
-				Tracer::warning(ClassId, Blob() << "The key '" << PerlinNoiseKey << "' is not an array !");
+				Tracer::warning(ClassId, BlobTrait() << "The key '" << PerlinNoiseKey << "' is not an array !");
 			}
 		}
 
 		/* Checks if the UV multiplier parameter. */
-		auto value = FastJSON::getFloat(data, FastJSON::UVMultiplierKey, 1.0F);
+		const auto value = FastJSON::getNumber< float >(data, FastJSON::UVMultiplierKey, 1.0F);
 
 		m_localData.setUVMultiplier(value);
 
@@ -511,7 +511,9 @@ namespace Emeraude::Graphics::Renderable
 
 		/* Checks if all is loaded */
 		if ( !this->addDependency(m_farGeometry.get()) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		//if ( vertexColorMap != nullptr )
 		//	m_geometry->enableVertexColor(vertexColorMap);
@@ -526,9 +528,6 @@ namespace Emeraude::Graphics::Renderable
 			return this->setLoadSuccess(false);
 		}
 
-		/* Sets scene area volume and boundaries. */
-		this->setBoundary(m_localData.squaredSize() * 0.5F);
-
 		return this->setLoadSuccess(true);
 	}
 
@@ -536,7 +535,9 @@ namespace Emeraude::Graphics::Renderable
 	TerrainResource::load (float size, size_t division, const std::shared_ptr< Material::Interface > & material) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( !this->prepareGeometry(size, division) )
 		{
@@ -547,7 +548,7 @@ namespace Emeraude::Graphics::Renderable
 
 		if ( !this->setMaterial(material) )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to use material for Terrain '" << this->name() << "' !");
+			Tracer::error(ClassId, BlobTrait() << "Unable to use material for Terrain '" << this->name() << "' !");
 
 			return this->setLoadSuccess(false);
 		}
@@ -555,18 +556,10 @@ namespace Emeraude::Graphics::Renderable
 		return this->setLoadSuccess(true);
 	}
 
-	bool
-	TerrainResource::prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept
-	{
-		TraceWarning{ClassId} << "Not done yet !";
-
-		return false;
-	}
-
 	std::shared_ptr< TerrainResource >
 	TerrainResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->terrains().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->terrains().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< TerrainResource >

@@ -1,43 +1,46 @@
 /*
- * Emeraude/Scenes/CubicInfluenceArea.hpp
- * This file is part of Emeraude
+ * src/Scenes/CubicInfluenceArea.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <memory>
-
 /* Local inclusions for inheritances. */
 #include "InfluenceAreaInterface.hpp"
 
+/* Local inclusions for usages. */
+#include "Libraries/Math/Vector.hpp"
+
+/* Forward declarations. */
 namespace Emeraude::Scenes
 {
-	/* Forward declarations */
 	class AbstractEntity;
+}
 
+namespace Emeraude::Scenes
+{
 	/**
 	 * @brief Defines a cubic area of influence for a modifier.
 	 * @extends Emeraude::Scenes::InfluenceAreaInterface The influence area base class.
@@ -48,27 +51,35 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Constructs a cubic influence area.
-			 * @param modifierNode A reference to the modifier parent scene entity.
+			 * @param parentEntity A reference to the modifier parent scene entity.
 			 * @param size Unidirectional size of the area.
 			 */
 			explicit CubicInfluenceArea (const AbstractEntity & parentEntity, float size = 1.0F) noexcept;
 
 			/**
 			 * @brief Constructs a cubic influence area.
-			 * @param modifierNode A reference to the modifier parent scene entity.
+			 * @param parentEntity A reference to the modifier parent scene entity.
 			 * @param xSize Size of the area in X axis.
 			 * @param ySize Size of the area in Y axis.
 			 * @param zSize Size of the area in Z axis.
 			 */
 			CubicInfluenceArea (const AbstractEntity & parentEntity, float xSize, float ySize, float zSize) noexcept;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::isUnderInfluence() */
+			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Sphere< float > &) */
 			[[nodiscard]]
-			bool isUnderInfluence (const Physics::MovableTrait & movable) const noexcept override;
+			bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::influenceStrength() */
+			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::influenceStrength(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Sphere< float > &) */
 			[[nodiscard]]
-			float influenceStrength (const Physics::MovableTrait & movable) const noexcept override;
+			float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
+
+			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Cuboid< float > &) */
+			[[nodiscard]]
+			bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
+
+			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::influenceStrength(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Cuboid< float > &) */
+			[[nodiscard]]
+			float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
 
 			/**
 			 * @brief Sets the size of the area.

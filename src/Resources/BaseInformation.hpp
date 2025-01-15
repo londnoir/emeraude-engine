@@ -1,45 +1,48 @@
 /*
- * Emeraude/Resources/BaseInformation.hpp
- * This file is part of Emeraude
+ * src/Resources/BaseInformation.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <string>
+#include <filesystem>
+
+/* Third-party inclusions. */
+#ifndef JSON_USE_EXCEPTION
+#define JSON_USE_EXCEPTION 0
+#endif
+#include "json/json.h"
 
 /* Local inclusions for usages. */
-#include "Path/File.hpp"
 #include "Types.hpp"
-
-/* Third-party libraries */
-#include "Third-Party-Inclusion/json.hpp"
 
 namespace Emeraude::Resources
 {
-	/** @brief This structure represent a resource definition in a store. It hold the way to load it. */
+	/** @brief This structure represent a resource definition in a store. It holds the way to load it. */
 	class BaseInformation final
 	{
 		public:
@@ -57,34 +60,50 @@ namespace Emeraude::Resources
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isValid () const noexcept;
+			bool
+			isValid () const noexcept
+			{
+				return m_source != SourceType::Undefined;
+			}
 
 			/**
 			 * @brief Returns the name of the resource.
 			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			const std::string & name () const noexcept;
+			const std::string &
+			name () const noexcept
+			{
+				return m_name;
+			}
 
 			/**
 			 * @brief Returns where the resource come from.
 			 * @return SourceType
 			 */
 			[[nodiscard]]
-			SourceType sourceType () const noexcept;
+			SourceType
+			sourceType () const noexcept
+			{
+				return m_source;
+			}
 
 			/**
 			 * @brief Returns the resource data as JSON.
 			 * @return const Json::Value &
 			 */
 			[[nodiscard]]
-			const Json::Value & data () const noexcept;
+			const Json::Value &
+			data () const noexcept
+			{
+				return m_data;
+			}
 
 			/**
 			 * @brief Updates resource information from a downloaded file.
-			 * @param file A reference to as file.
+			 * @param filepath A reference to a filesystem path.
 			 */
-			void updateFromDownload (const Libraries::Path::File & file) noexcept;
+			void updateFromDownload (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Parses a JSON node to extract resource information.
@@ -117,12 +136,12 @@ namespace Emeraude::Resources
 			bool parseData (const Json::Value & resourceDefinition) noexcept;
 
 			/* JSON keys */
-			static constexpr auto NameKey = "Name";
-			static constexpr auto SourceKey = "Source";
-			static constexpr auto DataKey = "Data";
+			static constexpr auto NameKey{"Name"};
+			static constexpr auto SourceKey{"Source"};
+			static constexpr auto DataKey{"Data"};
 
-			std::string m_name{};
-			SourceType m_source = SourceType::Undefined;
-			Json::Value m_data{};
+			std::string m_name;
+			SourceType m_source{SourceType::Undefined};
+			Json::Value m_data;
 	};
 }

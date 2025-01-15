@@ -1,33 +1,33 @@
 /*
- * Emeraude/Saphir/Declaration/AbstractBufferBackedBlock.hpp
- * This file is part of Emeraude
+ * src/Saphir/Declaration/AbstractBufferBackedBlock.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <vector>
 #include <cstdint>
 
@@ -42,7 +42,7 @@ namespace Emeraude::Saphir::Declaration
 {
 	/**
 	 * @brief Base class for every GLSL Buffer-Backed blocks.
-	 * @extends Emeraude::Saphir::BlockInterface
+	 * @extends Emeraude::Saphir::Declaration::BlockInterface
 	 */
 	class AbstractBufferBackedBlock : public BlockInterface
 	{
@@ -79,11 +79,11 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			~AbstractBufferBackedBlock () override = default;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::isValid() */
+			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::bytes() */
+			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept final;
 
@@ -92,27 +92,27 @@ namespace Emeraude::Saphir::Declaration
 			 * @return uint32_t.
 			 */
 			[[nodiscard]]
-			virtual uint32_t set () const noexcept final;
+			uint32_t set () const noexcept;
 
 			/**
 			 * @brief Gets the binding point.
 			 * @return uint32_t.
 			 */
 			[[nodiscard]]
-			virtual uint32_t binding () const noexcept final;
+			uint32_t binding () const noexcept;
 
 			/**
 			 * @brief Sets matrix storage order.
-			 * @param order
+			 * @param matrixStorageOrder
 			 */
-			virtual void setMatrixStorageOrder (MatrixStorageOrder matrixStorageOrder) noexcept final;
+			void setMatrixStorageOrder (MatrixStorageOrder matrixStorageOrder) noexcept;
 
 			/**
 			 * @brief Gets matrix storage order.
 			 * @return MatrixStorageOrder
 			 */
 			[[nodiscard]]
-			virtual MatrixStorageOrder matrixStorageOrder () const noexcept final;
+			MatrixStorageOrder matrixStorageOrder () const noexcept;
 
 			/**
 			 * @brief Adds a member to the block.
@@ -120,14 +120,14 @@ namespace Emeraude::Saphir::Declaration
 			 * @param name A C-string to set the name of the member.
 			 * @param layout The layout to use. Default nullptr.
 			 */
-			virtual bool addMember (VariableType type, Key name, Key layout = nullptr) noexcept final;
+			bool addMember (VariableType type, Key name, Key layout = nullptr) noexcept;
 
 			/**
 			 * @brief Adds a member to the block.
 			 * @param structure A reference to a structure.
 			 * @param layout The layout to use. Default nullptr.
 			 */
-			virtual bool addMember (const Structure & structure, Key layout = nullptr) noexcept final;
+			bool addMember (const Structure & structure, Key layout = nullptr) noexcept;
 
 			/**
 			 * @brief Adds an array member to the block.
@@ -136,7 +136,7 @@ namespace Emeraude::Saphir::Declaration
 			 * @param arraySize The size of the array.
 			 * @param layout The layout to use. Default nullptr.
 			 */
-			virtual bool addArrayMember (VariableType type, Key name, size_t arraySize, Key layout = nullptr) noexcept final;
+			bool addArrayMember (VariableType type, Key name, size_t arraySize, Key layout = nullptr) noexcept;
 
 			/**
 			 * @brief Adds an array member to the block.
@@ -144,14 +144,14 @@ namespace Emeraude::Saphir::Declaration
 			 * @param arraySize The size of the array.
 			 * @param layout The layout to use. Default nullptr.
 			 */
-			virtual bool addArrayMember (const Structure & structure, size_t arraySize, Key layout = nullptr) noexcept final;
+			bool addArrayMember (const Structure & structure, size_t arraySize, Key layout = nullptr) noexcept;
 
 			/**
 			 * @brief Returns the list of members.
 			 * @return const std::vector< std::pair< Key, Member::BufferBackedBlock > > &
 			 */
 			[[nodiscard]]
-			virtual const std::vector< std::pair< Key, Member::BufferBackedBlock > > & members () const noexcept final;
+			const std::vector< std::pair< Key, Member::BufferBackedBlock > > & members () const noexcept;
 
 		protected:
 
@@ -167,7 +167,7 @@ namespace Emeraude::Saphir::Declaration
 			AbstractBufferBackedBlock (uint32_t set, uint32_t binding, MemoryLayout memoryLayout, Key name, Key instanceName = nullptr, size_t arraySize = 0) noexcept;
 
 			/** @copydoc Emeraude::Saphir::BlockInterface::getLayoutQualifier() */
-			virtual std::string getLayoutQualifier () const noexcept final;
+			std::string getLayoutQualifier () const noexcept;
 
 		private:
 

@@ -1,46 +1,51 @@
 /*
- * Emeraude/Vulkan/SwapChain.cpp
- * This file is part of Emeraude
+ * src/Vulkan/SwapChain.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "SwapChain.hpp"
 
-/* Local inclusions */
-#include "Device.hpp"
-#include "Framebuffer.hpp"
-#include "Image.hpp"
-#include "ImageView.hpp"
-#include "Instance.hpp"
-#include "Queue.hpp"
-#include "RenderPass.hpp"
+/* STL inclusions. */
+#include <cstddef>
+#include <iostream>
+#include <limits>
+#include <mutex>
+
+/* Local inclusions. */
+#include "Graphics/Renderer.hpp"
 #include "Sync/Fence.hpp"
 #include "Sync/Semaphore.hpp"
-#include "Tracer.hpp"
+#include "Instance.hpp"
+#include "Device.hpp"
+#include "Queue.hpp"
+#include "Framebuffer.hpp"
+#include "RenderPass.hpp"
+#include "Image.hpp"
+#include "ImageView.hpp"
 #include "Utility.hpp"
-#include "Graphics/Renderer.hpp"
-#include "Graphics/RenderTarget/View/Abstract.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -48,22 +53,22 @@ namespace Emeraude::Vulkan
 	using namespace Libraries::Math;
 	using namespace Graphics;
 
-	SwapChain::SwapChain (const std::shared_ptr< Device > & device, Window & window) noexcept
-		: AbstractDeviceDependentObject(device), Abstract(ClassId, {}, {}, RenderType::View, MasterControl::ConnexionType::Input),
-		  m_window(&window)
+	SwapChain::SwapChain (const std::shared_ptr< Device > & device, Settings & settings, Window & window) noexcept
+		: AbstractDeviceDependentObject(device),
+		Abstract(ClassId, {}, {}, RenderTargetType::View, MasterControl::ConnexionType::Input, false),
+		m_window(&window)
 	{
 		m_window->surface()->update(device);
-	}
 
-	SwapChain::~SwapChain ()
-	{
-		this->destroyFromHardware();
+		m_flags[VSyncEnabled] = settings.get< bool >(VideoEnableVSyncKey, DefaultVideoEnableVSync);
+		m_flags[TripleBufferingEnabled] = settings.get< bool >(VideoEnableTripleBufferingKey, DefaultVideoEnableTripleBuffering);
+		m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
 	}
 
 	void
 	SwapChain::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
 	{
-		m_viewMatrices.create(*this);
+		m_viewMatrices.create(*Renderer::instance(), this->id());
 	}
 
 	void
@@ -72,91 +77,8 @@ namespace Emeraude::Vulkan
 		m_viewMatrices.destroy();
 	}
 
-	MasterControl::VideoType
-	SwapChain::videoType () const noexcept
-	{
-		return MasterControl::VideoType::View;
-	}
-
 	bool
-	SwapChain::isCubemap () const noexcept
-	{
-		return false;
-	}
-
-	const RenderPass *
-	SwapChain::renderPass () const noexcept
-	{
-		return m_renderPass.get();
-	}
-
-	const Framebuffer *
-	SwapChain::framebuffer () const noexcept
-	{
-		return m_framebuffers.at(m_currentFrame).get();
-	}
-
-	const std::shared_ptr< Vulkan::Image > &
-	SwapChain::image () const noexcept
-	{
-		return m_images[m_currentFrame];
-	}
-
-	const std::shared_ptr< Vulkan::ImageView > &
-	SwapChain::imageView () const noexcept
-	{
-		return m_imageViews[m_currentFrame];
-	}
-
-	const ViewMatricesInterface &
-	SwapChain::viewMatrices () const noexcept
-	{
-		return m_viewMatrices;
-	}
-
-	ViewMatricesInterface &
-	SwapChain::viewMatrices () noexcept
-	{
-		return m_viewMatrices;
-	}
-
-	bool
-	SwapChain::isValid () const noexcept
-	{
-		if ( !this->isCreated() )
-		{
-			return false;
-		}
-
-		return m_flags[Ready];
-	}
-
-	VkSwapchainKHR
-	SwapChain::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	VkSwapchainCreateInfoKHR
-	SwapChain::createInfo () const noexcept
-	{
-		return m_createInfo;
-	}
-
-	uint32_t
-	SwapChain::imageCount () const noexcept
-	{
-		return m_imageCount;
-	}
-
-	bool
-	SwapChain::isDegraded () const noexcept
-	{
-		return m_flags[SwapChainRecreationRequested];
-	}
-
-	bool
-	SwapChain::createOnHardware () noexcept
+	SwapChain::onCreate (Renderer & renderer) noexcept
 	{
 		if ( !this->checkPrerequisites() )
 		{
@@ -179,7 +101,7 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		if ( !this->createFramebuffer() )
+		if ( !this->createFramebuffer(renderer) )
 		{
 			Tracer::error(ClassId, "Unable to complete the framebuffer !");
 
@@ -195,15 +117,32 @@ namespace Emeraude::Vulkan
 
 		this->setCreated();
 
-		TraceSuccess{ClassId} << "The swap chain " << m_handle << " (" << this->identifier() << ") is successfully created !";
-
 		m_flags[Ready] = true;
 
 		return true;
 	}
 
+	void
+	SwapChain::onDestroy () noexcept
+	{
+		if ( !this->hasDevice() )
+		{
+			TraceError{ClassId} << "No device to destroy the swap chain " << m_handle << " (" << this->identifier() << ") !";
+
+			return;
+		}
+
+		this->device()->waitIdle();
+
+		this->destroyFramebuffer();
+
+		this->destroyBaseSwapChain();
+
+		this->setDestroyed();
+	}
+
 	bool
-	SwapChain::recreate () noexcept
+	SwapChain::recreateOnHardware (Renderer & renderer) noexcept
 	{
 		this->resetFramebuffer();
 
@@ -214,40 +153,20 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		if ( !this->createFramebuffer() )
+		if ( !this->createFramebuffer(renderer) )
 		{
 			Tracer::error(ClassId, "Unable to complete the framebuffer !");
 
 			return false;
 		}
 
-		TraceSuccess{ClassId} << "The swap chain " << m_handle << " (" << this->identifier() << ") is successfully recreated !";
+		if ( m_flags[ShowInformation] )
+		{
+			TraceSuccess{ClassId} << "The swap chain " << m_handle << " (" << this->identifier() << ") is successfully recreated !";
+		}
 
 		m_flags[Ready] = true;
 		m_flags[SwapChainRecreationRequested] = false;
-
-		return true;
-	}
-
-	bool
-	SwapChain::destroyFromHardware () noexcept
-	{
-		if ( !this->hasDevice() )
-		{
-			TraceError{ClassId} << "No device to destroy the swap chain " << m_handle << " (" << this->identifier() << ") !";
-
-			return false;
-		}
-
-		this->device()->waitIdle();
-
-		this->destroySynchronizationPrimitives();
-
-		this->destroyFramebuffer();
-
-		this->destroyBaseSwapChain();
-
-		this->setDestroyed();
 
 		return true;
 	}
@@ -257,24 +176,22 @@ namespace Emeraude::Vulkan
 	{
 		m_flags[Ready] = false;
 
-		/* Clear the render-pass. */
-		m_renderPass->destroyFromHardware();
-
-		for ( size_t imageIndex = 0; imageIndex < m_imageCount; imageIndex++ )
+		for ( auto & frame : m_frames )
 		{
 			/* Clear the framebuffer. */
-			m_framebuffers[imageIndex]->destroyFromHardware();
+			frame.framebuffer->destroyFromHardware();
 
 			/* Clear the color buffer. */
-			m_imageViews[imageIndex]->destroyFromHardware();
-			m_images[imageIndex]->destroyFromHardware();
+			frame.colorImageView->destroyFromHardware();
+			frame.colorImage->destroyFromHardware();
 
 			/* Clear the depth+stencil buffer. */
-			m_depthImageViews[imageIndex]->destroyFromHardware();
-			m_depthStencilImages[imageIndex]->destroyFromHardware();
+			frame.depthImageView->destroyFromHardware();
+			frame.depthStencilImage->destroyFromHardware();
 
 			/* Reset the image fence. */
-			m_inFlightFences[imageIndex]->recreate();
+			frame.inFlightFence->destroyFromHardware();
+			frame.inFlightFence->createOnHardware();
 		}
 
 		m_currentFrame = 0;
@@ -285,19 +202,11 @@ namespace Emeraude::Vulkan
 	{
 		m_flags[Ready] = false;
 
-		m_renderPass.reset();
-
-		m_framebuffers.clear();
-
-		m_depthImageViews.clear();
-		m_depthStencilImages.clear();
-
-		m_imageViews.clear();
-		m_images.clear();
+		m_frames.clear();
 	}
 
 	bool
-	SwapChain::checkPrerequisites () noexcept
+	SwapChain::checkPrerequisites () const noexcept
 	{
 		if ( !this->hasDevice() )
 		{
@@ -323,24 +232,86 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
+	uint32_t
+	SwapChain::selectImageCount (const VkSurfaceCapabilitiesKHR & capabilities) noexcept
+	{
+		/* NOTE: Only one image is possible. */
+		if ( capabilities.minImageCount == 1 && capabilities.minImageCount == capabilities.maxImageCount )
+		{
+			Tracer::error(ClassId, "The swap chain can only use 1 image. Disabling double buffering and V-Sync !");
+
+			m_flags[TripleBufferingEnabled] = false;
+			m_flags[VSyncEnabled] = false;
+
+			return 1;
+		}
+
+		/* NOTE: Looks like the triple-buffering is enforced by the system. */
+		if ( capabilities.minImageCount == 3 )
+		{
+			m_flags[TripleBufferingEnabled] = true;
+		}
+
+		if ( m_flags[TripleBufferingEnabled] && ( capabilities.maxImageCount == 0 || capabilities.maxImageCount >= 3 ) )
+		{
+			return 3;
+		}
+
+		return capabilities.minImageCount;
+	}
+
+	VkExtent2D
+	SwapChain::chooseSwapExtent (const VkSurfaceCapabilitiesKHR & capabilities) const noexcept
+	{
+		if ( capabilities.currentExtent.width <= std::numeric_limits< uint32_t >::max() )
+		{
+			return capabilities.currentExtent;
+		}
+
+		const auto & min = capabilities.minImageExtent;
+		const auto & max = capabilities.maxImageExtent;
+
+		const auto framebufferSize = m_window->getFramebufferSize();
+
+		return {
+			std::max(min.width, std::min(max.width, framebufferSize[0])),
+			std::max(min.height, std::min(max.height, framebufferSize[1]))
+		};
+	}
+
+	VkSurfaceFormatKHR
+	SwapChain::chooseSurfaceFormat () const noexcept
+	{
+		const auto & formats = m_window->surface()->formats();
+
+		/* NOTE: Check for 24 bits sRGB. */
+		const auto formatIt = std::ranges::find_if(formats, [] (auto item) {
+			return item.format == VK_FORMAT_B8G8R8A8_SRGB && item.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+		});
+
+		if ( formatIt == formats.cend() )
+		{
+			return formats.at(0);
+		}
+
+		return *formatIt;
+	}
+
 	bool
 	SwapChain::createBaseSwapChain (VkSwapchainKHR oldSwapChain) noexcept
 	{
-		const auto surfaceFormat = this->chooseSurfaceFormat();
 		const auto & capabilities = m_window->surface()->capabilities();
 
-#ifdef DEBUG
-		TraceDebug{ClassId} << "\n" << Surface::getCapabilitiesString(capabilities);
-#endif
+		const auto surfaceFormat = this->chooseSurfaceFormat();
 
 		m_createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		m_createInfo.pNext = nullptr;
 		m_createInfo.flags = 0;
 		m_createInfo.surface = m_window->surface()->handle();
-		m_createInfo.minImageCount = this->chooseMinimumImageCount();
+		m_createInfo.minImageCount = this->selectImageCount(capabilities);
 		m_createInfo.imageFormat = surfaceFormat.format;
 		m_createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		m_createInfo.imageExtent = this->chooseSwapExtent();
+		m_createInfo.imageExtent = this->chooseSwapExtent(capabilities);
 		m_createInfo.imageArrayLayers = 1;
 		m_createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		//auto index = device->getFamilyQueueIndex(VK_QUEUE_GRAPHICS_BIT);
@@ -363,7 +334,7 @@ namespace Emeraude::Vulkan
 		}
 		m_createInfo.preTransform = capabilities.currentTransform; /* NOTE: No transformation. Check "supportedTransforms" in "capabilities" */
 		m_createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		m_createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;//this->choosePresentMode();
+		m_createInfo.presentMode = this->choosePresentMode();
 		m_createInfo.clipped = VK_TRUE;
 		m_createInfo.oldSwapchain = oldSwapChain;
 
@@ -391,7 +362,7 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		this->setExtent({m_createInfo.imageExtent.width, m_createInfo.imageExtent.height, 1});
+		this->setExtent(m_createInfo.imageExtent.width, m_createInfo.imageExtent.height);
 
 		return true;
 	}
@@ -404,8 +375,6 @@ namespace Emeraude::Vulkan
 		if ( m_handle != VK_NULL_HANDLE )
 		{
 			vkDestroySwapchainKHR(this->device()->handle(), m_handle, nullptr);
-
-			TraceSuccess{ClassId} << "The swap chain " << m_handle << " (" << this->identifier() << ") is gracefully destroyed !";
 
 			m_handle = VK_NULL_HANDLE;
 		}
@@ -424,29 +393,12 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		if ( m_imageCount == 0 )
+		if ( m_flags[ShowInformation] )
 		{
-			Tracer::fatal(ClassId, "Unable to get the image count from the swap chain !");
-
-			return {};
+			TraceInfo{ClassId} << "The swap chain is using " << m_imageCount << " images.";
 		}
 
-		/* Framebuffer */
-		m_framebuffers.resize(m_imageCount);
-
-		/* Color buffer */
-		m_images.resize(m_imageCount);
-		m_imageViews.resize(m_imageCount);
-
-		/* Depth+Stencil buffer */
-		m_depthStencilImages.resize(m_imageCount);
-		m_depthImageViews.resize(m_imageCount);
-		m_stencilImageViews.resize(m_imageCount);
-
-		/* Synchronization primitives */
-		m_imageAvailableSemaphores.resize(m_imageCount);
-		m_renderFinishedSemaphores.resize(m_imageCount);
-		m_inFlightFences.resize(m_imageCount);
+		m_frames.resize(m_imageCount);
 
 		return true;
 	}
@@ -473,15 +425,8 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
-	SwapChain::createFramebuffer () noexcept
+	SwapChain::createImages () noexcept
 	{
-		if ( m_imageCount == 0 )
-		{
-			Tracer::error(ClassId, "Unable to create the swap chain without image !");
-
-			return false;
-		}
-
 		const auto swapChainImages = this->retrieveSwapChainImages();
 
 		if ( swapChainImages.empty() )
@@ -489,121 +434,58 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		/* Prepare the render pass for attachments. */
-		m_renderPass = std::make_shared< RenderPass >(this->device());
-		m_renderPass->setIdentifier("SwapChain-Main-RenderPass");
-
-		/* Prepare a subpass for the render pass. */
-		RenderSubpass subpass{VK_PIPELINE_BIND_POINT_GRAPHICS, 0};
-
+		/* Create image and image views in order to create the render pass. */
 		for ( size_t imageIndex = 0; imageIndex < m_imageCount; ++imageIndex )
 		{
-			/* Prepare the framebuffer for attachments. */
-			m_framebuffers[imageIndex] = std::make_unique< Framebuffer >(m_renderPass, this->extent());
-			m_framebuffers[imageIndex]->setIdentifier((std::stringstream{} << "SwapChain-Frame" << imageIndex << "-Framebuffer").str());
+			auto & frame = m_frames[imageIndex];
 
 			/* Color buffer. */
 			{
 				const auto purposeId = (std::stringstream{} << "SwapChain-ColorBuffer" << imageIndex).str();
 
-				if ( !this->createColorBuffer(swapChainImages[imageIndex], m_images[imageIndex], m_imageViews[imageIndex], purposeId) )
+				if ( !this->createColorBuffer(swapChainImages[imageIndex], frame.colorImage, frame.colorImageView, purposeId) )
 				{
 					TraceFatal{ClassId} << "Unable to create the color buffer #" << imageIndex << " !";
 
 					return false;
 				}
-
-				if ( imageIndex == 0 )
-				{
-					m_renderPass->addAttachmentDescription(VkAttachmentDescription{
-						.flags = 0,
-						.format = m_images[imageIndex]->createInfo().format,
-						.samples = m_images[imageIndex]->createInfo().samples,
-						.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-						.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-						.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-						.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-						.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-						.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-					});
-
-					subpass.addColorAttachment(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-					TraceInfo{ClassId} << "Image (color) #" << imageIndex << " attached to the render pass !";
-				}
-
-				m_framebuffers[imageIndex]->addAttachment(m_imageViews[imageIndex]->handle());
-
-				TraceInfo{ClassId} << "Image view (color) #" << imageIndex << " attached to the framebuffer #" << imageIndex << " !";
 			}
 
 			/* Depth/Stencil buffer. */
 			{
 				const auto purposeId = (std::stringstream{} << "SwapChain-DepthBuffer" << imageIndex).str();
 
-				if ( !this->createDepthBuffer(this->device(), m_depthStencilImages[imageIndex], m_depthImageViews[imageIndex], purposeId) )
+				if ( !this->createDepthStencilBuffer(this->device(), frame.depthStencilImage, frame.depthImageView, frame.stencilImageView, purposeId) )
 				{
 					TraceFatal{ClassId} << "Unable to create the depth buffer #" << imageIndex << " !";
 
 					return false;
 				}
-
-				if ( imageIndex == 0 )
-				{
-					m_renderPass->addAttachmentDescription(VkAttachmentDescription{
-						.flags = 0,
-						.format = m_depthStencilImages[imageIndex]->createInfo().format,
-						.samples = m_depthStencilImages[imageIndex]->createInfo().samples,
-						.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-						.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-						.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-						.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-						.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-						.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-					});
-
-					subpass.setDepthStencilAttachment(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-					TraceInfo{ClassId} << "Image (depth/stencil) #" << imageIndex << " attached to the render pass !";
-				}
-
-				m_framebuffers[imageIndex]->addAttachment(m_depthImageViews[imageIndex]->handle());
-
-				TraceInfo{ClassId} << "Image view (depth/stencil) #" << imageIndex << " attached to the framebuffer #" << imageIndex << " !";
 			}
+		}
 
-			if ( imageIndex == 0 )
-			{
-				m_renderPass->addSubpass(subpass);
+		return true;
+	}
 
-				//VkSubpassDependency subpassDependency{};
-				//subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-				//subpassDependency.dstSubpass = 0;
-				//subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-				//subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-				//subpassDependency.srcAccessMask = 0;
-				//subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				//subpassDependency.dependencyFlags = 0;
+	bool
+	SwapChain::createFramebuffers (const std::shared_ptr< RenderPass > & renderPass) noexcept
+	{
+		/* Create the frame buffer for each set of images using the same render pass. */
+		for ( size_t imageIndex = 0; imageIndex < m_imageCount; ++imageIndex )
+		{
+			auto & frame = m_frames[imageIndex];
 
-				//m_renderPass->addSubpassDependency(subpassDependency);
+			/* Prepare the framebuffer for attachments. */
+			frame.framebuffer = std::make_unique< Framebuffer >(renderPass, this->extent());
+			frame.framebuffer->setIdentifier((std::stringstream{} << "SwapChain-Frame" << imageIndex << "-Framebuffer").str());
 
-				if ( m_renderPass->createOnHardware() )
-				{
-					Tracer::success(ClassId, "Render pass is successfully created !");
-				}
-				else
-				{
-					Tracer::error(ClassId, "Unable to create a render pass !");
+			/* Color buffer. */
+			frame.framebuffer->addAttachment(frame.colorImageView->handle());
 
-					return false;
-				}
-			}
+			/* Depth/Stencil buffer. */
+			frame.framebuffer->addAttachment(frame.depthImageView->handle());
 
-			if ( m_framebuffers[imageIndex]->createOnHardware() )
-			{
-				TraceSuccess{ClassId} << "Framebuffer #" << imageIndex << " is successfully created !";
-			}
-			else
+			if ( !frame.framebuffer->createOnHardware() )
 			{
 				TraceError{ClassId} << "Unable to create a framebuffer #" << imageIndex << " !";
 
@@ -614,8 +496,99 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
+	std::shared_ptr< RenderPass >
+	SwapChain::createRenderPass (Renderer & renderer) const noexcept
+	{
+		auto renderPass = renderer.getRenderPass(ClassId, 0);
+
+		if ( !renderPass->isCreated() )
+		{
+			/* Prepare a sub-pass for the render pass. */
+			RenderSubPass subPass{VK_PIPELINE_BIND_POINT_GRAPHICS, 0};
+
+			/* Color buffer. */
+			{
+				const auto & colorBufferCreateInfo = m_frames.front().colorImage->createInfo();
+
+				renderPass->addAttachmentDescription(VkAttachmentDescription{
+					.flags = 0,
+					.format = colorBufferCreateInfo.format,
+					.samples = colorBufferCreateInfo.samples,
+					.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+					.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+					.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+					.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+					.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+					.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+				});
+
+				subPass.addColorAttachment(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+			}
+
+			/* Depth/Stencil buffer. */
+			{
+				const auto & depthStencilBufferCreateInfo = m_frames.front().depthStencilImage->createInfo();
+
+				renderPass->addAttachmentDescription(VkAttachmentDescription{
+					.flags = 0,
+					.format = depthStencilBufferCreateInfo.format,
+					.samples = depthStencilBufferCreateInfo.samples,
+					.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+					.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+					.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+					.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+					.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+					.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+				});
+
+				subPass.setDepthStencilAttachment(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			}
+
+			renderPass->addSubPass(subPass);
+
+			if ( !renderPass->createOnHardware() )
+			{
+				Tracer::error(ClassId, "Unable to create a render pass !");
+
+				return nullptr;
+			}
+		}
+
+		return renderPass;
+	}
+
 	bool
-	SwapChain::createColorBuffer (const VkImage & swapChainImage, std::shared_ptr< Vulkan::Image > & image, std::shared_ptr< Vulkan::ImageView > & imageView, const std::string & purposeId) noexcept
+	SwapChain::createFramebuffer (Renderer & renderer) noexcept
+	{
+		if ( m_imageCount == 0 )
+		{
+			Tracer::error(ClassId, "No image count to create the swap chain !");
+
+			return false;
+		}
+
+		if ( !this->createImages() )
+		{
+			Tracer::error(ClassId, "Unable to create the swap chain images !");
+
+			return false;
+		}
+
+		/* Create the render pass base on the first set of images (this is the swap chain, all images are technically the same) */
+		const auto renderPass = this->createRenderPass(renderer);
+
+		if ( !this->createFramebuffers(renderPass) )
+		{
+			Tracer::error(ClassId, "Unable to create the swap chain framebuffer !");
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
+	SwapChain::createColorBuffer (const VkImage & swapChainImage, std::shared_ptr< Image > & image, std::shared_ptr< ImageView > & imageView, const std::string & purposeId) const noexcept
 	{
 		/* NOTE: Create an image from existing data from the swap chain. */
 		image = Image::createFromSwapChain(this->device(), swapChainImage, m_createInfo);
@@ -654,34 +627,106 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
+	SwapChain::createDepthStencilBuffer (const std::shared_ptr< Device > & device, std::shared_ptr< Image > & image, std::shared_ptr< ImageView > & depthImageView, std::shared_ptr< ImageView > & stencilImageView, const std::string & purposeId) noexcept
+	{
+		image = std::make_shared< Image >(
+			device,
+			VK_IMAGE_TYPE_2D,
+			Instance::findDepthStencilFormat(device, this->precisions()),
+			this->extent(),
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			0, // flags
+			1, // Image mip levels
+			1, //m_createInfo.imageArrayLayers, // Image array layers
+			VK_SAMPLE_COUNT_1_BIT, // Image multi sampling
+			VK_IMAGE_TILING_OPTIMAL // Image tiling
+		);
+		image->setIdentifier(purposeId + "-Image");
+
+		if ( !image->createOnHardware() )
+		{
+			TraceError{ClassId} << "Unable to create image '" << purposeId << "' !";
+
+			return false;
+		}
+
+		const auto & imageCreateInfo = image->createInfo();
+
+		depthImageView = std::make_shared< ImageView >(
+			image,
+			VK_IMAGE_VIEW_TYPE_2D,
+			VkImageSubresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+				.baseMipLevel = 0,
+				.levelCount = imageCreateInfo.mipLevels,
+				.baseArrayLayer = 0,
+				.layerCount = imageCreateInfo.arrayLayers
+			}
+		);
+		depthImageView->setIdentifier(purposeId + "D-ImageView");
+
+		if ( !depthImageView->createOnHardware() )
+		{
+			TraceFatal{ClassId} << "Unable to create image view '" << purposeId << "' !";
+
+			return false;
+		}
+
+		stencilImageView = std::make_shared< ImageView >(
+			image,
+			VK_IMAGE_VIEW_TYPE_2D,
+			VkImageSubresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+				.baseMipLevel = 0,
+				.levelCount = imageCreateInfo.mipLevels,
+				.baseArrayLayer = 0,
+				.layerCount = imageCreateInfo.arrayLayers
+			}
+		);
+		stencilImageView->setIdentifier(purposeId + "S-ImageView");
+
+		if ( !stencilImageView->createOnHardware() )
+		{
+			TraceFatal{ClassId} << "Unable to create image view '" << purposeId << "' !";
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
 	SwapChain::createSynchronizationPrimitives () noexcept
 	{
 		for ( size_t imageIndex = 0; imageIndex < m_imageCount; ++imageIndex )
 		{
-			m_imageAvailableSemaphores[imageIndex] = std::make_unique< Sync::Semaphore >(this->device());
-			m_imageAvailableSemaphores[imageIndex]->setIdentifier((std::stringstream{} << "SwapChain-ImageAvailable" << imageIndex << "-Semaphore").str());
+			auto & frame = m_frames[imageIndex];
 
-			if ( !m_imageAvailableSemaphores[imageIndex]->createOnHardware() )
+			frame.imageAvailableSemaphore = std::make_unique< Sync::Semaphore >(this->device());
+			frame.imageAvailableSemaphore->setIdentifier((std::stringstream{} << "SwapChain-ImageAvailable" << imageIndex << "-Semaphore").str());
+
+			if ( !frame.imageAvailableSemaphore->createOnHardware() )
 			{
 				TraceError{ClassId} << "Unable to create a semaphore #" << imageIndex << " for image available !";
 
 				return false;
 			}
 
-			m_renderFinishedSemaphores[imageIndex] = std::make_unique< Sync::Semaphore >(this->device());
-			m_renderFinishedSemaphores[imageIndex]->setIdentifier((std::stringstream{} << "SwapChain-RenderFinished" << imageIndex << "-Semaphore").str());
+			frame.renderFinishedSemaphore = std::make_unique< Sync::Semaphore >(this->device());
+			frame.renderFinishedSemaphore->setIdentifier((std::stringstream{} << "SwapChain-RenderFinished" << imageIndex << "-Semaphore").str());
 
-			if ( !m_renderFinishedSemaphores[imageIndex]->createOnHardware() )
+			if ( !frame.renderFinishedSemaphore->createOnHardware() )
 			{
 				TraceError{ClassId} << "Unable to create a semaphore #" << imageIndex << " for image finished !";
 
 				return false;
 			}
 
-			m_inFlightFences[imageIndex] = std::make_unique< Sync::Fence >(this->device());
-			m_inFlightFences[imageIndex]->setIdentifier((std::stringstream{} << "SwapChain-ImageInFlight" << imageIndex << "-Fence").str());
+			frame.inFlightFence = std::make_unique< Sync::Fence >(this->device());
+			frame.inFlightFence->setIdentifier((std::stringstream{} << "SwapChain-ImageInFlight" << imageIndex << "-Fence").str());
 
-			if ( !m_inFlightFences[imageIndex]->createOnHardware() )
+			if ( !frame.inFlightFence->createOnHardware() )
 			{
 				TraceError{ClassId} << "Unable to create a fence #" << imageIndex << " for in-flight !";
 
@@ -692,16 +737,6 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	void
-	SwapChain::destroySynchronizationPrimitives () noexcept
-	{
-		m_flags[Ready] = false;
-
-		m_inFlightFences.clear();
-		m_renderFinishedSemaphores.clear();
-		m_imageAvailableSemaphores.clear();
-	}
-
 	bool
 	SwapChain::acquireNextImage (uint32_t & imageIndex) noexcept
 	{
@@ -710,7 +745,9 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		if ( !m_inFlightFences[m_currentFrame]->wait() )
+		const auto & currentFrame = m_frames.at(m_currentFrame);
+
+		if ( !currentFrame.inFlightFence->wait() )
 		{
 			Tracer::error(ClassId, "Something wrong happens while waiting the fence !");
 
@@ -721,7 +758,7 @@ namespace Emeraude::Vulkan
 			this->device()->handle(),
 			m_handle,
 			std::numeric_limits< uint64_t >::max(),
-			m_imageAvailableSemaphores[m_currentFrame]->handle(),
+			currentFrame.imageAvailableSemaphore->handle(),
 			VK_NULL_HANDLE,
 			&imageIndex
 		);
@@ -759,43 +796,46 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		if ( !m_inFlightFences[imageIndex]->wait() )
+		if ( !m_frames.at(imageIndex).inFlightFence->wait() )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", Something wrong happens while waiting the fence !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			TraceError{ClassId} << "Something wrong happens while waiting the fence for image #" << imageIndex << " !";
 
 			return false;
 		}
 
-		if ( !m_inFlightFences[m_currentFrame]->reset() )
+		const auto & currentFrame = m_frames.at(m_currentFrame);
+
+		if ( !currentFrame.inFlightFence->reset() )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", Unable to reset in-flight fence for image " << m_currentFrame << " !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			TraceError{ClassId} << " Unable to reset in-flight fence for image " << m_currentFrame << " !" "\n";
 
 			return false;
 		}
 
-		auto * graphicsQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
+		const std::lock_guard< std::mutex > deviceAccessLockGuard{this->device()->deviceAccessLock()};
 
-		if ( !graphicsQueue->submit(commandBuffer, *m_imageAvailableSemaphores[m_currentFrame], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, *m_renderFinishedSemaphores[m_currentFrame], *m_inFlightFences[m_currentFrame]) )
+		const auto * graphicsQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
+
+		auto * waitSemaphore = currentFrame.imageAvailableSemaphore->handle();
+		auto * signalSemaphore = currentFrame.renderFinishedSemaphore->handle();
+		auto * fence = currentFrame.inFlightFence->handle();
+
+		if ( !graphicsQueue->submit(commandBuffer, waitSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, signalSemaphore, fence) )
 		{
 			return false;
 		}
-
-		auto * waitSemaphoreHandle = m_renderFinishedSemaphores[m_currentFrame]->handle();
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
-
 		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &waitSemaphoreHandle;
-
+		presentInfo.pWaitSemaphores = &signalSemaphore;
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &m_handle;
-
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr;
 
-		auto * presentationQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
+		const auto * presentationQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
 
 		if ( !presentationQueue->present(&presentInfo, m_flags[SwapChainRecreationRequested]) )
 		{
@@ -807,81 +847,106 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	uint32_t
-	SwapChain::chooseMinimumImageCount () const noexcept
-	{
-		const auto & capabilities = m_window->surface()->capabilities();
-
-		/* NOTE: minimal images + 1. */
-		/*auto imageCount = capabilities.minImageCount + 1;
-
-		if ( capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount )
-			imageCount = capabilities.maxImageCount;*/
-
-		/* NOTE: We only use minimum image from capabilities for now. */
-		return capabilities.minImageCount;
-	}
-
-	VkSurfaceFormatKHR
-	SwapChain::chooseSurfaceFormat () const noexcept
-	{
-		const auto & formats = m_window->surface()->formats();
-
-		/* NOTE: Check for 24bits sRGB */
-		const auto formatIt = std::ranges::find_if(formats, [] (auto item) {
-			return item.format == VK_FORMAT_B8G8R8A8_SRGB && item.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		});
-
-		return formatIt != formats.cend() ? *formatIt : formats.at(0);
-	}
-
 	VkPresentModeKHR
 	SwapChain::choosePresentMode () const noexcept
 	{
 		const auto & presentModes = m_window->surface()->presentModes();
 
-		/*
-		 * VK_PRESENT_MODE_IMMEDIATE_KHR (tearing problem)
-		 * VK_PRESENT_MODE_MAILBOX_KHR (best, can implement triple-buffering)
-		 * VK_PRESENT_MODE_FIFO_KHR (always present)
-		 * VK_PRESENT_MODE_FIFO_RELAXED_KHR
-		 * VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR
-		 * VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR
-		 */
-		const auto modeIt = std::ranges::find_if(presentModes, [] (auto mode) {
-			return mode == VK_PRESENT_MODE_MAILBOX_KHR;
-		});
-
-		return modeIt != presentModes.cend() ? *modeIt : VK_PRESENT_MODE_FIFO_KHR;
-	}
-
-	VkExtent2D
-	SwapChain::chooseSwapExtent () const noexcept
-	{
-		const auto & capabilities = m_window->surface()->capabilities();
-
-		if ( capabilities.currentExtent.width <= std::numeric_limits< uint32_t >::max() )
+		if ( m_flags[ShowInformation] )
 		{
-			return capabilities.currentExtent;
+			std::stringstream info;
+
+			info << "Present modes available :" "\n";
+
+			for ( const auto presentMode : presentModes )
+			{
+				switch ( presentMode )
+				{
+					// NOTE: Tearing.
+					case VK_PRESENT_MODE_IMMEDIATE_KHR :
+						info << " - VK_PRESENT_MODE_IMMEDIATE_KHR" "\n";
+						break;
+
+					// NOTE: No tearing.
+					case VK_PRESENT_MODE_MAILBOX_KHR :
+						info << " - VK_PRESENT_MODE_MAILBOX_KHR" "\n";
+						break;
+
+					// NOTE: Always available, no tearing.
+					case VK_PRESENT_MODE_FIFO_KHR :
+						info << " - VK_PRESENT_MODE_FIFO_KHR" "\n";
+						break;
+
+					// NOTE: Tearing on timeout.
+					case VK_PRESENT_MODE_FIFO_RELAXED_KHR :
+						info << " - VK_PRESENT_MODE_FIFO_RELAXED_KHR" "\n";
+						break;
+
+					case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR :
+						info << " - VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR" "\n";
+						break;
+
+					case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR :
+						info << " - VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR" "\n";
+						break;
+
+					default:
+						info << " - UNKNOWN MODE !" "\n";
+						break;
+				}
+			}
+
+			TraceInfo{ClassId} << info.str();
 		}
 
-		const auto & min = capabilities.minImageExtent;
-		const auto & max = capabilities.maxImageExtent;
+		if ( m_flags[VSyncEnabled] )
+		{
+			if ( std::ranges::find(presentModes, VK_PRESENT_MODE_MAILBOX_KHR) != presentModes.cend() )
+			{
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "The swap chain will use MAILBOX as presentation mode.";
+				}
 
-		/* NOTE: Get the current framebuffer dimensions from GLFW. */
-		int width = 0;
-		int height = 0;
+				return VK_PRESENT_MODE_MAILBOX_KHR;
+			}
+		}
+		else if ( m_flags[TripleBufferingEnabled] )
+		{
+			if ( std::ranges::find(presentModes, VK_PRESENT_MODE_FIFO_RELAXED_KHR) != presentModes.cend() )
+			{
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "The swap chain will use FIFO_RELAXED as presentation mode.";
+				}
 
-		glfwGetFramebufferSize(m_window->handle(), &width, &height);
+				return VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+			}
+		}
+		else
+		{
+			if ( std::ranges::find(presentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != presentModes.cend() )
+			{
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "The swap chain will use IMMEDIATE as presentation mode.";
+				}
 
-		return {
-			std::max(min.width, std::min(max.width, static_cast< uint32_t >(width))),
-			std::max(min.height, std::min(max.height, static_cast< uint32_t >(height)))
-		};
+				return VK_PRESENT_MODE_IMMEDIATE_KHR;
+			}
+		}
+
+		if ( m_flags[ShowInformation] )
+		{
+			TraceInfo{ClassId} << "The swap chain will use FIFO as presentation mode.";
+		}
+
+		/* Default presentation mode (Always available). */
+		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
 	void
-	SwapChain::updateDeviceFromCoordinates (const Coordinates< float > & worldCoordinates, const Vector< 3, float > & worldVelocity) noexcept
+	SwapChain::updateDeviceFromCoordinates (const CartesianFrame< float > & worldCoordinates, const Vector< 3, float > & worldVelocity) noexcept
 	{
 		m_viewMatrices.updateViewCoordinates(worldCoordinates, worldVelocity);
 	}
@@ -890,7 +955,6 @@ namespace Emeraude::Vulkan
 	SwapChain::updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept
 	{
 		const auto & extent = this->extent();
-
 		const auto width = static_cast< float >(extent.width);
 		const auto height = static_cast< float >(extent.height);
 

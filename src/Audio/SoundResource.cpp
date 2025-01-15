@@ -1,37 +1,37 @@
 /*
- * Emeraude/Audio/SoundResource.cpp
- * This file is part of Emeraude
+ * src/Audio/SoundResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "SoundResource.hpp"
 
-/* Local inclusions */
-#include "Manager.hpp"
+/* Local inclusions. */
+#include "Libraries/WaveFactory/Processor.hpp"
 #include "Resources/Manager.hpp"
+#include "Manager.hpp"
 #include "Tracer.hpp"
-#include "WaveFactory/Processor.hpp"
 
 /* Defining the resource manager ClassId. */
 template<>
@@ -39,13 +39,13 @@ const char * const Emeraude::Resources::Container< Emeraude::Audio::SoundResourc
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Audio::SoundResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Audio::SoundResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Audio
 {
 	using namespace Libraries;
 
-	const size_t SoundResource::ClassUID{Observable::getClassUID()};
+	const size_t SoundResource::ClassUID{getClassUID(ClassId)};
 
 	SoundResource::SoundResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -54,40 +54,9 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	SoundResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	size_t
-	SoundResource::streamable () const noexcept
-	{
-		return 0;
-	}
-
-	std::shared_ptr< const Buffer >
-	SoundResource::buffer (size_t /*bufferIndex*/) const noexcept
-	{
-		return m_buffer;
-	}
-
-	const char *
-	SoundResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
-	bool
 	SoundResource::load () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -98,8 +67,7 @@ namespace Emeraude::Audio
 		}
 
 		const auto frequencyPlayback = Manager::instance()->frequencyPlayback();
-
-		auto oneSecond = 1 * static_cast< size_t >(frequencyPlayback);
+		const auto oneSecond = 1U * static_cast< size_t >(frequencyPlayback);
 
 		if ( !m_localData.initialize(oneSecond, WaveFactory::Channels::Mono, frequencyPlayback) )
 		{
@@ -115,9 +83,9 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	SoundResource::load (const Path::File & filepath) noexcept
+	SoundResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -186,7 +154,7 @@ namespace Emeraude::Audio
 	bool
 	SoundResource::load (const Json::Value & /*data*/) noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -201,26 +169,21 @@ namespace Emeraude::Audio
 		return this->setLoadSuccess(false);
 	}
 
-	const WaveFactory::Wave< short int > &
-	SoundResource::localData () const noexcept
-	{
-		return m_localData;
-	}
-
-	WaveFactory::Wave< short int > &
-	SoundResource::localData () noexcept
-	{
-		return m_localData;
-	}
-
 	bool
 	SoundResource::onDependenciesLoaded () noexcept
 	{
 		m_buffer = std::make_shared< Buffer >();
 
-		if ( !m_buffer->isCreated() || !m_buffer->feedData(m_localData, 0, 0) )
+		if ( !m_buffer->isCreated() )
 		{
-			Tracer::error(ClassId, "Unable to load Buffer in audio memory !");
+			Tracer::error(ClassId, "Unable to create a buffer in audio memory !");
+
+			return false;
+		}
+
+		if ( !m_buffer->feedData(m_localData, 0, 0) )
+		{
+			Tracer::error(ClassId, "Unable to load local data in audio buffer !");
 
 			return false;
 		}
@@ -231,7 +194,7 @@ namespace Emeraude::Audio
 	std::shared_ptr< SoundResource >
 	SoundResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->sounds().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->sounds().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< SoundResource >

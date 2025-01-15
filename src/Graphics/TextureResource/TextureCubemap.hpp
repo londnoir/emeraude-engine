@@ -1,39 +1,45 @@
 /*
- * Emeraude/Graphics/TextureResource/TextureCubemap.hpp
- * This file is part of Emeraude
+ * src/Graphics/TextureResource/TextureCubemap.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
+#include <cstddef>
 #include <memory>
-#include <array>
+#include <string>
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
+
+/* Local inclusions for usages. */
+#include "Libraries/PixelFactory/Color.hpp"
 #include "Resources/Container.hpp"
+#include "Resources/ResourceTrait.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
@@ -59,7 +65,7 @@ namespace Emeraude::Graphics::TextureResource
 	{
 		friend class Resources::Container< TextureCubemap >;
 
-		using Resources::ResourceTrait::load;
+		using ResourceTrait::load;
 
 		public:
 
@@ -76,10 +82,42 @@ namespace Emeraude::Graphics::TextureResource
 			 */
 			explicit TextureCubemap (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @brief Cleans video memory. */
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			TextureCubemap (const TextureCubemap & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			TextureCubemap (TextureCubemap && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return TextureCubemap &
+			 */
+			TextureCubemap & operator= (const TextureCubemap & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return TextureCubemap &
+			 */
+			TextureCubemap & operator= (TextureCubemap && copy) noexcept = delete;
+
+			/**
+			 * @brief Constructs the texture cubemap resource.
+			 */
 			~TextureCubemap () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -88,10 +126,14 @@ namespace Emeraude::Graphics::TextureResource
 			bool isCreated () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::createOnHardware() */
-			bool createOnHardware () noexcept override;
+			bool createOnHardware (Renderer & renderer) noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
+
+			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::type() */
+			[[nodiscard]]
+			Type type () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isGrayScale() */
 			[[nodiscard]]
@@ -111,33 +153,41 @@ namespace Emeraude::Graphics::TextureResource
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameCount() */
 			[[nodiscard]]
-			size_t frameCount () const noexcept override;
+			uint32_t frameCount () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::duration() */
 			[[nodiscard]]
-			size_t duration () const noexcept override;
+			uint32_t duration () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameIndexAt() */
+			[[nodiscard]]
+			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::image() */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Image > & image () const noexcept final;
+			std::shared_ptr< Vulkan::Image > image () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::imageView() */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::ImageView > & imageView () const noexcept final;
+			std::shared_ptr< Vulkan::ImageView > imageView () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::sampler() */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Sampler > & sampler () const noexcept final;
+			std::shared_ptr< Vulkan::Sampler > sampler () const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
+			[[nodiscard]]
+			bool request3DTextureCoordinates () const noexcept override;
+
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load (const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load (const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load (const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
@@ -167,10 +217,10 @@ namespace Emeraude::Graphics::TextureResource
 
 		private:
 
+			std::shared_ptr< CubemapResource > m_localData{};
 			std::shared_ptr< Vulkan::Image > m_image{};
 			std::shared_ptr< Vulkan::ImageView > m_imageView{};
 			std::shared_ptr< Vulkan::Sampler > m_sampler{};
-			std::shared_ptr< CubemapResource > m_localData{};
 	};
 }
 

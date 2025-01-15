@@ -1,36 +1,42 @@
 /*
- * Emeraude/Graphics/Renderable/SpriteResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/SpriteResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "SpriteResource.hpp"
 
+/* STL inclusions. */
+#include <cmath>
+
 /* Local inclusions. */
-#include "Tracer.hpp"
+#include "Libraries/VertexFactory/ShapeBuilder.hpp"
+#include "Libraries/FastJSON.hpp"
+#include "Graphics/Geometry/IndexedVertexResource.hpp"
+#include "Graphics/Material/BasicResource.hpp"
+#include "Graphics/Material/Helpers.hpp"
 #include "Resources/Manager.hpp"
-#include "VertexFactory/ShapeGenerator.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -38,7 +44,7 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderabl
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SpriteResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SpriteResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Renderable
 {
@@ -48,147 +54,26 @@ namespace Emeraude::Graphics::Renderable
 	using namespace Saphir;
 	using namespace Saphir::Keys;
 
-	const size_t SpriteResource::ClassUID{Observable::getClassUID()};
+	const size_t SpriteResource::ClassUID{getClassUID(ClassId)};
+	std::mutex SpriteResource::s_lockGeometryLoading{};
 
 	SpriteResource::SpriteResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: Interface(name, resourceFlagBits)
+		: Interface(name, IsSprite | resourceFlagBits)
 	{
 
-	}
-
-	bool
-	SpriteResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	void
-	SpriteResource::setReadyForInstanciation (bool state) noexcept
-	{
-		if ( state )
-			this->enableFlag(IsReadyForInstanciation);
-		else
-			this->disableFlag(IsReadyForInstanciation);
-	}
-
-	bool
-	SpriteResource::isReadyForInstantiation () const noexcept
-	{
-		return this->isFlagEnabled(IsReadyForInstanciation);
-	}
-
-	size_t
-	SpriteResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	bool
-	SpriteResource::isOpaque (size_t) const noexcept
-	{
-		if ( m_material != nullptr )
-			return m_material->isOpaque();
-
-		return true;
-	}
-
-	const Geometry::Interface *
-	SpriteResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	SpriteResource::material (size_t) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const Cuboid< float > &
-	SpriteResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-			return Interface::NullBoundingBox;
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	SpriteResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-			return Interface::NullBoundingSphere;
-
-		return m_geometry->boundingSphere();
-	}
-
-	int
-	SpriteResource::flags (size_t) const noexcept
-	{
-		return m_renderableFlags;
-	}
-
-	void
-	SpriteResource::setSize (float value) noexcept
-	{
-		m_size = value;
-	}
-
-	float
-	SpriteResource::size () const noexcept
-	{
-		return m_size;
-	}
-
-	float
-	SpriteResource::duration () const noexcept
-	{
-		if ( m_material == nullptr )
-		{
-			Tracer::warning(ClassId, "Material is not yet loaded ! Unable to get the Sprite duration.");
-
-			return 0.0F;
-		}
-
-		return m_material->duration();
-	}
-
-	size_t
-	SpriteResource::frameCount () const noexcept
-	{
-		if ( m_material == nullptr )
-		{
-			Tracer::warning(ClassId, "Material is not yet loaded ! Unable to get the Sprite frame count.");
-
-			return 1;
-		}
-
-		return m_material->frameCount();
-	}
-
-	const char *
-	SpriteResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
 	SpriteResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
-		/* Checks the quad geometry. */
-		if ( !this->loadGeometry(CenteredQuadGeometryName) )
+		if ( !this->prepareGeometry(false, false, false) )
 		{
 			Tracer::error(ClassId, "Unable to get default Geometry to generate the default Sprite !");
 
@@ -196,9 +81,10 @@ namespace Emeraude::Graphics::Renderable
 		}
 
 		if ( !this->setMaterial(Material::BasicResource::getDefault()) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
-		/* Checks if all is loaded */
 		return this->setLoadSuccess(this->addDependency(m_material.get()));
 	}
 
@@ -206,97 +92,227 @@ namespace Emeraude::Graphics::Renderable
 	SpriteResource::load (const Json::Value & data) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
-
-		this->setReadyForInstanciation(false);
-
-		auto centerAtBottom = false;
-
-		/* Gets Sprite options. */
-		if ( data.isMember(SizeKey) )
-		{
-			if ( data[SizeKey].isNumeric() )
-				m_size = data[SizeKey].asFloat();
-			else
-				TraceError{ClassId} << "The '" << SizeKey << "' key in Sprite definition must be a float !";
 		}
 
-		if ( data.isMember(CenterAtBottomKey) )
+		this->setReadyForInstantiation(false);
+
+		const auto materialResource = Resources::Manager::instance()->basicMaterials().getOrCreateResource(
+			"SpriteMaterial" + this->name(),
+			[&data] (Material::BasicResource & newMaterial)
+			{
+				if ( !data.isMember(Material::JKData) || !data[Material::JKData].isObject() )
+				{
+					TraceError{ClassId} << "The key '" << Material::JKData << "' JSON structure is not present or not an object !";
+
+					return newMaterial.setManualLoadSuccess(false);
+				}
+
+				const auto & componentData = data[Material::JKData];
+
+				/* Check the texture type. */
+				const auto type = FastJSON::getString(data, Material::JKType);
+
+				switch ( to_FillingType(type) )
+				{
+					case FillingType::Texture :
+					{
+						const auto textureResource = TextureResource::Texture2D::get(FastJSON::getString(componentData, Material::JKName));
+
+						if ( !newMaterial.setTexture(textureResource, true) )
+						{
+							return newMaterial.setManualLoadSuccess(false);
+						}
+					}
+						break;
+
+					case FillingType::AnimatedTexture :
+					{
+						const auto textureResource = TextureResource::AnimatedTexture2D::get(FastJSON::getString(componentData, Material::JKName));
+
+						if ( !newMaterial.setTexture(textureResource, true) )
+						{
+							return newMaterial.setManualLoadSuccess(false);
+						}
+					}
+						break;
+
+					default:
+						TraceError{ClassId} << "Unhandled material type (" << type << ") for sprite !";
+
+						return newMaterial.setManualLoadSuccess(false);
+				}
+
+				/* Check the blending mode. */
+				newMaterial.enableBlendingFromJson(data);
+
+				/* Check the optional global auto-illumination amount. */
+				const auto autoIllumination = FastJSON::getNumber< float >(data, Material::JKAutoIllumination, 0.0F);
+
+				if ( autoIllumination > 0.0F )
+				{
+					newMaterial.setAutoIlluminationAmount(autoIllumination);
+				}
+
+				/* Check the optional global opacity. */
+				const auto opacity = FastJSON::getNumber< float >(data, Material::JKOpacity, 1.0F);
+
+				if ( opacity < 1.0F )
+				{
+					newMaterial.setOpacity(opacity);
+				}
+
+				return newMaterial.setManualLoadSuccess(true);
+			},
+			0
+		);
+
+		if ( !this->setMaterial(materialResource) )
 		{
-			if ( data[CenterAtBottomKey].isBool() )
-				centerAtBottom = data[CenterAtBottomKey].asBool();
-			else
-				TraceError{ClassId} << "The '" << CenterAtBottomKey << "' key in Sprite definition must be a boolean !";
+			TraceError{ClassId} << "Unable to load sprite material '" << materialResource->name() << "' !";
+
+			return this->setLoadSuccess(false);
 		}
 
-		/* Checks the quad geometry. */
-		if ( !this->loadGeometry(centerAtBottom ? BottomQuadGeometryName : CenteredQuadGeometryName) )
+		const auto isAnimated = to_FillingType(FastJSON::getString(data, Material::JKType)) == FillingType::AnimatedTexture;
+		const auto centerAtBottom = FastJSON::getBoolean(data, JKCenterAtBottomKey, false);
+		const auto flip = FastJSON::getBoolean(data, JKFlipKey, false);
+
+		if ( !this->prepareGeometry(isAnimated, centerAtBottom, flip) )
 		{
 			Tracer::error(ClassId, "Unable to get default Geometry to generate the default Sprite !");
 
 			return this->setLoadSuccess(false);
 		}
 
-		/* Creates and load material. */
-		auto materialName = this->name() + "Material";
-
-		auto materialResource = Resources::Manager::instance()
-			->basicMaterials()
-			.createResource(materialName);
-
-		if ( !this->setMaterial(materialResource) )
-		{
-			TraceError{ClassId} << "Unable to load SpriteMaterial '" << materialName << "' !";
-
-			return this->setLoadSuccess(false);
-		}
+		m_size = FastJSON::getNumber< float >(data, JKSizeKey, 1.0F);
 
 		return this->setLoadSuccess(true);
 	}
 
 	bool
-	SpriteResource::loadGeometry (const char * const geometryName) noexcept
+	SpriteResource::load (const std::shared_ptr< Material::Interface > & material, bool centerAtBottom, bool flip, const RasterizationOptions & /*rasterizationOptions*/) noexcept
 	{
-		auto & geometries = Resources::Manager::instance()->indexedVertexGeometries();
-
-		if ( geometries.isResourceAvailable(geometryName) )
-			return this->setGeometry(geometries.getResource(geometryName));
-
-		ShapeBuilderOptions< float > options{};
-		options.setCenterAtBottom(geometryName == BottomQuadGeometryName);
-
-		auto shape = ShapeGenerator::generateQuad(1.0F, 1.0F, options);
-
-		auto geometryMateriel = std::make_shared< Geometry::IndexedVertexResource >(
-			geometryName,
-			Geometry::EnableTangentSpace | Geometry::EnablePrimaryTextureCoordinates
-		);
-
-		if ( !geometryMateriel->load(shape) )
+		if ( !this->beginLoading() )
 		{
-			Tracer::error(ClassId, "Unable to generate the Geometry for every Sprite !");
-
 			return false;
 		}
 
-		geometries.addResource(geometryMateriel);
+		if ( !this->prepareGeometry(material->isAnimated(), centerAtBottom, flip) )
+		{
+			Tracer::error(ClassId, "Unable to get default Geometry to generate the default Sprite !");
 
-		return this->setGeometry(geometryMateriel);
+			return this->setLoadSuccess(false);
+		}
+
+		/* 2. Check the materials. */
+		if ( material == nullptr )
+		{
+			TraceError{ClassId} << "Unable to set material for sprite '" << this->name() << "' !";
+
+			return this->setLoadSuccess(false);
+		}
+
+		this->setMaterial(material/*, rasterizationOptions, 0*/);
+
+		return this->setLoadSuccess(true);
 	}
 
 	bool
-	SpriteResource::setGeometry (const std::shared_ptr< Geometry::Interface > & geometryResource) noexcept
+	SpriteResource::prepareGeometry (bool isAnimated, bool centerAtBottom, bool flip) noexcept
 	{
+		const std::lock_guard< std::mutex > lock{s_lockGeometryLoading};
+
+		std::stringstream resourceName;
+		resourceName << "QuadSprite" << isAnimated << centerAtBottom << flip;
+
+		int flags = Geometry::EnableNormal | Geometry::EnablePrimaryTextureCoordinates;
+
+		if ( isAnimated )
+		{
+			flags |= Geometry::Enable3DPrimaryTextureCoordinates;
+		}
+
+		const auto geometryResource = Resources::Manager::instance()->indexedVertexGeometries().getOrCreateResource(
+			resourceName.str(),
+			[isAnimated, centerAtBottom, flip] (Geometry::IndexedVertexResource & newGeometry)
+			{
+				Shape< float_t > shape{2 * MaxFrames};
+				ShapeBuilder< float_t > builder{shape};
+
+				builder.beginConstruction(ConstructionMode::TriangleStrip);
+				builder.options().enableGlobalNormal(Vector< 3, float_t >::positiveZ());
+
+				const auto Ua = flip ? 1.0F : 0.0F;
+				const auto Ub = flip ? 0.0F : 1.0F;
+
+				const Vector< 3, float_t > positionA{-0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
+				const Vector< 3, float_t > positionB{-0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
+				const Vector< 3, float_t > positionC{ 0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
+				const Vector< 3, float_t > positionD{ 0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
+
+				if ( isAnimated )
+				{
+					for ( size_t frameIndex = 0; frameIndex < MaxFrames; frameIndex++ )
+					{
+						const auto depth = static_cast< float >(frameIndex);
+
+						builder.newGroup();
+
+						builder.setPosition(positionA);
+						builder.setTextureCoordinates(Ua, 0.0F, depth);
+						builder.newVertex();
+
+						builder.setPosition(positionB);
+						builder.setTextureCoordinates(Ua, 1.0F, depth);
+						builder.newVertex();
+
+						builder.setPosition(positionC);
+						builder.setTextureCoordinates(Ub, 0.0F, depth);
+						builder.newVertex();
+
+						builder.setPosition(positionD);
+						builder.setTextureCoordinates(Ub, 1.0F, depth);
+						builder.newVertex();
+					}
+				}
+				else
+				{
+					builder.newGroup();
+
+					builder.setPosition(positionA);
+					builder.setTextureCoordinates(Ua, 0.0F, 0.0F);
+					builder.newVertex();
+
+					builder.setPosition(positionB);
+					builder.setTextureCoordinates(Ua, 1.0F, 0.0F);
+					builder.newVertex();
+
+					builder.setPosition(positionC);
+					builder.setTextureCoordinates(Ub, 0.0F, 0.0F);
+					builder.newVertex();
+
+					builder.setPosition(positionD);
+					builder.setTextureCoordinates(Ub, 1.0F, 0.0F);
+					builder.newVertex();
+				}
+
+				builder.endConstruction();
+
+				return newGeometry.load(shape);
+			},
+			flags
+		);
+
 		if ( geometryResource == nullptr )
 		{
-			TraceError{ClassId} <<
-				"The geometry resource is null ! "
-				"Unable to attach it to the renderable object '" << this->name() << "' " << this << ".";
+			TraceError{ClassId} << "Unable to get or create the geometry resource for sprite resource '" << this->name() << "'.";
 
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		m_geometry = geometryResource;
 
@@ -315,7 +331,7 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		m_material = materialResource;
 
@@ -323,17 +339,17 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	SpriteResource::prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept
+	SpriteResource::onDependenciesLoaded () noexcept
 	{
-		TraceWarning{ClassId} << "Not done yet !";
+		this->setReadyForInstantiation(true);
 
-		return false;
+		return true;
 	}
 
 	std::shared_ptr< SpriteResource >
 	SpriteResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->sprites().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->sprites().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< SpriteResource >

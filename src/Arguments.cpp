@@ -1,137 +1,177 @@
 /*
- * Emeraude/Arguments.cpp
- * This file is part of Emeraude
+ * src/Arguments.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Arguments.hpp"
 
-/* C/C++ standard libraries. */
-#include <iostream>
+/* STL inclusions. */
 #include <cstring>
-#include <sstream>
+#include <iostream>
 
-/* Local inclusions */
-#include "String.hpp"
+/* Local inclusions. */
+#if IS_WINDOWS
+#include "PlatformSpecific/Helpers.hpp"
+#endif
+#include "Libraries/String.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude
 {
 	using namespace Libraries;
 
-	const size_t Arguments::ClassUID{Observable::getClassUID()};
-	Arguments * Arguments::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t Arguments::ClassUID{getClassUID(ClassId)};
+	Arguments * Arguments::s_instance{nullptr};
 
-	Arguments::Arguments (int argc, const char * argv[]) noexcept
-		: ServiceInterface(ClassId), m_argc(argc), m_argv(argv)
+	Arguments::Arguments (int argc, char * * argv) noexcept
+		: ServiceInterface(ClassId)
 	{
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
 
 		s_instance = this;
 
-		if ( argc > 0 && m_argv != nullptr )
+		/* NOTE: Create a copy of main() arguments. */
+		if ( argc > 0 && argv != nullptr )
 		{
-			m_argvCopy = new char * [static_cast< size_t >(argc)];
+			m_rawArguments.reserve(argc);
 
-			for ( auto i = 0; i < argc; i++ )
+			for ( int argIndex = 0; argIndex < argc; argIndex++ )
 			{
-				const auto length = std::strlen(argv[i]) + 1;
-
-				m_argvCopy[i] = new char[length];
-
-				//strcpy(m_argvCopy[i], argv[i]); // Standard C way, but unsecure.
-				//strlcpy(m_argvCopy[i], argv[i], length); // Secure way, but not standard
-				strncpy(m_argvCopy[i], argv[i], length);
+				m_rawArguments.emplace_back(argv[argIndex]);
 			}
 		}
 	}
+
+#if IS_WINDOWS
+    Arguments::Arguments (int argc, wchar_t * * wargv) noexcept
+        : ServiceInterface(ClassId)
+    {
+        if ( s_instance != nullptr )
+        {
+            std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
+
+            std::terminate();
+        }
+
+        s_instance = this;
+
+        /* NOTE: Create a copy of main() arguments. */
+        if ( argc > 0 && wargv != nullptr )
+        {
+            m_rawArguments.reserve(argc);
+
+            for ( int argIndex = 0; argIndex < argc; argIndex++ )
+            {
+                std::wstring tmp{wargv[argIndex]};
+
+                m_rawArguments.emplace_back(PlatformSpecific::convertWideToUTF8(tmp));
+            }
+        }
+    }
+#endif
 
 	Arguments::~Arguments ()
 	{
-		if ( m_argvCopy != nullptr )
-		{
-			for ( auto i = 0; i < m_argc; i++ )
-			{
-				delete[] m_argvCopy[i];
+		s_instance = nullptr;
 
-				m_argvCopy[i] = nullptr;
+		if ( m_argv != nullptr )
+		{
+			for ( int argIndex = 0; argIndex < m_argc; argIndex++ )
+			{
+				delete[] m_argv[argIndex];
+
+				m_argv[argIndex] = nullptr;
 			}
 
-			delete[] m_argvCopy;
+			delete[] m_argv;
 
-			m_argvCopy = nullptr;
+			m_argv = nullptr;
 		}
-
-		s_instance = nullptr;
 	}
 
-	Arguments *
-	Arguments::instance () noexcept
+	void
+	Arguments::addArgument (const std::string & argument) noexcept
 	{
-		return s_instance;
-	}
+		m_rawArguments.emplace_back(argument);
 
-	bool
-	Arguments::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
+		if ( argument.find_first_of('=') != std::string::npos )
 		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
+			const auto list = String::explode(argument, '=');
 
-			return false;
+			m_arguments.emplace(list[0], list[1]);
 		}
-
-		return classUID == ClassUID;
+		else
+		{
+			m_arguments.emplace(argument, "1");
+		}
 	}
 
-	bool
-	Arguments::usable () const noexcept
+	void
+	Arguments::recreateRawArguments () const noexcept
 	{
-		return m_argc > 0;
+		m_argc = static_cast< int >(m_rawArguments.size());
+		m_argv = new char * [static_cast< size_t >(m_argc)];
+
+		for ( auto it = m_rawArguments.cbegin(); it != m_rawArguments.cend(); ++it )
+		{
+			const auto argIndex = std::distance(m_rawArguments.cbegin(), it);
+			const auto strlen = it->size();
+
+			m_argv[argIndex] = new char[strlen + 1];
+
+			strncpy(m_argv[argIndex], it->data(), strlen);
+
+			m_argv[argIndex][strlen] = '\0';
+		}
 	}
 
 	int
 	Arguments::getArgc () const noexcept
 	{
+		if ( m_argv == nullptr )
+		{
+			this->recreateRawArguments();
+		}
+
 		return m_argc;
 	}
 
-	const char * *
+	char * *
 	Arguments::getArgv () const noexcept
 	{
-		return m_argv;
-	}
+		if ( m_argv == nullptr )
+		{
+			this->recreateRawArguments();
+		}
 
-	char * *
-	Arguments::getArgvCopy () const noexcept
-	{
-		return m_argvCopy;
+		return m_argv;
 	}
 
 	Argument
@@ -139,12 +179,12 @@ namespace Emeraude
 	{
 		const auto argIt = m_arguments.find(name);
 
-		if ( argIt != m_arguments.cend() )
+		if ( argIt == m_arguments.cend() )
 		{
-			return argIt->second;
+			return Argument{false};
 		}
 
-		return {};
+		return argIt->second;
 	}
 
 	Argument
@@ -164,7 +204,7 @@ namespace Emeraude
 			return argIt->second;
 		}
 
-		return {};
+		return Argument{false};
 	}
 
 	Argument
@@ -180,36 +220,55 @@ namespace Emeraude
 			}
 		}
 
-		return {};
+		return Argument{false};
 	}
 
-	const std::string &
-	Arguments::getBinaryPath () const noexcept
+	std::string
+	Arguments::packForCommandLine () const noexcept
 	{
-		return m_binaryPath;
+		std::stringstream output;
+
+		for ( const auto & [name, argument] : m_arguments )
+		{
+			if ( argument.isSwitch() )
+			{
+				output << name << ' ';
+			}
+			else
+			{
+				output << name << '=' << argument << ' ';
+			}
+		}
+
+		return output.str();
 	}
 
 	bool
 	Arguments::onInitialize () noexcept
 	{
-		m_binaryPath = m_argv[0];
-
-		/* NOTE : We execute at 1 because we don't
-		 * care about the binary name. */
-		for ( auto arg = 1; arg < m_argc; arg++ )
+		if ( m_rawArguments.empty() )
 		{
-			const auto nextArg = arg + 1;
+			TraceError{ClassId} << "There is no argument to evaluate !";
 
-			std::string value{m_argv[arg]};
+			return false;
+		}
 
-			if ( value[0] != '-' )
+		auto argIt = m_rawArguments.cbegin();
+
+		m_binaryFilepath = *argIt;
+
+		for ( ++argIt; argIt != m_rawArguments.cend(); ++argIt )
+		{
+			const auto & value = *argIt;
+
+			if ( !value.starts_with('-') )
 			{
 				std::cerr << "Invalid argument : " << value << '\n';
 
 				continue;
 			}
 
-			/* Checks the form --xxx=yyy */
+			/* NOTE: Checking the form --xxx=yyy */
 			if ( value.find_first_of('=') != std::string::npos )
 			{
 				auto chunks = String::explode(value, '=', false);
@@ -219,21 +278,31 @@ namespace Emeraude
 				continue;
 			}
 
-			/* Checks the form --xxx yyy */
-			if ( nextArg < m_argc && m_argv[nextArg][0] != '-' )
-			{
-				/* We assume the arg is the parameter value. */
-				m_arguments.emplace(std::piecewise_construct, std::forward_as_tuple(value), std::forward_as_tuple(m_argv[nextArg]));
+			auto nextArgIt = std::next(argIt);
 
-				arg++;
+			/* NOTE: Checking the form --xxx yyy */
+			if ( nextArgIt != m_rawArguments.cend() && !nextArgIt->starts_with('-') )
+			{
+				const auto & nextValue = *nextArgIt;
+
+				/* We assume the arg is the parameter value. */
+				m_arguments.emplace(std::piecewise_construct, std::forward_as_tuple(value), std::forward_as_tuple(nextValue));
+
+				++argIt;
 
 				continue;
 			}
 
-			/* NOTE: we put "1" to makes argument returning true
-			 * when calling ArgumentValue::isPresent(). */
-			m_arguments.emplace(std::piecewise_construct, std::forward_as_tuple(value), std::forward_as_tuple("1"));
+			/* NOTE: we put "1" to makes argument returning true when calling ArgumentValue::isPresent(). */
+			m_arguments.emplace(std::piecewise_construct, std::forward_as_tuple(value), std::forward_as_tuple(true));
 		}
+
+		if ( this->get("--verbose").isPresent() )
+		{
+			std::cout << *this << '\n';
+		}
+
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -241,6 +310,9 @@ namespace Emeraude
 	bool
 	Arguments::onTerminate () noexcept
 	{
+		m_flags[ServiceInitialized] = false;
+
+		m_rawArguments.clear();
 		m_arguments.clear();
 
 		return true;
@@ -250,13 +322,22 @@ namespace Emeraude
 	operator<< (std::ostream & out, const Arguments & obj)
 	{
 		if ( obj.m_arguments.empty() )
-		{ return out << "Arguments : NONE" "\n"; }
-
-		out << "Arguments :\n";
-
-		for ( const auto & argument : obj.m_arguments )
 		{
-			out << argument.first << " = " << argument.second << '\n';
+			return out << "Executable arguments : NONE" "\n";
+		}
+
+		out << "Executable arguments :" "\n";
+
+		for ( const auto & [name, argument] : obj.m_arguments )
+		{
+			if ( argument.isSwitch() )
+			{
+				out << name << '\n';
+			}
+			else
+			{
+				out << name << " = " << argument << '\n';
+			}
 		}
 
 		return out;
@@ -265,6 +346,10 @@ namespace Emeraude
 	std::string
 	to_string (const Arguments & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

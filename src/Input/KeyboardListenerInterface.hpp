@@ -1,54 +1,47 @@
 /*
- * Emeraude/Input/KeyboardListenerInterface.hpp
- * This file is part of Emeraude
+ * src/Input/KeyboardListenerInterface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* Local inclusion for inheritances. */
-#include "AbstractInputListener.hpp"
-
-/* Local inclusions for usages. */
-#include "KeyboardTypes.hpp"
+/* STL inclusions. */
+#include <cstdint>
+#include <array>
+#include <iostream>
 
 namespace Emeraude::Input
 {
 	/**
-	 * @brief The class defines a keyboard input listener interface to be implemented by a service.
-	 * @extends Emeraude::Input::AbstractInputListener
+	 * @brief Interface giving the ability to listen to the keyboard events.
 	 */
-	class KeyboardListenerInterface : public AbstractInputListener
+	class KeyboardListenerInterface
 	{
 		friend class Manager;
 
 		public:
-
-			/**
-			 * @brief Destructs the keyboard input listener.
-			 */
-			~KeyboardListenerInterface () override = default;
 
 			/**
 			 * @brief Copy constructor.
@@ -75,65 +68,150 @@ namespace Emeraude::Input
 			KeyboardListenerInterface & operator= (KeyboardListenerInterface && copy) noexcept = default;
 
 			/**
+			 * @brief Destructs the keyboard input listener.
+			 */
+			virtual ~KeyboardListenerInterface () = default;
+
+			/**
+			 * @brief Enables or disables this listener.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			enableKeyboardListening (bool state) noexcept
+			{
+				m_flags[Enabled] = state;
+			}
+
+			/**
+			 * @brief Returns whether the listener is enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isListeningKeyboard () const noexcept
+			{
+				return m_flags[Enabled];
+			}
+
+			/**
+			 * @brief Sets whether the listener is propagating the processed events.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			propagateProcessedEvent (bool state) noexcept
+			{
+				m_flags[PropagateProcessedEvent] = state;
+			}
+
+			/**
+			 * @brief Returns whether the listener is propagating the processed events.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isPropagatingProcessedEvents () const noexcept
+			{
+				return m_flags[PropagateProcessedEvent];
+			}
+
+			/**
 			 * @brief Enables the text mode.
 			 * @param state The state.
 			 */
-			virtual void enableTextMode (bool state) noexcept final;
+			void
+			enableTextMode (bool state) noexcept
+			{
+				m_flags[TextMode] = state;
+			}
 
 			/**
 			 * @brief Returns whether the text mode is enabled or not.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isTextModeEnabled () const noexcept final;
-
-			/**
-			 * @brief Enables or not the keyboard listening with the input manager.
-			 * @param state  The state.
-			 * @return void
-			 */
-			virtual void enableKeyboardListening (bool state) noexcept final;
+			bool
+			isTextModeEnabled () const noexcept
+			{
+				return m_flags[TextMode];
+			}
 
 		protected:
 
 			/**
-			 * @brief Constructs a keyboard input listener.
-			 * @param isOpaque Set whether the listener is opaque or not.
-			 * @param enableTextMode Enable text mode.
-			 * @param autoRegister Enable the auto registration of this listener to the manager.
+			 * @brief Constructs a keyboard input listener interface.
+			 * @param enableProcessedEventPropagation Enable the listener to propagate events event if they are processed.
+			 * @param enableTextMode Enable text mode. This will enable the character typing callback.
 			 */
-			KeyboardListenerInterface (bool isOpaque, bool enableTextMode, bool autoRegister) noexcept;
+			KeyboardListenerInterface (bool enableProcessedEventPropagation, bool enableTextMode) noexcept
+				: m_flags({true, enableProcessedEventPropagation, enableTextMode, false, false, false, false, false})
+			{
+
+			}
 
 		private:
 
 			/**
 			 * @brief Method to override to handle key pressing.
-			 * @param key The keyboard universal key code.
-			 * @param scanCode The system-dependent key code.
+			 * @note Returning true means the event was consumed.
+			 * @param key The keyboard universal key code from GLFW.
+			 * @param scancode The OS dependent scancode.
 			 * @param modifiers The modifier keys mask.
 			 * @param repeat Repeat state.
 			 * @return bool
 			 */
-			virtual bool onKeyPress (int key, int scanCode, int modifiers, bool repeat) noexcept;
+			virtual
+			bool
+			onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
+			{
+				return false;
+			}
 
 			/**
 			 * @brief Method to override to handle key releasing.
-			 * @param key The keyboard universal key code.
-			 * @param scanCode The system-dependent key code.
+			 * @note Returning true means the event was consumed.
+			 * @param key The keyboard universal key code from GLFW.
+			 * @param scancode The OS dependent scancode.
 			 * @param modifiers The modifier keys mask.
 			 * @return bool
 			 */
-			virtual bool onKeyRelease (int key, int scanCode, int modifiers) noexcept;
+			virtual
+			bool
+			onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
+			{
+				return false;
+			}
 
 			/**
 			 * @brief Method to override to handle text typing.
-			 * @param unicode The character unicode value.
-			 * @param modifiers The modification keys state.
+			 * @note Returning true means the event was consumed.
+			 * @param unicode The character Unicode value.
 			 * @return bool
 			 */
-			virtual bool onCharacterType (unsigned int unicode, int modifiers) noexcept;
+			virtual
+			bool
+			onCharacterType (uint32_t unicode) noexcept
+			{
+				std::cerr << "Text mode has been enabled on a listener which not overriding the method onCharacterType() !" "\n";
+
+				return false;
+			}
 
 			/* Flag names. */
-			static constexpr auto TextMode = 1UL;
+			static constexpr auto Enabled{0UL};
+			static constexpr auto PropagateProcessedEvent{1UL};
+			static constexpr auto TextMode{2UL};
+
+			std::array< bool, 8 > m_flags{
+				true/*Enabled*/,
+				false/*PropagateProcessedEvent*/,
+				false/*TextMode*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

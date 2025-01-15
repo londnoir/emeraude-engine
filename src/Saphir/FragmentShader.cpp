@@ -1,55 +1,231 @@
 /*
- * Emeraude/Saphir/FragmentShader.cpp
- * This file is part of Emeraude
+ * src/Saphir/FragmentShader.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "FragmentShader.hpp"
 
+/* STL inclusions. */
+#include <algorithm>
+
+/* Local inclusions. */
+#include "VertexShader.hpp"
+#include "TesselationEvaluationShader.hpp"
+#include "GeometryShader.hpp"
+#include "Tracer.hpp"
+
 namespace Emeraude::Saphir
 {
-	FragmentShader::FragmentShader (const std::string & name) noexcept
-		: AbstractShader(name)
+	using namespace Libraries;
+	using namespace Declaration;
+
+	FragmentShader::FragmentShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept
+		: AbstractShader(name, GLSLVersion, GLSLProfile)
 	{
 
-	}
-
-	ShaderType
-	FragmentShader::type () const noexcept
-	{
-		return ShaderType::FragmentShader;
-	}
-
-	const std::set< std::string > &
-	FragmentShader::outputs () const noexcept
-	{
-		return m_outputs;
 	}
 
 	bool
-	FragmentShader::declareOutput (const std::string & name) noexcept
+	FragmentShader::declare (const StageInput & declaration) noexcept
 	{
-		return m_outputs.emplace(name).second;
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(ClassId, "The stage input is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_stageInputs, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{ClassId} << "A stage input declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_stageInputs.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	FragmentShader::declare (const InputBlock & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(ClassId, "The input block is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_inputBlocks, [declaration] (const auto & existing) {return existing.instanceName() == declaration.instanceName();}) )
+		{
+			TraceWarning{ClassId} << "An input block declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_inputBlocks.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	FragmentShader::declare(const OutputFragment & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(ClassId, "The output fragment is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_outputFragments, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{ClassId} << "An output fragment declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_outputFragments.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	FragmentShader::connectFromPreviousShader (const VertexShader & vertexShader) noexcept
+	{
+		if ( !vertexShader.isGenerated() )
+		{
+			TraceError{ClassId} << "The vertex shader '" << vertexShader.name() << "' is not generated !";
+
+			return false;
+		}
+
+		if ( vertexShader.stageOutputs().empty() && vertexShader.outputBlocks().empty() )
+		{
+			/* NOTE : This can only have gl_Position. */
+			//TraceWarning{ClassId} << "The vertex shader '" << vertexShader.name() << "' has no output declaration !";
+
+			return true;
+		}
+
+		for ( const auto & stageOutput : vertexShader.stageOutputs() )
+		{
+			this->declare(StageInput{stageOutput});
+		}
+
+		for ( const auto & outputBlock : vertexShader.outputBlocks() )
+		{
+			this->declare(InputBlock{outputBlock});
+		}
+
+		return true;
+	}
+
+	bool
+	FragmentShader::connectFromPreviousShader (const TesselationEvaluationShader & tesselationEvaluationShader) noexcept
+	{
+		if ( !tesselationEvaluationShader.isGenerated() )
+		{
+			TraceError{ClassId} << "The tesselation evaluation shader '" << tesselationEvaluationShader.name() << "' is not generated !";
+
+			return false;
+		}
+
+		if ( tesselationEvaluationShader.stageOutputs().empty() && tesselationEvaluationShader.outputBlocks().empty() )
+		{
+			TraceWarning{ClassId} << "The tesselation evaluation shader '" << tesselationEvaluationShader.name() << "' has no output declaration !";
+
+			return false;
+		}
+
+		for ( const auto & stageOutput : tesselationEvaluationShader.stageOutputs() )
+		{
+			this->declare(StageInput{stageOutput});
+		}
+
+		for ( const auto & outputBlock : tesselationEvaluationShader.outputBlocks() )
+		{
+			this->declare(InputBlock{outputBlock});
+		}
+
+		return true;
+	}
+
+	bool
+	FragmentShader::connectFromPreviousShader (const GeometryShader & geometryShader) noexcept
+	{
+		if ( !geometryShader.isGenerated() )
+		{
+			TraceError{ClassId} << "The geometry shader '" << geometryShader.name() << "' is not generated !";
+
+			return false;
+		}
+
+		if ( geometryShader.stageOutputs().empty() && geometryShader.outputBlocks().empty() )
+		{
+			TraceWarning{ClassId} << "The geometry shader '" << geometryShader.name() << "' has no output declaration !";
+
+			return false;
+		}
+
+		for ( const auto & stageOutput : geometryShader.stageOutputs() )
+		{
+			this->declare(StageInput{stageOutput});
+		}
+
+		for ( const auto & outputBlock : geometryShader.outputBlocks() )
+		{
+			this->declare(InputBlock{outputBlock});
+		}
+
+		return true;
+	}
+
+	bool
+	FragmentShader::onSourceCodeGeneration (Generator::Abstract & /*generator*/, std::stringstream & code, std::string & /*topInstructions*/, std::string & /*outputInstructions*/) noexcept
+	{
+		/* Specific input shader code declarations. */
+		AbstractShader::generateDeclarations(code, m_stageInputs, "Stage inputs (From previous stage)");
+		AbstractShader::generateDeclarations(code, m_inputBlocks, "Input blocks (From previous stage)");
+
+		/* Specific output shader code declarations. */
+		AbstractShader::generateDeclarations(code, m_outputFragments, "Output fragments (Fragment shader only)");
+
+		return true;
+	}
+
+	void
+	FragmentShader::onGetDeclarationStats (std::stringstream & output) const noexcept
+	{
+		output <<
+		 	"Fragment shader input declarations : " "\n"
+			" - Stage input : " << m_stageInputs.size() << "\n"
+			" - Input block : " << m_inputBlocks.size() << "\n"
+
+			"Vertex shader output declarations : " "\n"
+			" - Output fragment (FS) : " << m_outputFragments.size() << "\n";
 	}
 }

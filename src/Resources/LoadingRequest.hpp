@@ -1,52 +1,59 @@
 /*
- * Emeraude/Resources/LoadingRequest.hpp
- * This file is part of Emeraude
+ * src/Resources/LoadingRequest.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <memory>
+#include <type_traits>
 #include <utility>
 
 /* Local inclusions for usages. */
-#include "Tracer.hpp"
+#include "Libraries/Network/URL.hpp"
+#include "Libraries/String.hpp"
 #include "BaseInformation.hpp"
 #include "FileSystem.hpp"
-#include "Network/URL.hpp"
+#include "Tracer.hpp"
 #include "ResourceTrait.hpp"
+#include "Types.hpp"
 
 namespace Emeraude::Resources
 {
 	/**
 	 * @brief The resource loading request within the manager.
-	 * @tparam resource_t The final resource type.
+	 * @tparam resource_t The type of resources.
 	 */
-	template< typename resource_t, std::enable_if_t< std::is_base_of_v< ResourceTrait, resource_t >, bool > = false >
+	template< typename resource_t >
+	requires (std::is_base_of_v< ResourceTrait, resource_t >)
 	class LoadingRequest final
 	{
 		public:
+
+			static constexpr auto TracerTag{"LoadingRequest"};
 
 			/**
 			 * @brief Constructs a loading request.
@@ -61,7 +68,7 @@ namespace Emeraude::Resources
 				switch ( m_baseInformation.sourceType() )
 				{
 					case SourceType::Undefined :
-						Tracer::error("LoadingRequest", "Undefined type for resource request !");
+						Tracer::error(TracerTag, "Undefined type for resource request !");
 						break;
 
 					case SourceType::LocalData :
@@ -77,7 +84,7 @@ namespace Emeraude::Resources
 						}
 						else
 						{
-							TraceError{"LoadingRequest"} << "'" << resourceUrl << "' is not a valid URL ! Download cancelled ...";
+							TraceError{TracerTag} << "'" << resourceUrl << "' is not a valid URL ! Download cancelled ...";
 
 							m_downloadTicket = DownloadError;
 						}
@@ -92,16 +99,18 @@ namespace Emeraude::Resources
 			/**
 			 * @brief Returns the cache file path.
 			 * @param fileSystem A reference to the file system.
-			 * @return Libraries::Path::File
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			Libraries::Path::File
+			std::filesystem::path
 			cacheFilepath (const FileSystem & fileSystem) const noexcept
 			{
-				return {
-					fileSystem.cacheDirectory("data").append(resource_t::ClassId),
-					Libraries::String::extractFilename(m_baseInformation.data().asString())
-				};
+				std::filesystem::path filepath{fileSystem.cacheDirectory()};
+				filepath.append("data");
+				filepath.append(resource_t::ClassId);
+				filepath.append(Libraries::String::extractFilename(m_baseInformation.data().asString()));
+
+				return filepath;
 			}
 
 			/**
@@ -153,7 +162,7 @@ namespace Emeraude::Resources
 			{
 				if ( m_baseInformation.sourceType() != SourceType::ExternalData )
 				{
-					Tracer::error("LoadingRequest", "This request is not external !");
+					Tracer::error(TracerTag, "This request is not external !");
 
 					return false;
 				}
@@ -187,7 +196,7 @@ namespace Emeraude::Resources
 			{
 				if ( m_baseInformation.sourceType() != SourceType::ExternalData )
 				{
-					Tracer::error("LoadingRequest", "This request is not external !");
+					Tracer::error(TracerTag, "This request is not external !");
 
 					return false;
 				}
@@ -213,14 +222,14 @@ namespace Emeraude::Resources
 			{
 				if ( m_baseInformation.sourceType() != SourceType::ExternalData )
 				{
-					Tracer::error("LoadingRequest", "This request is not external !");
+					Tracer::error(TracerTag, "This request is not external !");
 
 					return;
 				}
 
 				if ( m_downloadTicket != DownloadPending )
 				{
-					Tracer::error("LoadingRequest", "Cannot set a ticket to a request which is not in 'DownloadPending' status !");
+					Tracer::error(TracerTag, "Cannot set a ticket to a request which is not in 'DownloadPending' status !");
 
 					return;
 				}
@@ -238,7 +247,7 @@ namespace Emeraude::Resources
 			{
 				if ( m_baseInformation.sourceType() != SourceType::ExternalData )
 				{
-					Tracer::error("LoadingRequest", "This request is not external !");
+					Tracer::error(TracerTag, "This request is not external !");
 
 					return;
 				}
@@ -259,13 +268,13 @@ namespace Emeraude::Resources
 		private:
 
 			/* Special ticket flags. */
-			static constexpr auto DownloadNotRequested = -4;
-			static constexpr auto DownloadError = -3;
-			static constexpr auto DownloadSuccess = -2;
-			static constexpr auto DownloadPending = -1;
+			static constexpr auto DownloadNotRequested{-4};
+			static constexpr auto DownloadError{-3};
+			static constexpr auto DownloadSuccess{-2};
+			static constexpr auto DownloadPending{-1};
 
 			BaseInformation m_baseInformation;
 			std::shared_ptr< resource_t > m_resource;
-			int m_downloadTicket = DownloadNotRequested;
+			int m_downloadTicket{DownloadNotRequested};
 	};
 }

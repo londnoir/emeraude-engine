@@ -1,41 +1,49 @@
 /*
- * Emeraude/Vulkan/Image.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Image.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Image.hpp"
 
+/* STL inclusions. */
+#include <cstdint>
+#include <mutex>
+#include <numeric>
+#include <ranges>
+
 /* Local inclusions. */
-#include "Device.hpp"
 #include "Graphics/CubemapResource.hpp"
 #include "Graphics/ImageResource.hpp"
 #include "Graphics/MovieResource.hpp"
-#include "StagingBuffer.hpp"
-#include "Tracer.hpp"
+#include "Device.hpp"
+#include "DeviceMemory.hpp"
+#include "MemoryRegion.hpp"
 #include "TransferManager.hpp"
+#include "StagingBuffer.hpp"
 #include "Utility.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -88,6 +96,7 @@ namespace Emeraude::Vulkan
 			VK_SAMPLE_COUNT_1_BIT, // Image multi sampling
 			VK_IMAGE_TILING_OPTIMAL // Image tiling
 		);
+		swapChainImage->setIdentifier(ClassId, "OSBuffer", "Image");
 
 		/* NOTE: Set internal values manually and declare the image as created. */
 		swapChainImage->m_handle = handle;
@@ -140,7 +149,7 @@ namespace Emeraude::Vulkan
 		);
 
 		m_deviceMemory = std::make_unique< DeviceMemory >(this->device(), memoryRequirement, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		m_deviceMemory->setIdentifier(this->identifier() + "-Main-DeviceMemory");
+		m_deviceMemory->setIdentifier(ClassId, this->identifier(), "DeviceMemory");
 
 		if ( !m_deviceMemory->createOnHardware() )
 		{
@@ -172,26 +181,19 @@ namespace Emeraude::Vulkan
 
 		this->setCreated();
 
-		TraceSuccess{ClassId} <<
-			"The image " << m_handle << " (" << this->identifier() << ") is successfully created !" "\n"
-			"Device memory size : " << m_deviceMemory->bytes() << " bytes" "\n"
-			"Create info size : " << this->bytes() << " bytes";
-
 		return true;
 	}
 
 	bool
-	Image::create (TransferManager & transferManager, const std::shared_ptr< Graphics::ImageResource > & imageResource) noexcept
+	Image::create (TransferManager & transferManager, const PixelFactory::Pixmap< uint8_t > & pixmap) noexcept
 	{
 		if ( !this->createOnHardware() )
 		{
 			return false;
 		}
 
-		const auto & pixmap = imageResource->data();
-
 		/* Get an available staging buffer to prepare the transfer */
-		auto stagingBuffer = transferManager.getStagingBuffer(pixmap.bytes());
+		const auto stagingBuffer = transferManager.getStagingBuffer(pixmap.bytes());
 
 		if ( stagingBuffer == nullptr )
 		{
@@ -208,10 +210,14 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		TraceSuccess{ClassId} << pixmap.bytes() << " bytes successfully written in the staging buffer !";
-
 		/* Transfer the image data from host memory to device memory. */
 		return transferManager.transfer(*stagingBuffer, *this);
+	}
+
+	bool
+	Image::create (TransferManager & transferManager, const std::shared_ptr< Graphics::ImageResource > & imageResource) noexcept
+	{
+		return this->create(transferManager, imageResource->data());
 	}
 
 	bool
@@ -230,7 +236,7 @@ namespace Emeraude::Vulkan
 		});
 
 		/* Get an available staging buffer to prepare the transfer */
-		auto stagingBuffer = transferManager.getStagingBuffer(totalBytes);
+		const auto stagingBuffer = transferManager.getStagingBuffer(totalBytes);
 
 		if ( stagingBuffer == nullptr )
 		{
@@ -255,8 +261,6 @@ namespace Emeraude::Vulkan
 			offset += pixmap.bytes();
 		}
 
-		TraceSuccess{ClassId} << totalBytes << " bytes successfully written in the staging buffer !";
-
 		/* Transfer the image data from host memory to device memory. */
 		return transferManager.transfer(*stagingBuffer, *this);
 	}
@@ -276,7 +280,7 @@ namespace Emeraude::Vulkan
 		});
 
 		/* Get an available staging buffer to prepare the transfer */
-		auto stagingBuffer = transferManager.getStagingBuffer(totalBytes);
+		const auto stagingBuffer = transferManager.getStagingBuffer(totalBytes);
 
 		if ( stagingBuffer == nullptr )
 		{
@@ -288,10 +292,8 @@ namespace Emeraude::Vulkan
 
 		size_t offset = 0;
 
-		for ( const auto & frame : frames )
+		for ( const auto & pixmap : std::ranges::views::keys(frames) )
 		{
-			const auto & pixmap = frame.first;
-
 			if ( !stagingBuffer->writeData({pixmap.data().data(), pixmap.bytes(), offset}) )
 			{
 				TraceError{ClassId} << "Unable to write " << pixmap.bytes() << " bytes of data in the staging buffer !";
@@ -301,8 +303,6 @@ namespace Emeraude::Vulkan
 
 			offset += pixmap.bytes();
 		}
-
-		TraceSuccess{ClassId} << totalBytes << " bytes successfully written in the staging buffer !";
 
 		/* Transfer the image data from host memory to device memory. */
 		return transferManager.transfer(*stagingBuffer, *this);
@@ -319,7 +319,7 @@ namespace Emeraude::Vulkan
 		}
 
 		/* Get an available staging buffer to prepare the transfer */
-		auto stagingBuffer = transferManager.getStagingBuffer(memoryRegion.bytes());
+		const auto stagingBuffer = transferManager.getStagingBuffer(memoryRegion.bytes());
 
 		if ( stagingBuffer == nullptr )
 		{
@@ -336,8 +336,6 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		TraceSuccess{ClassId} << memoryRegion.bytes() << " bytes successfully written in the staging buffer !";
-
 		/* Transfer the image data from host memory to device memory. */
 		return transferManager.transfer(*stagingBuffer, *this);
 	}
@@ -345,7 +343,7 @@ namespace Emeraude::Vulkan
 	bool
 	Image::destroyFromHardware () noexcept
 	{
-		/* NOTE: Special case for swap chain images. */
+		/* NOTE: Swap chain image are destroyed by the OS. */
 		if ( m_flags[IsSwapChainImage] )
 		{
 			m_handle = VK_NULL_HANDLE;
@@ -378,73 +376,11 @@ namespace Emeraude::Vulkan
 				VK_NULL_HANDLE
 			);
 
-			TraceSuccess{ClassId} << "The image " << m_handle << " (" << this->identifier() << ") is gracefully destroyed !";
-
 			m_handle = VK_NULL_HANDLE;
 		}
 
 		this->setDestroyed();
 
 		return true;
-	}
-
-	VkImage
-	Image::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	const VkImageCreateInfo &
-	Image::createInfo () const noexcept
-	{
-		return m_createInfo;
-	}
-
-	void
-	Image::setCurrentImageLayout (VkImageLayout imageLayout) noexcept
-	{
-		m_currentImageLayout = imageLayout;
-	}
-
-	VkImageLayout
-	Image::currentImageLayout () const noexcept
-	{
-		return m_currentImageLayout;
-	}
-
-	uint32_t
-	Image::width () const noexcept
-	{
-		return m_createInfo.extent.width;
-	}
-
-	uint32_t
-	Image::height () const noexcept
-	{
-		return m_createInfo.extent.height;
-	}
-
-	uint32_t
-	Image::depth () const noexcept
-	{
-		return m_createInfo.extent.depth;
-	}
-
-	uint32_t
-	Image::colorCount () const noexcept
-	{
-		switch ( m_createInfo.format )
-		{
-			/* FIXME: Declares each used format ... */
-			default:
-				return 4;
-		}
-	}
-
-	VkDeviceSize
-	Image::bytes () const noexcept
-	{
-		/* FIXME: incorrect, this only count pixel elements ! */
-		return this->width() * this->height() * this->depth() * this->colorCount() /** sizeof(???)*/;
 	}
 }

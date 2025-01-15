@@ -1,42 +1,39 @@
 /*
- * Emeraude/Graphics/Renderable/BasicFloorResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/BasicFloorResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "BasicFloorResource.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <fstream>
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Resources/Manager.hpp"
-#include "Scenes/Node.hpp"
-#include "Saphir/ShaderGenerator.hpp"
-#include "Saphir/LightGenerator.hpp"
-#include "Vulkan/GraphicsShaderContainer.hpp"
+#include "Graphics/Material/StandardResource.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -44,32 +41,32 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderabl
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::BasicFloorResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::BasicFloorResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Renderable
 {
 	using namespace Libraries;
 	using namespace Libraries::Math;
+	using namespace Libraries::VertexFactory;
 	using namespace Scenes;
 
-	const size_t BasicFloorResource::ClassUID{Observable::getClassUID()};
+	const size_t BasicFloorResource::ClassUID{getClassUID(ClassId)};
 
 	BasicFloorResource::BasicFloorResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: AbstractSceneArea(name, resourceFlagBits)
+		: SceneAreaInterface(name, resourceFlagBits)
 	{
 
+	}
+
+	size_t
+	BasicFloorResource::classUID () const noexcept
+	{
+		return ClassUID;
 	}
 
 	bool
 	BasicFloorResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -80,10 +77,12 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::isOpaque (size_t) const noexcept
+	BasicFloorResource::isOpaque (size_t /*layerIndex*/) const noexcept
 	{
 		if ( m_material != nullptr )
+		{
 			return m_material->isOpaque();
+		}
 
 		return true;
 	}
@@ -95,16 +94,24 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	const Material::Interface *
-	BasicFloorResource::material (size_t) const noexcept
+	BasicFloorResource::material (size_t /*layerIndex*/) const noexcept
 	{
 		return m_material.get();
+	}
+
+	const RasterizationOptions *
+	BasicFloorResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
+	{
+		return nullptr;
 	}
 
 	const Cuboid< float > &
 	BasicFloorResource::boundingBox () const noexcept
 	{
 		if ( m_geometry == nullptr )
-			return Interface::NullBoundingBox;
+		{
+			return NullBoundingBox;
+		}
 
 		return m_geometry->boundingBox();
 	}
@@ -114,7 +121,7 @@ namespace Emeraude::Graphics::Renderable
 	{
 		if ( m_geometry == nullptr )
 		{
-			return Interface::NullBoundingSphere;
+			return NullBoundingSphere;
 		}
 
 		return m_geometry->boundingSphere();
@@ -126,20 +133,24 @@ namespace Emeraude::Graphics::Renderable
 		/* NOTE: If no geometry available,
 		 * we send the -Y boundary limit. */
 		if ( m_geometry == nullptr )
-			return -this->boundary();
+		{
+			return 0.0F;
+		}
 
 		return m_geometry->localData().getHeightAt(worldPosition[X], worldPosition[Z]);
 	}
 
 	Vector< 3, float >
-	BasicFloorResource::getLevelAt (float x, float z, float delta) const noexcept
+	BasicFloorResource::getLevelAt (float positionX, float positionZ, float deltaY) const noexcept
 	{
 		/* NOTE: If no geometry available,
 		 * we send the -Y boundary limit. */
 		if ( m_geometry == nullptr )
-			return {x, -this->boundary() + delta, z};
+		{
+			return {positionX, 0.0F + deltaY, positionZ};
+		}
 
-		return {x, m_geometry->localData().getHeightAt(x, z) + delta, z};
+		return {positionX, m_geometry->localData().getHeightAt(positionX, positionZ) + deltaY, positionZ};
 	}
 
 	Vector< 3, float >
@@ -148,7 +159,9 @@ namespace Emeraude::Graphics::Renderable
 		/* NOTE: If no geometry available,
 		 * we send a y+ normal vector. */
 		if ( m_geometry == nullptr )
+		{
 			return Vector< 3, float >::positiveY();
+		}
 
 		return m_geometry->localData().getNormalAt(worldPosition[X], worldPosition[Z]);
 	}
@@ -163,7 +176,7 @@ namespace Emeraude::Graphics::Renderable
 	BasicFloorResource::load () noexcept
 	{
 		/* 1. Creating a default GridGeometry. */
-		auto defaultGeometry = std::make_shared< Geometry::VertexGridResource >("DefaultBasicFloorGeometry");
+		const auto defaultGeometry = std::make_shared< Geometry::VertexGridResource >("DefaultBasicFloorGeometry");
 
 		if ( !defaultGeometry->load(DefaultSize, DefaultDivision) )
 		{
@@ -173,7 +186,7 @@ namespace Emeraude::Graphics::Renderable
 		}
 
 		/* 2. Retrieving the default material. */
-		auto defaultMaterial = Material::StandardResource::getDefault();
+		const auto defaultMaterial = Material::StandardResource::getDefault();
 
 		if ( defaultMaterial == nullptr )
 		{
@@ -187,15 +200,15 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::load (const Path::File & filepath) noexcept
+	BasicFloorResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		Json::CharReaderBuilder builder;
+		const Json::CharReaderBuilder builder{};
 
-		std::ifstream json(to_string(filepath), std::ifstream::binary);
+		std::ifstream json(filepath, std::ifstream::binary);
 
-		Json::Value root;
+		Json::Value root{};
 
-		std::string errors;
+		std::string errors{};
 
 		if ( !Json::parseFromStream(builder, json, &root, &errors) )
 		{
@@ -255,9 +268,9 @@ namespace Emeraude::Graphics::Renderable
 			return this->setLoadSuccess(false);
 		}
 
-		auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "Geometry");
+		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "Geometry");
 
-		if ( !geometryResource->load(data[SizeKey].asFloat(), data[DivisionKey].asUInt(), Geometry::EnableNormal | Geometry::EnableVertexColor | Geometry::EnablePrimaryTextureCoordinates) )
+		if ( !geometryResource->load(data[SizeKey].asFloat(), data[DivisionKey].asUInt(), DefaultGeometryFlags) )
 		{
 			TraceError{ClassId} << "Unable to create GridGeometry to generate the BasicFloor !";
 
@@ -271,9 +284,9 @@ namespace Emeraude::Graphics::Renderable
 
 			if ( subData.isMember(ImageNameKey) && subData[ImageNameKey].isString() )
 			{
-				auto imageName = subData[ImageNameKey].asString();
+				const auto imageName = subData[ImageNameKey].asString();
 
-				auto imageResource = resources->images().getResource(imageName, true);
+				const auto imageResource = resources->images().getResource(imageName);
 
 				if ( imageResource != nullptr )
 				{
@@ -281,7 +294,9 @@ namespace Emeraude::Graphics::Renderable
 					auto inverse = false;
 
 					if ( subData.isMember(InverseKey) )
+					{
 						inverse = subData[InverseKey].asBool();
+					}
 
 					/* Checks for scaling. */
 					auto scale = 1.0F;
@@ -289,9 +304,13 @@ namespace Emeraude::Graphics::Renderable
 					if ( subData.isMember(ScaleKey) )
 					{
 						if ( subData[ScaleKey].isNumeric() )
+						{
 							scale = subData[ScaleKey].asFloat();
+						}
 						else
+						{
 							TraceWarning{ClassId} << "The key '" << ScaleKey << "' is not numeric !";
+						}
 					}
 
 					/* Applies the height map on the geometry. */
@@ -327,20 +346,28 @@ namespace Emeraude::Graphics::Renderable
 		if ( data.isMember(UVMultiplierKey) )
 		{
 			if ( data[UVMultiplierKey].isNumeric() )
+			{
 				geometryResource->localData().setUVMultiplier(data[UVMultiplierKey].asFloat());
+			}
 			else
-				Tracer::warning(ClassId, Blob() << "The key '" << UVMultiplierKey << "' is not numeric !");
+			{
+				TraceWarning{ClassId} << "The key '" << UVMultiplierKey << "' is not numeric !";
+			}
 		}
 
 		/* Gets the resource from geometry store. */
 		std::shared_ptr< Material::Interface > materialResource;
 
-		auto materialType = data[MaterialTypeKey].asString();
+		const auto materialType = data[MaterialTypeKey].asString();
 
 		if ( materialType == Material::StandardResource::ClassId )
+		{
 			materialResource = resources->standardMaterials().getResource(data[MaterialNameKey].asString());
+		}
 		else
+		{
 			TraceWarning{ClassId} << "Material resource type '" << materialType << "' is not handled !";
+		}
 
 		/* 3. Use the common func. */
 		return this->load(geometryResource, materialResource);
@@ -350,7 +377,9 @@ namespace Emeraude::Graphics::Renderable
 	BasicFloorResource::load (const std::shared_ptr< Geometry::VertexGridResource > & geometry, const std::shared_ptr< Material::Interface > & material) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		/* 1. Check the grid geometry. */
 		if ( !this->setGeometry(geometry) )
@@ -368,19 +397,13 @@ namespace Emeraude::Graphics::Renderable
 			return this->setLoadSuccess(false);
 		}
 
-		/* Sets scene area volume and boundaries. */
-		this->setBoundary(geometry->localData().squaredSize() * 0.5F);
-
 		return this->setLoadSuccess(true);
 	}
 
 	bool
 	BasicFloorResource::load (float size, size_t division, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
-		auto geometryResource = std::make_shared< Geometry::VertexGridResource >(
-			this->name() + "GridGeometry",
-			Geometry::EnableNormal | Geometry::EnableVertexColor | Geometry::EnablePrimaryTextureCoordinates | Geometry::EnablePrimitiveRestart
-		);
+		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometry", DefaultGeometryFlags);
 
 		if ( !geometryResource->load(size, division, UVMultiplier) )
 		{
@@ -395,7 +418,7 @@ namespace Emeraude::Graphics::Renderable
 	bool
 	BasicFloorResource::loadDiamondSquare (float size, size_t division, float factor, unsigned int seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
-		VertexFactory::Grid< float > grid{};
+		Grid< float > grid{};
 
 		if ( grid.initializeData(size, division) )
 		{
@@ -410,10 +433,7 @@ namespace Emeraude::Graphics::Renderable
 		}
 
 		/* Create the geometry resource from the shape. */
-		auto geometryResource = std::make_shared< Geometry::VertexGridResource >(
-			this->name() + "GridGeometryDiamondSquare",
-			Geometry::EnableNormal | Geometry::EnableVertexColor | Geometry::EnablePrimaryTextureCoordinates | Geometry::EnablePrimitiveRestart
-		);
+		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometryDiamondSquare", DefaultGeometryFlags);
 
 		if ( !geometryResource->load(grid) )
 		{
@@ -428,7 +448,7 @@ namespace Emeraude::Graphics::Renderable
 	bool
 	BasicFloorResource::loadPerlinNoise (float size, size_t division, float noiseSize, float noiseFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
-		VertexFactory::Grid< float > grid{};
+		Grid< float > grid{};
 
 		if ( grid.initializeData(size, division) )
 		{
@@ -443,10 +463,7 @@ namespace Emeraude::Graphics::Renderable
 		}
 
 		/* Create the geometry resource from the shape. */
-		auto geometryResource = std::make_shared< Geometry::VertexGridResource >(
-			this->name() + "GridGeometryPerlinNoise",
-			Geometry::EnableNormal | Geometry::EnableVertexColor | Geometry::EnablePrimaryTextureCoordinates | Geometry::EnablePrimitiveRestart
-		);
+		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometryPerlinNoise", DefaultGeometryFlags);
 
 		if ( !geometryResource->load(grid) )
 		{
@@ -459,15 +476,6 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::isOnGround (Node & node) const noexcept
-	{
-		/* Gets the absolute position to test against the scene boundaries. */
-		const auto worldPosition = node.getWorldCoordinates().position();
-
-		return Utility::equal(worldPosition[Y], this->getLevelAt(worldPosition));
-	}
-
-	bool
 	BasicFloorResource::setGeometry (const std::shared_ptr< Geometry::VertexGridResource > & geometryResource) noexcept
 	{
 		if ( geometryResource == nullptr )
@@ -477,7 +485,7 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		m_geometry = geometryResource;
 
@@ -494,119 +502,17 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		m_material = materialResource;
 
 		return this->addDependency(m_material.get());
 	}
 
-	bool
-	BasicFloorResource::prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept
-	{
-		using namespace Saphir;
-
-		const auto modelMatrixType = enableInstancing ? ModelMatrixType::VertexBufferObject : ModelMatrixType::UniformBufferObject;
-
-		SetIndexes indexes{};
-		indexes.enableSet(SetType::PerView);
-		if ( !enableInstancing )
-		{
-			indexes.enableSet(SetType::PerModel);
-		}
-		indexes.enableSet(SetType::PerObjectLayer);
-
-		/* Vertex shader stage creation. */
-		{
-			auto shader = shaders.initVertexShader("CustomVertexShader");
-
-			ShaderGenerator generator{shader, modelMatrixType, renderPassType};
-			generator.setIndexes(indexes);
-			generator.setExtensionBehavior("GL_ARB_separate_shader_objects", "enable");
-
-			/* The position is always required and available. */
-			generator.requestVertexShaderSynthesizeInstruction(Keys::GLSL::Vertex::Out::Position);
-
-			if ( !material.generateShaderCode(generator, geometry) )
-			{
-				TraceError{ClassId} << "Unable to generate material source code for the vertex shader '" << shader->name() << "' !";
-
-				return false;
-			}
-
-			LightGenerator lightGenerator{};
-			lightGenerator.useSpecularComponent(ShaderGenerator::materialUniform(Keys::UniformBlocks::Component::Shininess));
-
-			if ( !lightGenerator.generateShaderCode(generator, geometry) )
-			{
-				TraceError{ClassId} << "Unable to generate light to the vertex shader '" << shader->name() << "' source code !";
-
-				return false;
-			}
-
-			if ( !generator.writeShader() )
-			{
-				TraceError{ClassId} << "Unable to write the vertex shader '" << shader->name() << "' !";
-
-				return false;
-			}
-		}
-
-		/* Tesselation control shader stage creation. */
-		{
-			//auto shader = shaders.initTesselationControlShader("DefaultTesselationControlShader");
-		}
-
-		/* Tesselation evaluation shader stage creation. */
-		{
-			//auto shader = shaders.initTesselationEvaluationShader("DefaultTesselationEvaluationShader");
-		}
-
-		/* Geometry shader stage creation. */
-		{
-			//auto shader = shaders.initGeometryShader("DefaultGeometryShader");
-		}
-
-		/* Fragment shader stage creation. */
-		{
-			auto shader = shaders.initFragmentShader("CustomFragmentShader");
-
-			ShaderGenerator generator{shader, modelMatrixType, renderPassType};
-			generator.setIndexes(indexes);
-			generator.setExtensionBehavior("GL_ARB_separate_shader_objects", "enable");
-
-			if ( !material.generateShaderCode(generator, geometry) )
-			{
-				TraceError{ClassId} << "Unable to generate material source code for the fragment shader '" << shader->name() << "' !";
-
-				return false;
-			}
-
-			LightGenerator lightGenerator{};
-			lightGenerator.useSpecularComponent(ShaderGenerator::materialUniform(Keys::UniformBlocks::Component::Shininess));
-
-			if ( !lightGenerator.generateShaderCode(generator, geometry) )
-			{
-				TraceError{ClassId} << "Unable to generate light to the fragment shader '" << shader->name() << "' source code !";
-
-				return false;
-			}
-
-			if ( !generator.writeShader() )
-			{
-				TraceError{ClassId} << "Unable to write the fragment shader '" << shader->name() << "' !";
-
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 	std::shared_ptr< BasicFloorResource >
 	BasicFloorResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->basicFloors().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->basicFloors().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< BasicFloorResource >

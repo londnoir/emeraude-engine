@@ -1,50 +1,56 @@
 /*
- * Emeraude/Graphics/Renderer.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderer.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <any>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <vector>
-#include <array>
+#include <string>
 
 /* Local inclusions for inheritances. */
-#include "ServiceInterface.hpp"
 #include "ConsoleControllable.hpp"
-#include "Observer.hpp"
+#include "Libraries/ObserverTrait.hpp"
+#include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "PixelFactory/Color.hpp"
-#include "Time/StatisticsTime.hpp"
-#include "Types.hpp"
-#include "RenderableInstance/VertexBufferFormatManager.hpp"
-
-/* Third-Party inclusions. */
-#include "Third-Party-Inclusion/vulkan.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/Time/Statistics/RealTime.hpp"
+#include "VertexBufferFormatManager.hpp"
+#include "RenderTarget/Abstract.hpp"
+#include "Vulkan/LayoutManager.hpp"
+#include "Vulkan/SharedUBOManager.hpp"
+#include "Vulkan/TransferManager.hpp"
+#include "Saphir/ShaderManager.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
@@ -55,13 +61,10 @@ namespace Emeraude
 		class SwapChain;
 		class Device;
 		class DescriptorPool;
-		class DescriptorSetLayout;
 		class CommandPool;
 		class CommandBuffer;
-		class PipelineLayout;
 		class GraphicsPipeline;
 		class Sampler;
-		class GraphicsShaderContainer;
 	}
 
 	namespace Graphics
@@ -87,9 +90,14 @@ namespace Emeraude
 		}
 	}
 
-	namespace Dev
+	namespace Saphir
 	{
-		class Manager;
+		class Program;
+	}
+
+	namespace Scenes
+	{
+		class Scene;
 	}
 
 	namespace Overlay
@@ -97,19 +105,7 @@ namespace Emeraude
 		class Manager;
 	}
 
-	namespace Saphir
-	{
-		class AbstractShader;
-	}
-
-	namespace Scenes
-	{
-		class Scene;
-		class LightSet;
-	}
-
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
 	class Window;
 }
 
@@ -119,9 +115,9 @@ namespace Emeraude::Graphics
 	 * @brief The graphics renderer service class.
 	 * @extends Emeraude::ServiceInterface The renderer is a service.
 	 * @extends Emeraude::ConsoleControllable The renderer can be controlled by the console.
-	 * @extends Libraries::Observer The renderer needs to observe handle changes for instance.
+	 * @extends Libraries::ObserverTrait The renderer needs to observe handle changes for instance.
 	 */
-	class Renderer final : public ServiceInterface, public ConsoleControllable, public Libraries::Observer
+	class Renderer final : public ServiceInterface, public ConsoleControllable, public Libraries::ObserverTrait
 	{
 		public:
 
@@ -130,14 +126,6 @@ namespace Emeraude::Graphics
 
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
-
-			/* Settings keys */
-			static constexpr auto EnabledKey = "Video/Enabled";
-			static constexpr auto DefaultEnabled = true;
-			static constexpr auto StereoEnabledKey = "Video/StereoEnabled";
-			static constexpr auto DefaultStereoEnabled = false;
-			static constexpr auto DoubleBufferEnabledKey = "Video/DoubleBufferEnabled";
-			static constexpr auto DefaultDoubleBufferEnabled = true;
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
@@ -149,23 +137,13 @@ namespace Emeraude::Graphics
 				MaxEnum
 			};
 
-			/** @brief Defines the rendering mode for a current frame. */
-			enum class SceneRenderingMode
-			{
-				Basic,
-				Forward,
-				Deferred
-			};
-
 			/**
 			 * @brief Constructs the graphics renderer.
-			 * @param arguments A reference to the core arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 * @param instance A reference to the Vulkan instance.
 			 * @param window A reference to a handle.
-			 * @param vertexBufferFormatManager A reference to the vertex buffer format manager.
 			 */
-			Renderer (const Arguments & arguments, Settings & coreSettings, Vulkan::Instance & instance, Window & window, RenderableInstance::VertexBufferFormatManager & vertexBufferFormatManager) noexcept;
+			Renderer (PrimaryServices & primaryServices, Vulkan::Instance & instance, Window & window) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -182,12 +160,14 @@ namespace Emeraude::Graphics
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Renderer &
 			 */
 			Renderer & operator= (const Renderer & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Renderer &
 			 */
 			Renderer & operator= (Renderer && copy) noexcept = delete;
 
@@ -196,20 +176,164 @@ namespace Emeraude::Graphics
 			 */
 			~Renderer () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
+
+			/**
+			 * @brief Returns the reference to the primary services.
+			 * @return PrimaryServices &
+			 */
+			[[nodiscard]]
+			PrimaryServices &
+			primaryServices () noexcept
+			{
+				return m_primaryServices;
+			}
+
+			/**
+			 * @brief Returns the reference to the shader manager service.
+			 * @return Saphir::ShaderManager &
+			 */
+			[[nodiscard]]
+			Saphir::ShaderManager &
+			shaderManager () noexcept
+			{
+				return m_shaderManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the shader manager service.
+			 * @return const Saphir::ShaderManager &
+			 */
+			[[nodiscard]]
+			const Saphir::ShaderManager &
+			shaderManager () const noexcept
+			{
+				return m_shaderManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the transfer manager.
+			 * @return Vulkan::TransferManager &
+			 */
+			[[nodiscard]]
+			Vulkan::TransferManager &
+			transferManager () noexcept
+			{
+				return m_transferManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the transfer manager.
+			 * @return const Vulkan::TransferManager &
+			 */
+			[[nodiscard]]
+			const Vulkan::TransferManager &
+			transferManager () const noexcept
+			{
+				return m_transferManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the layout manager.
+			 * @return Vulkan::LayoutManager &
+			 */
+			[[nodiscard]]
+			Vulkan::LayoutManager &
+			layoutManager () noexcept
+			{
+				return m_layoutManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the layout manager.
+			 * @return const Vulkan::LayoutManager &
+			 */
+			[[nodiscard]]
+			const Vulkan::LayoutManager &
+			layoutManager () const noexcept
+			{
+				return m_layoutManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the shared UBO manager.
+			 * @return Vulkan::SharedUBOManager &
+			 */
+			[[nodiscard]]
+			Vulkan::SharedUBOManager &
+			sharedUBOManager () noexcept
+			{
+				return m_sharedUBOManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the shared UBO manager.
+			 * @return const Vulkan::SharedUBOManager &
+			 */
+			[[nodiscard]]
+			const Vulkan::SharedUBOManager &
+			sharedUBOManager () const noexcept
+			{
+				return m_sharedUBOManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the vertex buffer format manager.
+			 * @return VertexBufferFormatManager &
+			 */
+			[[nodiscard]]
+			VertexBufferFormatManager &
+			vertexBufferFormatManager () noexcept
+			{
+				return m_vertexBufferFormatManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the vertex buffer format manager.
+			 * @return const VertexBufferFormatManager &
+			 */
+			[[nodiscard]]
+			const VertexBufferFormatManager &
+			vertexBufferFormatManager () const noexcept
+			{
+				return m_vertexBufferFormatManager;
+			}
 
 			/**
 			 * @brief Sets the clear value for the color buffer for the next rendering.
 			 * @param clearColor A reference to a color.
 			 * @return void
 			 */
-			void setClearColor (const Libraries::PixelFactory::Color< float > & clearColor) noexcept;
+			void
+			setClearColor (const Libraries::PixelFactory::Color< float > & clearColor) noexcept
+			{
+				m_clearColors[0].color.float32[0] = clearColor.red();
+				m_clearColors[0].color.float32[1] = clearColor.green();
+				m_clearColors[0].color.float32[2] = clearColor.blue();
+				m_clearColors[0].color.float32[3] = clearColor.alpha();
+			}
 
 			/**
 			 * @brief Sets the clear values for the depth/stencil buffers for the next rendering.
@@ -217,155 +341,148 @@ namespace Emeraude::Graphics
 			 * @param stencil The stencil value.
 			 * @return void
 			 */
-			void setClearDepthStencilValues (float depth, uint32_t stencil) noexcept;
+			void
+			setClearDepthStencilValues (float depth, uint32_t stencil) noexcept
+			{
+				m_clearColors[1].depthStencil.depth = depth;
+				m_clearColors[1].depthStencil.stencil = stencil;
+			}
 
 			/**
 			 * @brief Returns the clear color.
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float > getClearColor () const noexcept;
+			Libraries::PixelFactory::Color< float >
+			getClearColor () const noexcept
+			{
+				return {
+						m_clearColors[0].color.float32[0],
+						m_clearColors[0].color.float32[1],
+						m_clearColors[0].color.float32[2],
+						m_clearColors[0].color.float32[3]
+				};
+			}
 
 			/**
 			 * @brief Returns the depth clear value.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float getClearDepthValue () const noexcept;
+			float
+			getClearDepthValue () const noexcept
+			{
+				return m_clearColors[1].depthStencil.depth;
+			}
 
 			/**
 			 * @brief Returns the stencil clear value.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t getClearStencilValue () const noexcept;
+			uint32_t
+			getClearStencilValue () const noexcept
+			{
+				return m_clearColors[1].depthStencil.stencil;
+			}
 
 			/**
 			 * @brief Returns the selected logical device used for graphics.
-			 * @return const std::shared_ptr< Vulkan::Device > &
+			 * @return std::shared_ptr< Vulkan::Device >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Device > & device () const noexcept;
+			std::shared_ptr< Vulkan::Device >
+			device () const noexcept
+			{
+				return m_device;
+			}
 
 			/**
 			 * @brief Returns the descriptor pool.
-			 * @return const std::shared_ptr< Vulkan::DescriptorPool > &
+			 * @return std::shared_ptr< Vulkan::DescriptorPool >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::DescriptorPool > & descriptorPool () const noexcept;
+			std::shared_ptr< Vulkan::DescriptorPool >
+			descriptorPool () const noexcept
+			{
+				return m_descriptorPool;
+			}
 
 			/**
 			 * @brief Returns the swap chain.
-			 * @return const std::shared_ptr< Vulkan::SwapChain > &
+			 * @return std::shared_ptr< Vulkan::SwapChain >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::SwapChain > & swapChain () const noexcept;
+			std::shared_ptr< Vulkan::SwapChain >
+			swapChain () const noexcept
+			{
+				return m_swapChain;
+			}
 
 			/**
 			 * @brief Returns rendering statistics.
-			 * @return const Libraries::Time::StatisticsTime< std::chrono::high_resolution_clock > &
+			 * @return const Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > &
 			 */
 			[[nodiscard]]
-			const Libraries::Time::StatisticsTime< std::chrono::high_resolution_clock > & statistics () const noexcept;
+			const Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > &
+			statistics () const noexcept
+			{
+				return m_statistics;
+			}
 
 			/**
-			 * @brief Gets or creates a descriptor set layout for a render target (View UBO).
-			 * @param renderTarget A pointer to the render target.
-			 * @param flags Flags for create info. Default 0.
-			 * @return std::shared_ptr< Vulkan::DescriptorSetLayout >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Vulkan::DescriptorSetLayout > getViewDescriptorSetLayout (const RenderTarget::Abstract & renderTarget, int flags = 0) noexcept;
-
-			/**
-			 * @brief Gets or creates a descriptor set layout for a renderable instance (Model UBO + ModelView UBO).
-			 * @param renderableInstance A pointer to the renderable instance.
-			 * @param flags Flags for create info. Default 0.
-			 * @return std::shared_ptr< Vulkan::DescriptorSetLayout >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Vulkan::DescriptorSetLayout > getModelDescriptorSetLayout (const RenderableInstance::Abstract & renderableInstance, int flags = 0) noexcept;
-
-			/**
-			 * @brief Gets or creates a descriptor set layout for a material.
-			 * @param material A pointer to the material.
-			 * @param flags Flags for create info. Default 0.
-			 * @return std::shared_ptr< Vulkan::DescriptorSetLayout >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Vulkan::DescriptorSetLayout > getMaterialDescriptorSetLayout (const Material::Interface & material, int flags = 0) noexcept;
-
-			/**
-			 * @brief Returns or creates a pipeline layout according to requirements.
-			 * @param descriptorSetLayouts A reference to a list of descriptor set layout.
-			 * @return std::shared_ptr< Vulkan::PipelineLayout >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Vulkan::PipelineLayout > getPipelineLayout (const std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts) noexcept;
-
-			/**
-			 * @brief Gets a graphics pipeline for a renderable instance.
+			 * @brief Finalizes the graphics pipeline creation by replacing it by a similar or create and cache this new one.
 			 * @param renderTarget A reference to a render target.
-			 * @param renderableInstance A reference to the renderable instance.
-			 * @param pipelineLayout A reference to the pipeline layout smart pointer.
-			 * @param vertexBufferFormat A reference to the vertex format.
-			 * @param shaders A reference to a list of shaders being used to render the renderable instance.
-			 * @return std::shared_ptr< Vulkan::GraphicsPipeline >
+			 * @param program A reference to the program.
+			 * @param graphicsPipeline A reference to the graphics pipeline smart pointer.
+			 * @return bool
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::GraphicsPipeline > getGraphicsPipeline (const RenderTarget::Abstract & renderTarget, const RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< Vulkan::PipelineLayout > & pipelineLayout, const std::shared_ptr< RenderableInstance::VertexBufferFormat > & vertexBufferFormat, const Vulkan::GraphicsShaderContainer & shaders) noexcept;
+			bool finalizeGraphicsPipeline (const RenderTarget::Abstract & renderTarget, const Saphir::Program & program, std::shared_ptr< Vulkan::GraphicsPipeline > & graphicsPipeline) noexcept;
 
 			/**
-			 * @brief Gets a specific graphics pipeline for displaying the vertex TBN spaces.
-			 * @param renderTarget A reference to a render target.
-			 * @param renderableInstance A reference to the renderable instance.
-			 * @param pipelineLayout A reference to the pipeline layout smart pointer.
-			 * @param vertexBufferFormat A reference to the vertex format.
-			 * @param shaders A reference to a list of shaders being used to render the renderable instance.
-			 * @return std::shared_ptr< Vulkan::GraphicsPipeline >
+			 * @brief Gets a specific program for shadow casting.
+			 * @param renderTarget A reference to a render target smart pointer.
+			 * @param renderableInstance A reference to the renderable instance smart pointer.
+			 * @return std::shared_ptr< Saphir::Program >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::GraphicsPipeline > getTBNSpaceDisplayPipeline () noexcept;
+			std::shared_ptr< Saphir::Program > getShadowProgram (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) noexcept;
+
+			/**
+			 * @brief Gets a specific program for displaying the vertex TBN spaces.
+			 * @param renderTarget A reference to a render target smart pointer.
+			 * @param renderableInstance A reference to the renderable instance smart pointer.
+			 * @return std::shared_ptr< Saphir::Program >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Saphir::Program > getTBNSpaceProgram (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) noexcept;
+
+			/**
+			 * @brief Returns or creates a render pass.
+			 * @param identifier A reference to a string.
+			 * @param createFlags The createInfo flags. Default none.
+			 * @return std::shared_ptr< Vulkan::RenderPass >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::RenderPass > getRenderPass (const std::string & identifier, VkRenderPassCreateFlags createFlags = 0) noexcept;
 
 			/**
 			 * @brief Returns or creates a sampler.
 			 * @param type
-			 * @param createFlags The create info flags. Default none.
+			 * @param createFlags The createInfo flags. Default none.
 			 * @return std::shared_ptr< Vulkan::Sampler >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Sampler > getSampler (size_t type, VkSamplerCreateFlags createFlags = 0) noexcept;
 
 			/**
-			 * @brief Prepares a renderable instance for a specific rendering.
-			 * @note The function return false only if the instance cannot be prepared. 'true' can post pose the preparation.
-			 * @param renderableInstance A reference to the renderable instance.
-			 * @param renderTarget A reference to a render target smart pointer where the renderable instance must get ready.
-			 * @param lightSet A reference to the light set.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool getRenderableInstanceReadyForRender (RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Scenes::LightSet & lightSet) noexcept;
-
-			/**
-			 * @brief Refreshes a renderable instance. This will recreate the graphics pipelines.
-			 * @param renderableInstance A reference to the renderable instance.
-			 * @param renderTarget A reference to a render target smart pointer where the renderable instance must get ready.
-			 * @param lightSet A reference to the light set.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool refreshRenderableInstance (RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Scenes::LightSet & lightSet) noexcept;
-
-			/**
 			 * @brief Render a new frame for the active scene.
 			 * @param scene A reference to the scene smart pointer.
 			 * @param overlayManager A reference to the overlay manager.
-			 * @param devManager A reference to the dev manager.
-			 * @param lifetime The current engine lifetime in milliseconds.
 			 * @return void
 			 */
-			void renderFrame (const std::shared_ptr< const Scenes::Scene > & scene, const Overlay::Manager & overlayManager, const Dev::Manager & devManager, unsigned long lifetime) noexcept;
+			void renderFrame (const std::shared_ptr< Scenes::Scene > & scene, const Overlay::Manager & overlayManager) noexcept;
 
 			/**
 			 * @brief Returns the instance of the graphics renderer.
@@ -373,7 +490,11 @@ namespace Emeraude::Graphics
 			 */
 			[[nodiscard]]
 			static
-			Renderer * instance () noexcept;
+			Renderer *
+			instance () noexcept
+			{
+				return s_instance;
+			}
 
 		private:
 
@@ -383,44 +504,37 @@ namespace Emeraude::Graphics
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::Observer::onNotification() */
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
-			 * @brief Prepares descriptor set layouts for a renderable instance layer.
-			 * @param renderTarget A reference to the render target (View UBO).
-			 * @param renderableInstance A reference to the renderable instance (Model UBO).
-			 * @param material A reference to the material of the renderable instance layer (Material UBO).
-			 * @param enableInstance Hint for instancing.
-			 * @param descriptorSetLayouts A reference to the vector of generated descriptor set layouts for the renderable instance.
-			 * @return bool
+			 * @brief @brief Returns a command buffer for a specific render target.
+			 * @param renderTarget A reference to a render target smart pointer.
+			 * @return std::shared_ptr< Vulkan::CommandBuffer >
 			 */
-			[[nodiscard]]
-			bool prepareDescriptorSetLayouts (const RenderTarget::Abstract & renderTarget, const RenderableInstance::Abstract & renderableInstance, const Material::Interface & material, bool enableInstance, std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts) noexcept;
+			std::shared_ptr< Vulkan::CommandBuffer > getCommandBuffer (const std::shared_ptr< RenderTarget::Abstract > & renderTarget) noexcept;
 
 			/**
 			 * @brief Updates every shadow maps from the scene.
-			 * @param A reference to the active scene.
+			 * @param scene A reference to the scene.
+			 * @return void
 			 */
-			void renderShadowMaps (const Scenes::Scene & scene) noexcept;
+			void renderShadowMaps (Scenes::Scene & scene) noexcept;
 
 			/**
 			 * @brief Updates every dynamic texture2Ds from the scene.
-			 * @param A reference to the active scene.
+			 * @param scene A reference to the scene.
+			 * @return void
 			 */
-			void renderRenderToTextures (const Scenes::Scene & scene) noexcept;
+			void renderRenderToTextures (Scenes::Scene & scene) noexcept;
 
 			/**
 			 * @brief Updates every off-screen views from the scene.
-			 * @param A reference to the active scene.
+			 * @param scene A reference to the scene.
+			 * @return void
 			 */
-			void renderViews (const Scenes::Scene & scene) noexcept;
-
-			/**
-			 * @brief Render the final image for the screen.
-			 */
-			void renderFinal () noexcept;
+			void renderViews (Scenes::Scene & scene) noexcept;
 
 			/**
 			 * @brief Creates command pools and buffers according to the swap chain image count.
@@ -442,35 +556,37 @@ namespace Emeraude::Graphics
 			bool recreateSwapChain () noexcept;
 
 			/* Flag names. */
-			static constexpr auto Usable = 0UL;
-			static constexpr auto DebugMode = 1UL;
-			static constexpr auto ShadowMapsEnabled = 2UL;
-			static constexpr auto RenderToTexturesEnabled = 3UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto DebugMode{1UL};
+			static constexpr auto ShadowMapsEnabled{2UL};
+			static constexpr auto RenderToTexturesEnabled{3UL};
 
-			static Renderer * s_instance; // NOLINT NOTE: Singleton behavior
+			static Renderer * s_instance;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
+			PrimaryServices & m_primaryServices;
 			Vulkan::Instance & m_vulkanInstance;
 			Window & m_window;
-			RenderableInstance::VertexBufferFormatManager & m_vertexBufferFormatManager;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			std::shared_ptr< Vulkan::Device > m_device{};
-			std::shared_ptr< Vulkan::DescriptorPool > m_descriptorPool{};
-			std::map< size_t , std::shared_ptr< Vulkan::DescriptorSetLayout > > m_descriptorSetLayouts{};
-			std::vector< std::shared_ptr< Vulkan::CommandPool > > m_commandPools{};
-			std::vector< std::shared_ptr< Vulkan::CommandBuffer > > m_commandBuffers{};
-			std::shared_ptr< Vulkan::SwapChain > m_swapChain{};
-			std::map< size_t, std::shared_ptr< Vulkan::PipelineLayout > > m_pipelineLayouts{};
-			std::map< size_t, std::shared_ptr< Vulkan::GraphicsPipeline > > m_pipelines{};
-			std::map< size_t, std::shared_ptr< Vulkan::Sampler > > m_samplers{};
-			std::shared_ptr< Vulkan::GraphicsPipeline > m_TBNSpaceDisplay{};
-			SceneRenderingMode m_sceneRenderingMode = SceneRenderingMode::Basic;
-			Libraries::Time::StatisticsTime< std::chrono::high_resolution_clock > m_statistics{30}; // NOLINT(*-magic-numbers)
+			std::shared_ptr< Vulkan::Device > m_device;
+			Saphir::ShaderManager m_shaderManager;
+			Vulkan::TransferManager m_transferManager;
+			Vulkan::LayoutManager m_layoutManager;
+			Vulkan::SharedUBOManager m_sharedUBOManager;
+			std::vector< ServiceInterface * > m_subServicesEnabled;
+			VertexBufferFormatManager m_vertexBufferFormatManager;
+			std::shared_ptr< Vulkan::DescriptorPool > m_descriptorPool;
+			std::vector< std::shared_ptr< Vulkan::CommandPool > > m_commandPools;
+			std::vector< std::shared_ptr< Vulkan::CommandBuffer > > m_commandBuffers;
+			std::shared_ptr< Vulkan::CommandPool > m_offScreenCommandPool;
+			std::map< std::shared_ptr< RenderTarget::Abstract >, std::shared_ptr< Vulkan::CommandBuffer > > m_offScreenCommandBuffers;
+			std::shared_ptr< Vulkan::SwapChain > m_swapChain;
+			std::map< size_t, std::shared_ptr< Saphir::Program > > m_programs;
+			std::map< size_t, std::shared_ptr< Vulkan::GraphicsPipeline > > m_pipelines;
+			std::map< std::string, std::shared_ptr< Vulkan::RenderPass > > m_renderPasses;
+			std::map< size_t, std::shared_ptr< Vulkan::Sampler > > m_samplers;
+			Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > m_statistics{30};
 			std::array< VkClearValue, 2 > m_clearColors{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				false/*Usable*/,
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
 				false/*DebugMode*/,
 				true/*ShadowMapsEnabled*/,
 				true/*RenderToTexturesEnabled*/,

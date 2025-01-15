@@ -1,55 +1,46 @@
 /*
- * Emeraude/Vulkan/DeviceRequirements.hpp
- * This file is part of Emeraude
+ * src/Vulkan/DeviceRequirements.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <cstddef>
-#include <cstdint>
-#include <iostream>
-#include <sstream>
+#include <ostream>
 #include <string>
 #include <vector>
 
-/* Third-party libraries. */
-#include "Third-Party-Inclusion/vulkan.hpp"
+/* Third-party inclusions. */
+#include <vulkan/vulkan.h>
+
+/* Local inclusions for usages. */
+#include "Types.hpp"
 
 namespace Emeraude::Vulkan
 {
-	/**
-	 * @brief A hint for the main job of the device.
-	 */
-	enum class DeviceJobHint
-	{
-		General,
-		Graphics,
-		Compute,
-	};
-
 	/**
 	 * @brief This class describes the requirements to create a Vulkan logical device.
 	 */
@@ -71,21 +62,33 @@ namespace Emeraude::Vulkan
 			 * @return DeviceJobHint
 			 */
 			[[nodiscard]]
-			DeviceJobHint jobHint () const noexcept;
+			DeviceJobHint
+			jobHint () const noexcept
+			{
+				return m_deviceJobHint;
+			}
 
 			/**
 			 * @brief Gives access to device features to configure it.
 			 * @return VkPhysicalDeviceFeatures &
 			 */
 			[[nodiscard]]
-			VkPhysicalDeviceFeatures & features () noexcept;
+			VkPhysicalDeviceFeatures &
+			features () noexcept
+			{
+				return m_deviceFeatures;
+			}
 
 			/**
 			 * @brief Returns the device feature for the create info.
 			 * @return const VkPhysicalDeviceFeatures &
 			 */
 			[[nodiscard]]
-			const VkPhysicalDeviceFeatures & features () const noexcept;
+			const VkPhysicalDeviceFeatures &
+			features () const noexcept
+			{
+				return m_deviceFeatures;
+			}
 
 			/**
 			 * @brief Declares graphics queues requirements.
@@ -124,35 +127,55 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool needsGraphics () const noexcept;
+			bool
+			needsGraphics () const noexcept
+			{
+				return !m_graphicsQueues.empty();
+			}
 
 			/**
 			 * @brief Returns whether the device configuration requires compute.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool needsCompute () const noexcept;
+			bool
+			needsCompute () const noexcept
+			{
+				return !m_computeQueues.empty();
+			}
 
 			/**
 			 * @brief Returns whether the device configuration requires graphics presentation.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool needsPresentation () const noexcept;
+			bool
+			needsPresentation () const noexcept
+			{
+				return !m_presentationQueues.empty();
+			}
 
 			/**
 			 * @brief Returns whether to try a separate queue for presentation than graphics queue.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool tryPresentationSeparateFromGraphics () const noexcept;
+			bool
+			tryPresentationSeparateFromGraphics () const noexcept
+			{
+				return m_presentationSeparated;
+			}
 
 			/**
 			 * @brief Returns whether the device configuration requires separate transfer queues.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool needsTransfer () const noexcept;
+			bool
+			needsTransfer () const noexcept
+			{
+				return !m_transferQueues.empty();
+			}
 
 			/**
 			 * @brief Returns the number of required queue count for the device configuration.
@@ -166,69 +189,116 @@ namespace Emeraude::Vulkan
 			 * @return VkSurfaceKHR
 			 */
 			[[nodiscard]]
-			VkSurfaceKHR surface () const noexcept;
+			VkSurfaceKHR
+			surface () const noexcept
+			{
+				return m_surface;
+			}
 
 			/**
 			 * @brief Returns the graphics queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & graphicsQueuePriorities () const noexcept;
+			const std::vector< float > &
+			graphicsQueuePriorities () const noexcept
+			{
+				return m_graphicsQueues;
+			}
 
 			/**
 			 * @brief Returns the graphics transfer queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & graphicsTransferQueuePriorities () const noexcept;
+			const std::vector< float > &
+			graphicsTransferQueuePriorities () const noexcept
+			{
+				return m_graphicsTransferQueues;
+			}
 
 			/**
 			 * @brief Returns the presentation queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & presentationQueuePriorities () const noexcept;
+			const std::vector< float > &
+			presentationQueuePriorities () const noexcept
+			{
+				return m_presentationQueues;
+			}
 
 			/**
 			 * @brief Returns the compute queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & computeQueuePriorities () const noexcept;
+			const std::vector< float > &
+			computeQueuePriorities () const noexcept
+			{
+				return m_computeQueues;
+			}
 
 			/**
 			 * @brief Returns the compute transfer queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & computeTransferQueuePriorities () const noexcept;
+			const std::vector< float > &
+			computeTransferQueuePriorities () const noexcept
+			{
+				return m_presentationQueues;
+			}
 
 			/**
 			 * @brief Returns the transfer queue priorities.
 			 * @return const std::vector< float > &
 			 */
 			[[nodiscard]]
-			const std::vector< float > & transferQueuePriorities () const noexcept;
+			const std::vector< float > &
+			transferQueuePriorities () const noexcept
+			{
+				return m_transferQueues;
+			}
 
 			/**
 			 * @brief Returns whether any queue has been declared.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasQueueDeclared () const noexcept;
+			bool
+			hasQueueDeclared () const noexcept
+			{
+				if ( !m_graphicsQueues.empty() )
+				{
+					return true;
+				}
+
+				if ( !m_computeQueues.empty() )
+				{
+					return true;
+				}
+
+				if ( !m_transferQueues.empty() )
+				{
+					return true;
+				}
+
+				return false;
+			}
 
 			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const DeviceRequirements & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const DeviceRequirements & obj) noexcept;
 
@@ -236,12 +306,12 @@ namespace Emeraude::Vulkan
 
 			DeviceJobHint m_deviceJobHint;
 			VkPhysicalDeviceFeatures m_deviceFeatures{};
-			std::vector< float > m_graphicsQueues{};
-			std::vector< float > m_graphicsTransferQueues{};
-			std::vector< float > m_presentationQueues{};
-			std::vector< float > m_computeQueues{};
-			std::vector< float > m_computeTransferQueues{};
-			std::vector< float > m_transferQueues{};
+			std::vector< float > m_graphicsQueues;
+			std::vector< float > m_graphicsTransferQueues;
+			std::vector< float > m_presentationQueues;
+			std::vector< float > m_computeQueues;
+			std::vector< float > m_computeTransferQueues;
+			std::vector< float > m_transferQueues;
 			VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 			bool m_presentationSeparated{false};
 	};

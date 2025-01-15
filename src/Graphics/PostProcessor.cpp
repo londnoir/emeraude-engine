@@ -1,35 +1,36 @@
 /*
- * Emeraude/Graphics/PostProcessor.cpp
- * This file is part of Emeraude
+ * src/Graphics/PostProcessor.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "PostProcessor.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
 #include "Graphics/RenderTarget/View/Abstract.hpp"
+#include "Saphir/FramebufferEffectInterface.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Graphics
 {
@@ -47,11 +48,11 @@ namespace Emeraude::Graphics
 			return;
 		}
 
-		m_flags[Usable] = this->buildFramebuffer(width, height, colorBufferBits, depthBufferBits, stencilBufferBits, samples);
+		m_flags[ServiceInitialized] = this->buildFramebuffer(width, height, colorBufferBits, depthBufferBits, stencilBufferBits, samples);
 	}
 
 	bool
-	PostProcessor::resize (unsigned int width, unsigned int height) noexcept
+	PostProcessor::resize (unsigned int /*width*/, unsigned int /*height*/) noexcept
 	{
 		#ifdef VULKAN_DEV
 		if ( width * height == 0 )
@@ -60,8 +61,6 @@ namespace Emeraude::Graphics
 
 			return false;
 		}
-
-		m_flags[Usable] = false;
 
 		/* Destroys the old framebuffer. */
 		m_colorBuffer.destroy();
@@ -83,7 +82,7 @@ namespace Emeraude::Graphics
 			return false;
 		}
 
-		m_flags[Usable] = true;
+		m_flags[ServiceInitialized] = true;
 		#endif
 
 		return true;
@@ -92,28 +91,8 @@ namespace Emeraude::Graphics
 	bool
 	PostProcessor::usable () const noexcept
 	{
-		return m_flags[Usable];
+		return m_flags[ServiceInitialized];
 	}
-
-	/*bool
-	PostProcessor::updateVideoMemoryForRendering () noexcept
-	{
-		if ( m_flags[UpdateRequested] )
-		{
-			m_flags[UpdateRequested] = false;
-
-			m_program.reset();
-
-			if ( !this->loadProgram() )
-			{
-				Tracer::error(ClassId, "Unable to get an updated program !");
-
-				return false;
-			}
-		}
-
-		return true;
-	}*/
 
 	void
 	PostProcessor::begin () noexcept
@@ -140,16 +119,18 @@ namespace Emeraude::Graphics
 	void
 	PostProcessor::clearEffects () noexcept
 	{
-		if ( m_effectsList.size() )
+		if ( m_effectsList.empty() )
 		{
-			m_effectsList.clear();
-
-			m_flags[UpdateRequested] = true;
+			return;
 		}
+
+		m_effectsList.clear();
+
+		m_flags[UpdateRequested] = true;
 	}
 
 	void
-	PostProcessor::render (const PixelFactory::Area< size_t > & region) const noexcept
+	PostProcessor::render (const PixelFactory::Area< size_t > & /*region*/) const noexcept
 	{
 		/*if ( m_effectsList.empty() )
 		{
@@ -187,7 +168,7 @@ namespace Emeraude::Graphics
 	}
 
 	void
-	PostProcessor::setBackgroundColor (const PixelFactory::Color< float > & color) noexcept
+	PostProcessor::setBackgroundColor (const PixelFactory::Color< float > & /*color*/) noexcept
 	{
 		//m_framebuffer.setClearColor(color);
 	}
@@ -224,23 +205,23 @@ namespace Emeraude::Graphics
 			auto vertexShader = std::make_shared< VertexShader >("PostProcessor");
 
 			{
-				ShaderGenerator generator(vertexShader);
+				OLDShaderGenerator generator(vertexShader);
 
 				if ( requestScreenSize )
-					generator.declareViewUniformBlock();
+					generator.declare ViewUniformBlock();
 
-				generator.declare(InputAttribute{VertexAttributeType::Position});
+				generator.declare(InputAttribute{VertexAttributeType::Position}, true);
 
-				generator.addOutputInstruction(Blob() << "gl_Position = vec4(" << Attributes::Position << ", 1.0);");
+				generator.addOutputInstruction(Blob() << "gl_Position = vec4(" << Attribute::Position << ", 1.0);");
 
 				/* Fragment texture coodinates in case of non-multisample render or simply requested by a shader. */
 				if ( samples == 0 || std::any_of(m_effectsList.cbegin(), m_effectsList.cend(), [] (const auto & effect) {return effect->requestScreenCoordinates();}) )
 				{
 					generator.declare(InputAttribute{VertexAttributeType::PrimaryTextureCoordinates});
 
-					generator.declare(ShaderStageOutput{GLSL::FloatVector2, ShaderVariables::TextureCoordinates, GLSL::Smooth});
+					generator.declare(ShaderStageOutput{GLSL::FloatVector2, ShaderVariable::TextureCoordinates, GLSL::Smooth});
 
-					generator.addOutputInstruction(Blob() << ShaderVariables::TextureCoordinates << " = " << Attributes::PrimaryTextureCoordinates << ';');
+					generator.addOutputInstruction(Blob() << ShaderVariable::TextureCoordinates << " = " << Attribute::PrimaryTextureCoordinates << ';');
 				}
 
 				/* Effect code generation. */
@@ -270,10 +251,10 @@ namespace Emeraude::Graphics
 			auto fragmentShader = std::make_shared< FragmentShader >("PostProcessor");
 
 			{
-				ShaderGenerator generator(fragmentShader);
+				OLDShaderGenerator generator(fragmentShader);
 
 				if ( requestScreenSize )
-					generator.declareViewUniformBlock();
+					generator.declare ViewUniformBlock();
 
 				generator.declareDefaultOutputFragment();
 
@@ -307,9 +288,9 @@ namespace Emeraude::Graphics
 					{
 						generator.declare(ShaderUniform{GLSL::Sampler2D, Samplers::PrimaryTexture});
 
-						generator.declare(ShaderStageInput{GLSL::FloatVector2, ShaderVariables::TextureCoordinates, GLSL::Smooth});
+						generator.declare(ShaderStageInput{GLSL::FloatVector2, ShaderVariable::TextureCoordinates, GLSL::Smooth});
 
-						generator.addInstruction(Blob() << GLSL::FloatVector4 << ' ' << Fragment << " = texture(" << Samplers::PrimaryTexture << ", " << ShaderVariables::TextureCoordinates << ");");
+						generator.addInstruction(Blob() << GLSL::FloatVector4 << ' ' << Fragment << " = texture(" << Samplers::PrimaryTexture << ", " << ShaderVariable::TextureCoordinates << ");");
 					}
 				}
 
@@ -327,7 +308,7 @@ namespace Emeraude::Graphics
 					}
 				}
 
-				generator.addOutputInstruction(Blob() << ShaderVariables::OutputFragment << " = " << Fragment << ';');
+				generator.addOutputInstruction(Blob() << ShaderVariable::OutputFragment << " = " << Fragment << ';');
 
 				if ( !generator.writeShader() )
 				{
@@ -356,7 +337,7 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	PostProcessor::buildFramebuffer (unsigned int width, unsigned int height, unsigned int colorBufferBits, unsigned int depthBufferBits, unsigned int stencilBufferBits, unsigned int samples) noexcept
+	PostProcessor::buildFramebuffer (unsigned int /*width*/, unsigned int /*height*/, unsigned int /*colorBufferBits*/, unsigned int /*depthBufferBits*/, unsigned int /*stencilBufferBits*/, unsigned int /*samples*/) noexcept
 	{
 		#ifdef VULKAN_DEV
 		if ( width == 0 || height == 0 )

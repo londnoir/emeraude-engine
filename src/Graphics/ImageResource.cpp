@@ -1,37 +1,43 @@
 /*
- * Emeraude/Graphics/ImageResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/ImageResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ImageResource.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+
+/* Local inclusions. */
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/FileIO.hpp"
 #include "Resources/Manager.hpp"
-#include "PixelFactory/FileIO.hpp"
-#include "Graphics/TextureResource/Abstract.hpp"
+#include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -39,13 +45,13 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::ImageReso
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::ImageResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::ImageResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics
 {
 	using namespace Libraries;
 
-	const size_t ImageResource::ClassUID{Observable::getClassUID()};
+	const size_t ImageResource::ClassUID{getClassUID(ClassId)};
 
 	ImageResource::ImageResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -53,16 +59,15 @@ namespace Emeraude::Graphics
 
 	}
 
+	size_t
+	ImageResource::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	ImageResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -76,7 +81,9 @@ namespace Emeraude::Graphics
 	ImageResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		constexpr size_t size = 32;
 
@@ -98,10 +105,12 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	ImageResource::load (const Path::File & filepath) noexcept
+	ImageResource::load (const std::filesystem::path & filepath) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( !PixelFactory::FileIO::read(filepath, m_data) )
 		{
@@ -121,10 +130,12 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	ImageResource::load (const Json::Value &) noexcept
+	ImageResource::load (const Json::Value & /*data*/) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		Tracer::error(ClassId, "This method can't be used !");
 
@@ -140,7 +151,7 @@ namespace Emeraude::Graphics
 	std::shared_ptr< ImageResource >
 	ImageResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->images().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->images().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< ImageResource >
@@ -155,16 +166,16 @@ namespace Emeraude::Graphics
 		return m_data;
 	}
 
-	size_t
+	uint32_t
 	ImageResource::width () const noexcept
 	{
-		return m_data.width();
+		return static_cast< uint32_t >(m_data.width());
 	}
 
-	size_t
+	uint32_t
 	ImageResource::height () const noexcept
 	{
-		return m_data.height();
+		return static_cast< uint32_t >(m_data.height());
 	}
 
 	bool

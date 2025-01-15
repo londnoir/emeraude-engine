@@ -1,33 +1,33 @@
 /*
- * Emeraude/Audio/AmbienceChannel.hpp
- * This file is part of Emeraude
+ * src/Audio/AmbienceChannel.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <memory>
 
 /* Local inclusions. */
@@ -54,7 +54,11 @@ namespace Emeraude::Audio
 			 * @return std::shared_ptr< Source >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Source > getSource () const noexcept;
+			std::shared_ptr< Source >
+			getSource () const noexcept
+			{
+				return m_source;
+			}
 
 			/**
 			 * @brief Sets time before the next sound play from this channel.
@@ -62,7 +66,12 @@ namespace Emeraude::Audio
 			 * @param time The delay in milliseconds.
 			 * @return void
 			 */
-			void setTimeBeforeNextPlay (unsigned int time) noexcept;
+			void
+			setTimeBeforeNextPlay (unsigned int time) noexcept
+			{
+				m_timeBeforeNextPlay = time;
+				m_time = 0;
+			}
 
 			/**
 			 * @brief Initializes the channel to play an ambience sound.
@@ -85,34 +94,50 @@ namespace Emeraude::Audio
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isTimeToPlay () const noexcept;
+			bool
+			isTimeToPlay () const noexcept
+			{
+				return m_time > m_timeBeforeNextPlay;
+			}
 
 			/**
 			 * @brief Sets the position.
 			 * @param position A reference to a vector.
 			 * @return void
 			 */
-			void setPosition (const Libraries::Math::Vector< 3, float > & position) noexcept;
+			void
+			setPosition (const Libraries::Math::Vector< 3, float > & position) noexcept
+			{
+				m_position = position;
+			}
 
 			/**
 			 * @brief Sets a velocity vector to fake a movement.
 			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			void setVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept;
+			void
+			setVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			{
+				m_velocity = velocity;
+			}
 
 			/**
 			 * @brief Disable the channel velocity.
 			 * @return void
 			 */
-			void disableVelocity () noexcept;
+			void
+			disableVelocity () noexcept
+			{
+				m_velocity.reset();
+			}
 
 		private:
 
-			std::shared_ptr< Source > m_source{};
-			unsigned int m_timeBeforeNextPlay = 0U;
-			unsigned int m_time = 0U;
-			Libraries::Math::Vector< 3, float > m_position{};
-			Libraries::Math::Vector< 3, float > m_velocity{};
+			std::shared_ptr< Source > m_source;
+			Libraries::Math::Vector< 3, float > m_position;
+			Libraries::Math::Vector< 3, float > m_velocity;
+			unsigned int m_timeBeforeNextPlay{0U};
+			unsigned int m_time{0U};
 	};
 }

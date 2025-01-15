@@ -1,42 +1,50 @@
 /*
- * Emeraude/Scenes/Manager.hpp
- * This file is part of Emeraude
+ * src/Scenes/Manager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
+#include <shared_mutex>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
 #include "DefinitionResource.hpp"
+#include "Graphics/Renderable/AbstractBackground.hpp"
+#include "Graphics/Renderable/SceneAreaInterface.hpp"
+#include "Graphics/Renderable/SeaLevelInterface.hpp"
 #include "Scene.hpp"
 
 /* Forward declarations. */
@@ -52,8 +60,7 @@ namespace Emeraude
 		class Renderer;
 	}
 
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
 }
 
 namespace Emeraude::Scenes
@@ -74,19 +81,22 @@ namespace Emeraude::Scenes
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto AutoExpandEnabledKey = "Performances/AutoExpandEnabled";
-			static constexpr auto DefaultAutoExpandEnabled = true;
-			static constexpr auto AutoExpandAtKey = "Performances/AutoExpandAt";
-			static constexpr auto DefaultAutoExpandAt = 32;
+			static constexpr auto DefaultSceneBoundary{1000.0F};
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
 			{
+				/** @brief This event is fired when a new empty scene has been created. The scene smart pointer will be passed. */
 				SceneCreated,
+				/**
+				 * @brief This event is fired when a scene is loaded from a file. The scene smart pointer will be passed.
+				 * @note This event will come after a SceneCreated event. */
 				SceneLoaded,
+				/** @brief This event is fired when a scene has been destroyed or all scenes deleted. No data will be passed with it. */
 				SceneDestroyed,
+				/** @brief This event is fired when a scene become the active one. The scene smart pointer will be passed. */
 				SceneActivated,
+				/** @brief This event is fired when a scene is deactivated (not destroyed). The scene smart pointer will be passed. */
 				SceneDeactivated,
 				/* Enumeration boundary. */
 				MaxEnum
@@ -94,21 +104,67 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Constructs the scene manager.
-			 * @param arguments A reference to the application arguments.
-			 * @param coreSettings A reference to the core settings.
-			 * @param applicationSettings A reference to the user settings.
+			 * @param primaryServices A reference to primary services.
 			 * @param resourceManager A reference to the resource manager.
-			 * @param renderer A reference to the renderer.
+			 * @param graphicsRenderer A reference to the graphics renderer.
+			 * @param audioManager A reference to the audio manager.
 			 */
-			Manager (const Arguments & arguments, Settings & coreSettings, Settings & applicationSettings, Resources::Manager & resourceManager, Graphics::Renderer & renderer) noexcept;
+			Manager (PrimaryServices & primaryServices, Resources::Manager & resourceManager, Graphics::Renderer & graphicsRenderer, Audio::Manager & audioManager) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Manager (const Manager & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Manager (Manager && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Manager &
+			 */
+			Manager & operator= (const Manager & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Manager &
+			 */
+			Manager & operator= (Manager && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the console.
+			 */
+			~Manager () override = default;
+
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Returns whether a scene exists under the name.
@@ -116,7 +172,11 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasSceneNamed (const std::string & sceneName) const noexcept;
+			bool
+			hasSceneNamed (const std::string & sceneName) const noexcept
+			{
+				return m_scenes.contains(sceneName);
+			}
 
 			/**
 			 * @brief Creates a new scene.
@@ -129,7 +189,7 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< Scene >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Scene > newScene (const std::string & sceneName, float boundary, const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background = nullptr, const std::shared_ptr< Graphics::Renderable::AbstractSceneArea > & sceneArea = nullptr, const std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > & seaLevel = nullptr) noexcept;
+			std::shared_ptr< Scene > newScene (const std::string & sceneName, float boundary, const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background = nullptr, const std::shared_ptr< Graphics::Renderable::SceneAreaInterface > & sceneArea = nullptr, const std::shared_ptr< Graphics::Renderable::SeaLevelInterface > & seaLevel = nullptr) noexcept;
 
 			/**
 			 * @brief Loads a scene from a scene definition in the resource store.
@@ -143,11 +203,11 @@ namespace Emeraude::Scenes
 			/**
 			 * @brief Loads a scene from an external scene definition file. This file will be added in the resource store.
 			 * @note If no problem found, the method Manager::loadScene(const std::shared_ptr< DefinitionResource > &) will handle the loading.
-			 * @param filepath A Path::File object to the JSON file to load.
+			 * @param filepath A reference to a filesystem path.
 			 * @return std::pair< std::shared_ptr< Scene >, std::shared_ptr< DefinitionResource > >
 			 */
 			[[nodiscard]]
-			SceneLoading loadScene (const Libraries::Path::File & filepath) noexcept;
+			SceneLoading loadScene (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Loads a scene from a JSON definition.
@@ -159,9 +219,9 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Launches the process to refresh all scenes.
-			 * @return bool
+			 * @return void
 			 */
-			bool refreshScenes () const noexcept;
+			void refreshScenes () const noexcept;
 
 			/**
 			 * @brief Disables and delete a scene.
@@ -172,23 +232,24 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Disables active scene and clear all scene.
+			 * @return void
 			 */
 			void deleteAllScenes () noexcept;
 
 			/**
-			 * @brief Sets an active scene.
+			 * @brief Sets a scene as active.
 			 * @note This function will check the completeness of the scene with Scene::check().
-			 * It register every notifiers with all concerned services.
+			 * It will register every notifier with all concerned services.
 			 * @param scene A reference to a smart pointer of the scene.
 			 * @return bool
 			 */
-			bool enableScene (const std::shared_ptr< Scenes::Scene > & scene) noexcept;
+			bool enableScene (const std::shared_ptr< Scene > & scene) noexcept;
 
 			/**
 			 * @brief Disables the active scene.
 			 * @return bool
 			 */
-			bool disableScene () noexcept;
+			bool disableActiveScene () noexcept;
 
 			/**
 			 * @brief Creates a list of available scene names.
@@ -214,18 +275,37 @@ namespace Emeraude::Scenes
 			std::shared_ptr< const Scene > getScene (const std::string & sceneName) const noexcept;
 
 			/**
-			 * @brief Returns the active scene.
-			 * @return std::shared_ptr< Scene >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Scene > activeScene () noexcept;
-
-			/**
 			 * @brief Returns whether the manager has an active scene.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasActiveScene () const noexcept;
+			bool
+			hasActiveScene () const noexcept
+			{
+				return m_activeScene != nullptr;
+			}
+
+			/**
+			 * @brief Returns the active scene.
+			 * @return std::shared_ptr< Scene >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Scene >
+			activeScene () noexcept
+			{
+				return m_activeScene;
+			}
+
+			/**
+			 * @brief Returns the active scene access shared mutex.
+			 * @return std::shared_mutex &
+			 */
+			[[nodiscard]]
+			std::shared_mutex &
+			activeSceneAccess () noexcept
+			{
+				return m_activeSceneAccess;
+			}
 
 		private:
 
@@ -235,12 +315,25 @@ namespace Emeraude::Scenes
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
-			Settings & m_applicationSettings;
+			/* Flag names */
+			static constexpr auto ServiceInitialized{0UL};
+
+			PrimaryServices & m_primaryServices;
 			Resources::Manager & m_resourceManager;
-			Graphics::Renderer & m_renderer;
-			std::map< std::string, std::shared_ptr< Scene > > m_scenes{};
-			std::shared_ptr< Scene > m_activeScene{};
+			Graphics::Renderer & m_graphicsRenderer;
+			Audio::Manager & m_audioManager;
+			std::map< std::string, std::shared_ptr< Scene > > m_scenes;
+			std::shared_ptr< Scene > m_activeScene;
+			std::shared_mutex m_activeSceneAccess;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

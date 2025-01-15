@@ -1,40 +1,44 @@
 /*
- * Emeraude/Graphics/ImageResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/ImageResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
+#include <cstddef>
 #include <cstdint>
-#include <string>
 #include <memory>
+#include <string>
 
-/* Local inclusions */
-#include "PixelFactory/Pixmap.hpp"
+/* Local inclusions for inheritances. */
 #include "Resources/ResourceTrait.hpp"
+
+/* Local inclusions for usages. */
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
 #include "Resources/Container.hpp"
 
 namespace Emeraude::Graphics
@@ -62,19 +66,23 @@ namespace Emeraude::Graphics
 			 */
 			explicit ImageResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
@@ -88,17 +96,17 @@ namespace Emeraude::Graphics
 
 			/**
 			 * @brief Returns the width of the image.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t width () const noexcept;
+			uint32_t width () const noexcept;
 
 			/**
 			 * @brief Returns the height of the image.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t height () const noexcept;
+			uint32_t height () const noexcept;
 
 			/**
 			 * @brief Returns whether pixmaps are all gray scale.

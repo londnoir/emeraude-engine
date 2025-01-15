@@ -1,0 +1,91 @@
+/*
+ * src/Libraries/ObservableTrait.cpp
+ * This file is part of Emeraude-Engine
+ *
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude-Engine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "ObservableTrait.hpp"
+
+/* Local inclusions. */
+#include "ObserverTrait.hpp"
+
+namespace Libraries
+{
+	std::mutex ObservableTrait::s_UIDMutex{};
+
+	size_t ObservableTrait::s_nextClassUID{1UL};
+
+#ifdef DEBUG
+	std::unique_ptr< std::map< size_t, const char * > > ObservableTrait::s_classUIDs{nullptr};
+#endif
+
+	ObservableTrait::~ObservableTrait ()
+	{
+		/* NOTE: Wait for Observable::notify() to finish. */
+		const std::lock_guard< std::mutex > lockGuard{m_notificationMutex};
+
+		/* NOTE: Only erase "this" observable to every looking observer.
+		 * Do not use ObserverTrait::release(); */
+		for ( auto * observer : m_observers )
+		{
+			observer->m_observables.erase(this);
+		}
+	}
+
+	void
+	ObservableTrait::notify (int notificationCode, const std::any & data) noexcept
+	{
+		const std::lock_guard< std::mutex > lock{m_notificationMutex};
+
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
+		if ( m_observers.empty() )
+		{
+			std::cout << "Observable @" << this << " tries to notify the code '" << notificationCode << "', but no one was listening !" "\n";
+
+			return;
+		}
+#endif
+
+		/* [ERASE IN LOOP] */
+		auto observerIt = m_observers.begin();
+
+		while ( observerIt != m_observers.end() )
+		{
+			auto * observer = *observerIt;
+
+			/* If onNotification() returns false, we automatically remove the observer. */
+			if ( !observer->onNotification(this, notificationCode, data) )
+			{
+				observer->m_observables.erase(this);
+
+				/* NOTE: set::erase() gives the next iterator. */
+				observerIt = m_observers.erase(observerIt);
+			}
+			else
+			{
+				++observerIt;
+			}
+		}
+	}
+}

@@ -1,64 +1,67 @@
 /*
- * Emeraude/FileSystem.cpp
- * This file is part of Emeraude
+ * src/FileSystem.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "FileSystem.hpp"
 
-/* C/C++ standard libraries. */
-#include <filesystem>
+/* STL inclusions. */
+#include <cstddef>
+#include <array>
+#include <vector>
+#include <string>
 #include <iostream>
+#include <exception>
 
-/* Local inclusion */
+/* Local inclusion. */
+#include "Libraries/IO.hpp"
+#include "platform.hpp"
+#include "PlatformSpecific/UserInfo.hpp"
+#include "PlatformSpecific/SystemInfo.hpp"
+#include "Identification.hpp"
 #include "Arguments.hpp"
-#include "Path/Path.hpp"
 #include "Tracer.hpp"
-
-/* Used for get the home directory. */
-#if IS_LINUX
-	#include <pwd.h>
-	#include <unistd.h>
-#elif IS_WINDOWS
-	#include <Shlobj.h>
-#elif IS_MACOS
-	/* TODO ... */
-#endif
 
 namespace Emeraude
 {
 	using namespace Libraries;
 
-	const size_t FileSystem::ClassUID{Observable::getClassUID()};
-	FileSystem * FileSystem::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t FileSystem::ClassUID{getClassUID(ClassId)};
+	FileSystem * FileSystem::s_instance{nullptr};
 
-	FileSystem::FileSystem (const Arguments & arguments, std::string applicationName) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_applicationName(std::move(applicationName))
+	FileSystem::FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification) noexcept
+		: ServiceInterface(ClassId),
+		m_arguments(arguments),
+		m_userInfo(userInfo),
+		m_organizationName(identification.applicationOrganization()),
+		m_applicationName(identification.applicationName()),
+		m_applicationReverseId(identification.applicationReverseId())
 	{
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
@@ -71,79 +74,53 @@ namespace Emeraude
 		s_instance = nullptr;
 	}
 
-	FileSystem *
-	FileSystem::instance () noexcept
-	{
-		return s_instance;
-	}
-
-	bool
-	FileSystem::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	FileSystem::usable () const noexcept
-	{
-		return m_usable;
-	}
-
-	Path::Directory
-	FileSystem::userDataDirectory (const std::string & append) const noexcept
-	{
-		/* FIXME: Check the whole method ! */
-#if IS_LINUX
-		Path::Directory directory{to_string(m_userDirectory) + ".local" + Path::Separator + "share" + Path::Separator + m_applicationName + Path::Separator};
-#elif IS_MACOS
-		#error "TODO: Check for this platform"
-#elif IS_WINDOWS
-		#error "TODO: Check for this platform"
-#endif
-
-		return append.empty() ? directory : directory.append(append);
-	}
-
 	bool
 	FileSystem::onInitialize () noexcept
 	{
-		/* 1. Check for binary name and directory. */
-		const auto binaryPath = m_arguments.getBinaryPath();
+		m_flags[StandAlone] = m_arguments.get("--standalone").isPresent();
 
-#if IS_WINDOWS
-		std::replace(binaryPath.begin(), binaryPath.end(), '\\', Path::Separator);
-#endif
-
-		const auto position = binaryPath.find_last_of(Path::Separator);
-
-		/* FIXME: Gives incorrect results when called from PATH ! */
-		m_binaryDirectory = Path::Directory::getCurrentWorkingDirectory();
-		m_binaryName = position == std::string::npos ? binaryPath : binaryPath.substr(position + 1);
-
-		/* 2. Check home user directory. */
-		if ( !this->checkUserDirectory() )
+		if ( m_organizationName.empty() || m_applicationName.empty() )
 		{
-			Tracer::fatal(ClassId, "Unable to use the user directory !");
+			Tracer::error(ClassId, "The name of the organization or the application is invalid !");
 
 			return false;
 		}
 
-		/* 3. Check config directories. */
-		if ( !this->checkConfigDirectories() )
+		if ( !this->checkBinaryName() )
+		{
+			Tracer::error(ClassId, "Unable to determine the binary name !");
+
+			return false;
+		}
+
+		if ( !this->checkBinaryPath() )
+		{
+			Tracer::error(ClassId, "Unable to determine the binary parent directory !");
+
+			return false;
+		}
+
+		if ( !this->checkUserDataDirectory() )
+		{
+			Tracer::error(ClassId, "Unable to use the user directory !");
+
+			return false;
+		}
+
+		if ( !this->checkConfigDirectory() )
 		{
 			Tracer::error(ClassId, "Unable to reach a valid config data directory ! You can provide a custom path with argument '--config-directory'.");
 
 			return false;
 		}
 
-		/* 4. Check data directories. */
+		if ( !this->checkCacheDirectory() )
+		{
+			Tracer::error(ClassId, "Unable to reach a valid cache directory ! You can provide a custom path with argument '--cache-directory'.");
+
+			return false;
+		}
+
 		if ( !this->checkDataDirectories() )
 		{
 			Tracer::error(ClassId, "Unable to reach a valid data directory ! You can provide a custom path with argument '--data-directory'.");
@@ -151,19 +128,12 @@ namespace Emeraude
 			return false;
 		}
 
-		/* 5. Check cache directories. */
-		if ( !this->checkCacheDirectories() )
+		if ( m_arguments.get("--verbose").isPresent() )
 		{
-			Tracer::error(ClassId, "Unable to reach a valid cache directory ! You can provide a custom path with argument '--cache-directory'.");
-
-			return false;
+			std::cout << *this << '\n';
 		}
 
-#ifdef DEBUG
-		std::cout << *this << '\n';
-#endif
-
-		m_usable = true;
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -171,353 +141,407 @@ namespace Emeraude
 	bool
 	FileSystem::onTerminate () noexcept
 	{
+		m_flags[ServiceInitialized] = false;
+
 		return true;
 	}
 
 	bool
-	FileSystem::checkUserDirectory () noexcept
+	FileSystem::checkBinaryPath () noexcept
 	{
-#if IS_LINUX
-		const auto * userInfo = getpwuid(getuid());
+		m_binaryDirectory = PlatformSpecific::SystemInfo::getRealApplicationDir();
 
-		m_userDirectory.set(userInfo->pw_dir);
-#elif IS_WINDOWS
-		std::array< WCHAR, MAX_PATH > path;
-
-		if ( SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, path.data()) < 0 )
-			return false;
-
-		std::string userDirectory{};
-
-		for ( auto chr : path )
+		if ( m_binaryDirectory.empty() )
 		{
-			if ( chr == 0 )
-				break;
+			Tracer::error(ClassId, "The binary path is empty !");
 
-			userDirectory += static_cast< char >(chr);
+			return false;
 		}
 
-		std::replace(userDirectory.begin(), userDirectory.end(), '\\', Path::Separator);
-
-		m_userDirectory.set(userDirectory);
-#elif IS_MACOS
-		#error "TODO: Check for this platform"
-#endif
-
-		return !m_userDirectory.empty();
+		return true;
 	}
 
 	bool
-	FileSystem::checkConfigDirectories () noexcept
+	FileSystem::checkBinaryName () noexcept
 	{
-		std::vector< std::string > directoryStrings{};
+		m_binaryName = m_arguments.binaryFilepath().filename().string();
+
+		return !m_binaryName.empty();
+	}
+
+	bool
+	FileSystem::checkUserDataDirectory () noexcept
+	{
+		Tracer::info(ClassId, "Looking for user data directories ...");
+
+		const auto & homePath = m_userInfo.homePath();
+
+		if ( homePath.empty() )
+		{
+			Tracer::error(ClassId, "Unable to detect the current user home directory !");
+
+			return false;
+		}
+
+		m_userDirectory = homePath;
+
+		if ( !IO::directoryExists(m_userDirectory) )
+		{
+			return false;
+		}
+
+		/* Check next to binary. */
+		if ( m_flags[StandAlone] )
+		{
+			auto directoryPath = m_binaryDirectory;
+			directoryPath.append("data");
+
+			return registerDirectory(directoryPath, true, true, m_userDataDirectory);
+		}
+
+		auto directoryPath = m_userDirectory;
+#if IS_LINUX
+		directoryPath.append(".local");
+		directoryPath.append("share");
+		directoryPath.append(m_organizationName);
+		directoryPath.append(m_applicationName);
+#elif IS_MACOS
+		directoryPath.append("Library");
+		directoryPath.append("Application Support");
+		directoryPath.append(m_applicationReverseId);
+#elif IS_WINDOWS
+		directoryPath.append("AppData");
+		directoryPath.append("Roaming");
+		directoryPath.append(m_organizationName);
+		directoryPath.append(m_applicationName);
+#endif
+
+		return registerDirectory(directoryPath, true, true, m_userDataDirectory);
+	}
+
+	bool
+	FileSystem::checkConfigDirectory () noexcept
+	{
+		Tracer::info(ClassId, "Looking for config directories ...");
 
 		/* Check for a forced config directory from command line arguments. */
-		const auto forcedDirectory = m_arguments.get("--forced-config-directory").value();
+		const auto forcedPath = m_arguments.get("--config-directory").value();
 
-		if ( !forcedDirectory.empty() )
+		if ( !forcedPath.empty() )
 		{
-			directoryStrings.emplace_back(forcedDirectory);
+			return registerDirectory(forcedPath, false, true, m_configDirectory);
 		}
-		else
+
+		/* Check next to binary. */
+		if ( m_flags[StandAlone] )
 		{
-			/* Check for a custom config directory from command line arguments. */
-			const auto customDirectory = m_arguments.get("--config-directory").value();
+			auto directoryPath = m_binaryDirectory;
+			directoryPath.append("config");
 
-			if ( !customDirectory.empty() )
-			{
-				directoryStrings.emplace_back(customDirectory);
-			}
+			return registerDirectory(directoryPath, true, true, m_configDirectory);
+		}
 
-			/* Check for standard OS config directories (User space or system space). */
+		/* Check for standard OS config directories. */
+		std::vector< std::filesystem::path > paths{};
+
+		if ( !m_userDirectory.empty() )
+		{
+			auto directoryPath = m_userDirectory;
 #if IS_LINUX
-			/* NOTE: "/etc/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				Path::Separator << "etc" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-
-			/* NOTE: "/usr/local/etc/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				Path::Separator << "usr" << Path::Separator << "local" << Path::Separator << "etc" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-
-			/* Check for a config directory next to binary. */
-			directoryStrings.emplace_back(to_string(m_binaryDirectory) + "config" + Path::Separator);
-
-			/* NOTE: "$HOME/.config/Emeraude/" [DEFAULT] */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				m_userDirectory << ".config" << Path::Separator << m_applicationName << Path::Separator
-			).str());
+			directoryPath.append(".config");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
 #elif IS_MACOS
-			#error "TODO: Check for this platform"
+			directoryPath.append("Library");
+			directoryPath.append("Preferences");
+			directoryPath.append(m_applicationReverseId);
 #elif IS_WINDOWS
-			#error "TODO: Check for this platform"
+			directoryPath.append("AppData");
+			directoryPath.append("Local");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
 #endif
+
+			paths.emplace_back(directoryPath);
 		}
 
-		return FileSystem::registerDirectories(directoryStrings, true, true, m_configDirectories);
+		for ( auto it = paths.cbegin(); it != paths.cend(); ++it )
+		{
+			const bool last = (it != paths.cend() && std::next(it) == paths.cend());
+
+			if ( registerDirectory(*it, last, true, m_configDirectory) )
+			{
+				return true;
+			}
+		}
+
+		return !m_configDirectory.empty();
+	}
+
+	bool
+	FileSystem::checkCacheDirectory () noexcept
+	{
+		Tracer::info(ClassId, "Looking for cache directories ...");
+
+		/* Check for a forced cache directory from command line arguments. */
+		const auto forcedPath = m_arguments.get("--cache-directory").value();
+
+		if ( !forcedPath.empty() )
+		{
+			return registerDirectory(forcedPath, false, true, m_cacheDirectory);
+		}
+
+		/* Check next to binary. */
+		if ( m_flags[StandAlone] )
+		{
+			auto directoryPath = m_binaryDirectory;
+			directoryPath.append("cache");
+
+			return registerDirectory(directoryPath, true, true, m_cacheDirectory);
+		}
+
+		/* Check for standard OS config directories. */
+		std::vector< std::filesystem::path > paths{};
+
+		if ( !m_userDirectory.empty() )
+		{
+			auto directoryPath = m_userDirectory;
+#if IS_LINUX
+			directoryPath.append(".cache");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
+#elif IS_MACOS
+			directoryPath.append("Library");
+			directoryPath.append("Caches");
+			directoryPath.append(m_applicationReverseId);
+#elif IS_WINDOWS
+			directoryPath.append("AppData");
+			directoryPath.append("Local");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
+#endif
+
+
+			paths.emplace_back(directoryPath);
+		}
+
+		for ( auto it = paths.cbegin(); it != paths.cend(); ++it )
+		{
+			const bool last = (it != paths.cend() && std::next(it) == paths.cend());
+
+			if ( registerDirectory(*it, last, true, m_cacheDirectory) )
+			{
+				return true;
+			}
+		}
+
+		return !m_cacheDirectory.empty();
 	}
 
 	bool
 	FileSystem::checkDataDirectories () noexcept
 	{
-		std::vector< std::string > directoryStrings{};
+		Tracer::info(ClassId, "Looking for data directories ...");
 
 		/* Check for a forced data directory from command line arguments. */
-		const auto forcedDirectory = m_arguments.get("--forced-data-directory").value();
+		const auto forcedPath = m_arguments.get("--data-directory").value();
 
-		if ( !forcedDirectory.empty() )
+		if ( !forcedPath.empty() )
 		{
-			directoryStrings.emplace_back(forcedDirectory);
-		}
-		else
-		{
-			/* Check for a custom data directory from command line arguments. */
-			const auto customDirectory = m_arguments.get("--data-directory").value();
+			const std::filesystem::path tempDirectory{forcedPath};
 
-			if ( !customDirectory.empty() )
+			if ( !checkDirectoryRequirements(tempDirectory, false, false) )
 			{
-				directoryStrings.emplace_back(customDirectory);
-			}
-
-			/* Check for standard OS data directories (User space or system space). */
-#if IS_LINUX
-			/* NOTE: "/usr/share/games/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				Path::Separator << "usr" << Path::Separator << "share" << Path::Separator << "games" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-
-			/* NOTE: "/usr/local/share/games/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				Path::Separator << "usr" << Path::Separator << "local" << Path::Separator << "share" << Path::Separator << "games" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-
-			/* Check for a data directory next to binary. */
-			directoryStrings.emplace_back(to_string(m_binaryDirectory) + "data" + Path::Separator);
-
-			/* NOTE: "$HOME/.local/share/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				m_userDirectory << ".local" << Path::Separator << "share" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-#elif IS_MACOS
-			#error "TODO: Check for this platform"
-#elif IS_WINDOWS
-			#error "TODO: Check for this platform"
-#endif
-		}
-
-		return FileSystem::registerDirectories(directoryStrings, false, false, m_dataDirectories);
-	}
-
-	bool
-	FileSystem::checkCacheDirectories () noexcept
-	{
-		std::vector< std::string > directoryStrings{};
-
-		/* Check for a forced cache directory from command line arguments. */
-		const auto forcedDirectory = m_arguments.get("--forced-cache-directory").value();
-
-		if ( !forcedDirectory.empty() )
-		{
-			directoryStrings.emplace_back(forcedDirectory);
-		}
-		else
-		{
-			/* Check for a custom cache directory from command line arguments. */
-			const auto customDirectory = m_arguments.get("--cache-directory").value();
-
-			if ( !customDirectory.empty() )
-			{
-				directoryStrings.emplace_back(customDirectory);
-			}
-
-			/* Check for standard OS cache directories (User space or system space). */
-#if IS_LINUX
-			/* NOTE: "/var/cache/Emeraude/" */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				Path::Separator << "var" << Path::Separator << "cache" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-
-			/* Check for a cache directory next to binary */
-			directoryStrings.emplace_back(to_string(m_binaryDirectory) + "cache" + Path::Separator);
-
-			/* NOTE: "$HOME/.cache/Emeraude/" [DEFAULT] */
-			directoryStrings.emplace_back((std::stringstream{} <<
-				m_userDirectory << ".cache" << Path::Separator << m_applicationName << Path::Separator
-			).str());
-#elif IS_MACOS
-			#error "TODO: Check for this platform"
-#elif IS_WINDOWS
-			#error "TODO: Check for this platform"
-#endif
-		}
-
-		return FileSystem::registerDirectories(directoryStrings, true, true, m_cacheDirectories);
-	}
-
-	bool
-	FileSystem::registerDirectories (const std::vector< std::string > & directoryStrings, bool createLastDirectory, bool writableRequested, std::vector< Path::Directory > & directories) noexcept
-	{
-		for ( const auto & directoryString : directoryStrings )
-		{
-#if IS_WINDOWS
-			std::replace(directoryString.begin(), directoryString.end(), '\\', Path::Separator);
-#endif
-
-			const Path::Directory directory{directoryString};
-
-			/* If the directory doesn't exist, we skip it. */
-			if ( !directory.exists() )
-			{
-				TraceInfo{ClassId} << "'" << directoryString << "' doesn't exist !";
-
-				continue;
-			}
-
-			/* If the directory exists, but we need permission to write to it,
-			 * we test and if the permission is revoked we skip it. */
-			if ( writableRequested && !directory.writable() )
-			{
-				TraceWarning{ClassId} << "'" << directoryString << "' exists, but is not writable !";
-
-				continue;
-			}
-
-			/* If all is ok, we keep it. */
-			directories.emplace_back(directory);
-
-			TraceSuccess{ClassId} << "Directory '" << directory << "' added !";
-		}
-
-		/* NOTE: If no directory was found, we try to create the default one. */
-		if ( directories.empty() && createLastDirectory )
-		{
-			const auto defaultDirectory = Path::Directory{directoryStrings.back()};
-
-			/* If we can't write the directory, we set an error ! */
-			if ( !defaultDirectory.create() )
-			{
-				TraceError{ClassId} << "Default directory '" << defaultDirectory << "' is not writable !";
-
 				return false;
 			}
 
-			directories.emplace_back(defaultDirectory);
+			m_dataDirectories.emplace_back(tempDirectory);
+
+			return true;
+		}
+
+		std::vector< std::filesystem::path > paths{};
+
+		/* Check for a custom data directory from command line arguments. */
+		const auto customDirectory = m_arguments.get("--add-data-directory").value();
+
+		if ( !customDirectory.empty() )
+		{
+			paths.emplace_back(customDirectory);
+		}
+
+		/* Check next to binary [FORCED]. */
+		if ( m_flags[StandAlone] )
+		{
+			auto directoryPath = m_binaryDirectory;
+			directoryPath.append("data");
+
+			if ( !checkDirectoryRequirements(directoryPath, true, false) )
+			{
+				return false;
+			}
+
+			m_dataDirectories.emplace_back(directoryPath);
+
+			return true;
+		}
+
+#if IS_LINUX
+		{
+			std::filesystem::path directoryPath{"/usr/share/games"};
+			directoryPath.append(m_applicationName);
+
+			paths.emplace_back(directoryPath);
+		}
+
+		{
+			std::filesystem::path directoryPath{"/usr/local/share/games"};
+			directoryPath.append(m_applicationName);
+
+			paths.emplace_back(directoryPath);
+		}
+#endif
+
+		/* Check for standard OS config directories. */
+		if ( !m_userDirectory.empty() )
+		{
+			auto directoryPath = m_userDirectory;
+#if IS_LINUX
+			directoryPath.append(".local");
+			directoryPath.append("share");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
+#elif IS_MACOS
+			directoryPath.append("Library");
+			directoryPath.append("Application Support");
+			directoryPath.append(m_applicationReverseId);
+#elif IS_WINDOWS
+			directoryPath.append("AppData");
+			directoryPath.append("Local");
+			directoryPath.append(m_organizationName);
+			directoryPath.append(m_applicationName);
+#endif
+
+			paths.emplace_back(directoryPath);
+		}
+
+		/* Check next to binary. */
+		{
+			std::filesystem::path nextBinaryDirectory = m_binaryDirectory;
+#if IS_MACOS
+			nextBinaryDirectory.append("..");
+			nextBinaryDirectory.append("Resources");
+#endif
+			nextBinaryDirectory.append("data");
+
+			if ( checkDirectoryRequirements(nextBinaryDirectory, true, false) )
+			{
+				m_dataDirectories.emplace_back(nextBinaryDirectory);
+			}
+		}
+
+		for ( auto it = paths.cbegin(); it != paths.cend(); ++it )
+		{
+			const std::filesystem::path & tempDirectory{*it};
+
+			const bool last = (it != paths.cend() && std::next(it) == paths.cend());
+
+			if ( checkDirectoryRequirements(tempDirectory, last, false) )
+			{
+				m_dataDirectories.emplace_back(tempDirectory);
+			}
 		}
 
 		return true;
 	}
 
-	const Path::Directory &
-	FileSystem::userDirectory () const noexcept
+	bool
+	FileSystem::checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) noexcept
 	{
-		return m_userDirectory;
-	}
-
-	const Path::Directory &
-	FileSystem::binaryDirectory () const noexcept
-	{
-		return m_binaryDirectory;
-	}
-
-	const std::string &
-	FileSystem::binaryName () const noexcept
-	{
-		return m_binaryName;
-	}
-
-	const std::vector< Path::Directory > &
-	FileSystem::configDirectoriesList () const noexcept
-	{
-		return m_configDirectories;
-	}
-
-	const std::vector< Path::Directory > &
-	FileSystem::dataDirectoriesList () const noexcept
-	{
-		return m_dataDirectories;
-	}
-
-	const std::vector< Path::Directory > &
-	FileSystem::cacheDirectoriesList() const noexcept
-	{
-		return m_cacheDirectories;
-	}
-
-	Path::Directory
-	FileSystem::configDirectory (const std::string & append) const noexcept
-	{
-		if ( m_configDirectories.empty() )
+		/* If the directory doesn't exist, we skip it. */
+		if ( IO::directoryExists(directory) )
 		{
-			Tracer::error(ClassId, "No config directory available !");
+			/* If the directory exists, but we need permission to write to it,
+			 * we test and if the permission is revoked we skip it. */
+			if ( writableRequested && !IO::writable(directory) )
+			{
+				TraceError{ClassId} << "The directory '" << directory.string() << "' exists, but it's not writable !";
 
-			return {};
+				return false;
+			}
+		}
+		else
+		{
+			/* NOTE: If no directory was found, we try to create the default one. */
+			if ( createDirectory )
+			{
+				/* If we can't write the directory, we set an error ! */
+				if ( !IO::createDirectory(directory) )
+				{
+					TraceError{ClassId} << "Unable to create the directory '" << directory.string() << "' !";
+
+					return false;
+				}
+			}
+			else
+			{
+				TraceInfo{ClassId} << "Trying to use directory '" << directory.string() << "', but doesn't exists ...";
+
+				return false;
+			}
 		}
 
-		auto directory = m_configDirectories[0];
+		TraceSuccess{ClassId} << "The directory '" << directory.string() << "' is valid !";
 
-		return append.empty() ? directory : directory.append(append);
+		return true;
 	}
 
-	Path::Directory
-	FileSystem::dataDirectory (const std::string & append) const noexcept
+	bool
+	FileSystem::registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) noexcept
 	{
-		if ( m_dataDirectories.empty() )
+		if ( !checkDirectoryRequirements(directoryPath, createDirectory, writableRequested) )
 		{
-			Tracer::error(ClassId, "No data directory available !");
-
-			return {};
+			return false;
 		}
 
-		auto directory = m_dataDirectories[0];
+		finalDirectoryPath = directoryPath;
 
-		return append.empty() ? directory : directory.append(append);
+		return true;
 	}
 
-	Path::Directory
-	FileSystem::cacheDirectory (const std::string & append) const noexcept
+	std::filesystem::path
+	FileSystem::getFilepathFromDataDirectories (const std::string & path, const std::string & filename) const noexcept
 	{
-		if ( m_cacheDirectories.empty() )
+		for ( auto filepath : m_dataDirectories )
 		{
-			Tracer::error(ClassId, "No cache directory available !");
+			filepath.append(path);
+			filepath.append(filename);
 
-			return {};
+			if ( IO::fileExists(filepath) )
+			{
+				return filepath;
+			}
 		}
 
-		auto directory = m_cacheDirectories[0];
-
-		return append.empty() ? directory : directory.append(append);
+		return {};
 	}
 
 	std::ostream &
 	operator<< (std::ostream & out, const FileSystem & obj)
 	{
 		out <<
-			"\n"
-			"[Core] Engine working directories :" "\n" <<
-			" - Current user home directory : " << obj.m_userDirectory << "\n"
-			" - Binary directory : " << obj.m_binaryDirectory << "\n"
+			"File system information :" "\n" <<
 			" - Binary name : " << obj.m_binaryName << "\n"
-
-			" - Config directories :" "\n";
-
-		for ( const auto & directory : obj.m_configDirectories )
-		{
-			out << '\t' << directory << '\n';
-		}
-
-		out << " - Data directories :" "\n";
+			" - Binary directory : " << obj.m_binaryDirectory.string() << "\n"
+			" - User home directory : " << obj.m_userDirectory.string() << "\n"
+			" - Config directory : " << obj.m_configDirectory.string() << "\n"
+			" - Data (Writable) directory : " << obj.m_userDataDirectory.string() << "\n"
+			" - Cache directory : " << obj.m_cacheDirectory.string() << "\n"
+			" - Data (Read-only) directories :" "\n";
 
 		for ( const auto & directory : obj.m_dataDirectories )
 		{
-			out << '\t' << directory << '\n';
-		}
-
-		out << " - Cache directories :" "\n";
-
-		for ( const auto & directory : obj.m_cacheDirectories )
-		{
-			out << '\t' << directory << '\n';
+			out << '\t' << directory.string() << '\n';
 		}
 
 		return out;
@@ -526,6 +550,10 @@ namespace Emeraude
 	std::string
 	to_string (const FileSystem & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

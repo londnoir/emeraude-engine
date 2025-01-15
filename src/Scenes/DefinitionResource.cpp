@@ -1,40 +1,40 @@
 /*
- * Emeraude/Scenes/DefinitionResource.cpp
- * This file is part of Emeraude
+ * src/Scenes/DefinitionResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "DefinitionResource.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <fstream>
 #include <cstring>
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Tracer.hpp"
 #include "Resources/Manager.hpp"
-#include "FastJSON.hpp"
+#include "Libraries/FastJSON.hpp"
 #include "Scene.hpp"
 
 /* Defining the resource manager class id. */
@@ -43,14 +43,14 @@ const char * const Emeraude::Resources::Container< Emeraude::Scenes::DefinitionR
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Scenes::DefinitionResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Scenes::DefinitionResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Scenes
 {
 	using namespace Libraries;
 	using namespace Graphics;
 
-	const size_t DefinitionResource::ClassUID{Observable::getClassUID()};
+	const size_t DefinitionResource::ClassUID{getClassUID(ClassId)};
 
 	DefinitionResource::DefinitionResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -58,16 +58,15 @@ namespace Emeraude::Scenes
 
 	}
 
+	size_t
+	DefinitionResource::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	DefinitionResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -84,19 +83,19 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	DefinitionResource::load (const Path::File & filepath) noexcept
+	DefinitionResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		Json::CharReaderBuilder builder;
+		const Json::CharReaderBuilder builder;
 
-		std::ifstream json(to_string(filepath), std::ifstream::binary);
+		std::ifstream file{filepath, std::ifstream::binary};
 
 		Json::Value root;
 
 		std::string errors;
 
-		if ( !Json::parseFromStream(builder, json, &root, &errors) )
+		if ( !Json::parseFromStream(builder, file, &root, &errors) )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to parse JSON file ! Errors :\n" << errors);
+			Tracer::error(ClassId, BlobTrait() << "Unable to parse JSON file ! Errors :\n" << errors);
 
 			return false;
 		}
@@ -129,7 +128,7 @@ namespace Emeraude::Scenes
 	{
 		if ( m_root.empty() )
 		{
-			Tracer::error(ClassId, Blob() << "No data ! Load a JSON file or set a JSON string before.");
+			Tracer::error(ClassId, BlobTrait() << "No data ! Load a JSON file or set a JSON string before.");
 
 			return false;
 		}
@@ -160,7 +159,7 @@ namespace Emeraude::Scenes
 	{
 		if ( !m_root.isMember(FastJSON::PropertiesKey) || !m_root[FastJSON::PropertiesKey].isObject() )
 		{
-			Tracer::warning(ClassId, Blob() << "There is no '" << FastJSON::PropertiesKey << "' definition or is invalid !");
+			Tracer::warning(ClassId, BlobTrait() << "There is no '" << FastJSON::PropertiesKey << "' definition or is invalid !");
 
 			return false;
 		}
@@ -169,16 +168,16 @@ namespace Emeraude::Scenes
 		auto properties = m_root[FastJSON::PropertiesKey];
 
 		scene.setPhysicalEnvironmentProperties({
-			FastJSON::getFloat(properties, SurfaceGravityKey, Physics::Gravity::Earth< float >),
-			FastJSON::getFloat(properties, AtmosphericDensityKey, Physics::Density::EarthStandardAir< float >),
-			FastJSON::getFloat(properties, PlanetRadiusKey, Physics::Radius::Earth< float >)
+			FastJSON::getNumber< float >(properties, SurfaceGravityKey, Physics::Gravity::Earth< float >),
+			FastJSON::getNumber< float >(properties, AtmosphericDensityKey, Physics::Density::EarthStandardAir< float >),
+			FastJSON::getNumber< float >(properties, PlanetRadiusKey, Physics::Radius::Earth< float >)
 		});
 
 		return true;
 	}
 
 	bool
-	DefinitionResource::readBackground (Scene & scene) noexcept
+	DefinitionResource::readBackground (Scene & /*scene*/) noexcept
 	{
 		/*if ( !m_root.isMember(BackgroundKey) || !m_root[BackgroundKey].isObject() )
 		{
@@ -205,9 +204,9 @@ namespace Emeraude::Scenes
 
 		auto type = background[FastJSON::TypeKey].asString();
 
-		if ( std::strcmp(type.c_str(), Renderable::SkyboxResource::ClassId) == 0 )
+		if ( std::strcmp(type.c_str(), Renderable::SkyBoxResource::ClassId) == 0 )
 		{
-			auto name = scene.name() + Renderable::SkyboxResource::ClassId;
+			auto name = scene.name() + Renderable::SkyBoxResource::ClassId;
 
 			auto backgroundResource = Resources::Manager::instance()->skyboxManager().create(name);
 
@@ -231,7 +230,7 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	DefinitionResource::readSceneArea (Scene & scene) noexcept
+	DefinitionResource::readSceneArea (Scene & /*scene*/) noexcept
 	{
 		/*if ( !m_root.isMember(SceneAreaKey) || !m_root[SceneAreaKey].isObject() )
 		{
@@ -307,7 +306,7 @@ namespace Emeraude::Scenes
 	std::shared_ptr< DefinitionResource >
 	DefinitionResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->sceneDefinitions().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->sceneDefinitions().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< DefinitionResource >

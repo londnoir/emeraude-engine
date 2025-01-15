@@ -1,82 +1,54 @@
 /*
- * Emeraude/Graphics/Geometry/Interface.hpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/Interface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <vector>
 
 /* Local inclusions for inheritances. */
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Graphics/Types.hpp"
-#include "SubGeometry.hpp"
-#include "VertexFactory/Grid.hpp"
-#include "VertexFactory/Shape.hpp"
-#include "Vulkan/IndexBufferObject.hpp"
+#include "Libraries/VertexFactory/Grid.hpp"
+#include "Libraries/VertexFactory/Shape.hpp"
+#include "Libraries/Math/Sphere.hpp"
+#include "Libraries/Math/Cuboid.hpp"
 #include "Vulkan/VertexBufferObject.hpp"
+#include "Vulkan/IndexBufferObject.hpp"
+#include "Graphics/Types.hpp"
+#include "Types.hpp"
+#include "SubGeometry.hpp"
 
 namespace Emeraude::Graphics::Geometry
 {
-	/** @brief Geometry interface flag bits. */
-	enum GeometryFlagBits
-	{
-		/* Vertex attributes present in local data. */
-		EnableNormal = 1,
-		EnableTangentSpace = 2, /* Overrides EnableNormal. */
-		EnablePrimaryTextureCoordinates = 4,
-		EnableSecondaryTextureCoordinates = 8,
-		EnableVertexColor = 16,
-		EnableWeight = 32,
-		/* Vertex attribute options. */
-		Enable3DPrimaryTextureCoordinates = 64, /* Will modify texture coordinates to be 3 components instead of 2. */
-		Enable3DSecondaryTextureCoordinates = 128, /* Will modify texture coordinates to be 3 components instead of 2. */
-		EnableDynamicVertexBuffer = 256,
-		EnableAbsolutePosition = 512,
-		EnablePrimitiveRestart = 1024
-	};
-
-	/**
-	 * @brief Returns the number of element for a vertex definition using geometry flags.
-	 * @param flatBits The geometry flags.
-	 * @return uint32_t
-	 */
-	[[nodiscard]]
-	uint32_t getElementCountFromFlags (int flatBits) noexcept;
-
-	/**
-	 * @brief Returns a printable debug flags string.
-	 * @param flatBits The geometry flags.
-	 * @return std::string
-	 */
-	[[nodiscard]]
-	std::string getFlagsString (int flatBits) noexcept;
-
 	/**
 	 * @brief This is the base of all geometry compatible with the graphic engine.
 	 * @extends Emeraude::Resources::ResourceTrait Every material is a resource.
@@ -90,10 +62,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			tangentSpaceEnabled () const noexcept final
+			tangentSpaceEnabled () const noexcept
 			{
 				return this->isFlagEnabled(EnableTangentSpace);
 			}
@@ -104,10 +74,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			normalEnabled () const noexcept final
+			normalEnabled () const noexcept
 			{
 				if ( this->isFlagEnabled(EnableTangentSpace) )
 				{
@@ -122,10 +90,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			primaryTextureCoordinatesEnabled () const noexcept final
+			primaryTextureCoordinatesEnabled () const noexcept
 			{
 				return this->isFlagEnabled(EnablePrimaryTextureCoordinates);
 			}
@@ -135,10 +101,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			secondaryTextureCoordinatesEnabled () const noexcept final
+			secondaryTextureCoordinatesEnabled () const noexcept
 			{
 				return this->isFlagEnabled(EnableSecondaryTextureCoordinates);
 			}
@@ -148,12 +112,21 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			vertexColorEnabled () const noexcept final
+			vertexColorEnabled () const noexcept
 			{
 				return this->isFlagEnabled(EnableVertexColor);
+			}
+
+			/**
+			 * @brief Returns whether influences are present in local data.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			influenceEnabled () const noexcept
+			{
+				return this->isFlagEnabled(EnableInfluence);
 			}
 
 			/**
@@ -161,10 +134,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			weightEnabled () const noexcept final
+			weightEnabled () const noexcept
 			{
 				return this->isFlagEnabled(EnableWeight);
 			}
@@ -174,10 +145,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			primaryTextureCoordinates3DEnabled () const noexcept final
+			primaryTextureCoordinates3DEnabled () const noexcept
 			{
 				if ( !this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
 				{
@@ -192,10 +161,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			secondaryTextureCoordinates3DEnabled () const noexcept final
+			secondaryTextureCoordinates3DEnabled () const noexcept
 			{
 				if ( !this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
 				{
@@ -210,10 +177,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			useDynamicVertexBuffer () const noexcept final
+			useDynamicVertexBuffer () const noexcept
 			{
 				return this->isFlagEnabled(EnableDynamicVertexBuffer);
 			}
@@ -223,10 +188,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			useAbsolutePosition () const noexcept final
+			useAbsolutePosition () const noexcept
 			{
 				return this->isFlagEnabled(EnableAbsolutePosition);
 			}
@@ -236,10 +199,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			inline
-			virtual
 			bool
-			usePrimitiveRestart () const noexcept final
+			usePrimitiveRestart () const noexcept
 			{
 				return this->isFlagEnabled(EnablePrimitiveRestart);
 			}
@@ -266,20 +227,12 @@ namespace Emeraude::Graphics::Geometry
 			virtual size_t subGeometryCount () const noexcept = 0;
 
 			/**
-			 * @brief subGeometryOffset
+			 * @brief Returns the sub-geometry range [offset, length].
 			 * @param subGeometryIndex The sub-geometry index.
-			 * @return size_t
+			 * @return std::array< uint32_t, 2 >
 			 */
 			[[nodiscard]]
-			virtual size_t subGeometryOffset (size_t subGeometryIndex) const noexcept = 0;
-
-			/**
-			 * @brief subGeometryLength
-			 * @param subGeometryIndex The sub-geometry index.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			virtual size_t subGeometryLength (size_t subGeometryIndex) const noexcept = 0;
+			virtual std::array< uint32_t, 2 > subGeometryRange (size_t subGeometryIndex) const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.
@@ -332,6 +285,7 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Destroys resource.
 			 * @param clearLocalData Erase local data too.
+			 * @return void
 			 */
 			virtual void destroy (bool clearLocalData) noexcept = 0;
 
@@ -340,9 +294,95 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Constructs an abstract geometry.
 			 * @param name A reference to a string for the resource name.
-			 * @param resourceFlagBits The resource flag bits.
+			 * @param geometryFlagBits The geometry resource flag bits.
 			 */
-			Interface (const std::string & name, uint32_t resourceFlagBits) noexcept;
+			Interface (const std::string & name, uint32_t geometryFlagBits) noexcept;
+
+			/**
+			 * @brief Returns the size of the primary texture coordinates attribute.
+			 * @return size_t
+			 */
+			size_t
+			getPrimaryTextureCoordinatesAttribSize () const noexcept
+			{
+				if ( !this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
+				{
+					return 0;
+				}
+
+				return this->isFlagEnabled(Enable3DPrimaryTextureCoordinates) ? 3 : 2;
+			}
+
+			/**
+			 * @brief Returns the size of the secondary texture coordinates attribute.
+			 * @return size_t
+			 */
+			size_t
+			getSecondaryTextureCoordinatesAttribSize () const noexcept
+			{
+				if ( !this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
+				{
+					return 0;
+				}
+
+				return this->isFlagEnabled(Enable3DSecondaryTextureCoordinates) ? 3 : 2;
+			}
+
+			/**
+			 * @brief Returns the normals format.
+			 * @return Libraries::VertexFactory::NormalType
+			 */
+			Libraries::VertexFactory::NormalType
+			getNormalsFormat () const noexcept
+			{
+				using namespace Libraries::VertexFactory;
+
+				if ( this->isFlagEnabled(EnableTangentSpace) )
+				{
+					return NormalType::TBNSpace;
+				}
+
+				if ( this->isFlagEnabled(EnableNormal) )
+				{
+					return NormalType::Normal;
+				}
+
+				return NormalType::None;
+			}
+
+			/**
+			 * @brief Returns the primary texture coordinates format.
+			 * @return Libraries::VertexFactory::TextureCoordinatesType
+			 */
+			Libraries::VertexFactory::TextureCoordinatesType
+			getPrimaryTextureCoordinatesFormat () const noexcept
+			{
+				using namespace Libraries::VertexFactory;
+
+				if ( !this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
+				{
+					return TextureCoordinatesType::None;
+				}
+
+				return this->isFlagEnabled(Enable3DPrimaryTextureCoordinates) ? TextureCoordinatesType::UVW : TextureCoordinatesType::UV;
+			}
+
+			/**
+			 * @brief Returns the secondary texture coordinates format.
+			 * @return Libraries::VertexFactory::TextureCoordinatesType
+			 */
+			Libraries::VertexFactory::TextureCoordinatesType
+			getSecondaryTextureCoordinatesFormat () const noexcept
+			{
+				using namespace Libraries::VertexFactory;
+
+				if ( !this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
+				{
+					return TextureCoordinatesType::None;
+				}
+
+				return this->isFlagEnabled(Enable3DSecondaryTextureCoordinates) ? TextureCoordinatesType::UVW : TextureCoordinatesType::UV;
+			}
 
 			/**
 			 * @brief Builds a simple geometry batch by specifying only the vertex count.

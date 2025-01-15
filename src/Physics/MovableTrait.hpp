@@ -1,55 +1,49 @@
 /*
- * Emeraude/Physics/MovableTrait.hpp
- * This file is part of Emeraude
+ * src/Physics/MovableTrait.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* Local inclusions for inheritances. */
-#include "Scenes/LocatableInterface.hpp"
-#include "PhysicalInterface.hpp"
+/* STL inclusions. */
+#include <cstdint>
+#include <array>
 
 /* Local inclusions for usages. */
-#include "Math/Vector.hpp"
 #include "PhysicalEnvironmentProperties.hpp"
+#include "PhysicalObjectProperties.hpp"
+#include "Collider.hpp"
 
 namespace Emeraude::Physics
 {
 	/**
 	 * @brief Gives the ability to move something in the 3D world with physical properties.
-	 * @extends Emeraude::Scenes::LocatableInterface Something movable has a position in the 3D world.
-	 * @extends Emeraude::Physics::PhysicalInterface Something movable has physical properties to interact with other entities from the 3D world.
 	 */
-	class MovableTrait : virtual public Scenes::LocatableInterface, virtual public PhysicalInterface
+	class MovableTrait
 	{
 		public:
-
-			/**
-			 * @brief Destructs the movable trait.
-			 */
-			~MovableTrait () override = default;
 
 			/**
 			 * @brief Copy constructor.
@@ -66,187 +60,308 @@ namespace Emeraude::Physics
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return MovableTrait &
 			 */
 			MovableTrait & operator= (const MovableTrait & copy) noexcept = default;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return MovableTrait &
 			 */
 			MovableTrait & operator= (MovableTrait && copy) noexcept = default;
 
 			/**
-			 * @brief Sets an initial velocity.
+			 * @brief Destructs the movable trait.
+			 */
+			virtual ~MovableTrait () = default;
+
+			/**
+			 * @brief Sets the linear velocity in a direction.
 			 * @param velocity A reference to a vector.
-			 * @param resetAcceleration Reset the acceleration vector. Default: false.
 			 * @return void
 			 */
-			virtual void setVelocity (const Libraries::Math::Vector< 3, float > & velocity, bool resetAcceleration = false) noexcept final;
+			void
+			setLinearVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			{
+				m_linearVelocity = velocity;
+				m_linearSpeed = m_linearVelocity.length();
+
+				this->onImpulse();
+			}
 
 			/**
-			 * @brief Sets the acceleration.
-			 * @param acceleration A reference to a vector.
+			 * @brief Sets the angular velocity around a vector.
+			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			virtual void setAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept final;
+			void
+			setAngularVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			{
+				m_angularVelocity = velocity;
+				m_angularSpeed = m_angularVelocity.length();
+
+				this->onImpulse();
+			}
 
 			/**
-			 * @brief This will add an arbitrary vector to the acceleration without any checking.
-			 * @param acceleration A reference to an absolute acceleration vector.
+			 * @brief Sets a minimal velocity in a direction.
+			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			virtual void addRawAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept final;
+			void setMinimalVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept;
+
+			/**
+			 * @brief Adds an acceleration to the velocity to the current velocity without any checking.
+			 * @param acceleration A reference to vector.
+			 * @return void
+			 */
+			void
+			addAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept
+			{
+				m_linearVelocity += acceleration * EngineUpdateCycleDurationS< float >;
+				m_linearSpeed = m_linearVelocity.length();
+
+				this->onImpulse();
+			}
+
+			/**
+			 * @brief Adds a raw angular acceleration vector to the current angular velocity without any checking.
+			 * @param acceleration A reference to vector.
+			 * @return void
+			 */
+			void
+			addAngularAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept
+			{
+				m_angularVelocity += acceleration;
+				m_angularSpeed = m_angularVelocity.length();
+
+				this->onImpulse();
+			}
+
+			/**
+			 * @brief Returns whether the object is in motion.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			hasVelocity () const noexcept
+			{
+				return m_linearSpeed > 0.0F;
+			}
+
+			/**
+			 * @brief Returns the linear velocity vector.
+			 * @return const Libraries::Math::Vector< 3, float > &
+			 */
+			[[nodiscard]]
+			const Libraries::Math::Vector< 3, float > &
+			linearVelocity () const noexcept
+			{
+				return m_linearVelocity;
+			}
+
+			/**
+			 * @brief Returns the linear speed in meters per second.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			linearSpeed () const noexcept
+			{
+				return m_linearSpeed;
+			}
+
+			/**
+			 * @brief Returns whether the object is spinning.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isSpinning () const noexcept
+			{
+				return m_angularSpeed > 0.0F;
+			}
+
+			/**
+			 * @brief Returns the angular velocity vector.
+			 * @return const Libraries::Math::Vector< 3, float > &
+			 */
+			[[nodiscard]]
+			const Libraries::Math::Vector< 3, float > &
+			angularVelocity () const noexcept
+			{
+				return m_angularVelocity;
+			}
+
+			/**
+			 * @brief Returns the angular speed.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			angularSpeed () const noexcept
+			{
+				return m_angularSpeed;
+			}
 
 			/**
 			 * @brief Sets the center of mass.
 			 * @param centerOfMass A reference to a vector.
 			 * @return void
 			 */
-			virtual void setCenterOfMass (const Libraries::Math::Vector< 3, float > & centerOfMass) noexcept final;
-
-			/**
-			 * @brief Returns the velocity
-			 * @return const Libraries::Math::Vector< 3, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 3, float > & velocity () const noexcept final;
-
-			/**
-			 * @brief Returns an acceleration vector relative to scene node.
-			 * @return const Libraries::Math::Vector< 3, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 3, float > & acceleration () const noexcept final;
+			void
+			setCenterOfMass (const Libraries::Math::Vector< 3, float > & centerOfMass) noexcept
+			{
+				m_centerOfMass = centerOfMass;
+			}
 
 			/**
 			 * @brief Returns the center of mass from the scene node position.
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 3, float > & centerOfMass () const noexcept final;
+			const Libraries::Math::Vector< 3, float > &
+			centerOfMass () const noexcept
+			{
+				return m_centerOfMass;
+			}
 
 			/**
-			 * @brief Gives the speed in meters per second.
-			 * @return float
+			 * @brief Returns the read-only collider.
+			 * @return const Collider &
 			 */
 			[[nodiscard]]
-			virtual float getSpeed () const noexcept final;
+			const Collider &
+			collider () const noexcept
+			{
+				return m_collider;
+			}
+
+			/**
+			 * @brief Returns the collider.
+			 * @return Collider &
+			 */
+			[[nodiscard]]
+			Collider &
+			collider () noexcept
+			{
+				return m_collider;
+			}
+
+			/**
+			 * @brief Adds a physical force to the object acceleration.
+			 * @note Using this formula : F = m * a
+			 * @param force A reference to a vector representing the force. The magnitude (length) will represent the acceleration in m/s².
+			 * @return void
+			 */
+			void addForce (const Libraries::Math::Vector< 3, float > & force) noexcept;
+
+			/**
+			 * @brief Adds a torque to the object angular acceleration.
+			 * @param torque A reference to a vector representing the torque.
+			 * @return void
+			 */
+			void addTorque (const Libraries::Math::Vector< 3, float > & torque) noexcept;
+
+			/**
+			 * @brief Deviates the velocity direction from a normal vector when the object hit something static.
+			 * @param surfaceNormal A vector representing the hit surface normal.
+			 * @param surfaceBounciness A scalar to reduce the velocity after deviating the movement. 1.0F = no velocity loss from the surface. Default 0.75.
+			 * @return float
+			 */
+			float deflect (const Libraries::Math::Vector< 3, float > & surfaceNormal, float surfaceBounciness = 0.75F) noexcept;
 
 			/**
 			 * @brief Sets the object into inertia.
 			 * @return void
 			 */
-			virtual void stopMovement () final;
-
-			/**
-			 * @brief Returns whether the object is moving.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			virtual bool isMoving () const final;
-
-			/**
-			 * @brief Reset the velocity vector.
-			 * @note This method don't touch the acceleration vector. Use Node::stopMovement() instead.
-			 * @return void
-			 */
-			virtual void clearVelocity () noexcept final;
-
-			/**
-			 * @brief Adds a physical force to the object acceleration.
-			 * @param force A reference to a vector representing the force. The magnitude (length) will represent the acceleration in m/s².
-			 */
-			virtual void addForce (const Libraries::Math::Vector< 3, float > & force) noexcept final;
-
-			/**
-			 * @brief Adds an impulse to the node.
-			 * @param direction A reference to a direction vector.
-			 * @param power The strength of the impulse.
-			 * @return void
-			 */
-			inline
-			virtual
-			void
-			impulse (const Libraries::Math::Vector< 3, float > & direction, float power) noexcept final
-			{
-				this->addForce(direction.scaled(power));
-			}
-
-			/**
-			 * @brief Deviate velocity direction from a normal vector when the object hit something.
-			 * @param surfaceNormal A vector representing the hit surface normal.
-			 * @param surfaceBounciness A scalar to reduce the velocity after deviating the movement. 1.0F = no velocity loss from the surface. Default 0.75.
-			 * @return void
-			 */
-			virtual void deflect (const Libraries::Math::Vector< 3, float > & surfaceNormal, float surfaceBounciness = 0.75F) noexcept final;
+			void stopMovement () noexcept;
 
 			/**
 			 * @brief Updates the velocity vector from the acceleration vector and return a reference to the new velocity.
 			 * This will in order :
 			 *  - Apply gravity force to acceleration vector.
 			 *  - Apply drag force to acceleration vector.
-			 *  - Add acceleration vector to velocity vector. (then reset acceleration)
-			 * @param properties A reference to physical environment properties.
-			 * @return const Vector< 3, float > &
+			 *  - Add acceleration vector to velocity vector.
+			 * Then will return true if a movement occurs.
+			 * @param envProperties A reference to physical environment properties.
+			 * @return bool
 			 */
-			virtual const Libraries::Math::Vector< 3, float > & updateVelocity (const PhysicalEnvironmentProperties & properties) noexcept final;
+			bool updateSimulation (const PhysicalEnvironmentProperties & envProperties) noexcept;
 
 			/**
-			 * @brief Enables or not the moving ability.
+			 * @brief Sets whether this is affected by all physical interactions.
 			 * @param state The state.
 			 * @return void
 			 */
-			virtual void setMovingAbility (bool state) noexcept = 0;
+			void
+			setMovingAbility (bool state) noexcept
+			{
+				m_flags[IsMovable] = state;
+			}
 
 			/**
-			 * @brief Returns whether the entity is movable by physical interactions.
+			 * @brief Returns whether this is affected by all physical interactions.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isMovable () const noexcept = 0;
+			bool
+			isMovable () const noexcept
+			{
+				return m_flags[IsMovable];
+			}
 
 			/**
-			 * @brief Pauses the simulation on this object.
-			 * The object is stopped from receiving gravity and drag force.
-			 * @note The simulation will restart automatically after adding a custom force.
+			 * @brief Sets whether this movable trait always compute physics.
 			 * @param state The state.
+			 * @return void
 			 */
-			virtual void pauseSimulation (bool state) noexcept = 0;
+			void
+			setAlwaysComputePhysicsState (bool state) noexcept
+			{
+				m_flags[AlwaysComputePhysics] = state;
+			}
 
 			/**
-			 * @brief Returns the simulation execution state.
+			 * @brief Returns whether this movable trait always compute physics.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isSimulationPaused () const noexcept = 0;
+			bool
+			alwaysComputePhysics () const noexcept
+			{
+				return m_flags[AlwaysComputePhysics];
+			}
 
 			/**
 			 * @brief Enables the free fly mode. In other terms , the gravity will be ignored.
 			 * @param state The state.
 			 */
-			virtual void enableFreeFlyMode (bool state) noexcept = 0;
+			void
+			enableFreeFlyMode (bool state) noexcept
+			{
+				m_flags[FreeFlyModeEnabled] = state;
+			}
 
 			/**
 			 * @brief Returns whether the free fly mode is enabled or not.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isFreeFlyModeEnabled () const noexcept = 0;
+			bool
+			isFreeFlyModeEnabled () const noexcept
+			{
+				return m_flags[FreeFlyModeEnabled];
+			}
 
 			/**
-			 * @brief Enables the collision test.
-			 * @param state The state of the effect.
-			 */
-			virtual void enableNoClippingMode (bool state) noexcept = 0;
-
-			/**
-			 * @brief Returns the ability of node to interact with others physical objects.
-			 * For this, this node must have a physical component, be able to move (Node::isMovable())
-			 * and shouldn't have the special no clip mode enabled.
+			 * @brief Check for simulation inertia.
+			 * @warning This method is not physically correct and its aim is to reduce useless physics computation.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isNoClippingModeEnabled () const noexcept = 0;
+			bool checkSimulationInertia () noexcept;
 
 			/**
 			 * @brief Returns the world velocity of the entity.
@@ -257,20 +372,25 @@ namespace Emeraude::Physics
 			virtual Libraries::Math::Vector< 3, float > getWorldVelocity () const noexcept = 0;
 
 			/**
-			 * @brief Returns the world acceleration of the entity.
-			 * @note If not override, velocity is null.
-			 * @return Libraries::Math::Vector< float >
-			 */
-			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getWorldAcceleration () const noexcept = 0;
-
-			/**
 			 * @brief Returns the world center of mass of the entity.
 			 * @note If not override, velocity is null.
 			 * @return Libraries::Math::Vector< float >
 			 */
 			[[nodiscard]]
 			virtual Libraries::Math::Vector< 3, float > getWorldCenterOfMass () const noexcept = 0;
+
+			/**
+			 * @brief Events when this movable has hit something.
+			 * @param impactForce The force of impact.
+			 * @return void
+			 */
+			virtual void onHit (float impactForce) noexcept = 0;
+
+			/**
+			 * @brief Events when this movable got a new impulse or a force.
+			 * @return void
+			 */
+			virtual void onImpulse () noexcept = 0;
 
 		protected:
 
@@ -279,24 +399,59 @@ namespace Emeraude::Physics
 			 */
 			MovableTrait () noexcept = default;
 
+			/**
+			 * @brief Returns the object physical properties for the physics simulation.
+			 * @return Libraries::Math::Vector< 3, float >
+			 */
+			[[nodiscard]]
+			virtual const PhysicalObjectProperties & getObjectProperties () const noexcept = 0;
+
+			/**
+			 * @brief Returns the world position for the physics simulation.
+			 * @return Libraries::Math::Vector< 3, float >
+			 */
+			[[nodiscard]]
+			virtual Libraries::Math::Vector< 3, float > getWorldPosition () const noexcept = 0;
+
+			/**
+			 * @brief Gives the new world position after simulation computed.
+			 * @param worldPosition A reference to a vector.
+			 * @return void
+			 */
+			virtual void simulatedMove (const Libraries::Math::Vector< 3, float > & worldPosition) noexcept = 0;
+
+			/**
+			 * @brief Gives the new world orientation after simulation computed.
+			 * @param radianAngle
+			 * @param worldDirection
+			 * @return Libraries::Math::Vector< 3, float >
+			 */
+			virtual void simulatedRotation (float radianAngle, const Libraries::Math::Vector< 3, float > & worldDirection) noexcept = 0;
+
 		private:
 
-			/**
-			 * @brief Adds a gravity force to the object acceleration.
-			 * @note This acts like addForce() method, but in an easier way.
-			 * @param gravity The gravity value.
-			 */
-			virtual void applyGravityForce (float gravity) noexcept final;
+			/* Flag names */
+			static constexpr auto IsMovable{0UL};
+			static constexpr auto AlwaysComputePhysics{1UL};
+			static constexpr auto FreeFlyModeEnabled{2UL};
 
-			/**
-			 * @brief Applies a drag force to object acceleration according to his current velocity.
-			 * @note If the velocity is null, there will be no drag force computed or added.
-			 * @param density Fluid or Air density expressed in kg/m³.
-			 */
-			virtual void applyDragForce (float density) noexcept final;
-
-			Libraries::Math::Vector< 3, float > m_velocity{};
-			Libraries::Math::Vector< 3, float > m_acceleration{};
-			Libraries::Math::Vector< 3, float > m_centerOfMass{};
+			Libraries::Math::Vector< 3, float > m_lastWorldPosition;
+			Libraries::Math::Vector< 3, float > m_linearVelocity;
+			Libraries::Math::Vector< 3, float > m_angularVelocity; // Omega
+			Libraries::Math::Vector< 3, float > m_centerOfMass;
+			float m_linearSpeed{0.0F};
+			float m_angularSpeed{0.0F};
+			Collider m_collider;
+			uint32_t m_inertCheckCount{0};
+			std::array< bool, 8 > m_flags{
+				true/*IsMovable*/,
+				false/*AlwaysComputePhysics*/,
+				false/*FreeFlyModeEnabled*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

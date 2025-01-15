@@ -1,33 +1,33 @@
 /*
- * Emeraude/Vulkan/RenderPass.hpp
- * This file is part of Emeraude
+ * src/Vulkan/RenderPass.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <memory>
 #include <vector>
 
@@ -35,7 +35,7 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Local inclusions for usages. */
-#include "RenderSubpass.hpp"
+#include "RenderSubPass.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -104,49 +104,69 @@ namespace Emeraude::Vulkan
 			 * @param attachmentDescription A reference to an attachment description.
 			 * @return void
 			 */
-			void addAttachmentDescription (const VkAttachmentDescription & attachmentDescription) noexcept;
+			void
+			addAttachmentDescription (const VkAttachmentDescription & attachmentDescription) noexcept
+			{
+				m_attachmentDescriptions.emplace_back(attachmentDescription);
+			}
 
 			/**
-			 * @brief Adds a render subpass description.
-			 * @param renderSubpass A reference to a render subpass structure.
+			 * @brief Adds a render sub-pass description.
+			 * @param subPass A reference to a render sub-pass structure.
 			 * @return void
 			 */
-			void addSubpass (const RenderSubpass & renderSubpass) noexcept;
+			void
+			addSubPass (const RenderSubPass & subPass) noexcept
+			{
+				m_renderSubPasses.emplace_back(subPass);
+			}
 
 			/**
-			 * @brief Adds a subpass dependency.
-			 * @param subpassDependency A reference to a subpass dependency.
+			 * @brief Adds a sub-pass dependency.
+			 * @param dependency A reference to a sub-pass dependency.
 			 * @return void
 			 */
-			void addSubpassDependency (const VkSubpassDependency & subpassDependency) noexcept;
+			void
+			addSubPassDependency (const VkSubpassDependency & dependency) noexcept
+			{
+				m_subPassDependencies.emplace_back(dependency);
+			}
 
 			/**
 			 * @brief Returns the render-pass vulkan handle.
 			 * @return VkRenderPass
 			 */
 			[[nodiscard]]
-			VkRenderPass handle () const noexcept;
+			VkRenderPass
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the render-pass create info.
 			 * @return VkRenderPassCreateInfo
 			 */
 			[[nodiscard]]
-			VkRenderPassCreateInfo createInfo () const noexcept;
+			const VkRenderPassCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 		private:
 
 			/**
-			 * @brief Pack subpass descriptions.
+			 * @brief Pack sub-pass descriptions.
 			 * @return std::vector< VkSubpassDescription >
 			 */
 			[[nodiscard]]
-			std::vector< VkSubpassDescription > getSubpassDescriptions () const noexcept;
+			std::vector< VkSubpassDescription > getSubPassDescriptions () const noexcept;
 
 			VkRenderPass m_handle{VK_NULL_HANDLE};
 			VkRenderPassCreateInfo m_createInfo{};
-			std::vector< VkAttachmentDescription > m_attachmentDescriptions{};
-			std::vector< RenderSubpass > m_renderSubPasses{};
-			std::vector< VkSubpassDependency > m_subpassDependencies{};
+			std::vector< VkAttachmentDescription > m_attachmentDescriptions;
+			std::vector< RenderSubPass > m_renderSubPasses;
+			std::vector< VkSubpassDependency > m_subPassDependencies;
 	};
 }

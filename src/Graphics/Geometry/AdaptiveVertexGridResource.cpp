@@ -1,37 +1,42 @@
 /*
- * Emeraude/Graphics/Geometry/AdaptiveVertexGridResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/AdaptiveVertexGridResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "AdaptiveVertexGridResource.hpp"
 
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+
 /* Local inclusions. */
-#include "Tracer.hpp"
 #include "Resources/Manager.hpp"
 #include "Vulkan/TransferManager.hpp"
-#include "Vulkan/CommandBuffer.hpp"
+#include "Constants.hpp"
+#include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -39,7 +44,7 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Geometry:
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::AdaptiveVertexGridResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::AdaptiveVertexGridResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Geometry
 {
@@ -49,10 +54,10 @@ namespace Emeraude::Graphics::Geometry
 	using namespace Libraries::PixelFactory;
 	using namespace Vulkan;
 
-	const size_t AdaptiveVertexGridResource::ClassUID{Observable::getClassUID()};
+	const size_t AdaptiveVertexGridResource::ClassUID{getClassUID(ClassId)};
 
-	AdaptiveVertexGridResource::AdaptiveVertexGridResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: Interface(name, resourceFlagBits)
+	AdaptiveVertexGridResource::AdaptiveVertexGridResource (const std::string & name, uint32_t geometryFlagBits) noexcept
+		: Interface(name, geometryFlagBits)
 	{
 
 	}
@@ -63,96 +68,11 @@ namespace Emeraude::Graphics::Geometry
 	}
 
 	bool
-	AdaptiveVertexGridResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	AdaptiveVertexGridResource::isCreated () const noexcept
-	{
-		if ( m_vertexBufferObject == nullptr || !m_vertexBufferObject->isCreated() )
-			return false;
-
-		if ( m_indexBufferObject == nullptr || !m_indexBufferObject->isCreated() )
-			return false;
-
-		return true;
-	}
-
-	Topology
-	AdaptiveVertexGridResource::topology () const noexcept
-	{
-		return Topology::TriangleStrip;
-	}
-
-	size_t
-	AdaptiveVertexGridResource::subGeometryCount () const noexcept
-	{
-		return 1;
-	}
-
-	size_t
-	AdaptiveVertexGridResource::subGeometryOffset (size_t) const noexcept
-	{
-		return 0;
-	}
-
-	size_t
-	AdaptiveVertexGridResource::subGeometryLength (size_t) const noexcept
-	{
-		return m_indexBufferObject->indexCount();
-	}
-
-	const Math::Cuboid< float > &
-	AdaptiveVertexGridResource::boundingBox () const noexcept
-	{
-		return m_boundingBox;
-	}
-
-	const Math::Sphere< float > &
-	AdaptiveVertexGridResource::boundingSphere () const noexcept
-	{
-		return m_boundingSphere;
-	}
-
-	const Vulkan::VertexBufferObject *
-	AdaptiveVertexGridResource::vertexBufferObject () const noexcept
-	{
-		return m_vertexBufferObject.get();
-	}
-
-	const Vulkan::IndexBufferObject *
-	AdaptiveVertexGridResource::indexBufferObject () const noexcept
-	{
-		return m_indexBufferObject.get();
-	}
-
-	bool
-	AdaptiveVertexGridResource::useIndexBuffer () const noexcept
-	{
-#ifdef DEBUG
-		return m_indexBufferObject != nullptr;
-#else
-		return true;
-#endif
-	}
-
-	bool
 	AdaptiveVertexGridResource::create () noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_GPUAccessMutex};
-
 		if ( this->isCreated() )
 		{
-			Tracer::warning(ClassId, "The buffers are already in video memory ! Use update() instead.");
+			Tracer::warning(ClassId, "The buffers are already in video memory ! Use processLogics() instead.");
 
 			return true;
 		}
@@ -168,9 +88,9 @@ namespace Emeraude::Graphics::Geometry
 		}
 
 		/* NOTE: Requesting a VBO using data. */
-		const auto vertexElementCount = Geometry::getElementCountFromFlags(this->flagBits());
+		const auto vertexElementCount = getElementCountFromFlags(this->flagBits());
 
-		auto * transferManager = Vulkan::TransferManager::instance(TransferType::Graphics);
+		auto * transferManager = TransferManager::instance(GPUWorkType::Graphics);
 
 		m_vertexBufferObject = std::make_unique< VertexBufferObject >(transferManager->device(), m_localData.size(), vertexElementCount);
 		m_vertexBufferObject->setIdentifier(this->name() + "-VBO-VertexBufferObject");
@@ -206,14 +126,14 @@ namespace Emeraude::Graphics::Geometry
 	{
 		if ( !this->isCreated() )
 		{
-			Tracer::warning(ClassId, "No buffer in video memory to update !");
+			Tracer::warning(ClassId, "No buffer in video update to update !");
 
 			return false;
 		}
 
-		// TODO
+		Tracer::warning(ClassId, "Updating geometry in video memory is not handled yet !");
 
-		return false;
+		return true;
 	}
 
 	void
@@ -237,7 +157,7 @@ namespace Emeraude::Graphics::Geometry
 			m_localData.clear();
 			m_indices.clear();
 
-			m_minimalUpdateDistance = 1024.0F;
+			m_minimalUpdateDistance = DefaultMinimalUpdateDistance;
 			m_squareQuadCount = 0;
 			m_quadCount = 0;
 			m_squarePointCount = 0;
@@ -246,17 +166,13 @@ namespace Emeraude::Graphics::Geometry
 		}
 	}
 
-	const char *
-	AdaptiveVertexGridResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	AdaptiveVertexGridResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		Tracer::warning(ClassId, "FIXME: This function is not available yet !");
 
@@ -264,10 +180,12 @@ namespace Emeraude::Graphics::Geometry
 	}
 
 	bool
-	AdaptiveVertexGridResource::load (const Json::Value &) noexcept
+	AdaptiveVertexGridResource::load (const Json::Value & /*data*/) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		Tracer::warning(ClassId, "FIXME: This function is not available yet !");
 
@@ -278,7 +196,9 @@ namespace Emeraude::Graphics::Geometry
 	AdaptiveVertexGridResource::load (const Grid< float > & baseGrid, size_t quadCount, const Vector< 3, float > & position) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( !baseGrid.isValid() )
 		{
@@ -298,15 +218,19 @@ namespace Emeraude::Graphics::Geometry
 		m_quadCount = m_squareQuadCount * m_squareQuadCount;
 		m_squarePointCount = m_squareQuadCount + 1;
 		m_pointCount = m_squarePointCount * m_squarePointCount;
-		m_minimalUpdateDistance = baseGrid.quadSize() * m_squareQuadCount * 0.5F;
+		m_minimalUpdateDistance = baseGrid.quadSize() * static_cast< float >(m_squareQuadCount) * Half< float >;
 
 		/* Generate vertices buffer. */
 		if ( !this->updateLocalData(baseGrid, position) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		/* Generate indices buffer. */
 		if ( !this->generateIndicesBuffer() )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		return this->setLoadSuccess(true);
 	}
@@ -314,17 +238,18 @@ namespace Emeraude::Graphics::Geometry
 	size_t
 	AdaptiveVertexGridResource::findStartingOffset (const Grid< float > & baseGrid, const Vector< 3, float > & position) const noexcept
 	{
-		/* Convert from 3D to 2D coordinates and shift the position
-		 * to the bottom-left position of the future adaptive grid
-		 * to get the right first quad. */
-		auto x = position[X] - m_minimalUpdateDistance;
-		auto y = position[Z] - m_minimalUpdateDistance;
+		/* Convert from 3D to 2D coordinates and shift the position to the bottom-left
+		 * position of the future adaptive grid to get the right first quad. */
+		const auto xCoord = position[X] - m_minimalUpdateDistance;
+		const auto yCoord = position[Z] - m_minimalUpdateDistance;
 
-		auto offset = baseGrid.nearestQuad(x, y).topLeftIndex();
-		auto max = baseGrid.pointCount() - m_pointCount;
+		const auto offset = baseGrid.nearestQuad(xCoord, yCoord).topLeftIndex();
+		const auto max = baseGrid.pointCount() - m_pointCount;
 
 		if ( offset >= max )
+		{
 			return max - 1;
+		}
 
 		return offset;
 	}
@@ -332,29 +257,25 @@ namespace Emeraude::Graphics::Geometry
 	bool
 	AdaptiveVertexGridResource::generateIndicesBuffer () noexcept
 	{
-		for ( auto y = 0U; y < m_squareQuadCount; y++ )
+		for ( size_t yIndex = 0; yIndex < m_squareQuadCount; yIndex++ )
 		{
-			auto rowOffset = y * m_squarePointCount;
+			const auto rowOffset = yIndex * m_squarePointCount;
 
-			for ( auto x = 0U; x < m_squareQuadCount; x++ )
+			for ( size_t xIndex = 0; xIndex < m_squareQuadCount; xIndex++ )
 			{
-				/* Top left vertex. */
-				auto tl = rowOffset + x;
-				/* Bottom left vertex. */
-				auto bl = tl + m_squarePointCount;
-				/* Top right vertex. */
-				auto tr = tl + 1;
-				/* Bottom right vertex. */
-				auto br = bl + 1;
+				const auto topLeft = rowOffset + xIndex;
+				const auto bottomLeft = topLeft + m_squarePointCount;
+				const auto topRight = topLeft + 1;
+				const auto bottomRight = bottomLeft + 1;
 
-				if ( x == 0 )
+				if ( xIndex == 0 )
 				{
-					m_indices.emplace_back(tl);
-					m_indices.emplace_back(bl);
+					m_indices.emplace_back(topLeft);
+					m_indices.emplace_back(bottomLeft);
 				}
 
-				m_indices.emplace_back(tr);
-				m_indices.emplace_back(br);
+				m_indices.emplace_back(topRight);
+				m_indices.emplace_back(bottomRight);
 			}
 
 			/* Primitive restart. This will break the triangle strip. */
@@ -376,18 +297,17 @@ namespace Emeraude::Graphics::Geometry
 
 		m_localData.clear();
 
-		auto startingOffset = this->findStartingOffset(baseGrid, position);
+		const auto startingOffset = this->findStartingOffset(baseGrid, position);
 
-		for ( size_t y = 0; y < m_squarePointCount; y++ )
+		for ( size_t yIndex = 0; yIndex < m_squarePointCount; yIndex++ )
 		{
-			auto rowOffset = startingOffset + (y * baseGrid.squaredPointCount());
+			const auto rowOffset = startingOffset + (yIndex * baseGrid.squaredPointCount());
 
-			for ( size_t x = 0; x < m_squarePointCount; x++ )
+			for ( size_t xIndex = 0; xIndex < m_squarePointCount; xIndex++ )
 			{
-				auto index = rowOffset + x;
+				const auto index = rowOffset + xIndex;
 
-				addGridPointToVertexAttributes(baseGrid, index, this->flagBits(), m_localData);
-
+				addGridPointToVertexAttributes(baseGrid, index);
 			}
 		}
 
@@ -395,15 +315,114 @@ namespace Emeraude::Graphics::Geometry
 	}
 
 	void
-	AdaptiveVertexGridResource::updateVisibility (const Coordinates< float > & /*view*/) noexcept
+	AdaptiveVertexGridResource::addGridPointToVertexAttributes (const Grid< float > & grid, size_t index) noexcept
 	{
-		/* FIXME: Empty function. */
+		const auto position = grid.position(index);
+
+		/* Position */
+		m_localData.emplace_back(position[X]);
+		m_localData.emplace_back(position[Y]);
+		m_localData.emplace_back(position[Z]);
+
+		if ( this->isFlagEnabled(EnableTangentSpace) )
+		{
+			const auto normal = grid.normal(index, position);
+			const auto tangent = grid.tangent(index, position, grid.textureCoordinates3D(index));
+			const auto binormal = Vector< 3, float >::crossProduct(normal, tangent);
+
+			/* Tangent */
+			m_localData.emplace_back(tangent[X]);
+			m_localData.emplace_back(tangent[Y]);
+			m_localData.emplace_back(tangent[Z]);
+
+			/* Binormal */
+			m_localData.emplace_back(binormal[X]);
+			m_localData.emplace_back(binormal[Y]);
+			m_localData.emplace_back(binormal[Z]);
+
+			/* Normal */
+			m_localData.emplace_back(normal[X]);
+			m_localData.emplace_back(normal[Y]);
+			m_localData.emplace_back(normal[Z]);
+		}
+		else if ( this->isFlagEnabled(EnableNormal) )
+		{
+			const auto normal = grid.normal(index, position);
+
+			/* Normal */
+			m_localData.emplace_back(normal[X]);
+			m_localData.emplace_back(normal[Y]);
+			m_localData.emplace_back(normal[Z]);
+		}
+
+		if ( this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
+		{
+			if ( this->isFlagEnabled(Enable3DPrimaryTextureCoordinates) )
+			{
+				const auto UVWCoords = grid.textureCoordinates3D(index);
+
+				/* 3D texture coordinates */
+				m_localData.emplace_back(UVWCoords[X]);
+				m_localData.emplace_back(UVWCoords[Y]);
+				m_localData.emplace_back(UVWCoords[Z]);
+			}
+			else
+			{
+				const auto UVCoords = grid.textureCoordinates2D(index);
+
+				/* 2D texture coordinates */
+				m_localData.emplace_back(UVCoords[X]);
+				m_localData.emplace_back(UVCoords[Y]);
+			}
+		}
+
+		/* FIXME: For now the secondary texture are the same as primary. */
+		if ( this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
+		{
+			if ( this->isFlagEnabled(Enable3DSecondaryTextureCoordinates) )
+			{
+				const auto UVWCoords = grid.textureCoordinates3D(index);
+
+				/* 3D texture coordinates */
+				m_localData.emplace_back(UVWCoords[X]);
+				m_localData.emplace_back(UVWCoords[Y]);
+				m_localData.emplace_back(UVWCoords[Z]);
+			}
+			else
+			{
+				const auto UVCoords = grid.textureCoordinates2D(index);
+
+				/* 2D Texture2Ds CartesianFrame */
+				m_localData.emplace_back(UVCoords[X]);
+				m_localData.emplace_back(UVCoords[Y]);
+			}
+		}
+
+		/* Vertex color. */
+		if ( this->isFlagEnabled(EnableVertexColor) )
+		{
+			const auto color = Color< float >::random();
+			
+			m_localData.emplace_back(color.red());
+			m_localData.emplace_back(color.green());
+			m_localData.emplace_back(color.blue());
+			m_localData.emplace_back(1.0);
+		}
+
+		/* Vertex weight. */
+		if ( this->isFlagEnabled(EnableWeight) )
+		{
+			m_localData.emplace_back(1.0);
+			m_localData.emplace_back(1.0);
+			m_localData.emplace_back(1.0);
+			m_localData.emplace_back(1.0);
+		}
 	}
 
-	float
-	AdaptiveVertexGridResource::getMinimalUpdateDistance () const noexcept
+	void
+	AdaptiveVertexGridResource::updateVisibility (const CartesianFrame< float > & /*view*/) noexcept
 	{
-		return m_minimalUpdateDistance;
+		/* FIXME: Empty function. */
 	}
 
 	void
@@ -419,16 +438,10 @@ namespace Emeraude::Graphics::Geometry
 		m_vertexColorMap = vertexColorMap;
 	}
 
-	bool
-	AdaptiveVertexGridResource::isVertexColorEnabled () const noexcept
-	{
-		return m_vertexColorMap != nullptr;
-	}
-
 	std::shared_ptr< AdaptiveVertexGridResource >
 	AdaptiveVertexGridResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->adaptiveVertexGridGeometries().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->adaptiveVertexGridGeometries().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< AdaptiveVertexGridResource >

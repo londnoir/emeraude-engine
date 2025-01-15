@@ -1,54 +1,61 @@
 /*
- * Emeraude/Audio/Manager.hpp
- * This file is part of Emeraude
+ * src/Audio/Manager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
 #include <memory>
 #include <string>
 #include <vector>
+
+/* Third-party inclusions. */
+#include "OpenAL.EFX.hpp"
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 #include "ConsoleControllable.hpp"
 
 /* Local inclusions for usages. */
+#include "Libraries/WaveFactory/Types.hpp"
+#include "SettingKeys.hpp"
 #include "Source.hpp" // FIXME
-#include "WaveFactory/Types.hpp"
-
-/* Third-party libraries */
-#include "OpenAL.EFX.hpp"
+#include "SoundEnvironmentProperties.hpp"
+#include "Types.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
 {
-	class Arguments;
-	class Settings;
+	namespace Resources
+	{
+		class Manager;
+	}
+
+	class PrimaryServices;
 }
 
 namespace Emeraude::Audio
@@ -63,7 +70,7 @@ namespace Emeraude::Audio
 	/**
 	 * @brief The audio manager service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::Observable
+	 * @extends Emeraude::ConsoleControllable
 	 */
 	class Manager final : public ServiceInterface, public ConsoleControllable
 	{
@@ -75,32 +82,6 @@ namespace Emeraude::Audio
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto EnabledKey = "Audio/Enabled";
-			static constexpr auto DefaultEnabled = true;
-			static constexpr auto PlaybackFrequencyKey = "Audio/PlaybackFrequency";
-			static constexpr auto DefaultPlaybackFrequency = 22050;
-			static constexpr auto MasterVolumeKey = "Audio/MasterVolume";
-			static constexpr auto DefaultMasterVolume = 0.75F;
-			static constexpr auto SFXVolumeKey = "Audio/SFXVolume";
-			static constexpr auto DefaultSFXVolume = 0.6F;
-			static constexpr auto MusicVolumeKey = "Audio/MusicVolume";
-			static constexpr auto DefaultMusicVolume = 0.5F;
-			static constexpr auto MusicChunkSizeKey = "Audio/MusicChunkSize";
-			static constexpr auto DefaultMusicChunkSize = 8192;
-			static constexpr auto OpenALUseALUTKey = "Audio/OpenAL/UseALUT";
-			static constexpr auto DefaultOpenALUseALUT = true;
-			static constexpr auto OpenALUseEFXExtensionsKey = "Audio/OpenAL/UseEFXExtensions";
-			static constexpr auto DefaultOpenALUseEFXExtensions = true;
-			static constexpr auto OpenALRefreshRateKey = "Audio/OpenAL/RefreshRate";
-			static constexpr auto DefaultOpenALRefreshRate = 46;
-			static constexpr auto OpenALSyncStateKey = "Audio/OpenAL/SyncState";
-			static constexpr auto DefaultOpenALSyncState = 0;
-			static constexpr auto OpenALMaxMonoSourceCountKey = "Audio/OpenAL/MaxMonoSourceCount";
-			static constexpr auto DefaultOpenALMaxMonoSourceCount = 32;
-			static constexpr auto OpenALMaxStereoSourceCountKey = "Audio/OpenAL/MaxStereoSourceCount";
-			static constexpr auto DefaultOpenALMaxStereoSourceCount = 2;
-
 			/** @brief Observable notification codes. */
 			enum NotificationCode
 			{
@@ -110,23 +91,12 @@ namespace Emeraude::Audio
 				MaxEnum
 			};
 
-			/** @brief The distance model to use with audio source for mixing. */
-			enum class DistanceModel
-			{
-				Inverse,
-				InverseClamped,
-				Linear,
-				LinearClamped,
-				Exponent,
-				ExponentClamped
-			};
-
 			/**
 			 * @brief Constructs an audio manager.
-			 * @param arguments A reference to the core arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
+			 * @param resourceManager A reference to the resource manager.
 			 */
-			Manager (const Arguments & arguments, Settings & coreSettings) noexcept;
+			Manager (PrimaryServices & primaryServices, Resources::Manager & resourceManager) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -157,26 +127,35 @@ namespace Emeraude::Audio
 			 */
 			~Manager () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Sets the main state of the audio manager.
+			 * @note If the audio has been disabled at startup, this method will have no effect.
 			 * @param state The state.
 			 */
-			void setState (bool state) noexcept;
+			void enableAudio (bool state) noexcept;
 
 			/**
 			 * @brief Returns the main state of the audio manager.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool state () const noexcept;
+			bool isAudioEnabled () const noexcept;
 
 			/**
 			 * @brief Returns the EFX extension checker.
@@ -194,25 +173,26 @@ namespace Emeraude::Audio
 
 			/**
 			 * @brief Plays a sound on the default source.
-			 * @param sample A pointer on a playable interface.
+			 * @param playable A reference to a playable interface smart pointer.
 			 * @param mode The play mode. Default Once.
 			 * @param gain The gain of the channel to play the sound.
 			 */
-			void play (const PlayableInterface * sample, Source::PlayMode mode = Source::PlayMode::Once, float gain = 1.0F) const noexcept;
+			void play (const std::shared_ptr< PlayableInterface > & playable, Source::PlayMode mode = Source::PlayMode::Once, float gain = 1.0F) const noexcept;
+
+			/**
+			 * @brief Plays a sound on the default source.
+			 * @param resourceName A reference to a string for a resource.
+			 * @param mode The play mode. Default Once.
+			 * @param gain The gain of the channel to play the sound.
+			 */
+			void play (const std::string & resourceName, Source::PlayMode mode = Source::PlayMode::Once, float gain = 1.0F) const noexcept;
 
 			/**
 			 * @brief Returns the API (OpenAL) information.
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			std::string getAPIInformation () noexcept;
-
-			/**
-			 * @brief Returns whether the audio was enabled at startup.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			static bool isAudioAvailable () noexcept;
+			std::string getAPIInformation () const noexcept;
 
 			/**
 			 * @brief Returns the frequency playback.
@@ -242,57 +222,32 @@ namespace Emeraude::Audio
 			float masterVolume () noexcept;
 
 			/**
-			 * @brief Sets the distance model for the sound attenuation.
-			 * @param model One of the DistanceModel enum values.
+			 * @brief Changes the sound properties.
+			 * @param properties A reference to a sound environment properties.
+			 * @return void
 			 */
-			void setDistanceModel (DistanceModel model) noexcept;
+			void setSoundEnvironmentProperties (const SoundEnvironmentProperties & properties) noexcept;
 
 			/**
-			 * @brief Returns the current distance model in use for the sound attenuation.
-			 * @return DistanceModel
+			 * @brief Returns the actual sound properties.
+			 * @return SoundEnvironmentProperties
 			 */
 			[[nodiscard]]
-			DistanceModel distanceModel () const noexcept;
-
-			/**
-			 * @brief Sets the doppler effect factor.
-			 * @param dopplerFactor
-			 */
-			void setDopplerFactor (float dopplerFactor) noexcept;
-
-			/**
-			 * @brief Returns the current doppler effect factor.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float dopplerFactor () const noexcept;
-
-			/**
-			 * @brief Sets the speed of sound.
-			 * @param speed The value in unit per second.
-			 */
-			void setSpeedOfSound (float speed) noexcept;
-
-			/**
-			 * @brief Returns the current speed of sound.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float speedOfSound () noexcept;
+			SoundEnvironmentProperties getSoundEnvironmentProperties () const noexcept;
 
 			/**
 			 * @brief Sets the listener properties.
 			 * @param properties An array of parameters. The first 3 floats are for position,
 			 * the next 3 floats are for orientation and the 3 lasts for velocity.
 			 */
-			void setListenerProperties (const std::array< ALfloat, 12 > & properties) noexcept; // NOLINT(*-magic-numbers)
+			void setListenerProperties (const std::array< ALfloat, 12 > & properties) noexcept;
 
 			/**
 			 * @brief Returns the listener properties by reference.
 			 * @param properties An array of parameters. The first 3 floats are for position,
 			 * the next 3 floats are for orientation and the 3 lasts for velocity.
 			 */
-			void listenerProperties (std::array< ALfloat, 12 > & properties) const noexcept; // NOLINT(*-magic-numbers)
+			void listenerProperties (std::array< ALfloat, 12 > & properties) const noexcept;
 
 			/**
 			 * @brief Sets meters per unit.
@@ -353,9 +308,48 @@ namespace Emeraude::Audio
 			bool onTerminate () noexcept override;
 
 			/**
+			 * @brief Sets the doppler effect factor.
+			 * @param dopplerFactor
+			 */
+			void setDopplerFactor (float dopplerFactor) noexcept;
+
+			/**
+			 * @brief Returns the current doppler effect factor.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float dopplerFactor () const noexcept;
+
+			/**
+			 * @brief Sets the speed of sound.
+			 * @param speed The value in unit per second.
+			 */
+			void setSpeedOfSound (float speed) noexcept;
+
+			/**
+			 * @brief Returns the current speed of sound.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float speedOfSound () const noexcept;
+
+			/**
+			 * @brief Sets the distance model for the sound attenuation.
+			 * @param model One of the DistanceModel enum values.
+			 */
+			void setDistanceModel (DistanceModel model) noexcept;
+
+			/**
+			 * @brief Returns the current distance model in use for the sound attenuation.
+			 * @return DistanceModel
+			 */
+			[[nodiscard]]
+			DistanceModel distanceModel () const noexcept;
+
+			/**
 			 * @brief Returns the split device name from the raw API data.
 			 * @param list The raw list from OpenAL.
-			 * @return vector< string >
+			 * @return std::vector< std::string >
 			 */
 			[[nodiscard]]
 			static std::vector< std::string > getDeviceName (const ALCchar * list) noexcept;
@@ -379,30 +373,29 @@ namespace Emeraude::Audio
 			bool saveContextAttributes () noexcept;
 
 			/* Flag names. */
-			static constexpr auto Usable = 0UL;
-			static constexpr auto MainState = 1UL;
-			static constexpr auto UsingALUT = 2UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto ShowInformation{1UL};
+			static constexpr auto AudioDisabledAtStartup{2UL};
+			static constexpr auto Enabled{3UL};
 
-			static Manager * s_instance; // NOLINT NOTE: Singleton behavior
+			static Manager * s_instance;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
-			ALCdevice * m_device = nullptr;
-			ALCcontext * m_context = nullptr;
-			std::vector< std::string > m_availableAudioDevices{};
-			std::shared_ptr< EFX > m_EFX{};
-			std::map< ALCint, ALCint > m_contextAttributes{};
-			std::shared_ptr< Source > m_defaultSource{};
-			std::vector< std::shared_ptr< Source > > m_sources{};
+			PrimaryServices & m_primaryServices;
+			Resources::Manager & m_resourceManager;
+			ALCdevice * m_device{nullptr};
+			ALCcontext * m_context{nullptr};
+			std::vector< std::string > m_availableAudioDevices;
+			std::shared_ptr< EFX > m_EFX;
+			std::map< ALCint, ALCint > m_contextAttributes;
+			std::shared_ptr< Source > m_defaultSource;
+			std::vector< std::shared_ptr< Source > > m_sources;
 			Libraries::WaveFactory::Frequency m_playbackFrequency{Libraries::WaveFactory::Frequency::PCM22050Hz};
-			size_t m_musicChunkSize{DefaultMusicChunkSize};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				true/*Usable*/,
-				false/*MainState*/,
-				false/*UsingALUT*/,
-				false/*UNUSED*/,
+			size_t m_musicChunkSize{DefaultAudioMusicChunkSize};
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
+				false/*ShowInformation*/,
+				false/*AudioDisabledAtStartup*/,
+				false/*Enabled*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

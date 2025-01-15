@@ -1,38 +1,45 @@
 /*
- * Emeraude/Vulkan/Device.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Device.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Device.hpp"
 
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
 /* Local inclusions. */
+#include "Utility.hpp"
+#include "Instance.hpp"
+#include "PhysicalDevice.hpp"
+#include "DeviceRequirements.hpp"
 #include "QueueFamily.hpp"
 #include "QueueFamilySQ.hpp"
 #include "Settings.hpp"
+#include "SettingKeys.hpp"
 #include "Tracer.hpp"
-#include "Utility.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -40,9 +47,9 @@ namespace Emeraude::Vulkan
 	using namespace Graphics;
 
 	Device::Device (const std::shared_ptr< PhysicalDevice > & physicalDevice) noexcept
-		: NamedItem(physicalDevice->properties().deviceName), m_physicalDevice(physicalDevice)
+		: NameableTrait(physicalDevice->properties().deviceName), m_physicalDevice(physicalDevice)
 	{
-		m_flags[DebugMode] = Settings::instance(SettingsType::Core)->getAs< bool >(EnableDeviceDebugKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[DebugMode] = Settings::instance()->get< bool >(VkDeviceEnableDebugKey, BOOLEAN_FOLLOWING_DEBUG);
 	}
 
 	Device::~Device ()
@@ -53,9 +60,9 @@ namespace Emeraude::Vulkan
 	bool
 	Device::create (const DeviceRequirements & requirements, const std::vector< const char * > & extensions) noexcept
 	{
-		if ( Settings::instance(SettingsType::Core)->getAs< bool >(ShowAvailableDeviceExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( Settings::instance()->get< bool >(VkDeviceShowAvailableExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
 		{
-			printItemList("Device", m_physicalDevice->getExtensions(nullptr));
+			TraceInfo{ClassId} << getItemListAsString("Device", m_physicalDevice->getExtensions(nullptr));
 		}
 
 		/* Queue creation definitions. */
@@ -101,15 +108,11 @@ namespace Emeraude::Vulkan
 		{
 			if ( !queueFamily->retrieveQueuesFromDevice(device) )
 			{
-				TraceError{ClassId} <<
-					"Unable to retrieve queue for queue family #" << queueFamily->index() << " of "
-					"the device " << m_handle << " (" << this->identifier() << ") is successfully created !";
+				TraceError{ClassId} << "Unable to retrieve queue for queue family #" << queueFamily->index() << " of the device " << m_handle << " (" << this->identifier() << ") !";
 
 				return false;
 			}
 		}
-
-		TraceSuccess{ClassId} << "The device " << m_handle << " (" << this->identifier() << ") is successfully created !";
 
 		this->setCreated();
 
@@ -130,8 +133,6 @@ namespace Emeraude::Vulkan
 		m_queueFamilies.clear();
 
 		vkDestroyDevice(m_handle, nullptr);
-
-		TraceSuccess{ClassId} << "The device " << m_handle << " is gracefully destroyed !";
 
 		m_handle = VK_NULL_HANDLE;
 
@@ -214,7 +215,7 @@ namespace Emeraude::Vulkan
 				m_queueFamilies.emplace_back(std::make_shared< QueueFamily >(queueFamilyIndex, maxQueueCount)) :
 				m_queueFamilies.emplace_back(std::make_shared< QueueFamilySQ >(queueFamilyIndex));
 
-			if ( flag & VK_QUEUE_GRAPHICS_BIT )
+			if ( (flag & VK_QUEUE_GRAPHICS_BIT) != 0 )
 			{
 				if ( requirements.needsGraphics() )
 				{
@@ -223,7 +224,7 @@ namespace Emeraude::Vulkan
 					{
 						m_queueFamilyPerJob[QueueJob::Graphics] = queueFamily;
 
-						if ( flag & VK_QUEUE_TRANSFER_BIT )
+						if ( (flag & VK_QUEUE_TRANSFER_BIT) != 0 )
 						{
 							m_queueFamilyPerJob[QueueJob::GraphicsTransfer] = queueFamily;
 						}
@@ -240,21 +241,21 @@ namespace Emeraude::Vulkan
 				m_queueFamilyPerJob[QueueJob::Presentation] = queueFamily;
 			}
 
-			if ( requirements.needsCompute() && flag & VK_QUEUE_COMPUTE_BIT )
+			if ( requirements.needsCompute() && (flag & VK_QUEUE_COMPUTE_BIT) != 0 )
 			{
 				/* If no compute queue has been registered or if the queue family is exclusive to compute. */
 				if ( !m_queueFamilyPerJob.contains(QueueJob::Compute) || (flag & VK_QUEUE_GRAPHICS_BIT) == 0 )
 				{
 					m_queueFamilyPerJob[QueueJob::Compute] = queueFamily;
 
-					if ( flag & VK_QUEUE_TRANSFER_BIT )
+					if ( (flag & VK_QUEUE_TRANSFER_BIT) != 0 )
 					{
 						m_queueFamilyPerJob[QueueJob::ComputeTransfer] = queueFamily;
 					}
 				}
 			}
 
-			if ( requirements.needsTransfer() && flag & VK_QUEUE_TRANSFER_BIT && (flag & VK_QUEUE_GRAPHICS_BIT) == 0 && (flag & VK_QUEUE_COMPUTE_BIT) == 0 )
+			if ( requirements.needsTransfer() && (flag & VK_QUEUE_TRANSFER_BIT) != 0 && (flag & VK_QUEUE_GRAPHICS_BIT) == 0 && (flag & VK_QUEUE_COMPUTE_BIT) == 0 )
 			{
 				m_queueFamilyPerJob[QueueJob::Transfer] = queueFamily;
 			}
@@ -432,8 +433,9 @@ namespace Emeraude::Vulkan
 		createInfo.flags = 0;
 		createInfo.queueCreateInfoCount = static_cast< uint32_t >(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
-		createInfo.enabledLayerCount = 0; // IGNORED (Device layer deprecation)
-		createInfo.ppEnabledLayerNames = nullptr; // IGNORED (Device layer deprecation)
+		/* NOTE: Device layer are ignored (Device layer deprecation) */
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
 		createInfo.enabledExtensionCount = static_cast< uint32_t >(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 		createInfo.pEnabledFeatures = &(requirements.features());
@@ -450,46 +452,10 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	const std::shared_ptr< PhysicalDevice > &
-	Device::physicalDevice () const noexcept
-	{
-		return m_physicalDevice;
-	}
-
-	VkDevice
-	Device::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	bool
-	Device::isDebugModeEnabled () const noexcept
-	{
-		return m_flags[DebugMode];
-	}
-
-	void
-	Device::enableDebugMode (bool state) noexcept
-	{
-		m_flags[DebugMode] = state;
-	}
-
-	bool
-	Device::hasBasicSupport () const noexcept
-	{
-		return m_flags[HasBasicSupport];
-	}
-
-	bool
-	Device::hasGraphicsQueues () const noexcept
-	{
-		return m_queueFamilyPerJob.contains(QueueJob::Graphics);
-	}
-
 	uint32_t
 	Device::getGraphicsFamilyIndex () const noexcept
 	{
-		auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Graphics);
+		const auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Graphics);
 
 		if ( queueFamilyIt == m_queueFamilyPerJob.cend() )
 		{
@@ -497,18 +463,12 @@ namespace Emeraude::Vulkan
 		}
 
 		return queueFamilyIt->second->index();
-	}
-
-	bool
-	Device::hasComputeQueues () const noexcept
-	{
-		return m_queueFamilyPerJob.contains(QueueJob::Compute);
 	}
 
 	uint32_t
 	Device::getComputeFamilyIndex () const noexcept
 	{
-		auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Compute);
+		const auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Compute);
 
 		if ( queueFamilyIt == m_queueFamilyPerJob.cend() )
 		{
@@ -518,16 +478,10 @@ namespace Emeraude::Vulkan
 		return queueFamilyIt->second->index();
 	}
 
-	bool
-	Device::hasTransferQueues () const noexcept
-	{
-		return m_queueFamilyPerJob.contains(QueueJob::Transfer);
-	}
-
 	uint32_t
 	Device::getTransferFamilyIndex () const noexcept
 	{
-		auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Transfer);
+		const auto queueFamilyIt = m_queueFamilyPerJob.find(QueueJob::Transfer);
 
 		if ( queueFamilyIt == m_queueFamilyPerJob.cend() )
 		{
@@ -540,7 +494,7 @@ namespace Emeraude::Vulkan
 	Queue *
 	Device::getQueue (QueueJob deviceJobType, QueuePriority priority) const noexcept
 	{
-		auto queueFamilyIt = m_queueFamilyPerJob.find(deviceJobType);
+		const auto queueFamilyIt = m_queueFamilyPerJob.find(deviceJobType);
 
 		if ( queueFamilyIt == m_queueFamilyPerJob.cend() )
 		{
@@ -555,7 +509,14 @@ namespace Emeraude::Vulkan
 	{
 		const std::lock_guard< std::mutex > lock{m_mutex};
 
-		auto result = vkDeviceWaitIdle(m_handle);
+		if ( m_handle == VK_NULL_HANDLE )
+		{
+			Tracer::error(ClassId, "The device is gone !");
+
+			return false;
+		}
+
+		const auto result = vkDeviceWaitIdle(m_handle);
 
 		if ( result != VK_SUCCESS )
 		{
@@ -574,7 +535,7 @@ namespace Emeraude::Vulkan
 
 		for ( auto memoryTypeIndex = 0U; memoryTypeIndex < memoryProperties.memoryTypeCount; memoryTypeIndex++ )
 		{
-			if ( (memoryTypeFilter & (1 << memoryTypeIndex)) && (memoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & propertyFlags) == propertyFlags )
+			if ( (memoryTypeFilter & (1 << memoryTypeIndex)) != 0 && (memoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & propertyFlags) == propertyFlags )
 			{
 				return memoryTypeIndex;
 			}
@@ -608,7 +569,7 @@ namespace Emeraude::Vulkan
 
 				/* FIXME: Check this tiling mode. */
 				case VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT :
-					if ( (formatProperties.optimalTilingFeatures & featureFlags) == featureFlags || (formatProperties.linearTilingFeatures & featureFlags) )
+					if ( (formatProperties.optimalTilingFeatures & featureFlags) == featureFlags || (formatProperties.linearTilingFeatures & featureFlags) != 0 )
 					{
 						return format;
 					}

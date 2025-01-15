@@ -1,43 +1,55 @@
 /*
- * Emeraude/Graphics/Material/BasicResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Material/BasicResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "BasicResource.hpp"
 
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+
 /* Local inclusions. */
-#include "Component/TypeColor.hpp"
+#include "Libraries/Math/Base.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/FastJSON.hpp"
+#include "Saphir/Declaration/Function.hpp"
+#include "Saphir/Declaration/Types.hpp"
+#include "Saphir/Generator/Abstract.hpp"
+#include "Saphir/Code.hpp"
+#include "Saphir/Keys.hpp"
+#include "Saphir/LightGenerator.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Graphics/Types.hpp"
+#include "Vulkan/DescriptorSet.hpp"
 #include "Helpers.hpp"
 #include "Resources/Manager.hpp"
-#include "Saphir/Keys.hpp"
-#include "Saphir/Code.hpp"
+#include "Component/Texture.hpp"
 #include "Tracer.hpp"
-#include "Vulkan/DescriptorSet.hpp"
-#include "Vulkan/DescriptorSetLayout.hpp"
-#include "Vulkan/SharedUniformBuffer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -45,17 +57,17 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Material:
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Material::BasicResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Material::BasicResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Material
 {
 	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace Math;
 	using namespace Saphir;
-	using namespace Saphir::Keys;
+	using namespace Keys;
+	using namespace Vulkan;
 
-	const size_t BasicResource::ClassUID{Observable::getClassUID()};
-	std::unique_ptr< Vulkan::SharedUniformBuffer > BasicResource::s_sharedUniformBuffer{};
+	const size_t BasicResource::ClassUID{getClassUID(ClassId)};
 
 	BasicResource::BasicResource (const std::string & name, int resourceFlagBits) noexcept
 		: Interface(name, resourceFlagBits)
@@ -69,25 +81,6 @@ namespace Emeraude::Graphics::Material
 	}
 
 	bool
-	BasicResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	const char *
-	BasicResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
-	bool
 	BasicResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
@@ -95,9 +88,10 @@ namespace Emeraude::Graphics::Material
 			return false;
 		}
 
-		this->enableFlag(UsesVertexColors);
-
-		this->setColor(PixelFactory::Magenta);
+		if ( !this->setColor(PixelFactory::Grey) )
+		{
+			return false;
+		}
 
 		return this->setLoadSuccess(true);
 	}
@@ -111,19 +105,13 @@ namespace Emeraude::Graphics::Material
 		}
 
 		/* NOTE: We only check the diffuse component in material JSON. */
-		if ( !data.isMember(DiffuseString) || !data[DiffuseString].isObject() )
-		{
-			TraceError{ClassId} << "Unable to reach the key '" << DiffuseString << "' key in '" << this->name() << "' Json file ! ";
-
-			return this->setLoadSuccess(false);
-		}
-
 		FillingType fillingType{};
+
 		Json::Value componentData{};
 
-		if ( !Component::TypeInterface::parseBase(data[DiffuseString], fillingType, componentData) )
+		if ( !parseComponentBase(data, DiffuseString, fillingType, componentData, false) )
 		{
-			TraceError{ClassId} << "There is no valid component in '" << this->name() << "' Json file !" << data;
+			TraceError{ClassId} << "Unable to parse the diffuse component in material '" << this->name() << "' resource JSON file ! " "\n" << data;
 
 			return this->setLoadSuccess(false);
 		}
@@ -132,10 +120,12 @@ namespace Emeraude::Graphics::Material
 		{
 			case FillingType::Color :
 			{
-				/* NOTE: We use a temporary color component here to keep simplicity on the final material. */
-				const Component::TypeColor colorComponent{Saphir::Keys::Uniforms::PrimaryColor, componentData};
+				const auto color = parseColorComponent(componentData);
 
-				this->setColor(colorComponent.color());
+				if ( !this->setColor(color) )
+				{
+					return this->setLoadSuccess(false);
+				}
 			}
 				break;
 
@@ -144,17 +134,25 @@ namespace Emeraude::Graphics::Material
 			case FillingType::VolumeTexture :
 			case FillingType::Cubemap :
 			case FillingType::AnimatedTexture :
+			{
+				m_textureComponent = std::make_unique< Component::Texture >(Uniform::PrimarySampler, SurfaceColor, componentData, fillingType, *Resources::Manager::instance());
+
+				auto * textureResource = m_textureComponent->textureResource().get();
+
+				if ( !this->addDependency(textureResource) )
 				{
-					m_textureComponent = std::make_unique< Component::TypeTexture >(Saphir::Keys::Uniforms::PrimaryTexture, componentData, fillingType);
+					m_textureComponent.reset();
 
-					this->enableFlag(TexturingEnabled);
-					this->enableFlag(UsesPrimaryTextureCoordinates);
-
-					if ( !this->addDependency(m_textureComponent->texture().get()) )
-					{
-						return this->setLoadSuccess(false);
-					}
+					return this->setLoadSuccess(false);
 				}
+
+				this->enableFlag(TexturingEnabled);
+				this->enableFlag(UsesPrimaryTextureCoordinates);
+				if ( textureResource->request3DTextureCoordinates() )
+				{
+					this->enableFlag(PrimaryTextureCoordinatesUses3D);
+				}
+			}
 				break;
 
 			case FillingType::Value :
@@ -165,16 +163,46 @@ namespace Emeraude::Graphics::Material
 				return this->setLoadSuccess(false);
 		}
 
-		/* Check the optional global auto-illumination amount. */
-		auto value = 0.0F;
-
-		if ( Component::TypeInterface::getComponentAsValue(data, AutoIlluminationString, value) )
+		/* Check specular color value and shininess. */
+		if ( data.isMember(SpecularString) )
 		{
-			this->setAutoIlluminationAmount(value);
+			if ( !data[SpecularString].isObject() )
+			{
+				TraceError{ClassId} << "The key '" << SpecularString << "' in '" << this->name() << "' Json file must be an object ! ";
+
+				return this->setLoadSuccess(false);
+			}
+
+			const auto & specularData = data[SpecularString];
+
+			this->setSpecularComponent(
+				FastJSON::getColor(specularData, JKColor, DefaultSpecularColor),
+				FastJSON::getNumber< float >(specularData, JKShininess, DefaultShininess)
+			);
+		}
+
+		/* Check the blending mode. */
+		this->enableBlendingFromJson(data);
+
+		/* Check the optional global auto-illumination amount. */
+		if ( data.isMember(AutoIlluminationString) )
+		{
+			if ( !data[AutoIlluminationString].isObject() )
+			{
+				TraceError{ClassId} << "The key '" << AutoIlluminationString << "' in '" << this->name() << "' Json file must be an object ! ";
+
+				return this->setLoadSuccess(false);
+			}
+
+			const auto & autoIlluminationData = data[AutoIlluminationString];
+
+			this->setAutoIlluminationAmount(FastJSON::getNumber< float >(autoIlluminationData, JKValue, DefaultAutoIllumination));
 		}
 
 		/* Check the optional global opacity. */
-		if ( Component::TypeInterface::getComponentAsValue(data, OpacityString, value) )
+		auto value = 1.0F;
+
+		if ( getComponentAsValue(data, OpacityString, value) )
 		{
 			this->setOpacity(value);
 		}
@@ -183,59 +211,7 @@ namespace Emeraude::Graphics::Material
 	}
 
 	bool
-	BasicResource::createSharedUniformBuffer () noexcept
-	{
-		if ( s_sharedUniformBuffer != nullptr )
-		{
-			return true;
-		}
-
-		const auto uniformBlock = BasicResource::getMaterialUniformBlock(1);
-
-		s_sharedUniformBuffer = std::make_unique< Vulkan::SharedUniformBuffer >(Graphics::Renderer::instance()->device(), uniformBlock, 0);
-
-		return s_sharedUniformBuffer->usable();
-	}
-
-	bool
-	BasicResource::registerToSharedUniformBuffer () noexcept
-	{
-		if ( !BasicResource::createSharedUniformBuffer() )
-		{
-			Tracer::error(ClassId, "Unable to create the shared uniform buffer object !");
-
-			return false;
-		}
-
-		if ( !s_sharedUniformBuffer->addElement(this, m_sharedUBOIndex) )
-		{
-			Tracer::error(ClassId, "Unable to get an UBO !");
-
-			return false;
-		}
-
-		return true;
-	}
-
-	void
-	BasicResource::unregisterFromSharedUniformeBuffer () noexcept
-	{
-		s_sharedUniformBuffer->removeElement(this);
-
-		if ( s_sharedUniformBuffer->elementCount() == 0 )
-		{
-			BasicResource::destroySharedUniformBuffer();
-		}
-	}
-
-	void
-	BasicResource::destroySharedUniformBuffer () noexcept
-	{
-		s_sharedUniformBuffer.reset();
-	}
-
-	bool
-	BasicResource::create () noexcept
+	BasicResource::create (Renderer & renderer) noexcept
 	{
 		if ( this->isCreated() )
 		{
@@ -244,51 +220,29 @@ namespace Emeraude::Graphics::Material
 			return true;
 		}
 
-		/* Save the material to the shared UBO */
-		if ( !this->registerToSharedUniformBuffer() )
-		{
-			return false;
-		}
-
 		/* Component creation (optional). */
-		if ( m_textureComponent != nullptr && !m_textureComponent->create() )
+		if ( this->usingTexture() )
 		{
-			Tracer::error(ClassId, "Unable to create the texture component !");
+			/* NOTE: Starts to 1 because there is the UBO in the first place. */
+			uint32_t binding = 1;
+
+			if ( !m_textureComponent->create(renderer, binding) )
+			{
+				Tracer::error(ClassId, "Unable to create the texture component !");
+
+				return false;
+			}
+		}
+
+		/* Create the material UBO, sampler, descriptor set ... */
+		if ( !this->createVideoMemory(renderer) )
+		{
+			Tracer::error(ClassId, "Unable to the material onto the GPU !");
 
 			return false;
 		}
 
-		auto * renderer = Graphics::Renderer::instance();
-
-		m_descriptorSetLayout = renderer->getMaterialDescriptorSetLayout(*this);
-
-		/* Descriptor set creation. */
-		m_descriptorSet = std::make_unique< Vulkan::DescriptorSet >(renderer->descriptorPool(), m_descriptorSetLayout);
-		m_descriptorSet->setIdentifier("BasicResource-" + this->name() + "-DescriptorSet");
-
-		if ( !m_descriptorSet->create() )
-		{
-			m_descriptorSet.reset();
-
-			Tracer::error(ClassId, "Unable to create the descriptor set !");
-
-			return false;
-		}
-
-		if ( !m_descriptorSet->writeUniformBufferObject(*s_sharedUniformBuffer->uniformBufferObject(m_sharedUBOIndex), 0) )
-		{
-			Tracer::error(ClassId, "Unable to write the uniform buffer object to the descriptor set !");
-
-			return false;
-		}
-
-		if ( m_textureComponent != nullptr &&  !m_descriptorSet->writeCombinedImageSampler(m_textureComponent->texture(), 1) )
-		{
-			Tracer::error(ClassId, "Unable to write the combined image sampler to the descriptor set !");
-
-			return false;
-		}
-
+		/* Initialize the material data in the GPU. */
 		if ( !this->updateVideoMemory() )
 		{
 			Tracer::error(ClassId, "Unable to update the initial video memory !");
@@ -301,63 +255,187 @@ namespace Emeraude::Graphics::Material
 		return true;
 	}
 
-	bool
-	BasicResource::updateVideoMemory () noexcept
+	std::string
+	BasicResource::getSharedUniformBufferIdentifier () const noexcept
 	{
-		if ( s_sharedUniformBuffer == nullptr )
+		std::string identifier{ClassId};
+
+		identifier += this->usingTexture() ? "Textured" : "Simple";
+
+		return identifier;
+	}
+
+	bool
+	BasicResource::createElementInSharedBuffer (Renderer & renderer, const std::string & identifier) noexcept
+	{
+		m_sharedUniformBuffer = this->getSharedUniformBuffer(renderer, identifier);
+
+		if ( m_sharedUniformBuffer == nullptr )
 		{
+			TraceError{ClassId} << "Unable to get the shared uniform buffer for material '" << this->name() << "' !";
+
 			return false;
 		}
 
-		return s_sharedUniformBuffer->writeElementData(m_sharedUBOIndex, m_materialProperties.data());
+		if ( !m_sharedUniformBuffer->addElement(this, m_sharedUBOIndex) )
+		{
+			TraceError{ClassId} << "Unable to add the material to the shared uniform buffer for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		return m_sharedUniformBuffer->writeElementData(m_sharedUBOIndex, m_materialProperties.data());
+	}
+
+	bool
+	BasicResource::createDescriptorSetLayout (LayoutManager & layoutManager, const std::string & identifier) noexcept
+	{
+		m_descriptorSetLayout = layoutManager.getDescriptorSetLayout(identifier);
+
+		if ( m_descriptorSetLayout == nullptr )
+		{
+			m_descriptorSetLayout = layoutManager.prepareNewDescriptorSetLayout(identifier);
+			m_descriptorSetLayout->setIdentifier(ClassId, identifier, "DescriptorSetLayout");
+
+			/* Declare the UBO for the material properties. */
+			m_descriptorSetLayout->declareUniformBuffer(0, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+
+			/* Declare the sampler used by the material if needed. */
+			if ( this->usingTexture() )
+			{
+				m_descriptorSetLayout->declareCombinedImageSampler(1, VK_SHADER_STAGE_FRAGMENT_BIT);
+			}
+
+			if ( !layoutManager.createDescriptorSetLayout(m_descriptorSetLayout) )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool
+	BasicResource::createDescriptorSet (Renderer & renderer, const UniformBufferObject & uniformBufferObject) noexcept
+	{
+		m_descriptorSet = std::make_unique< DescriptorSet >(renderer.descriptorPool(), m_descriptorSetLayout);
+		m_descriptorSet->setIdentifier(ClassId, this->name(), "DescriptorSet");
+
+		if ( !m_descriptorSet->create() )
+		{
+			TraceError{ClassId} << "Unable to create the descriptor set for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		if ( !m_descriptorSet->writeUniformBufferObject(0, uniformBufferObject, m_sharedUBOIndex) )
+		{
+			TraceError{ClassId} << "Unable to write the uniform buffer object to the descriptor set for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		if ( this->usingTexture() )
+		{
+			if ( !m_descriptorSet->writeCombinedImageSampler(1, *m_textureComponent->textureResource()) )
+			{
+				TraceError{ClassId} << "Unable to write the sampler to the descriptor set for material '" << this->name() << "' !";
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void
+	BasicResource::onMaterialLoaded () noexcept
+	{
+		if ( m_textureComponent != nullptr && m_textureComponent->textureResource()->duration() > 0 )
+		{
+			this->enableFlag(Animated);
+		}
+	}
+
+	bool
+	BasicResource::createVideoMemory (Renderer & renderer) noexcept
+	{
+		const auto identifier = this->getSharedUniformBufferIdentifier();
+
+		if ( !this->createElementInSharedBuffer(renderer, identifier) )
+		{
+			TraceError{ClassId} << "Unable to create the data inside the shared uniform buffer '" << identifier << "' for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		if ( !this->createDescriptorSetLayout(renderer.layoutManager(), identifier) )
+		{
+			TraceError{ClassId} << "Unable to create the descriptor set layout for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		if ( !this->createDescriptorSet(renderer, *m_sharedUniformBuffer->uniformBufferObject(m_sharedUBOIndex)) )
+		{
+			TraceError{ClassId} << "Unable to create the descriptor set for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
+	BasicResource::updateVideoMemory () const noexcept
+	{
+		if ( !this->isCreated() )
+		{
+			return true;
+		}
+
+		if ( m_sharedUniformBuffer == nullptr )
+		{
+			TraceError{ClassId} << "There is no shared uniform buffer for material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		return m_sharedUniformBuffer->writeElementData(m_sharedUBOIndex, m_materialProperties.data());
 	}
 
 	void
 	BasicResource::destroy () noexcept
 	{
-		m_descriptorSet.reset();
-		m_descriptorSetLayout.reset();
-
-		m_physicalSurfaceProperties.reset();
-
-		m_textureComponent.reset();
-
-		m_blendingMode = BlendingMode::None;
-		m_materialProperties = {
-			// Color (4)
-			0.3F, 0.3F, 0.3F, 1.0F, // NOLINT(*-magic-numbers)
-			// Opacity, auto-illumination, unused, unused.
-			1.0F, 0.0F, 0.0F, 0.0F
-		};
-
-		m_sharedUBOIndex = 0;
-		m_dynamicColorEnabled = false;
+		if ( m_sharedUniformBuffer != nullptr )
+		{
+			m_sharedUniformBuffer->removeElement(this);
+		}
 
 		/* Reset to defaults. */
-		this->setFlagBits(0);
+		this->resetFlagBits();
 
-		this->unregisterFromSharedUniformeBuffer();
+		/* Reset member variables. */
+		m_physicalSurfaceProperties.reset();
+		m_textureComponent.reset();
+		m_blendingMode = BlendingMode::None;
+		m_materialProperties = {
+			/* Diffuse color (4), */
+			DefaultDiffuseColor.red(), DefaultDiffuseColor.green(), DefaultDiffuseColor.blue(), DefaultDiffuseColor.alpha(),
+			/* Specular color (4), */
+			DefaultSpecularColor.red(), DefaultSpecularColor.green(), DefaultSpecularColor.blue(), DefaultSpecularColor.alpha(),
+			/* Shininess (1), Opacity (1), AutoIlluminationColor (1), Unused (1). */
+			DefaultShininess, DefaultOpacity, DefaultAutoIllumination, 0.0F
+		};
+		m_descriptorSetLayout.reset();
+		m_descriptorSet.reset();
+		m_sharedUniformBuffer.reset();
+		m_sharedUBOIndex = 0;
+		m_flags[DynamicColorEnabled] = false;
+		m_flags[EnableAutoIllumination] = false;
 	}
 
-	bool
-	BasicResource::isCreated () const noexcept
-	{
-		return this->isFlagEnabled(Created);
-	}
-
-	const Physics::PhysicalSurfaceProperties &
-	BasicResource::physicalSurfaceProperties () const noexcept
-	{
-		return m_physicalSurfaceProperties;
-	}
-
-	Physics::PhysicalSurfaceProperties &
-	BasicResource::physicalSurfaceProperties () noexcept
-	{
-		return m_physicalSurfaceProperties;
-	}
-
-	size_t
+	uint32_t
 	BasicResource::frameCount () const noexcept
 	{
 		if ( !this->isFlagEnabled(Animated) || m_textureComponent == nullptr )
@@ -365,7 +443,7 @@ namespace Emeraude::Graphics::Material
 			return 1;
 		}
 
-		const auto * textureResource = m_textureComponent->texture().get();
+		const auto textureResource = m_textureComponent->textureResource();
 
 		if ( textureResource == nullptr )
 		{
@@ -375,55 +453,53 @@ namespace Emeraude::Graphics::Material
 		return textureResource->frameCount();
 	}
 
-	float
+	uint32_t
 	BasicResource::duration () const noexcept
 	{
 		if ( !this->isFlagEnabled(Animated) || m_textureComponent == nullptr )
 		{
-			return 0.0F;
+			return 0;
 		}
 
-		const auto * textureResource = m_textureComponent->texture().get();
+		const auto textureResource = m_textureComponent->textureResource();
 
 		if ( textureResource == nullptr )
 		{
-			return 0.0F;
+			return 0;
 		}
 
-		return static_cast< float >(textureResource->duration());
+		return textureResource->duration();
 	}
 
-	bool
-	BasicResource::isTranslucent () const noexcept
+	size_t
+	BasicResource::frameIndexAt (uint32_t sceneTime) const noexcept
 	{
-		return this->isFlagEnabled(BlendingEnabled);
+		if ( !this->isFlagEnabled(Animated) || m_textureComponent == nullptr )
+		{
+			return 0;
+		}
+
+		const auto textureResource = m_textureComponent->textureResource();
+
+		if ( textureResource == nullptr )
+		{
+			return 0;
+		}
+
+		return textureResource->frameIndexAt(sceneTime);
 	}
 
 	void
-	BasicResource::enableBlending () noexcept
+	BasicResource::enableBlending (BlendingMode mode) noexcept
 	{
 		if ( this->isCreated() )
 		{
-			TraceWarning{ClassId} << "The resource '" << this->name() << "' is already created !";
+			TraceWarning{ClassId} << "The resource '" << this->name() << "' is already created ! Unable to enabled a blending mode.";
 
 			return;
 		}
 
 		this->enableFlag(BlendingEnabled);
-
-		if ( m_blendingMode == BlendingMode::None )
-		{
-			m_blendingMode = BlendingMode::Normal;
-		}
-	}
-
-	void
-	BasicResource::setBlendingMode (BlendingMode mode) noexcept
-	{
-		if ( !this->isFlagEnabled(BlendingEnabled) )
-		{
-			TraceWarning{ClassId} << "The blending is not enabled with the material resource '" << this->name() << "' !";
-		}
 
 		m_blendingMode = mode;
 	}
@@ -441,132 +517,195 @@ namespace Emeraude::Graphics::Material
 		return m_blendingMode;
 	}
 
-	std::shared_ptr< Vulkan::DescriptorSetLayout >
-	BasicResource::descriptorSetLayout () const noexcept
+	std::string
+	BasicResource::fragmentColor () const noexcept
 	{
-		return m_descriptorSetLayout;
-	}
+		if ( m_flags[EnableOpacity] )
+		{
+			std::stringstream surfaceColor;
+			surfaceColor << "vec4(" << SurfaceColor << ".rgb, " << MaterialUB(UniformBlock::Component::Opacity) << ')';
+			return surfaceColor.str();
+		}
 
-	const Vulkan::DescriptorSet *
-	BasicResource::descriptorSet () const noexcept
-	{
-		return m_descriptorSet.get();
+		return SurfaceColor;
 	}
 
 	bool
-	BasicResource::generateShaderCode (Saphir::ShaderGenerator & gen, const Geometry::Interface & geometry) const noexcept
+	BasicResource::setupLightGenerator (LightGenerator & lightGenerator) const noexcept
 	{
-		using namespace Saphir;
-
 		if ( !this->isCreated() )
 		{
 			TraceError{ClassId} <<
 				"The basic material '" << this->name() << "' is not created !"
-				"It can't generates a shader source code.";
+				"It can't configure the light generator.";
 
 			return false;
 		}
 
-		const auto materialSet = gen.indexes().set(SetType::PerObjectLayer);
+		lightGenerator.declareSurfaceAmbient((std::stringstream{} << "desaturate(" << SurfaceColor << ")").str());
+		lightGenerator.declareSurfaceDiffuse(SurfaceColor);
+		lightGenerator.declareSurfaceSpecular(MaterialUB(UniformBlock::Component::SpecularColor), MaterialUB(UniformBlock::Component::Shininess));
 
-		gen.declare(BasicResource::getMaterialUniformBlock(materialSet, 0));
-
-		switch ( gen.shaderType() )
+		if ( m_flags[EnableOpacity] )
 		{
-			case ShaderType::VertexShader :
-				/* Check texture coordinate attributes. */
-				if ( m_textureComponent != nullptr && !checkPrimaryTextureCoordinates(gen, *this, geometry) )
-				{
-					return false;
-				}
-
-				/* Check if the material needs vertex colors. */
-				if ( this->usingVertexColors() )
-				{
-					if ( !geometry.vertexColorEnabled() )
-					{
-						TraceError{ClassId} <<
-							"The geometry " << geometry.name() << " has no vertex color "
-							"for basic material '" << this->name() << "' !";
-
-						return false;
-					}
-
-					gen.requestVertexShaderSynthesizeInstruction(ShaderVariables::Color);
-				}
-
-				return true;
-
-			case ShaderType::FragmentShader :
-			{
-				gen.declareDefaultOutputFragment();
-
-				if ( m_textureComponent == nullptr )
-				{
-					if ( this->usingVertexColors() )
-					{
-						gen.declare(Declaration::StageInput{ShaderVariables::Color, GLSL::Smooth});
-
-						if ( m_dynamicColorEnabled )
-						{
-							Code{gen, Location::Output} <<
-								ShaderVariables::OutputFragment << " = " << ShaderGenerator::materialUniform(UniformBlocks::Component::Color) << " * " << ShaderVariables::Color << ';';
-						}
-						else
-						{
-							Code{gen, Location::Output} <<
-								ShaderVariables::OutputFragment << " = " << ShaderVariables::Color << ';';
-						}
-					}
-					else
-					{
-						Code{gen, Location::Output} <<
-							ShaderVariables::OutputFragment << " = " << ShaderGenerator::materialUniform(UniformBlocks::Component::Color) << ';';
-					}
-				}
-				else
-				{
-					const auto * texCoordVariable = m_textureComponent->isVolumetricTexture() ?
-						ShaderVariables::Primary3DTextureCoordinates :
-						ShaderVariables::Primary2DTextureCoordinates;
-
-					gen.declare(Declaration::Sampler{materialSet, 1, m_textureComponent->textureType(), Uniforms::Diffuse});
-					gen.declare(Declaration::StageInput{texCoordVariable, GLSL::Smooth});
-
-					if ( this->usingVertexColors() )
-					{
-						gen.declare(Declaration::StageInput{ShaderVariables::Color, GLSL::Smooth});
-
-						if ( m_dynamicColorEnabled )
-						{
-							Code{gen, Location::Output} <<
-								ShaderVariables::OutputFragment << " = texture(" << Uniforms::Diffuse << ", " << texCoordVariable << ") * " << ShaderGenerator::materialUniform(UniformBlocks::Component::Color) << " * " << ShaderVariables::Color << ';';
-						}
-						else
-						{
-							Code{gen, Location::Output} <<
-								ShaderVariables::OutputFragment << " = texture(" << Uniforms::Diffuse << ", " << texCoordVariable << ") * " << ShaderVariables::Color << ';';
-						}
-					}
-					else if ( m_dynamicColorEnabled )
-					{
-						Code{gen, Location::Output} <<
-							ShaderVariables::OutputFragment << " = texture(" << Uniforms::Diffuse << ", " << texCoordVariable << ") * " << ShaderGenerator::materialUniform(UniformBlocks::Component::Color) << ';';
-					}
-					else
-					{
-						Code{gen, Location::Output} <<
-							ShaderVariables::OutputFragment << " = texture(" << Uniforms::Diffuse << ", " << texCoordVariable << ");";
-					}
-				}
-			}
-				return true;
-
-			default:
-				break;
+			lightGenerator.declareSurfaceOpacity(MaterialUB(UniformBlock::Component::Opacity));
 		}
 
-		return false;
+		if ( m_flags[EnableAutoIllumination] )
+		{
+			lightGenerator.declareSurfaceAutoIllumination(MaterialUB(UniformBlock::Component::AutoIlluminationAmount));
+		}
+
+		return true;
+	}
+
+	Declaration::UniformBlock
+	BasicResource::getUniformBlock (uint32_t set, uint32_t binding) const noexcept
+	{
+		Declaration::UniformBlock block{set, binding, Declaration::MemoryLayout::Std140, UniformBlock::Type::BasicMaterial, UniformBlock::Material};
+		block.addMember(Declaration::VariableType::FloatVector4, UniformBlock::Component::DiffuseColor);
+		block.addMember(Declaration::VariableType::FloatVector4, UniformBlock::Component::SpecularColor);
+		block.addMember(Declaration::VariableType::Float, UniformBlock::Component::Shininess);
+		block.addMember(Declaration::VariableType::Float, UniformBlock::Component::Opacity);
+		block.addMember(Declaration::VariableType::Float, UniformBlock::Component::AutoIlluminationAmount);
+
+		return block;
+	}
+
+	bool
+	BasicResource::generateVertexShaderCode (Generator::Abstract & generator, VertexShader & vertexShader) const noexcept
+	{
+		if ( !this->isCreated() )
+		{
+			TraceError{ClassId} <<
+				"The basic material '" << this->name() << "' is not created !"
+				"It can't generates a vertex shader source code.";
+
+			return false;
+		}
+
+		const auto * geometry = generator.geometry();
+
+		if ( !generator.highQualityLightEnabled() && !generator.declareMaterialUniformBlock(*this, vertexShader, 0) )
+		{
+			return false;
+		}
+
+		/* Check texture coordinate attributes. */
+		if ( this->usingTexture() && !checkPrimaryTextureCoordinates(generator, vertexShader, *this, *geometry) )
+		{
+			return false;
+		}
+
+		/* Check if the material needs vertex colors. */
+		if ( this->usingVertexColors() )
+		{
+			if ( !geometry->vertexColorEnabled() )
+			{
+				TraceError{ClassId} << "The geometry " << geometry->name() << " has no vertex color for basic material '" << this->name() << "' !";
+
+				return false;
+			}
+
+			vertexShader.requestSynthesizeInstruction(ShaderVariable::PrimaryVertexColor);
+		}
+
+		return true;
+	}
+
+	bool
+	BasicResource::generateFragmentShaderCodeWithTexture (FragmentShader & fragmentShader, uint32_t materialSet) const noexcept
+	{
+		const auto * texCoordVariable =
+			m_textureComponent->isVolumetricTexture() ?
+			ShaderVariable::Primary3DTextureCoordinates :
+			ShaderVariable::Primary2DTextureCoordinates;
+
+		if ( !fragmentShader.declare(Declaration::Sampler{materialSet, 1, m_textureComponent->textureType(), m_textureComponent->samplerName()}) )
+		{
+			return false;
+		}
+
+		if ( this->usingVertexColors() )
+		{
+			if ( m_flags[DynamicColorEnabled] )
+			{
+				Code{fragmentShader, Location::Top} << "const vec4 " << m_textureComponent->variableName() << " = texture(" << m_textureComponent->samplerName() << ", " << texCoordVariable << ") * " << MaterialUB(UniformBlock::Component::DiffuseColor) << " * " << ShaderVariable::PrimaryVertexColor << ';';
+			}
+			else
+			{
+				Code{fragmentShader, Location::Top} << "const vec4 " << m_textureComponent->variableName() << " = texture(" << m_textureComponent->samplerName() << ", " << texCoordVariable << ") * " << ShaderVariable::PrimaryVertexColor << ';';
+			}
+		}
+		else if ( m_flags[DynamicColorEnabled] )
+		{
+			Code{fragmentShader, Location::Top} << "const vec4 " << m_textureComponent->variableName() << " = texture(" << m_textureComponent->samplerName() << ", " << texCoordVariable << ") * " << MaterialUB(UniformBlock::Component::DiffuseColor) << ';';
+		}
+		else
+		{
+			Code{fragmentShader, Location::Top} << "const vec4 " << m_textureComponent->variableName() << " = texture(" << m_textureComponent->samplerName() << ", " << texCoordVariable << ");";
+		}
+
+		return true;
+	}
+
+	bool
+	BasicResource::generateFragmentShaderCodeWithoutTexture (FragmentShader & fragmentShader) const noexcept
+	{
+		if ( this->usingVertexColors() )
+		{
+			if ( m_flags[DynamicColorEnabled] )
+			{
+				Code{fragmentShader, Location::Top} << "const vec4 " << SurfaceColor << " = " << MaterialUB(UniformBlock::Component::DiffuseColor) << " * " << ShaderVariable::PrimaryVertexColor << ';';
+			}
+			else
+			{
+				Code{fragmentShader, Location::Top} << "const vec4 " << SurfaceColor << " = " << ShaderVariable::PrimaryVertexColor << ';';
+			}
+		}
+		else
+		{
+			Code{fragmentShader, Location::Top} << "const vec4 " << SurfaceColor << " = " << MaterialUB(UniformBlock::Component::DiffuseColor) << ';';
+		}
+
+		return true;
+	}
+
+	bool
+	BasicResource::generateFragmentShaderCode (Generator::Abstract & generator, LightGenerator & /*lightGenerator*/, FragmentShader & fragmentShader) const noexcept
+	{
+		if ( !this->isCreated() )
+		{
+			TraceError{ClassId} <<
+				"The basic material '" << this->name() << "' is not created !"
+				"It can't generates a fragment shader source code.";
+
+			return false;
+		}
+
+		if ( !generator.declareMaterialUniformBlock(*this, fragmentShader, 0) )
+		{
+			return false;
+		}
+
+		Declaration::Function desaturate{"desaturate", GLSL::FloatVector4};
+		desaturate.addInParameter(GLSL::FloatVector4, "color");
+		Code{desaturate} << "float average = (min(color.r, min(color.g, color.b)) + max(color.r, max(color.g, color.b))) * 0.5;";
+		Code{desaturate, Location::Output} << "return vec4(average, average, average, 1.0);";
+
+		if ( !fragmentShader.declare(desaturate) )
+		{
+			return false;
+		}
+
+		if ( m_textureComponent != nullptr )
+		{
+			const uint32_t materialSet = generator.program()->setIndex(SetType::PerModelLayer);
+
+			return this->generateFragmentShaderCodeWithTexture(fragmentShader, materialSet);
+		}
+
+		return this->generateFragmentShaderCodeWithoutTexture(fragmentShader);
 	}
 
 	void
@@ -584,26 +723,26 @@ namespace Emeraude::Graphics::Material
 		this->enableFlag(UsesVertexColors);
 	}
 
-	void
+	bool
 	BasicResource::setColor (const PixelFactory::Color< float > & color) noexcept
 	{
-		if ( this->isCreated() && !m_dynamicColorEnabled )
+		if ( this->isCreated() && !m_flags[DynamicColorEnabled] )
 		{
 			TraceWarning{ClassId} <<
-				"The resource '" << this->name() << "' is created ! "
+				"The resource '" << this->name() << "' is created without the dynamic color enabled ! "
 				"Unable to change the dynamic color.";
 
-			return;
+			return false;
 		}
 
-		m_materialProperties[0] = color.red();
-		m_materialProperties[1] = color.green();
-		m_materialProperties[2] = color.blue();
-		m_materialProperties[3] = color.alpha();
+		m_materialProperties[DiffuseColorOffset] = color.red();
+		m_materialProperties[DiffuseColorOffset+1] = color.green();
+		m_materialProperties[DiffuseColorOffset+2] = color.blue();
+		m_materialProperties[DiffuseColorOffset+3] = color.alpha();
 
-		m_dynamicColorEnabled = true;
+		m_flags[DynamicColorEnabled] = true;
 
-		this->updateVideoMemory();
+		return this->updateVideoMemory();
 	}
 
 	bool
@@ -618,71 +757,103 @@ namespace Emeraude::Graphics::Material
 			return false;
 		}
 
-		m_textureComponent = std::make_unique< Component::TypeTexture >(Saphir::Keys::Uniforms::PrimaryTexture, texture);
+		if ( !this->addDependency(texture.get()) )
+		{
+			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' !";
+
+			return false;
+		}
+
+		m_textureComponent = std::make_unique< Component::Texture >(Uniform::PrimarySampler, SurfaceColor, texture);
 		m_textureComponent->enableAlpha(enableAlpha);
 
 		this->enableFlag(TexturingEnabled);
 		this->enableFlag(UsesPrimaryTextureCoordinates);
-
-		if ( !this->addDependency(m_textureComponent->texture().get()) )
+		if ( texture->request3DTextureCoordinates() )
 		{
-			TraceError{ClassId} << "Unable to set a texture to basic material '" << this->name() << "'.";
-
-			return false;
+			this->enableFlag(PrimaryTextureCoordinatesUses3D);
 		}
 
 		return true;
 	}
 
-	void
-	BasicResource::setAutoIlluminationAmount (float amount) noexcept
+	bool
+	BasicResource::setSpecularComponent (const PixelFactory::Color< float > & color) noexcept
 	{
-		m_materialProperties[5] = amount; // NOLINT(*-magic-numbers)
+		m_materialProperties[SpecularColorOffset] = color.red();
+		m_materialProperties[SpecularColorOffset+1] = color.green();
+		m_materialProperties[SpecularColorOffset+2] = color.blue();
+		m_materialProperties[SpecularColorOffset+3] = color.alpha();
 
-		this->updateVideoMemory();
+		return this->updateVideoMemory();
 	}
 
-	float
-	BasicResource::autoIlluminationAmount () noexcept
+	bool
+	BasicResource::setSpecularComponent (const PixelFactory::Color< float > & color, float shininess) noexcept
 	{
-		return m_materialProperties[5]; // NOLINT(*-magic-numbers)
+		m_materialProperties[SpecularColorOffset] = color.red();
+		m_materialProperties[SpecularColorOffset+1] = color.green();
+		m_materialProperties[SpecularColorOffset+2] = color.blue();
+		m_materialProperties[SpecularColorOffset+3] = color.alpha();
+
+		m_materialProperties[ShininessOffset] = shininess;
+
+		return this->updateVideoMemory();
 	}
 
-	void
+	bool
+	BasicResource::setShininess (float value) noexcept
+	{
+		m_materialProperties[ShininessOffset] = value;
+
+		return this->updateVideoMemory();
+	}
+
+	bool
 	BasicResource::setOpacity (float value) noexcept
 	{
-		m_materialProperties[4] = clampToUnit(value);
+		if ( this->isCreated() && !m_flags[EnableOpacity] )
+		{
+			TraceWarning{ClassId} << "The resource '" << this->name() << "' is already created ! Changing the state of opacity or its value is disallowed.";
 
-		this->updateVideoMemory();
+			return false;
+		}
+
+		this->enableFlag(BlendingEnabled);
+
+		m_materialProperties[OpacityOffset] = clampToUnit(value);
+
+		m_flags[EnableOpacity] = true;
+
+		return this->updateVideoMemory();
 	}
 
-	float
-	BasicResource::opacity () noexcept
+	bool
+	BasicResource::setAutoIlluminationAmount (float amount) noexcept
 	{
-		return m_materialProperties[4];
+		if ( this->isCreated() && !m_flags[EnableAutoIllumination] )
+		{
+			TraceWarning{ClassId} << "The resource '" << this->name() << "' is already created ! Unable to enable the auto-illumination or change the value.";
+
+			return false;
+		}
+
+		m_materialProperties[AutoIlluminationOffset] = amount;
+
+		m_flags[EnableAutoIllumination] = true;
+
+		return this->updateVideoMemory();
 	}
 
 	std::shared_ptr< BasicResource >
 	BasicResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->basicMaterials().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->basicMaterials().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< BasicResource >
 	BasicResource::getDefault () noexcept
 	{
 		return Resources::Manager::instance()->basicMaterials().getDefaultResource();
-	}
-
-	Declaration::UniformBlock
-	BasicResource::getMaterialUniformBlock (uint32_t set, uint32_t binding) noexcept
-	{
-		Declaration::UniformBlock block{set, binding, Declaration::MemoryLayout::Std140, UniformBlocks::Material, BufferBackedBlocks::Material};
-		block.addMember(Declaration::VariableType::FloatVector4, UniformBlocks::Component::Color);
-		block.addMember(Declaration::VariableType::Float, UniformBlocks::Component::Shininess);
-		block.addMember(Declaration::VariableType::Float, UniformBlocks::Component::Opacity);
-		block.addMember(Declaration::VariableType::Float, UniformBlocks::Component::AutoIllumination);
-
-		return block;
 	}
 }

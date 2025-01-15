@@ -1,36 +1,37 @@
 /*
- * Emeraude/Vulkan/DescriptorSetLayout.hpp
- * This file is part of Emeraude
+ * src/Vulkan/DescriptorSetLayout.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
-#include <iostream>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -47,7 +48,7 @@ namespace Emeraude::Vulkan
 	{
 		public:
 
-			enum Flag
+			enum Flag : uint8_t
 			{
 				UseLocationVBO = 1
 			};
@@ -58,16 +59,18 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Constructs a descriptor set layout.
 			 * @param device A reference to a smart pointer of a device.
+			 * @param UUID A reference to a string [std::move].
 			 * @param createFlags The create info flags. Default none.
 			 */
-			explicit DescriptorSetLayout (const std::shared_ptr< Device > & device, VkDescriptorSetLayoutCreateFlags createFlags = 0) noexcept;
+			explicit DescriptorSetLayout (const std::shared_ptr< Device > & device, std::string UUID, VkDescriptorSetLayoutCreateFlags createFlags = 0) noexcept;
 
 			/**
 			 * @brief Constructs a descriptor set layout with create info.
 			 * @param device A reference to a smart pointer to device where the render pass will be performed.
+			 * @param UUID A reference to a string [std::move].
 			 * @param createInfo A reference to a create info.
 			 */
-			DescriptorSetLayout (const std::shared_ptr< Device > & device, const VkDescriptorSetLayoutCreateInfo & createInfo) noexcept;
+			DescriptorSetLayout (const std::shared_ptr< Device > & device, std::string UUID, const VkDescriptorSetLayoutCreateInfo & createInfo) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -105,6 +108,17 @@ namespace Emeraude::Vulkan
 			bool destroyFromHardware () noexcept override;
 
 			/**
+			 * @brief Returns the UUID of the descriptor set layout.
+			 * @return const std::string &
+			 */
+			[[nodiscard]]
+			const std::string &
+			UUID () const noexcept
+			{
+				return m_UUID;
+			}
+
+			/**
 			 * @brief Declares a set layout binding.
 			 * @param setLayoutBinding
 			 * @return bool
@@ -119,7 +133,17 @@ namespace Emeraude::Vulkan
 			 * @param pImmutableSamplers The immutable samplers to bind. Default none.
 			 * @return bool
 			 */
-			bool declareSampler (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1, const VkSampler * pImmutableSamplers = nullptr) noexcept;
+			bool
+			declareSampler (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1, const VkSampler * pImmutableSamplers = nullptr) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_SAMPLER,
+					descriptorCount,
+					stageFlags,
+					pImmutableSamplers
+				});
+			}
 
 			/**
 			 * @brief Declare combined image sampler binding.
@@ -129,7 +153,17 @@ namespace Emeraude::Vulkan
 			 * @param pImmutableSamplers he immutable samplers to bind. Default none.
 			 * @return bool
 			 */
-			bool declareCombinedImageSampler (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1, const VkSampler * pImmutableSamplers = nullptr) noexcept;
+			bool
+			declareCombinedImageSampler (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1, const VkSampler * pImmutableSamplers = nullptr) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					descriptorCount,
+					stageFlags,
+					pImmutableSamplers
+				});
+			}
 
 			/**
 			 * @brief Declares sampled image binding.
@@ -138,7 +172,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareSampledImage (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareSampledImage (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares storage image binding.
@@ -147,7 +191,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareStorageImage (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareStorageImage (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares uniform texel buffer binding.
@@ -156,7 +210,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareUniformTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareUniformTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares storage texel buffer binding.
@@ -165,7 +229,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareStorageTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareStorageTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares uniform buffer binding.
@@ -174,7 +248,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareUniformBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareUniformBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares storage buffer binding.
@@ -183,7 +267,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareStorageBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareStorageBuffer (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares uniform buffer dynamic binding.
@@ -192,7 +286,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareUniformBufferDynamic (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareUniformBufferDynamic (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares storage texel dynamic binding.
@@ -201,7 +305,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareStorageTexelDynamic (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareStorageTexelDynamic (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares input attachment binding.
@@ -210,7 +324,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareInputAttachment (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareInputAttachment (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares inline uniform block binding.
@@ -219,7 +343,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareInlineUniformBlockEXT (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareInlineUniformBlockEXT (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares acceleration structure binding.
@@ -228,7 +362,17 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareAccelerationStructureKHR (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareAccelerationStructureKHR (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Declares acceleration structure binding.
@@ -237,41 +381,63 @@ namespace Emeraude::Vulkan
 			 * @param descriptorCount Define the number of descriptor to bind. Default 1.
 			 * @return bool
 			 */
-			bool declareAccelerationStructureNV (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept;
+			bool
+			declareAccelerationStructureNV (uint32_t binding, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL, uint32_t descriptorCount = 1) noexcept
+			{
+				return this->declare(VkDescriptorSetLayoutBinding{
+					binding,
+					VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV,
+					descriptorCount,
+					stageFlags,
+					nullptr
+				});
+			}
 
 			/**
 			 * @brief Returns the descriptor pool handle.
 			 * @return VkDescriptorSetLayout
 			 */
 			[[nodiscard]]
-			VkDescriptorSetLayout handle () const noexcept;
+			VkDescriptorSetLayout
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the descriptor pool create info.
-			 * @return VkDescriptorSetLayoutCreateInfo
+			 * @return const VkDescriptorSetLayoutCreateInfo &
 			 */
 			[[nodiscard]]
-			VkDescriptorSetLayoutCreateInfo createInfo () const noexcept;
+			const VkDescriptorSetLayoutCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the descriptor set layout hash.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t hash () const noexcept;
+			size_t
+			hash () const noexcept
+			{
+				return DescriptorSetLayout::getHash(m_setLayoutBindings, m_createInfo.flags);
+			}
 
 			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const DescriptorSetLayout & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const DescriptorSetLayout & obj) noexcept;
 
@@ -286,6 +452,7 @@ namespace Emeraude::Vulkan
 
 			VkDescriptorSetLayout m_handle{VK_NULL_HANDLE};
 			VkDescriptorSetLayoutCreateInfo m_createInfo{};
+			std::string m_UUID;
 			std::vector< VkDescriptorSetLayoutBinding > m_setLayoutBindings;
 	};
 }

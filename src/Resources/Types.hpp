@@ -1,37 +1,44 @@
 /*
- * Emeraude/Resources/Types.hpp
- * This file is part of Emeraude
+ * src/Resources/Types.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <string>
 
 namespace Emeraude::Resources
 {
+	/** @brief Name of a default resource. */
+	constexpr auto Default{"Default"};
+
+	/** @brief Name of the data store base directory. */
+	static constexpr auto DataStores{"data-stores"};
+
 	/**
 	 * @brief The resource source type.
 	 */
@@ -46,10 +53,10 @@ namespace Emeraude::Resources
 		DirectData
 	};
 
-	static constexpr auto UndefinedString = "Undefined";
-	static constexpr auto LocalDataString = "LocalData";
-	static constexpr auto ExternalDataString = "ExternalData";
-	static constexpr auto DirectDataString = "DirectData";
+	static constexpr auto UndefinedString{"Undefined"};
+	static constexpr auto LocalDataString{"LocalData"};
+	static constexpr auto ExternalDataString{"ExternalData"};
+	static constexpr auto DirectDataString{"DirectData"};
 
 	/**
 	 * @brief Converts a source type enumeration value to the corresponding string.
@@ -79,4 +86,50 @@ namespace Emeraude::Resources
 	 */
 	[[nodiscard]]
 	SourceType to_SourceType (const std::string & value) noexcept;
+
+	/** @brief This enum define every stages of resource loading. */
+	enum class Status : uint8_t
+	{
+		/* This is the status of a new resource instantiation. */
+		Unloaded = 0,
+		/* Define a resource being attached with dependencies. */
+		Enqueuing = 1,
+		/* Define a resource being manually attached with dependencies. */
+		ManualEnqueuing = 2,
+		/* Define a resource being loaded.
+		 * NOTE: In this stage, this is no more possible to add new dependency. */
+		Loading = 3,
+		/* Define a resource fully loaded with all dependencies. */
+		Loaded = 4,
+		/* Define a resource impossible to load. */
+		Failed = 5
+	};
+
+	static constexpr auto UnloadedString{"Unloaded"};
+	static constexpr auto EnqueuingString{"Enqueuing"};
+	static constexpr auto ManualEnqueuingString{"ManualEnqueuing"};
+	static constexpr auto LoadingString{"Loading"};
+	static constexpr auto LoadedString{"Loaded"};
+	static constexpr auto FailedString{"Failed"};
+
+	/**
+	 * @brief Converts a light pass type enumeration value to the corresponding string.
+	 * @param value The enumeration value.
+	 * @return const char *
+	 */
+	[[nodiscard]]
+	const char * to_cstring (Status value) noexcept;
+
+	/**
+	 * @brief Returns a string version of the enum value.
+	 * @param value The enum value.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	inline
+	std::string
+	to_string (Status value) noexcept
+	{
+		return {to_cstring(value)};
+	}
 }

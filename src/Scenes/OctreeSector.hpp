@@ -1,102 +1,183 @@
 /*
- * Emeraude/Scenes/OctreeSector.hpp
- * This file is part of Emeraude
+ * src/Scenes/OctreeSector.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C++ standard libraries */
+/* STL inclusions. */
+#include <cstddef>
 #include <array>
-#include <set>
+#include <vector>
+#include <unordered_set>
+#include <string>
 #include <memory>
+#include <algorithm>
+#include <limits>
+#include <type_traits>
 
 /* Local inclusions for inheritances. */
-#include "Math/Cuboid.hpp"
+#include "Libraries/Math/Cuboid.hpp"
 
 /* Local inclusions for usages. */
-#include "AbstractOctreeElement.hpp"
+#include "LocatableInterface.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Scenes
 {
 	/**
-	 * @brief The OctreeSector class.
-	 * @extends std::enable_shared_from_this A sector must be able to self give his smart pointer.
-	 * @extends Libraries::Math::Cuboid A sector act as a cube in the 3D space.
+	 * @brief The octree sector class.
+	 * @tparam element_t The type of inserted element, it must inherit from Emeraude::Scenes::LocatableInterface.
+	 * @tparam enable_volume Enable the use of the element volume instead of their position. This implies multiple insertions at the same depth level.
+	 * @extends std::enable_shared_from_this A sector must be able to give his own smart pointer.
+	 * @extends Libraries::Math::Cuboid A sector is a cube in the 3D space and thus provide intersection detection with primitives.
 	 */
-	class OctreeSector final : public std::enable_shared_from_this< OctreeSector >, public Libraries::Math::Cuboid< float >
+	template< typename element_t, bool enable_volume >
+	requires (std::is_base_of_v< Libraries::NameableTrait, element_t >, std::is_base_of_v< LocatableInterface, element_t >)
+	class OctreeSector final : public std::enable_shared_from_this< OctreeSector< element_t, enable_volume > >, public Libraries::Math::Cuboid< float >
 	{
 		public:
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"OctreeSector"};
 
-			static constexpr auto XPositiveYPositiveZPositive = 0UL;
-			static constexpr auto XPositiveYPositiveZNegative = 1UL;
-			static constexpr auto XPositiveYNegativeZPositive = 2UL;
-			static constexpr auto XPositiveYNegativeZNegative = 3UL;
-			static constexpr auto XNegativeYPositiveZPositive = 4UL;
-			static constexpr auto XNegativeYPositiveZNegative = 5UL;
-			static constexpr auto XNegativeYNegativeZPositive = 6UL;
-			static constexpr auto XNegativeYNegativeZNegative = 7UL;
+			static constexpr auto SectorDivision{8UL};
+			static constexpr auto DefaultSectorElementLimit{8UL};
 
-			/** @brief The status of a sector after a content check. */
-			enum class SectorStatus
-			{
-				Unchanged,
-				Grew,
-				Reduced
-			};
+			static constexpr auto XPositiveYPositiveZPositive{0UL};
+			static constexpr auto XPositiveYPositiveZNegative{1UL};
+			static constexpr auto XPositiveYNegativeZPositive{2UL};
+			static constexpr auto XPositiveYNegativeZNegative{3UL};
+			static constexpr auto XNegativeYPositiveZPositive{4UL};
+			static constexpr auto XNegativeYPositiveZNegative{5UL};
+			static constexpr auto XNegativeYNegativeZPositive{6UL};
+			static constexpr auto XNegativeYNegativeZNegative{7UL};
 
 			/**
-			 * @brief Constructs the root sector.
-			 * @note If parent is null, the sector will be a root sector.
+			 * @brief Constructs a root octree sector.
+			 * @note The root sector is a leaf when empty.
 			 * @param maximum The highest limit of the root sector.
 			 * @param minimum The lowest limit of the root sector.
+			 * @param maxElementPerSector The threshold number of elements to trigger a new sector subdivision. Default 8.
+			 * @param enableAutoCollapse Enable a leaf sector to be automatically removed if empty. Default false.
 			 */
-			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum) noexcept;
+			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum, size_t maxElementPerSector = DefaultSectorElementLimit, bool enableAutoCollapse = false) noexcept
+				: Cuboid(maximum, minimum), m_maxElementPerSector(std::max< size_t >(DefaultSectorElementLimit, maxElementPerSector))
+			{
+				m_flags[AutoCollapseEnabled] = enableAutoCollapse;
+			}
 
 			/**
-			 * @brief Constructs a child sector.
+			 * @brief Constructs a child octree sector.
 			 * @param maximum The highest limit of the child sector.
 			 * @param minimum The lowest limit of the child sector.
 			 * @param parentSector A reference to the parent sector smart pointer.
 			 * @param slot The slot where the sub-sector is built.
 			 */
-			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum, const std::shared_ptr< OctreeSector > & parentSector, size_t slot) noexcept;
+			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum, const std::shared_ptr< OctreeSector > & parentSector, size_t slot) noexcept
+				: Cuboid(maximum, minimum), m_parentSector(parentSector), m_slot(slot), m_maxElementPerSector(parentSector->m_maxElementPerSector)
+			{
+				m_flags[AutoCollapseEnabled] = parentSector->m_flags[AutoCollapseEnabled];
+			}
 
-			/** @brief Deleted copy constructor. */
-			OctreeSector (const OctreeSector & copy) = delete;
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			OctreeSector (const OctreeSector & copy) noexcept = delete;
 
-			/** @brief Deleted move constructor. */
-			OctreeSector (OctreeSector && copy) = delete;
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			OctreeSector (OctreeSector && copy) noexcept = delete;
 
-			/** @brief Deleted assignment operator. */
-			OctreeSector & operator= (const OctreeSector & other) = delete;
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return OctreeSector &
+			 */
+			OctreeSector & operator= (const OctreeSector & copy) noexcept = delete;
 
-			/** @brief Deleted move assignment operator. */
-			OctreeSector & operator= (OctreeSector && other) = delete;
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return OctreeSector &
+			 */
+			OctreeSector & operator= (OctreeSector && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the octree sector.
+			 */
+			~OctreeSector () override = default;
+
+			/**
+			 * @brief Returns true if the sector is the top of the tree.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isRoot () const noexcept
+			{
+				return m_parentSector.expired();
+			}
+
+			/**
+			 * @brief Returns whether the sector is an endpoint in the tree.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isLeaf () const noexcept
+			{
+				return !m_flags[IsExpanded];
+			}
+
+			/**
+			 * @brief Returns whether the sector has sub-sectors.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isExpanded () const noexcept
+			{
+				return m_flags[IsExpanded];
+			}
+
+			/**
+			 * @brief Returns whether this sector has no element registered in it.
+			 * @warning This method does not indicate whether there are no more sub-sectors below.
+			 * But it is guaranteed that there can only be empty sub-sectors underneath.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			empty () const noexcept
+			{
+				return m_elements.empty();
+			}
 
 			/**
 			 * @brief Returns the slot of a sub-sector.
@@ -104,211 +185,719 @@ namespace Emeraude::Scenes
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t slot () const noexcept;
+			size_t
+			slot () const noexcept
+			{
+				return m_slot;
+			}
 
 			/**
-			 * @brief Returns true if the sector is the top of the tree.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool isRoot () const noexcept;
-
-			/**
-			 * @brief Returns true if the sector is a endpoint in the tree.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool isLeaf () const noexcept;
-
-			/**
-			 * @brief Returns the level below the root of this sector.
+			 * @brief Returns the number of elements hold in an octree before expanding.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t getDepth () const noexcept;
+			size_t
+			maxElementPerSector () const noexcept
+			{
+				return m_maxElementPerSector;
+			}
+
+			/**
+			 * @brief Returns whether the automatic empty leaf sector removal is enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			autoCollapseEnabled () const noexcept
+			{
+				return m_flags[AutoCollapseEnabled];
+			}
+
+			/**
+			 * @brief Returns the sector distance from the root sector.
+			 * @note If the sector is root, the method will return 0.
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			size_t
+			getDistance () const noexcept
+			{
+				if ( this->isRoot() )
+				{
+					return 0;
+				}
+
+				size_t depth = 1;
+
+				auto parentSector = m_parentSector.lock();
+
+				while ( !parentSector->isRoot() )
+				{
+					depth++;
+
+					parentSector = parentSector->m_parentSector.lock();
+				}
+
+				return depth;
+			}
+
+			/**
+			 * @brief Returns the depth below this one.
+			 * @note From the root sector, this method will give the depth of the whole octree.
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			size_t
+			getDepth () const noexcept
+			{
+				if ( this->isLeaf() )
+				{
+					return 0;
+				}
+
+				size_t belowDepth = 0;
+
+				for ( const auto & subSector : m_subSectors )
+				{
+					const auto sectorDepth = subSector->getDepth();
+
+					if ( sectorDepth > belowDepth )
+					{
+						belowDepth = sectorDepth;
+					}
+				}
+
+				return 1 + belowDepth;
+			}
+
+			/**
+			 * @brief Returns the sector count below this one (included).
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			size_t
+			getSectorCount () const noexcept
+			{
+				size_t count = 1;
+
+				if ( !this->isLeaf() )
+				{
+					for ( const auto & subSector : m_subSectors )
+					{
+						count += subSector->getSectorCount();
+					}
+				}
+
+				return count;
+			}
 
 			/**
 			 * @brief Returns the parent sector.
 			 * @warning this can be nullptr. Check if the sector is root before.
-			 * @return shared_ptr< OctreeSector >
+			 * @return std::weak_ptr< OctreeSector >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< OctreeSector > parentSector () noexcept;
+			std::weak_ptr< OctreeSector >
+			parentSector () noexcept
+			{
+				return m_parentSector;
+			}
 
 			/**
 			 * @brief Returns the parent sector.
 			 * @warning this can be nullptr. Check if the sector is root before.
-			 * @return shared_ptr< OctreeSector >
+			 * @return std::weak_ptr< const OctreeSector >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< const OctreeSector > parentSector () const noexcept;
+			std::weak_ptr< const OctreeSector >
+			parentSector () const noexcept
+			{
+				return m_parentSector;
+			}
 
 			/**
 			 * @brief Returns the root sector.
-			 * @return shared_ptr< OctreeSector >.
+			 * @return std::shared_ptr< OctreeSector >.
 			 */
 			[[nodiscard]]
-			std::shared_ptr< OctreeSector > getRootSector () noexcept;
+			std::shared_ptr< OctreeSector >
+			getRootSector () noexcept
+			{
+				auto currentSector = this->shared_from_this();
+
+				while ( !currentSector->isRoot() )
+				{
+					currentSector = currentSector->parentSector();
+				}
+
+				return currentSector;
+			}
 
 			/**
 			 * @brief Returns the root sector.
-			 * @return shared_ptr< const OctreeSector >.
+			 * @return std::shared_ptr< const OctreeSector >.
 			 */
 			[[nodiscard]]
-			std::shared_ptr< const OctreeSector > getRootSector () const noexcept;
+			std::shared_ptr< const OctreeSector >
+			getRootSector () const noexcept
+			{
+				auto currentSector = this->shared_from_this();
+
+				while ( !currentSector->isRoot() )
+				{
+					currentSector = currentSector->parentSector();
+				}
+
+				return currentSector;
+			}
 
 			/**
 			 * @brief Returns the sub sector list.
 			 * @warning This can be a list of empty sector. Check if the sector is leaf before.
-			 * @return array< shared_ptr< OctreeSector >, 8 > &
+			 * @return std::array< std::shared_ptr< OctreeSector >, 8 > &
 			 */
 			[[nodiscard]]
-			std::array< std::shared_ptr< OctreeSector >, 8 > & subSectors () noexcept;
+			std::array< std::shared_ptr< OctreeSector >, SectorDivision > &
+			subSectors () noexcept
+			{
+				return m_subSectors;
+			}
 
 			/**
 			 * @brief Returns the sub sector list.
 			 * @warning This can be a list of empty sector. Check if the sector is leaf before.
-			 * @return const array< shared_ptr< OctreeSector >, 8 > &
+			 * @return const std::array< std::shared_ptr< OctreeSector >, 8 > &
 			 */
 			[[nodiscard]]
-			const std::array< std::shared_ptr< OctreeSector >, 8 > & subSectors () const noexcept;
+			const std::array< std::shared_ptr< OctreeSector >, SectorDivision > &
+			subSectors () const noexcept
+			{
+				return m_subSectors;
+			}
 
 			/**
-			 * @brief Adds an element to the tree at the level of this sector and below.
+			 * @brief Reserves sub-sectors by specifying the desired depth.
+			 * @note This won't have any effect with automatic collapse enabled.
+			 * @param depth
+			 * @return void
+			 */
+			void
+			reserve (size_t depth) noexcept
+			{
+				if ( m_flags[AutoCollapseEnabled] )
+				{
+					Tracer::warning(ClassId, "Automatic empty sub-sectors removal is enabled !");
+
+					return;
+				}
+
+				if ( depth != 0 )
+				{
+					this->expand();
+
+					if ( depth > 1 )
+					{
+						for ( auto & subSector : m_subSectors )
+						{
+							subSector->reserve(depth - 1);
+						}
+					}
+				}
+			}
+
+			/**
+			 * @brief Returns whether the entity is present in the sector.
 			 * @param element A reference to an element smart pointer.
 			 * @return bool
 			 */
-			bool addElement (const std::shared_ptr< AbstractOctreeElement > & element) noexcept;
+			[[nodiscard]]
+			bool
+			contains (const std::shared_ptr< element_t > & element) const noexcept
+			{
+				return m_elements.contains(element);
+			}
+
+			/**
+			 * @brief Adds an element to the tree at the level of this sector and below.
+			 * @note This is the main function determining the collision primitive to use.
+			 * @param element A reference to an element smart pointer.
+			 * @return bool
+			 */
+			bool
+			insert (const std::shared_ptr< element_t > & element) noexcept
+			{
+				if constexpr ( enable_volume )
+				{
+					if ( element->sphereCollisionIsEnabled() )
+					{
+						return this->insertWithPrimitive(element, element->getWorldBoundingSphere());
+					}
+
+					return this->insertWithPrimitive(element, element->getWorldBoundingBox());
+				}
+				else
+				{
+					return this->insertWithPrimitive(element, element->getWorldCoordinates().position());
+				}
+			}
+
+			/**
+			 * @brief Checks whether an element still in this sector and below.
+			 * @note This is the main function determining the collision primitive to use.
+			 * @param element A reference to an element smart pointer.
+			 * @return bool
+			 */
+			bool
+			update (const std::shared_ptr< element_t > & element) noexcept
+			{
+#ifdef DEBUG
+				if ( !this->isRoot() )
+				{
+					TraceError{ClassId} << "You can't call update() on a sub-sector !";
+
+					return false;
+				}
+#endif
+
+				/* NOTE: If the root sector is not split down, there is no need to check. */
+				if ( !m_flags[IsExpanded] )
+				{
+					return true;
+				}
+
+				if constexpr ( enable_volume )
+				{
+					if ( element->sphereCollisionIsEnabled() )
+					{
+						return this->checkElementOverlapWithPrimitive(element, element->getWorldBoundingSphere());
+					}
+
+					return this->checkElementOverlapWithPrimitive(element, element->getWorldBoundingBox());
+				}
+				else
+				{
+					const auto position = element->getWorldCoordinates().position();
+
+					/* NOTE: Does the element moved out the last registered sub-sector boundaries ? */
+					const auto * lastSubSector = this->getDeepestSubSector(element);
+
+					if ( lastSubSector->isCollidingWith(position) )
+					{
+						return true;
+					}
+
+					return this->checkElementOverlapWithPrimitive(element, position);
+				}
+			}
 
 			/**
 			 * @brief Removes an element from the tree this level and below.
 			 * @param element A reference to an element smart pointer.
 			 * @return bool
 			 */
-			bool removeElement (const std::shared_ptr< AbstractOctreeElement > & element) noexcept;
+			bool
+			erase (const std::shared_ptr< element_t > & element) noexcept
+			{
+				/* The node is not present in this sector. */
+				if ( !m_elements.contains(element) )
+				{
+					if ( this->isRoot() )
+					{
+						TraceWarning{ClassId} << "Element '" << element->name() << "' is not part of the octree !";
+					}
 
-			/**
-			 * @brief Checks if an element is still or not in this sector and below.
-			 * @param element A reference to an element smart pointer.
-			 * @return bool
-			 */
-			bool checkElementOverlap (const std::shared_ptr< AbstractOctreeElement > & node) noexcept;
+					return false;
+				}
+
+				/* Removes the node from the set. */
+				m_elements.erase(element);
+
+				/* If this sector is a leaf, we are done. */
+				if ( !this->isStillLeaf() )
+				{
+					for ( const auto & subSector : m_subSectors )
+					{
+						subSector->erase(element);
+					}
+				}
+
+				return true;
+			}
 
 			/**
 			 * @brief Returns the number of elements present in this sector.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t elementCount () const noexcept;
+			size_t
+			elementCount () const noexcept
+			{
+				return m_elements.size();
+			}
 
 			/**
 			 * @brief Returns the element list of the sector.
-			 * @return const std::set< std::shared_ptr< AbstractOctreeElement > > &
+			 * @return const std::unordered_set< std::shared_ptr< element_t > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< AbstractOctreeElement > > & elements () const noexcept;
+			const std::unordered_set< std::shared_ptr< element_t > > &
+			elements () const noexcept
+			{
+				return m_elements;
+			}
 
 			/**
 			 * @brief Tries to find the first named element in the octree.
 			 * @param name A reference to a string
-			 * @return std::shared_ptr< AbstractOctreeElement >
+			 * @return std::shared_ptr< element_t >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractOctreeElement > getFirstElementNamed (const std::string & name) const noexcept;
+			std::shared_ptr< element_t >
+			getFirstElementNamed (const std::string & name) const noexcept
+			{
+				for ( const auto & element : m_elements )
+				{
+					if ( element->name() == name )
+					{
+						return element;
+					}
+				}
+
+				return nullptr;
+			}
 
 			/**
 			 * @brief Returns a list of surrounding leaf sectors.
 			 * @param includeThisSector Include the current sector to the list.
-			 * @return vector< shared_ptr< OctreeSector > >
+			 * @return std::vector< std::shared_ptr< OctreeSector > >
 			 */
 			[[nodiscard]]
-			std::vector< std::shared_ptr< const OctreeSector > > getSurroundingSectors (bool includeThisSector) const noexcept;
+			std::vector< std::shared_ptr< const OctreeSector > >
+			getSurroundingSectors (bool includeThisSector) const noexcept
+			{
+				std::vector< std::shared_ptr< const OctreeSector > > sectors;
+
+				auto currentSector = this->shared_from_this();
+
+				if ( includeThisSector )
+				{
+					sectors.emplace_back(currentSector);
+				}
+
+				size_t level = 0;
+
+				while ( !currentSector->isRoot() )
+				{
+					/* FIXME: This is always evaluated to zero from static analysis ! */
+					if ( level == 0UL )
+					{
+						/* Get its direct neighbors from parent sector. */
+						for ( const auto & subSector : this->parentSector().lock()->m_subSectors )
+						{
+							if ( subSector.get() == this )
+							{
+								continue;
+							}
+
+							sectors.emplace_back(subSector);
+						}
+
+						continue;
+					}
+
+					level++;
+				}
+
+				return sectors;
+			}
 
 			/**
-			 * @brief Destroy the sector tree.
-			 * @note This must be called from root sector.
+			 * @brief Executes a function on every sub-sector inside the area.
+			 * @tparam primitive_t The type of primitive for collision detection.
+			 * @param primitive A reference to the primitive.
+			 * @param function A reference to lambda.
 			 * @return void
 			 */
-			void destroyTree () noexcept;
+			template< typename primitive_t >
+			void
+			forTouchedSector (const primitive_t & primitive, const std::function< void (const OctreeSector &) > & function) const noexcept
+			{
+				/* NOTE: Sector empty or out of bound. */
+				if ( m_elements.empty() || !this->isCollidingWith(primitive) )
+				{
+					return;
+				}
+
+				/* NOTE: This is a final sector, we can execute the function here. */
+				if ( this->isLeaf() )
+				{
+					function(*this);
+
+					return;
+				}
+
+				/* NOTE: Go deeper in the tree before executing the function. */
+				for ( const auto & subSector : m_subSectors )
+				{
+					subSector->forTouchedSector(primitive, function);
+				}
+			}
 
 			/**
-			 * @brief Enables or not the automatic subdivision of sectors.
-			 * @param state The state.
+			 * @brief Returns a pointer to a sub-sector when an element appears.
+			 * @note This assumes the element is part of this sector.
+			 * @param element A reference to an element smart pointer.
+			 * @return const OctreeSector *
 			 */
-			static void enableAutoExpand (bool state) noexcept;
+			[[nodiscard]]
+			const OctreeSector *
+			getDeepestSubSector (const std::shared_ptr< element_t > & element) const noexcept
+			{
+				/* NOTE: If there is no sub-sector below this one. */
+				if ( !m_flags[IsExpanded] )
+				{
+					return this;
+				}
 
-			/**
-			 * @brief Sets the element limit for a sector.
-			 * @note Minimum is 8.
-			 * @param count The numbe of element a sector can contains before expanding.
-			 */
-			static void setAutoExpandAt (size_t count) noexcept;
+				const OctreeSector * deepestSubSector = this;
+
+				for ( const auto & subSector : m_subSectors )
+				{
+					if ( subSector->contains(element) )
+					{
+						deepestSubSector = subSector->getDeepestSubSector(element);
+
+						break;
+					}
+				}
+
+				return deepestSubSector;
+			}
 
 		private:
-
-			static bool s_enableAutoExpand;
-			static size_t s_autoExpandAt;
 
 			/**
 			 * @brief Checks the sector content to expand or collapse it and returns if the sector is a leaf or not.
 			 * @return bool
 			 */
-			bool isStillLeaf () noexcept;
+			[[nodiscard]]
+			bool
+			isStillLeaf () noexcept
+			{
+				/* If the number of elements exceeds the sector limit, we split down the sector. */
+				if ( !m_flags[IsExpanded] && m_elements.size() > m_maxElementPerSector )
+				{
+					this->expand();
+
+					return false;
+				}
+
+				if ( m_flags[AutoCollapseEnabled] )
+				{
+					/* If the number of elements is below the sector limit, we merge the sub-sectors. */
+					if ( m_flags[IsExpanded] && m_elements.size() < m_maxElementPerSector / 2 )
+					{
+						this->collapse();
+
+						return true;
+					}
+				}
+
+				return this->isLeaf();
+			}
 
 			/**
 			 * @brief Adds an element to the tree at the level of this sector and below.
+			 * @tparam primitive_t The type of primitive for collision detection.
 			 * @param element A reference to the element smart pointer.
-			 * @param boundingBox The precomputed absolute bounding box of the element.
+			 * @param primitive A reference to the primitive.
 			 * @return bool
 			 */
-			bool addElement (const std::shared_ptr< AbstractOctreeElement > & element, const Cuboid< float > & boundingBox) noexcept;
+			template< typename primitive_t >
+			bool
+			insertWithPrimitive (const std::shared_ptr< element_t > & element, const primitive_t & primitive) noexcept
+			{
+				if ( !this->isCollidingWith(primitive) )
+				{
+					return false;
+				}
+
+				if ( !m_elements.emplace(element).second )
+				{
+					return false;
+				}
+
+				if ( !this->isStillLeaf() )
+				{
+					for ( auto & subSector: m_subSectors )
+					{
+						subSector->insertWithPrimitive(element, primitive);
+					}
+				}
+
+				return true;
+			}
 
 			/**
-			 * @brief Adds an element to the tree at the level of this sector and below.
+			 * @brief Checks whether an element still in this sector and below.
+			 * @tparam primitive_t The type of primitive for collision detection.
 			 * @param element A reference to the element smart pointer.
-			 * @param position The precomputed absolute position of the element.
+			 * @param primitive A reference to the primitive.
 			 * @return bool
 			 */
-			bool addElement (const std::shared_ptr< AbstractOctreeElement > & element, const Libraries::Math::Vector< 3, float > & position) noexcept;
+			template< typename primitive_t >
+			bool
+			checkElementOverlapWithPrimitive (const std::shared_ptr< element_t > & element, const primitive_t & primitive) noexcept
+			{
+				if ( !this->isCollidingWith(primitive) )
+				{
+					/* If this sector is not the root, we remove the element. */
+					if ( !this->isRoot() )
+					{
+						this->erase(element);
+					}
 
-			/**
-			 * @brief Adds an element to the sector node set and link it back to the sector (if its a leaf).
-			 * @param element A reference to the element smart pointer.
-			 * @return bool
-			 */
-			bool makeLink (const std::shared_ptr< AbstractOctreeElement > & element) noexcept;
+					return false;
+				}
 
-			/**
-			 * @brief Checks if an element is still or not in this sector and below.
-			 * @param element A reference to the element smart pointer.
-			 * @param boundingBox The precomputed absolute bounding box of the element.
-			 * @return bool
-			 */
-			bool checkElementOverlap (const std::shared_ptr< AbstractOctreeElement > & element, const Cuboid< float > & boundingBox) noexcept;
+				/* If the element is not present to this sector.
+				 * We let the insertion algorithm do the work. */
+				if ( !m_elements.contains(element) )
+				{
+					return this->insertWithPrimitive(element, primitive);
+				}
 
-			/**
-			 * @brief Checks if an element is still or not in this sector and below.
-			 * @param element A reference to the element smart pointer.
-			 * @param position The precomputed absolute position of the element.
-			 * @return bool
-			 */
-			bool checkElementOverlap (const std::shared_ptr< AbstractOctreeElement > & element, const Libraries::Math::Vector< 3, float > & position) noexcept;
+				/* It this sector is not a leaf, we propagate the current test below. */
+				if ( !this->isLeaf() )
+				{
+					for ( const auto & subSector : m_subSectors )
+					{
+						subSector->checkElementOverlapWithPrimitive(element, primitive);
+					}
+				}
+
+				return true;
+			}
 
 			/**
 			 * @brief Expands this sector to eight new ones.
-			 * @return bool.
+			 * @return void.
 			 */
-			bool expand () noexcept;
+			void
+			expand () noexcept
+			{
+				using namespace Libraries::Math;
+
+				const auto size = this->width() * 0.5F;
+				const auto max = this->maximum();
+
+				const auto minX = max[X] - size;
+				const auto minY = max[Y] - size;
+				const auto minZ = max[Z] - size;
+
+				const auto parent = this->shared_from_this();
+
+				/* Init to max. */
+				auto tmp = max;
+
+				//tmp[X] = max[X];
+				//tmp[Y] = max[Y];
+				//tmp[Z] = max[Z];
+
+				m_subSectors[XPositiveYPositiveZPositive] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XPositiveYPositiveZPositive);
+
+				//tmp[X] = max[X];
+				//tmp[Y] = max[Y];
+				tmp[Z] = minZ;
+
+				m_subSectors[XPositiveYPositiveZNegative] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XPositiveYPositiveZNegative);
+
+				/* Reset only the Z axis to max. */
+				//tmp[X] = max[X];
+				tmp[Y] = minY;
+				tmp[Z] = max[Z];
+
+				m_subSectors[XPositiveYNegativeZPositive] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XPositiveYNegativeZPositive);
+
+				/* Y-axis is already to min. */
+				//tmp[X] = max[X];
+				//tmp[Y] = minY;
+				tmp[Z] = minZ;
+
+				m_subSectors[XPositiveYNegativeZNegative] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XPositiveYNegativeZNegative);
+
+				/* Reset to max except for X axis */
+				tmp[X] = minX;
+				tmp[Y] = max[Y];
+				tmp[Z] = max[Z];
+
+				m_subSectors[XNegativeYPositiveZPositive] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XNegativeYPositiveZPositive);
+
+				//tmp[X] = minX;
+				//tmp[Y] = max[Y];
+				tmp[Z] = minZ;
+
+				m_subSectors[XNegativeYPositiveZNegative] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XNegativeYPositiveZNegative);
+
+				/* Reset only the Z axis to max. */
+				//tmp[X] = minX;
+				tmp[Y] = minY;
+				tmp[Z] = max[Z];
+
+				m_subSectors[XNegativeYNegativeZPositive] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XNegativeYNegativeZPositive);
+
+				/* Y-axis is already to min. */
+				//tmp[X] = minX;
+				//tmp[Y] = minY;
+				tmp[Z] = minZ;
+
+				m_subSectors[XNegativeYNegativeZNegative] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XNegativeYNegativeZNegative);
+
+				/* Now, we redistribute the sector elements to the sub-sectors. */
+				for ( const auto & element : m_elements )
+				{
+					for ( const auto & subSector : m_subSectors )
+					{
+						subSector->insert(element);
+					}
+				}
+
+				m_flags[IsExpanded] = true;
+			}
 
 			/**
 			 * @brief Merges the sectors underlying this one.
-			 * @return bool.
+			 * @return void
 			 */
-			bool collapse () noexcept;
+			void
+			collapse () noexcept
+			{
+				for ( auto & subSector : m_subSectors )
+				{
+					subSector.reset();
+				}
 
-			std::shared_ptr< OctreeSector > m_parentSector{};
-			std::array< std::shared_ptr< OctreeSector >, 8 > m_subSectors{};
-			std::set< std::shared_ptr< AbstractOctreeElement > > m_elements{};
-			size_t m_slot = std::numeric_limits< size_t >::max();
+				m_flags[IsExpanded] = false;
+			}
+
+			/* Flag names. */
+			static constexpr auto IsExpanded{0UL};
+			static constexpr auto AutoCollapseEnabled{1UL};
+
+			std::weak_ptr< OctreeSector > m_parentSector;
+			std::array< std::shared_ptr< OctreeSector >, SectorDivision > m_subSectors;
+			std::unordered_set< std::shared_ptr< element_t > > m_elements;
+			size_t m_slot{std::numeric_limits< size_t >::max()};
+			size_t m_maxElementPerSector;
+			std::array< bool, 8 > m_flags{
+				false/*IsExpanded*/,
+				false/*AutoCollapseEnabled*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

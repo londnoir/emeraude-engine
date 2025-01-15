@@ -1,42 +1,44 @@
 /*
- * Emeraude/Graphics/Frustum.hpp
- * This file is part of Emeraude
+ * src/Graphics/Frustum.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
-#include <sstream>
+#include <cstdint>
+#include <ostream>
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Math/Matrix.hpp"
-#include "Math/Cuboid.hpp"
-#include "Math/Plane.hpp"
-#include "Math/Sphere.hpp"
+#include "Libraries/Math/Cuboid.hpp"
+#include "Libraries/Math/Matrix.hpp"
+#include "Libraries/Math/Plane.hpp"
+#include "Libraries/Math/Sphere.hpp"
+#include "Libraries/Math/Vector.hpp"
 
 namespace Emeraude::Graphics
 {
@@ -47,19 +49,19 @@ namespace Emeraude::Graphics
 	{
 		public:
 
-			enum class Result
+			enum class Result : uint8_t
 			{
 				Outside,
 				Intersect,
 				Inside
 			};
 
-			static constexpr auto Right = 0;
-			static constexpr auto Left = 1;
-			static constexpr auto Bottom = 2;
-			static constexpr auto Top = 3;
-			static constexpr auto Far = 4;
-			static constexpr auto Near = 5;
+			static constexpr auto Right{0};
+			static constexpr auto Left{1};
+			static constexpr auto Bottom{2};
+			static constexpr auto Top{3};
+			static constexpr auto Far{4};
+			static constexpr auto Near{5};
 
 			/** @brief Default constructor. */
 			Frustum () noexcept = default;
@@ -79,11 +81,11 @@ namespace Emeraude::Graphics
 			void update (const Libraries::Math::Matrix< 4, float > & viewProjectionMatrix) noexcept;
 
 			/**
-			 * @brief update
-			 * @param projection
-			 * @param view
+			 * @brief Updates the frustum geometry.
+			 * @param projection A reference to a projection matrix.
+			 * @param view A reference to a view matrix.
+			 * @return void
 			 */
-			inline
 			void
 			update (const Libraries::Math::Matrix< 4, float > & projection, const Libraries::Math::Matrix< 4, float > & view) noexcept
 			{
@@ -108,7 +110,7 @@ namespace Emeraude::Graphics
 
 			/**
 			 * @brief Checks an axis aligned bounding box against the Frustum.
-			 * @todo FIXME: may be it could be useful to separate Intersect and Inside case ! ² Not perfect...
+			 * @FIXME May be it could be useful to separate Intersect and Inside case ! ² Not perfect...
 			 * @param box A reference to an axis aligned bounding box.
 			 * @return Result
 			 */
@@ -117,27 +119,27 @@ namespace Emeraude::Graphics
 
 			/**
 			 * @brief Checks a ??? against the Frustum.
-			 * @param x
-			 * @param y
-			 * @param z
+			 * @param coordX
+			 * @param coordY
+			 * @param coordZ
 			 * @param size
 			 * @return Result
 			 */
 			[[nodiscard]]
-			Result isCollidingWith (float x, float y, float z, float size) const noexcept;
+			Result isCollidingWith (float coordX, float coordY, float coordZ, float size) const noexcept;
 
 			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const Frustum & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const Frustum & obj) noexcept;
 
@@ -145,24 +147,41 @@ namespace Emeraude::Graphics
 			 * @brief setTestState
 			 * @param state
 			 */
-			static void setTestState (bool state) noexcept;
+			static
+			void
+			setTestState (bool state) noexcept
+			{
+				s_enableFrustumTest = state;
+			}
 
 			/**
 			 * @brief isTestEnabled
 			 * @return bool
 			 */
-			static bool isTestEnabled () noexcept;
+			static
+			bool
+			isTestEnabled () noexcept
+			{
+				return s_enableFrustumTest;
+			}
 
 			/**
 			 * @brief toggleTestState
 			 * @return bool
 			 */
-			static bool toggleTestState () noexcept;
+			static
+			bool
+			toggleTestState () noexcept
+			{
+				return s_enableFrustumTest = !s_enableFrustumTest;
+			}
 
 		private:
 
+			static constexpr auto PlaneCount{6UL};
+
 			static bool s_enableFrustumTest;
 
-			std::array< Libraries::Math::Plane< float >, 6 > m_planes{};
+			std::array< Libraries::Math::Plane< float >, PlaneCount > m_planes{};
 	};
 }

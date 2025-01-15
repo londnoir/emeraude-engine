@@ -1,38 +1,38 @@
 /*
- * Emeraude/ConsoleControllable.hpp
- * This file is part of Emeraude
+ * src/ConsoleControllable.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <map>
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Blob.hpp"
+#include "Libraries/BlobTrait.hpp"
 #include "CommandContainer.hpp"
 #include "ConsoleExpression.hpp"
 #include "Types.hpp"
@@ -79,17 +79,21 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the identifier of this object in the console.
-			 * @return string
+			 * @return std::string
 			 */
 			[[nodiscard]]
-			virtual const std::string & identifier () const noexcept final;
+			const std::string &
+			identifier () const noexcept
+			{
+				return m_identifier;
+			}
 
 			/**
 			 * @brief Register this controllable object below an other one.
 			 * @param object A reference to the parent object.
 			 * @return bool
 			 */
-			virtual bool registerToObject (ConsoleControllable & object) noexcept final;
+			bool registerToObject (ConsoleControllable & object) noexcept;
 
 			/**
 			 * @brief Executes an expression from the console.
@@ -97,7 +101,7 @@ namespace Emeraude
 			 * @param expression An expression object from the console.
 			 * @return bool
 			 */
-			virtual bool execute (ConsoleExpression & expression) noexcept final;
+			bool execute (ConsoleExpression & expression) noexcept;
 
 			/**
 			 * @brief Tries to complete a expression from the console.
@@ -105,7 +109,7 @@ namespace Emeraude
 			 * @param identifier The identifier of the controlled object.
 			 * @param suggestions List of suggestions to complete the expression.
 			 */
-			virtual void complete (ConsoleExpression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept final;
+			void complete (ConsoleExpression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept;
 
 		protected:
 
@@ -121,36 +125,37 @@ namespace Emeraude
 			 * @param command The command to execute in the container.
 			 * @param help A way to explain that command. By default "NoHelp" will be display.
 			 */
-			virtual void bindCommand (const std::string & commandNames, const ConsoleCommand & command, const std::string & help = {"No help"}) noexcept final;
+			void bindCommand (const std::string & commandNames, const ConsoleCommand & command, const std::string & help = {"No help"}) noexcept;
 
 			/**
 			 * @brief Removes a command from the console.
 			 * @param commandNames The way of calling the command inside the console.
 			 */
-			virtual void unbindCommand (const std::string & commandNames) noexcept final;
+			void unbindCommand (const std::string & commandNames) noexcept;
 
 			/**
 			 * @brief Register this controllable object directly to the console.
 			 * @return bool
 			 */
-			virtual bool registerToConsole () noexcept final;
+			bool registerToConsole () noexcept;
 
 			/**
 			 * @brief Writes a message directly to the console.
 			 * @param message The message to display in the console.
-			 * @param severity The severity is used to color or emphasis the message.
+			 * @param severity The severity is used to color or emphasis the message. Default info.
+			 * @return void
 			 */
-			virtual void writeToConsole (const std::string & message, Severity severity = Severity::Info) noexcept final;
+			void writeToConsole (const std::string & message, Severity severity = Severity::Info) noexcept;
 
 			/**
 			 * @brief Writes a message directly to the console.
 			 * @note This is a shortcut to user the Libraries::Blob() utility.
 			 * @param message The message to display in the console.
-			 * @param severity The severity is used to color or emphasis the message.
+			 * @param severity The severity is used to color or emphasis the message. Default info.
+			 * @return void
 			 */
-			virtual inline
 			void
-			writeToConsole (const Libraries::Blob & message, Severity severity = Severity::Info) noexcept final
+			writeToConsole (const Libraries::BlobTrait & message, Severity severity = Severity::Info) noexcept
 			{
 				this->writeToConsole(message.get(), severity);
 			}
@@ -163,10 +168,10 @@ namespace Emeraude
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool checkBuiltInCommands (const ConsoleExpression & expression) noexcept final;
+			bool checkBuiltInCommands (const ConsoleExpression & expression) noexcept;
 
 			std::string m_identifier;
-			std::map< std::string, CommandContainer > m_commands{};
-			std::map< std::string, ConsoleControllable * > m_consoleObjects{};
+			std::map< std::string, CommandContainer > m_commands;
+			std::map< std::string, ConsoleControllable * > m_consoleObjects;
 	};
 }

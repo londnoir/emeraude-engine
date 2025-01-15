@@ -1,42 +1,53 @@
 /*
- * Emeraude/Graphics/TextWriter.cpp
- * This file is part of Emeraude
+ * src/Graphics/TextWriter.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "TextWriter.hpp"
 
 /* Local inclusions. */
-#include "PixelFactory/Processor.hpp"
+#include "Libraries/Math/Vector.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "FontResource.hpp"
+#include "Libraries/PixelFactory/Processor.hpp"
+#include "Tracer.hpp"
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <utility>
 
 namespace Emeraude::Graphics
 {
 	using namespace Libraries;
+	using namespace Libraries::Math;
 	using namespace Libraries::PixelFactory;
 
-	TextWriter::TextWriter (Pixmap< uint8_t > * target) noexcept
-		: m_target(target)
+	TextWriter::TextWriter (Pixmap< uint8_t > & target) noexcept
+		: m_target(&target)
 	{
 
 	}
@@ -45,10 +56,14 @@ namespace Emeraude::Graphics
 	TextWriter::isReady () const noexcept
 	{
 		if ( m_target == nullptr )
+		{
 			return false;
+		}
 
 		if ( m_font == nullptr )
+		{
 			return false;
+		}
 
 		return true;
 	}
@@ -155,64 +170,13 @@ namespace Emeraude::Graphics
 		m_currentCursor = m_originCursor;
 	}
 
-	template<>
-	void
-	TextWriter::setCursor (int x, int y) noexcept
-	{
-		m_originCursor[Math::X] = x;
-		m_originCursor[Math::Y] = y;
-
-		m_currentCursor[Math::X] = x;
-		m_currentCursor[Math::Y] = y;
-	}
-
-	template<>
-	void
-	TextWriter::setCursorX (int x) noexcept
-	{
-		m_originCursor[Math::X] = x;
-
-		m_currentCursor[Math::X] = x;
-	}
-
-	template<>
-	void
-	TextWriter::setCursorY (int y) noexcept
-	{
-		m_originCursor[Math::Y] = y;
-
-		m_currentCursor[Math::Y] = y;
-	}
-
-	template<>
-	void
-	TextWriter::moveCursor (int x, int y) noexcept
-	{
-		m_currentCursor[Math::X] += x;
-		m_currentCursor[Math::Y] += y;
-	}
-
-	template<>
-	void
-	TextWriter::moveCursorX (int x) noexcept
-	{
-		m_currentCursor[Math::X] += x;
-	}
-
-	template<>
-	void
-	TextWriter::moveCursorY (int y) noexcept
-	{
-		m_currentCursor[Math::Y] += y;
-	}
-
-	const Math::Vector< 2, int > &
+	const Vector< 2, int > &
 	TextWriter::originCursor () const noexcept
 	{
 		return m_originCursor;
 	}
 
-	const Math::Vector< 2, int > &
+	const Vector< 2, int > &
 	TextWriter::currentCursor () const noexcept
 	{
 		return m_currentCursor;
@@ -228,11 +192,13 @@ namespace Emeraude::Graphics
 	TextWriter::lineFeed (size_t count) noexcept
 	{
 		/* Reset the cursor in X to the original position. */
-		m_currentCursor[Math::X] = m_originCursor[Math::X];
+		m_currentCursor[X] = m_originCursor[X];
 
 		/* Advance the cursor in Y by the highest char from the current Font. */
 		if ( count > 0 )
+		{
 			this->moveCursorY(m_font->lineHeight() * count);
+		}
 	}
 
 	size_t
@@ -263,16 +229,20 @@ namespace Emeraude::Graphics
 		/* Count every chars printed. */
 		auto charCount = 0UL;
 
-		for ( auto character : text )
+		for ( const auto character : text )
 		{
 			if ( !this->executeCharacter(static_cast< uint8_t >(character)) )
+			{
 				break;
+			}
 
 			charCount++;
 		}
 
 		if ( m_flags[AutoLineFeedEnabled] )
+		{
 			this->lineFeed(1UL);
+		}
 
 		return charCount;
 	}
@@ -281,7 +251,9 @@ namespace Emeraude::Graphics
 	TextWriter::widthRequest (const std::string & text) const noexcept
 	{
 		if ( m_font == nullptr )
+		{
 			return 0UL;
+		}
 
 		return this->computeSpaceRequired(text).first;
 	}
@@ -289,15 +261,19 @@ namespace Emeraude::Graphics
 	TextWriter::SpaceAvailability
 	TextWriter::isSpaceLeftFor (size_t glyphWidth, size_t glyphHeight) const noexcept
 	{
-		auto spaceAvailableInX = static_cast< size_t >(m_currentCursor[Math::X]) + glyphWidth <= m_target->width();
+		auto spaceAvailableInX = static_cast< size_t >(m_currentCursor[X]) + glyphWidth <= m_target->width();
 		//auto spaceAvailableInY = this->OpenGLCursorY(glyphHeight) > glyphHeight;
-		auto spaceAvailableInY = static_cast< size_t >(m_currentCursor[Math::Y]) + glyphHeight <= m_target->height();
+		auto spaceAvailableInY = static_cast< size_t >(m_currentCursor[Y]) + glyphHeight <= m_target->height();
 
 		if ( spaceAvailableInX && spaceAvailableInY )
+		{
 			return SpaceAvailability::Yes;
+		}
 
 		if ( spaceAvailableInY )
+		{
 			return SpaceAvailability::RequestNewLine;
+		}
 
 		return SpaceAvailability::No;
 	}
@@ -310,23 +286,25 @@ namespace Emeraude::Graphics
 			case SpaceAvailability::No :
 				if ( !m_flags[ScrollUpEnabled] )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", no more space left to render a glyph ! [AllowScrollUp=false]" << std::endl;
+					std::cerr << __PRETTY_FUNCTION__ << ", no more space left to render a glyph ! [AllowScrollUp=false]" "\n";
 
 					return false;
 				}
 
-				m_currentCursor[Math::X] = m_originCursor[Math::X];
-				m_currentCursor[Math::Y] += -static_cast< int >(m_font->lineHeight());
+				m_currentCursor[X] = m_originCursor[X];
+				m_currentCursor[Y] += -static_cast< int >(m_font->lineHeight());
 
 				if ( !this->moveUp(m_font->lineHeight(), m_clearColor) )
+				{
 					return false;
+				}
 
 				break;
 
 			case SpaceAvailability::RequestNewLine :
 				if ( !m_flags[WrappingEnabled] )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", no more space left to render a glyph on the current line ! [WrappingEnabled=false]" << std::endl;
+					std::cerr << __PRETTY_FUNCTION__ << ", no more space left to render a glyph on the current line ! [WrappingEnabled=false]" "\n";
 
 					return false;
 				}
@@ -349,7 +327,7 @@ namespace Emeraude::Graphics
 		}
 
 		/* Advancing cursor. */
-		m_currentCursor[Math::X] += static_cast< int >(glyph.width()) + m_spacing;
+		m_currentCursor[X] += static_cast< int >(glyph.width()) + m_spacing;
 
 		return true;
 	}
@@ -362,7 +340,7 @@ namespace Emeraude::Graphics
 		auto width = 0UL;
 		auto lineCount = 1UL;
 
-		for ( auto character : text )
+		for ( const auto character : text )
 		{
 			const auto ASCIICode = static_cast< uint8_t >(character);
 
@@ -373,7 +351,7 @@ namespace Emeraude::Graphics
 			{
 				/* HT \t Horizontal Tab[f] */
 				case 9 :
-					nextWidth += m_font->spacing() * 4;
+					nextWidth += static_cast< unsigned long >(m_font->spacing() * 4);
 					break;
 
 				/* LF \n Line feed */
@@ -394,7 +372,7 @@ namespace Emeraude::Graphics
 
 				/* White space */
 				case 32 :
-					nextWidth = m_font->spacing();
+					nextWidth = static_cast< unsigned long >(m_font->spacing());
 					break;
 
 				/* Remaining control chars */
@@ -428,12 +406,14 @@ namespace Emeraude::Graphics
 				case 31 : // US Unit Separator
 				case 127 : // DEL Delete[k][e]
 					if ( !m_flags[AllCharactersEnabled] )
+					{
 						continue;
+					}
 
 					[[fallthrough]];
 
 				default :
-					nextWidth = m_font->glyph(ASCIICode).width() + static_cast< size_t >(m_spacing);
+					nextWidth = static_cast< unsigned long >(m_font->glyph(ASCIICode).width() + static_cast< size_t >(m_spacing));
 					break;
 			}
 
@@ -493,7 +473,10 @@ namespace Emeraude::Graphics
 			case 31 : // US Unit Separator
 			case 127 : // DEL Delete[k][e]
 				if ( m_flags[AllCharactersEnabled] )
+				{
 					return this->renderGlyph(m_font->glyph(ASCIICode));
+				}
+
 				break;
 
 			/* HT \t Horizontal Tab[f]. */
@@ -513,7 +496,7 @@ namespace Emeraude::Graphics
 
 			/* CR \r Carriage return[g]. */
 			case 13 :
-				m_currentCursor[Math::X] = m_originCursor[Math::X];
+				m_currentCursor[X] = m_originCursor[X];
 				break;
 
 			/* White space. */
@@ -530,9 +513,10 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	TextWriter::autoAlignCursor (TextWriter::Alignment alignment, const std::pair< size_t, size_t > & requestedSizes) noexcept
+	TextWriter::autoAlignCursor (Alignment alignment, const std::pair< size_t, size_t > & requestedSizes) noexcept
 	{
-		size_t x, y;
+		size_t x = 0;
+		size_t y = 0;
 
 		switch ( alignment )
 		{
@@ -585,7 +569,7 @@ namespace Emeraude::Graphics
 				break;
 
 			default :
-				std::cerr << __PRETTY_FUNCTION__ << ", unknow alignment !" << std::endl;
+				std::cerr << __PRETTY_FUNCTION__ << ", unknow alignment !" "\n";
 
 				return false;
 		}
@@ -600,7 +584,7 @@ namespace Emeraude::Graphics
 	{
 		Processor proc{*m_target};
 
-		if ( !proc.shiftTextArea(distance) )
+		if ( !proc.shiftTextArea(static_cast< int >(distance)) )
 		{
 			return false;
 		}
@@ -611,15 +595,18 @@ namespace Emeraude::Graphics
 	std::string
 	TextWriter::ASCIITable () noexcept
 	{
-		std::string table;
-
+		std::string table{};
 		table.reserve(256);
 
-		for ( char c = 0; c < 127; c++ )
-			table += c;
+		for ( char character = 0; character < 127; character++ )
+		{
+			table += character;
+		}
 
-		for ( char c = -127; c < 0; c++ )
-			table += c;
+		for ( char character = -127; character < 0; character++ )
+		{
+			table += character;
+		}
 
 		return table;
 	}
@@ -637,16 +624,20 @@ namespace Emeraude::Graphics
 			/* Printer */
 			"Target pointer : " << obj.m_target << "\n"
 			"Current Style : " << obj.m_font->name() << "\n"
-			"Cursor origin X : " << obj.m_originCursor[Math::X] << "\n"
-			"Cursor origin Y : " << obj.m_originCursor[Math::Y] << "\n"
-			"Current cursor X : " << obj.m_currentCursor[Math::X] << "\n"
-			"Current cursor Y : " << obj.m_currentCursor[Math::Y] << "\n"
+			"Cursor origin X : " << obj.m_originCursor[X] << "\n"
+			"Cursor origin Y : " << obj.m_originCursor[Y] << "\n"
+			"Current cursor X : " << obj.m_currentCursor[X] << "\n"
+			"Current cursor Y : " << obj.m_currentCursor[Y] << "\n"
 			"Wrapping : " << ( obj.isWrappingEnabled() ? "Enabled" : "Disabled" ) << '\n';
 	}
 
 	std::string
 	to_string (const TextWriter & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

@@ -1,27 +1,27 @@
 /*
- * Emeraude/Vulkan/Buffer.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Buffer.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -29,8 +29,9 @@
 
 /* Local inclusions. */
 #include "Device.hpp"
-#include "Tracer.hpp"
+#include "DeviceMemory.hpp"
 #include "Utility.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -94,7 +95,7 @@ namespace Emeraude::Vulkan
 		);
 
 		m_deviceMemory = std::make_unique< DeviceMemory >(this->device(), memoryRequirement, m_memoryPropertyFlag);
-		m_deviceMemory->setIdentifier(this->identifier() + "-Main-DeviceMemory");
+		m_deviceMemory->setIdentifier(ClassId, this->identifier(), "DeviceMemory");
 
 		if ( !m_deviceMemory->createOnHardware() )
 		{
@@ -126,11 +127,6 @@ namespace Emeraude::Vulkan
 
 		this->setCreated();
 
-		TraceSuccess{ClassId} <<
-			"The buffer " << m_handle << " (" << this->identifier() << ") is successfully created !" "\n"
-			"Device memory size : " << m_deviceMemory->bytes() << " bytes" "\n"
-			"Create info size : " << this->bytes() << " bytes";
-
 		return true;
 	}
 
@@ -160,8 +156,6 @@ namespace Emeraude::Vulkan
 				VK_NULL_HANDLE
 			);
 
-			TraceSuccess{ClassId} << "The buffer " << m_handle << " is gracefully destroyed !";
-
 			m_handle = VK_NULL_HANDLE;
 		}
 
@@ -170,63 +164,15 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	bool
-	Buffer::recreate (VkDeviceSize size) noexcept
-	{
-		m_createInfo.size = size;
-
-		return this->AbstractDeviceDependentObject::recreate();
-	}
-
-	VkBuffer
-	Buffer::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	VkBufferCreateInfo
-	Buffer::createInfo () const noexcept
-	{
-		return m_createInfo;
-	}
-
-	VkBufferCreateFlags
-	Buffer::createFlags () const noexcept
-	{
-		return m_createInfo.flags;
-	}
-
-	VkDeviceSize
-	Buffer::bytes () const noexcept
-	{
-		return m_createInfo.size;
-	}
-
-	VkBufferUsageFlags
-	Buffer::usageFlags () const noexcept
-	{
-		return m_createInfo.usage;
-	}
-
-	VkMemoryPropertyFlags
-	Buffer::memoryPropertyFlags () const noexcept
-	{
-		return m_memoryPropertyFlag;
-	}
-
-	const DeviceMemory *
-	Buffer::deviceMemory () const noexcept
-	{
-		return m_deviceMemory.get();
-	}
-
 	VkDescriptorBufferInfo
-	Buffer::getDescriptorInfo () const noexcept
+	Buffer::getDescriptorInfo (uint32_t /*offset*/, uint32_t range) const noexcept
 	{
+		/* FIXME: Setting the offset to break some scenes ! */
+
 		VkDescriptorBufferInfo descriptorInfo{};
 		descriptorInfo.buffer = m_handle;
 		descriptorInfo.offset = 0;
-		descriptorInfo.range = m_createInfo.size;
+		descriptorInfo.range = range;
 
 		return descriptorInfo;
 	}

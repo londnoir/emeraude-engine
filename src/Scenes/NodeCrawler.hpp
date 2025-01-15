@@ -1,33 +1,33 @@
 /*
- * Emeraude/Scenes/NodeCrawler.hpp
- * This file is part of Emeraude
+ * src/Scenes/NodeCrawler.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <stack>
 #include <type_traits>
 #include <memory>
@@ -38,9 +38,11 @@
 namespace Emeraude::Scenes
 {
 	/**
-	 * Utility class to crawl down the node tree from a node.
+	 * @brief Utility class to crawl down the node tree from a node.
+	 * @tparam node_t The type of node
 	 */
-	template< typename type_t, std::enable_if_t< std::is_class_v< Node >, bool > = false >
+	template< typename node_t >
+	requires (std::is_class_v< Node >)
 	class NodeCrawler final
 	{
 		public:
@@ -49,7 +51,7 @@ namespace Emeraude::Scenes
 			 * @brief Constructs a crawler from a node.
 			 * @param baseNode From which node to execute the crawling.
 			 */
-			NodeCrawler (const std::shared_ptr< type_t > & baseNode) noexcept
+			explicit NodeCrawler (const std::shared_ptr< node_t > & baseNode) noexcept
 			{
 				this->populateStack(baseNode);
 			}
@@ -71,11 +73,13 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< type_t >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< type_t >
+			std::shared_ptr< node_t >
 			nextNode () noexcept
 			{
 				if ( m_nodes.empty() )
+				{
 					return nullptr;
+				}
 
 				/* Gets the next node */
 				auto nextNode = m_nodes.top();
@@ -98,17 +102,19 @@ namespace Emeraude::Scenes
 			 * @return void
 			 */
 			void
-			populateStack (const std::shared_ptr< type_t > & currentNode) noexcept
+			populateStack (const std::shared_ptr< node_t > & currentNode) noexcept
 			{
-				for ( const auto & nodePair : currentNode->subNodes() )
+				for ( const auto & nodePair : currentNode->children() )
 				{
 					if ( nodePair.second->isDiscardable() )
+					{
 						continue;
+					}
 
 					m_nodes.emplace(nodePair.second);
 				}
 			}
 
-			std::stack< std::shared_ptr< type_t > > m_nodes{};
+			std::stack< std::shared_ptr< node_t > > m_nodes{};
 	};
 }

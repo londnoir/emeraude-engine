@@ -1,64 +1,54 @@
 /*
- * Emeraude/ServiceInterface.hpp
- * This file is part of Emeraude
+ * src/ServiceInterface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
+#include <string>
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "NamedItem.hpp"
-#include "Observable.hpp"
+#include "Libraries/NameableTrait.hpp"
+#include "Libraries/ObservableTrait.hpp"
 
 namespace Emeraude
 {
 	/**
 	 * @brief The service interface.
-	 * @note A service cannot be duplicated and acts like a singleton.
-	 * @extends Libraries::NamedItem Each service have a name.
-	 * @extends Libraries::Observable Each service should be observable.
+	 * @note A service cannot be duplicated and should act like a singleton.
+	 * @extends Libraries::NameableTrait Each service have a name.
+	 * Libraries::ObservableTrait Each service should be observable.
 	 */
-	class ServiceInterface : public Libraries::NamedItem, public Libraries::Observable
+	class ServiceInterface : public Libraries::NameableTrait, public Libraries::ObservableTrait
 	{
 		public:
-
-			/** @brief Service common notification code. */
-			enum NotificationCode
-			{
-				ServiceUp,
-				ServiceDown,
-				/* Enumeration boundary. */
-				MaxEnum
-			};
-
-			/**
-			 * @brief Destructs the service.
-			 */
-			~ServiceInterface () override = default;
 
 			/**
 			 * @brief Copy constructor.
@@ -78,6 +68,7 @@ namespace Emeraude
 			 * @brief Copy assignment.
 			 * @note A service cannot be duplicated.
 			 * @param copy A reference to the copied instance.
+			 * @return ServiceInterface &
 			 */
 			ServiceInterface & operator= (const ServiceInterface & copy) noexcept = delete;
 
@@ -85,24 +76,38 @@ namespace Emeraude
 			 * @brief Move assignment.
 			 * @note A service cannot be duplicated.
 			 * @param copy A reference to the copied instance.
+			 * @return ServiceInterface &
 			 */
 			ServiceInterface & operator= (ServiceInterface && copy) noexcept = delete;
 
 			/**
+			 * @brief Destructs the service.
+			 */
+			~ServiceInterface () override = default;
+
+			/**
 			 * @brief Starts the service.
-			 * @param enabledServices A reference to auto register the service for shutdown.
 			 * @return bool.
 			 */
-			virtual bool initialize (std::vector< ServiceInterface * > & enabledServices) noexcept final;
+			bool initialize () noexcept;
+
+			/**
+			 * @brief Starts the service and register the pointer into a service list.
+			 * @note This version ensure each service in order for an automatic cleaning.
+			 * @param services A reference to auto register the service for shutdown.
+			 * @return bool.
+			 */
+			bool initialize (std::vector< ServiceInterface * > & services) noexcept;
 
 			/**
 			 * @brief Terminates the service.
 			 * @return bool.
 			 */
-			virtual bool terminate () noexcept final;
+			bool terminate () noexcept;
 
 			/**
 			 * @brief Returns whether the service is up and available.
+			 * @warning This function must reflect the method ServiceInterface::onInitialize() has been called !
 			 * @return bool.
 			 */
 			[[nodiscard]]
@@ -114,7 +119,7 @@ namespace Emeraude
 			 * @brief Constructs a service.
 			 * @param serviceInstanceName The name of the service for print information.
 			 */
-			explicit ServiceInterface (const char * serviceInstanceName) noexcept;
+			explicit ServiceInterface (const std::string & serviceInstanceName) noexcept;
 
 			/**
 			 * @brief This method must be override by the final service on initialization.

@@ -1,48 +1,50 @@
 /*
- * Emeraude/Audio/Ambience.hpp
- * This file is part of Emeraude
+ * src/Audio/Ambience.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <memory>
-#include <string>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <vector>
+#include <memory>
 
 /* Local inclusions for usages. */
-#include "Path/File.hpp"
+#include "Libraries/Utility.hpp"
 #include "AmbienceChannel.hpp"
 #include "AmbienceSound.hpp"
 
 namespace Emeraude::Audio
 {
 	/**
-	 * @brief The Ambience class
+	 * @brief The ambience class.
+	 * @extends Libraries::ObserverTrait This component observes sound loading events.
 	 */
-	class Ambience final
+	class Ambience final : public Libraries::ObserverTrait
 	{
 		public:
 
@@ -58,51 +60,64 @@ namespace Emeraude::Audio
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			Ambience (const Ambience & copy) noexcept = default;
+			Ambience (const Ambience & copy) noexcept = delete;
 
 			/**
 			 * @brief Move constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			Ambience (Ambience && copy) noexcept = default;
+			Ambience (Ambience && copy) noexcept = delete;
 
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
 			 */
-			Ambience & operator= (const Ambience & copy) noexcept = default;
+			Ambience & operator= (const Ambience & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
 			 */
-			Ambience & operator= (Ambience && copy) noexcept = default;
+			Ambience & operator= (Ambience && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the ambience.
 			 */
-			~Ambience ();
+			~Ambience () override;
 
 			/**
 			 * @brief Returns whether the ambience sound set is playing.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isPlaying () const noexcept;
+			bool
+			isPlaying () const noexcept
+			{
+				return m_active;
+			}
 
 			/**
 			 * @brief Sets the number of sound that can be played simultaneously.
+			 * @note This will change after a call to start().
 			 * @param count The number of channel.
 			 * @return void
 			 */
-			void setChannelCount (size_t count) noexcept;
+			void
+			setChannelCount (size_t count) noexcept
+			{
+				m_channelCount = std::max(static_cast< size_t >(1), count);
+			}
 
 			/**
 			 * @brief Returns the number of sound that can be played simultaneously.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t channelCount () const noexcept;
+			size_t
+			channelCount () const noexcept
+			{
+				return m_channelCount;
+			}
 
 			/**
 			 * @brief Sets a distance around the listener where sound will be played randomly.
@@ -116,7 +131,11 @@ namespace Emeraude::Audio
 			 * @return float
 			 */
 			[[nodiscard]]
-			float radius () const noexcept;
+			float
+			radius () const noexcept
+			{
+				return m_radius;
+			}
 
 			/**
 			 * @brief Sets a random delay range.
@@ -124,7 +143,12 @@ namespace Emeraude::Audio
 			 * @param delayB Another delay.
 			 * @return void
 			 */
-			void setRandomDelayRange (unsigned int delayA, unsigned int delayB) noexcept;
+			void
+			setRandomDelayRange (uint32_t delayA, uint32_t delayB) noexcept
+			{
+				m_minDelay = std::min(delayA, delayB);
+				m_maxDelay = std::max(delayA, delayB);
+			}
 
 			/**
 			 * @brief Sets the loop sound effect.
@@ -132,7 +156,7 @@ namespace Emeraude::Audio
 			 * @param gain The loop channel gain. Default 0.75F.
 			 * @return bool
 			 */
-			bool setLoopSound (const std::shared_ptr< SoundResource > & soundResource, float gain = 0.75F) noexcept;
+			bool setLoopSound (const std::shared_ptr< SoundResource > & soundResource, float gain = DefaultGain) noexcept;
 
 			/**
 			 * @brief Adds a sound effect to the ambience list.
@@ -151,7 +175,7 @@ namespace Emeraude::Audio
 			 * @param velocity The radial velocity value. Default 0.0.
 			 * @return bool
 			 */
-			bool addSound (const std::shared_ptr< SoundResource > & sound, float channelGain = 0.75F,  bool relative = true, float minPitch = 1.0F, float maxPitch = 1.0F, float velocity = 0.0F) noexcept;
+			bool addSound (const std::shared_ptr< SoundResource > & sound, float channelGain = DefaultGain,  bool relative = true, float minPitch = 1.0F, float maxPitch = 1.0F, float velocity = 0.0F) noexcept;
 
 			/**
 			 * @brief Enables a direct filter.
@@ -188,10 +212,10 @@ namespace Emeraude::Audio
 
 			/**
 			 * @brief Loads a sound set from a JSON file.
-			 * @param filepath The path to the file.
+			 * @param filepath The path to the filesystem path.
 			 * @return bool
 			 */
-			bool loadSoundSet (const Libraries::Path::File & filepath) noexcept;
+			bool loadSoundSet (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Reset the current sound set.
@@ -201,12 +225,42 @@ namespace Emeraude::Audio
 
 		private:
 
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			[[nodiscard]]
+			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+
 			/**
 			 * @brief Returns a random delay.
-			 * @return unsigned int
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			unsigned int getRandomDelay () const noexcept;
+			uint32_t
+			getRandomDelay () const noexcept
+			{
+				return Libraries::Utility::quickRandom(m_minDelay, m_maxDelay);
+			}
+
+			/**
+			 * @brief Returns whether this ambience needs a loop channel.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			requestLoopChannel () const noexcept
+			{
+				return m_loopSound != nullptr;
+			}
+
+			/**
+			 * @brief Returns whether this ambience needs a sound effect channels.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			requestSoundEffectChannels () const noexcept
+			{
+				return !m_soundEffects.empty();
+			}
 
 			/**
 			 * @brief Allocates all sources.
@@ -225,30 +279,41 @@ namespace Emeraude::Audio
 			 * @return AmbienceSound &
 			 */
 			[[nodiscard]]
-			AmbienceSound & getRandomSound () noexcept;
+			AmbienceSound &
+			getRandomSound () noexcept
+			{
+				return m_soundEffects[Libraries::Utility::quickRandom(static_cast< size_t >(0), m_soundEffects.size() - 1)];
+			}
 
 			/* JSON key. */
-			static constexpr auto JKLoopSoundEffect = "LoopSoundEffect";
-			static constexpr auto JKSoundEffectCollection = "SoundEffectCollection";
-			static constexpr auto JKChannelCount = "ChannelCount";
-			static constexpr auto JKRadius = "Radius";
-			static constexpr auto JKResourceName = "ResourceName";
-			static constexpr auto JKGain = "Gain";
-			static constexpr auto JKRelative = "Relative";
-			static constexpr auto JKMinimumPitch = "MinimumPitch";
-			static constexpr auto JKMaximumPitch = "MaximumPitch";
-			static constexpr auto JKRadialVelocity = "RadialVelocity";
+			static constexpr auto JKLoopSoundEffect{"LoopSoundEffect"};
+			static constexpr auto JKSoundEffectCollection{"SoundEffectCollection"};
+			static constexpr auto JKChannelCount{"ChannelCount"};
+			static constexpr auto JKRadius{"Radius"};
+			static constexpr auto JKResourceName{"ResourceName"};
+			static constexpr auto JKGain{"Gain"};
+			static constexpr auto JKRelative{"Relative"};
+			static constexpr auto JKMinimumPitch{"MinimumPitch"};
+			static constexpr auto JKMaximumPitch{"MaximumPitch"};
+			static constexpr auto JKRadialVelocity{"RadialVelocity"};
 
-			std::vector< AmbienceChannel > m_channels{};
-			std::vector< AmbienceSound > m_sounds{};
-			std::shared_ptr< Source > m_loopedSource{};
-			std::shared_ptr< SoundResource > m_loopedSoundResource{};
-			std::shared_ptr< Filters::Abstract > m_directFilter{};
-			float m_loopedChannelGain{0.75F};
-			size_t m_channelCount{4UL};
-			float m_radius{1024.0F};
-			unsigned int m_minDelay{500};
-			unsigned int m_maxDelay{3000};
+			/* Default values */
+			static constexpr auto DefaultChannelCount{4UL};
+			static constexpr auto DefaultGain{0.75F};
+			static constexpr auto DefaultRadius{1000.0F};
+			static constexpr auto DefaultMinDelay{500};
+			static constexpr auto DefaultMaxDelay{3000};
+
+			std::shared_ptr< Source > m_loopedSource;
+			std::vector< AmbienceChannel > m_channels;
+			std::shared_ptr< Filters::Abstract > m_directFilter;
+			std::shared_ptr< SoundResource > m_loopSound;
+			std::vector< AmbienceSound > m_soundEffects;
+			size_t m_channelCount{DefaultChannelCount};
+			float m_loopedChannelGain{DefaultGain};
+			float m_radius{DefaultRadius};
+			uint32_t m_minDelay{DefaultMinDelay};
+			uint32_t m_maxDelay{DefaultMaxDelay};
 			bool m_active{false};
 	};
 }

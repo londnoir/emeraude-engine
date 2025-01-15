@@ -1,54 +1,76 @@
 /*
- * Emeraude/Vulkan/CommandBuffer.hpp
- * This file is part of Emeraude
+ * src/Vulkan/CommandBuffer.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
+#include <cstdint>
+#include <cstddef>
 #include <memory>
+#include <vector>
 
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
 
 /* Local inclusions for usages. */
-#include "Buffer.hpp"
-#include "CommandPool.hpp"
-#include "ComputePipeline.hpp"
-#include "DescriptorSet.hpp"
-#include "Framebuffer.hpp"
-#include "GraphicsPipeline.hpp"
-#include "Image.hpp"
-#include "IndexBufferObject.hpp"
-#include "RenderPass.hpp"
-#include "Sync/BufferMemoryBarrier.hpp"
-#include "Sync/Event.hpp"
-#include "Sync/ImageMemoryBarrier.hpp"
-#include "Sync/MemoryBarrier.hpp"
-#include "VertexBufferObject.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
+{
+	namespace Vulkan
+	{
+		namespace Sync
+		{
+			class Event;
+			class MemoryBarrier;
+			class BufferMemoryBarrier;
+			class ImageMemoryBarrier;
+		}
+
+		class GraphicsPipeline;
+		class ComputePipeline;
+		class DescriptorSet;
+		class PipelineLayout;
+		class Framebuffer;
+		class VertexBufferObject;
+		class IndexBufferObject;
+		class CommandPool;
+		class Buffer;
+		class Image;
+		class Framebuffer;
+	}
+
+	namespace Graphics::Geometry
+	{
+		class Interface;
+	}
+}
 
 namespace Emeraude::Vulkan
 {
@@ -104,21 +126,33 @@ namespace Emeraude::Vulkan
 			 * @return VkCommandBuffer
 			 */
 			[[nodiscard]]
-			VkCommandBuffer handle () const noexcept;
+			VkCommandBuffer
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the responsible command pool smart pointer.
-			 * @return const std::shared_ptr< CommandPool > &
+			 * @return std::shared_ptr< CommandPool >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< CommandPool > & commandPool () const noexcept;
+			std::shared_ptr< CommandPool >
+			commandPool () const noexcept
+			{
+				return m_commandPool;
+			}
 
 			/**
 			 * @brief Returns whether the buffer level is primary.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isBufferLevelPrimary () const noexcept;
+			bool
+			isBufferLevelPrimary () const noexcept
+			{
+				return m_primaryLevel;
+			}
 
 			/**
 			 * @brief Begins registering commands.
@@ -130,31 +164,32 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool begin (VkCommandBufferUsageFlagBits usage) noexcept;
+			bool begin (VkCommandBufferUsageFlagBits usage) const noexcept;
 
 			/**
 			 * @brief Ends registering commands.
 			 * @return bool
 			 */
-			bool end () noexcept;
+			[[nodiscard]]
+			bool end () const noexcept;
 
 			/**
 			 * @brief Reset the command buffer.
 			 * @param flags The reset flags. Default none.
 			 * @return bool
 			 */
-			bool reset (VkCommandBufferResetFlags flags = 0) noexcept;
+			[[nodiscard]]
+			bool reset (VkCommandBufferResetFlags flags = 0) const noexcept;
 
 			/**
 			 * @brief Registers a render pass begin.
-			 * @param renderPass A reference to a render pass.
 			 * @param framebuffer A reference to a framebuffer.
 			 * @param renderArea The render area.
 			 * @param clearValues The framebuffer clear values.
 			 * @param subpassContents
 			 * @return void
 			 */
-			void beginRenderPass (const RenderPass & renderPass, const Framebuffer & framebuffer, const VkRect2D & renderArea, const std::array< VkClearValue, 2 > & clearValues, VkSubpassContents subpassContents) const noexcept;
+			void beginRenderPass (const Framebuffer & framebuffer, const VkRect2D & renderArea, const std::array< VkClearValue, 2 > & clearValues, VkSubpassContents subpassContents) const noexcept;
 
 			/**
 			 * @brief Registers a render pass end.
@@ -163,11 +198,11 @@ namespace Emeraude::Vulkan
 			void endRenderPass () const noexcept;
 
 			/**
-			 * @brief Registers a update buffer command.
+			 * @brief Registers an update buffer command.
 			 * @param buffer A reference to the buffer.
 			 * @param dstOffset The byte offset into the buffer to execute updating, and must be a multiple of 4.
 			 * @param dataSize The number of bytes to update, and must be a multiple of 4.
-			 * @param pData A pointer to the source data for the buffer update, and must be at least dataSize bytes in size.
+			 * @param pData A pointer to the source data for the buffer processLogics, and must be at least dataSize bytes in size.
 			 * @return void
 			 */
 			void update (const Buffer & buffer, VkDeviceSize dstOffset, VkDeviceSize dataSize, const void * pData) const noexcept;
@@ -184,6 +219,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Registers a buffer to buffer copy command.
+			 * @deprecated This must be done the transferManager !
 			 * @param src A reference to the buffer.
 			 * @param dst A reference to the buffer.
 			 * @param srcOffset The source buffer start for reading. Default 0.
@@ -195,6 +231,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Registers a image to image copy command.
+			 * @deprecated This must be done the transferManager !
 			 * @param src A reference to the image.
 			 * @param dst A reference to the image.
 			 * @return void
@@ -203,6 +240,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Registers a buffer to image copy command.
+			 * @deprecated This must be done the transferManager !
 			 * @param src A reference to the buffer.
 			 * @param dst A reference to the image.
 			 * @param srcOffset The source buffer start for reading. Default 0.
@@ -211,7 +249,8 @@ namespace Emeraude::Vulkan
 			void copy (const Buffer & src, const Image & dst, VkDeviceSize srcOffset = 0) const noexcept;
 
 			/**
-			 * @brief Registers a image to buffer copy command.
+			 * @brief Registers an image to buffer copy command.
+			 * @deprecated This must be done the transferManager !
 			 * @param src A reference to the image.
 			 * @param dst A reference to the buffer.
 			 * @return void
@@ -219,7 +258,8 @@ namespace Emeraude::Vulkan
 			void copy (const Image & src, const Buffer & dst) const noexcept;
 
 			/**
-			 * @brief Registers a image to image blit command.
+			 * @brief Registers an image to image blit command.
+			 * @deprecated This must be done the transferManager !
 			 * @param src A reference to the image.
 			 * @param dst A reference to the buffer.
 			 * @return void
@@ -228,7 +268,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Clears the color part of the image.
-			 * @param commandBuffer A reference to a command buffer.
+			 * @param image A reference to a command buffer.
 			 * @param imageLayout Specifies the current layout of the image subresource ranges to be cleared, and must be VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR, VK_IMAGE_LAYOUT_GENERAL or VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.
 			 * @param color A reference to a color. Default black.
 			 * @return void
@@ -237,7 +277,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Clears the depth/stencil part of the image.
-			 * @param commandBuffer A reference to a command buffer.
+			 * @param image A reference to a command buffer.
 			 * @param imageLayout Specifies the current layout of the image subresource ranges to be cleared, and must be VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR, VK_IMAGE_LAYOUT_GENERAL or VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.
 			 * @return void
 			 */
@@ -317,7 +357,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Sets the event status in a command buffer.
-			 * @param commandBuffer A reference to a command buffer smart pointer.
+			 * @param event A reference to a command buffer smart pointer.
 			 * @param flags A pipeline stage flags.
 			 * @return void
 			 */
@@ -325,7 +365,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Resets the event status in a command buffer.
-			 * @param commandBuffer A reference to a command buffer smart pointer.
+			 * @param event A reference to a command buffer smart pointer.
 			 * @param flags A pipeline stage flags.
 			 * @return void
 			 */
@@ -333,7 +373,6 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Waits for events in command.
-			 * @param commandBuffer A reference to a command buffer smart pointer.
 			 * @param events A reference to event list.
 			 * @param srcFlags A pipeline source stage flags.
 			 * @param dstFlags A pipeline destination stage flags.
@@ -342,7 +381,7 @@ namespace Emeraude::Vulkan
 			 * @param imageMemoryBarriers A reference to image memory barrier list. Default none.
 			 * @return void
 			 */
-			void waitEvents (const std::vector< VkEvent > & events, VkPipelineStageFlags srcFlags, VkPipelineStageFlags dstFlags, const std::vector< VkMemoryBarrier > & memoryBarriers = {}, const std::vector< VkBufferMemoryBarrier > & bufferMemoryBarriers = {}, const std::vector< VkImageMemoryBarrier > & imageMemoryBarriers = {}) noexcept;
+			void waitEvents (const std::vector< VkEvent > & events, VkPipelineStageFlags srcFlags, VkPipelineStageFlags dstFlags, const std::vector< VkMemoryBarrier > & memoryBarriers = {}, const std::vector< VkBufferMemoryBarrier > & bufferMemoryBarriers = {}, const std::vector< VkImageMemoryBarrier > & imageMemoryBarriers = {}) const noexcept;
 
 			/**
 			 * @brief Binds a graphics pipeline.
@@ -353,7 +392,7 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Binds a compute pipeline.
-			 * @param graphicsPipeline A reference to a compute pipeline.
+			 * @param computePipeline A reference to a compute pipeline.
 			 * @return void
 			 */
 			void bind (const ComputePipeline & computePipeline) const noexcept;
@@ -380,11 +419,21 @@ namespace Emeraude::Vulkan
 			 * @param descriptorSet A reference to a descriptor set.
 			 * @param pipelineLayout A reference to a pipeline layout.
 			 * @param bindPoint The target binding point in the pipeline.
-			 * @param firstSet The first set. Default 0.
-			 * @param dynamicOffsets A reference to a list of dynamic offsets. Default none.
+			 * @param firstSet The first set.
 			 * @return void
 			 */
-			void bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet = 0, const std::vector< uint32_t > & dynamicOffsets = {}) const noexcept;
+			void bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet) const noexcept;
+
+			/**
+			 * @brief Binds a single descriptor set.
+			 * @param descriptorSet A reference to a descriptor set.
+			 * @param pipelineLayout A reference to a pipeline layout.
+			 * @param bindPoint The target binding point in the pipeline.
+			 * @param firstSet The first set. Default 0.
+			 * @param dynamicOffset ??? TODO: Define it
+			 * @return void
+			 */
+			void bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet, uint32_t dynamicOffset) const noexcept;
 
 			/**
 			 * @brief Binds a single geometry.
@@ -398,7 +447,7 @@ namespace Emeraude::Vulkan
 			 * @brief Binds a single geometry using a model vertex buffer object for location.
 			 * @param geometry A reference to the geometry.
 			 * @param modelVBO A reference to a vertex buffer object.
-			 * @param ubGeometryIndex A sub geometry layer index being drawn. Default 0.
+			 * @param subGeometryIndex A sub geometry layer index being drawn. Default 0.
 			 * @param modelVBOOffset The offset in the model vertex buffer object. Default 0.
 			 * @return void
 			 */

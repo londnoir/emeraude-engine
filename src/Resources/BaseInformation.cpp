@@ -1,36 +1,37 @@
 /*
- * Emeraude/Resources/BaseInformation.cpp
- * This file is part of Emeraude
+ * src/Resources/BaseInformation.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "BaseInformation.hpp"
 
 /* Local inclusions. */
+#include "Libraries/Network/URL.hpp"
+#include "Libraries/IO.hpp"
+#include "Libraries/String.hpp"
 #include "FileSystem.hpp"
-#include "Network/URL.hpp"
-#include "Stores.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude::Resources
@@ -122,24 +123,19 @@ namespace Emeraude::Resources
 			case SourceType::LocalData :
 				if ( data.isString() )
 				{
-					for ( const auto & dataDirectory : FileSystem::instance()->dataDirectoriesList() )
-					{
-						const auto filepath = Path::File{dataDirectory, (std::stringstream{} << Stores::DataStores << Path::Separator << data.asString()).str()};
-
-						if ( filepath.exists() )
-						{
-							m_data = {to_string(filepath)};
-
-							break;
-						}
-					}
-
-					if ( m_data.empty() )
+#if IS_WINDOWS
+				    const auto filepath = FileSystem::instance()->getFilepathFromDataDirectories(DataStores, String::replace('/', IO::Separator, data.asString()));
+#else
+					const auto filepath = FileSystem::instance()->getFilepathFromDataDirectories(DataStores, data.asString());
+#endif
+					if ( filepath.empty() )
 					{
 						TraceError{ClassId} << data << " for '" << DataKey << "' key (" << LocalDataString << ") point to an invalid location.";
 
 						return false;
 					}
+
+					m_data = filepath.string();
 				}
 				else
 				{
@@ -152,7 +148,7 @@ namespace Emeraude::Resources
 			case SourceType::ExternalData :
 				if ( data.isString() )
 				{
-					auto url = data.asString();
+					const auto url = data.asString();
 
 					if ( Network::URL::isURL(url) )
 					{
@@ -191,34 +187,10 @@ namespace Emeraude::Resources
 	}
 
 	void
-	BaseInformation::updateFromDownload (const Libraries::Path::File & file) noexcept
+	BaseInformation::updateFromDownload (const std::filesystem::path & filepath) noexcept
 	{
 		m_source = SourceType::LocalData;
-		m_data = Json::Value(to_string(file));
-	}
-
-	bool
-	BaseInformation::isValid () const noexcept
-	{
-		return m_source != SourceType::Undefined;
-	}
-
-	const std::string &
-	BaseInformation::name () const noexcept
-	{
-		return m_name;
-	}
-
-	SourceType
-	BaseInformation::sourceType () const noexcept
-	{
-		return m_source;
-	}
-
-	const Json::Value &
-	BaseInformation::data () const noexcept
-	{
-		return m_data;
+		m_data = Json::Value(filepath.string());
 	}
 
 	bool
@@ -226,11 +198,15 @@ namespace Emeraude::Resources
 	{
 		/* 1. Check resource name. */
 		if ( !this->parseName(resourceDefinition) )
+		{
 			return false;
+		}
 
 		/* 2. Check resource source. */
 		if ( !this->parseSource(resourceDefinition) )
+		{
 			return false;
+		}
 
 		/* 3. Check resource data. */
 		if ( !this->parseData(resourceDefinition) )

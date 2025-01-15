@@ -1,48 +1,55 @@
 /*
- * Emeraude/Graphics/MovieResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/MovieResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
 
-/* Local inclusions */
-#include "PixelFactory/Pixmap.hpp"
+/* Third-Party inclusions. */
+#include "json/json.h"
+
+/* Local inclusions. */
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Resources/Container.hpp"
-#include "Constants.hpp"
 
 namespace Emeraude::Graphics
 {
 	/**
 	 * @brief The movie resource class.
+	 * @todo FIXME: There is a bug when unloading this resource at the engine shutdown.
+	 * The main resources directory is "./data-stores/Movies/".
 	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class MovieResource final : public Resources::ResourceTrait
@@ -67,19 +74,35 @@ namespace Emeraude::Graphics
 			 */
 			explicit MovieResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
+
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			[[nodiscard]]
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
@@ -97,15 +120,23 @@ namespace Emeraude::Graphics
 			 * @return const std::vector< Frame > &
 			 */
 			[[nodiscard]]
-			const std::vector< Frame > & frames () const noexcept;
+			const std::vector< Frame > &
+			frames () const noexcept
+			{
+				return m_frames;
+			}
 
 			/**
 			 * @brief Returns the width of the movie.
 			 * @note Returns the width of the first frame.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t width () const noexcept;
+			uint32_t
+			width () const noexcept
+			{
+				return m_frames.empty() ? 0 : static_cast< uint32_t >(m_frames[0].first.width());
+			}
 
 			/**
 			 * @brief Returns the height of the movie.
@@ -113,7 +144,11 @@ namespace Emeraude::Graphics
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t height () const noexcept;
+			uint32_t
+			height () const noexcept
+			{
+				return m_frames.empty() ? 0 : static_cast< uint32_t >(m_frames[0].first.height());
+			}
 
 			/**
 			 * @brief Returns whether frames are all gray scale.
@@ -134,22 +169,52 @@ namespace Emeraude::Graphics
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t duration () const noexcept;
+			uint32_t
+			duration () const noexcept
+			{
+				return m_duration;
+			}
 
 			/**
 			 * @brief Returns the number of frame.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t frameCount () const noexcept;
+			uint32_t
+			frameCount () const noexcept
+			{
+				return static_cast< uint32_t >(m_frames.size());
+			}
 
 			/**
 			 * @brief Returns the index of the frame at specific time.
-			 * @param timepoint A time point in milliseconds.
+			 * @param timePoint A time point in milliseconds.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t frameIndexAt (size_t timepoint) const noexcept;
+			size_t frameIndexAt (uint32_t timePoint) const noexcept;
+
+			/**
+			 * @brief Sets whether the animation is looping.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			setLoopState (bool state) noexcept
+			{
+				m_looping = state;
+			}
+
+			/**
+			 * @brief Returns whether the animation is looping.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isLooping () const noexcept
+			{
+				return m_looping;
+			}
 
 			/**
 			 * @brief Returns a movie resource by its name.
@@ -194,6 +259,15 @@ namespace Emeraude::Graphics
 			void updateDuration () noexcept;
 
 			/**
+			 * @brief Returns the frame duration from the json resource description.
+			 * @param data A reference to a json node.
+			 * @param frameCount The animation frame count for calculation.
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			static size_t extractFrameDuration (const Json::Value & data, size_t frameCount) noexcept;
+
+			/**
 			 * @brief extractCountWidth
 			 * @param basename
 			 * @param replaceKey
@@ -201,20 +275,12 @@ namespace Emeraude::Graphics
 			 */
 			static size_t extractCountWidth (const std::string & basename, std::string & replaceKey) noexcept;
 
-			/* JSON key. */
-			static constexpr auto BaseFrameNameKey = "BaseFrameName";
-			static constexpr auto FrameCountKey = "FrameCount";
-			static constexpr auto FrameRateKey = "FrameRate";
-			static constexpr auto FrameDurationKey = "FrameDuration";
-			static constexpr auto AnimationDurationKey = "AnimationDuration";
-			static constexpr auto FramesKey = "Frames";
-			static constexpr auto DurationKey = "Duration";
-			static constexpr auto ImageKey = "Image";
+			static constexpr uint32_t BaseTime{1000};
+			static constexpr uint32_t DefaultFrameDuration{BaseTime / 30};
 
-			static constexpr auto DefaultFrameDuration = 1000 / EngineUpdateFrequency< size_t >;
-
-			std::vector< Frame > m_data{};
-			size_t m_duration{};
+			std::vector< Frame > m_frames;
+			uint32_t m_duration{0};
+			bool m_looping{true};
 	};
 }
 

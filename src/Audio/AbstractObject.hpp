@@ -1,34 +1,41 @@
 /*
- * Emeraude/Audio/AbstractObject.hpp
- * This file is part of Emeraude
+ * src/Audio/AbstractObject.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/openal.hpp"
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* Third-party inclusions. */
+#include "AL/al.h"
+#include "AL/alc.h"
+#include "AL/alext.h"
+#include "AL/efx.h"
+#include "AL/efx-presets.h"
 
 namespace Emeraude::Audio
 {
@@ -75,7 +82,11 @@ namespace Emeraude::Audio
 			 * @return ALuint
 			 */
 			[[nodiscard]]
-			virtual ALuint identifier () const noexcept final;
+			ALuint
+			identifier () const noexcept
+			{
+				return m_identifier;
+			}
 
 			/**
 			 * @brief Returns whether this object has an identifier on audio memory.
@@ -96,13 +107,21 @@ namespace Emeraude::Audio
 			 * @return ALuint *
 			 */
 			[[nodiscard]]
-			ALuint * identifierPointer () noexcept;
+			ALuint *
+			identifierPointer () noexcept
+			{
+				return &m_identifier;
+			}
 
 			/**
 			 * @brief Reset the OpenAL identifier.
 			 * @return void
 			 */
-			void resetIdentifier () noexcept;
+			void
+			resetIdentifier () noexcept
+			{
+				m_identifier = 0;
+			}
 
 		private:
 

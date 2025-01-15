@@ -1,36 +1,37 @@
 /*
- * Emeraude/SettingStore.hpp
- * This file is part of Emeraude
+ * src/SettingStore.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <map>
-#include <string>
 #include <vector>
+#include <string>
+#include <any>
 
 namespace Emeraude
 {
@@ -43,73 +44,58 @@ namespace Emeraude
 
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"SettingStore"};
+
 			/**
-			 * @brief Constructs a setting store.
+			 * @brief Constructs a default setting store.
 			 */
 			SettingStore () noexcept = default;
 
 			/**
-			 * @brief Sets a new variable in store.
+			 * @brief Sets an "any" variable variable in store.
 			 * @param name A reference to a string for the variable name.
-			 * @param value The variable value.
+			 * @param value A reference to a std::any.
+			 * @return void
 			 */
-			void set (const std::string & name, const std::string & value) noexcept;
-
-			/**
-			 * @brief Sets a new variable in store.
-			 * @param name A reference to a string for the variable name.
-			 * @param value The variable value.
-			 */
-			inline
 			void
-			set (const std::string & name, const char * value) noexcept
+			setVariable (const std::string & name, const std::any & value) noexcept
 			{
-				this->set(name, std::string{value});
+				m_variables[name] = value;
 			}
 
 			/**
-			 * @brief Sets a new variable in store.
+			 * @brief Sets an "any" variable in an array store.
 			 * @param name A reference to a string for the variable name.
-			 * @param value The variable value.
+			 * @param value A reference to a std::any.
+			 * @return void
 			 */
-			template< typename type_t >
-			inline
-			void
-			set (const std::string & name, type_t value) noexcept
-			{
-				this->set(name, std::to_string(value));
-			}
+			void setVariableInArray (const std::string & name, const std::any & value) noexcept;
 
 			/**
-			 * @brief Sets a new variable in an array of the store.
-			 * @param name A reference to a string for the array name.
-			 * @param value The variable value.
+			 * @brief Returns whether the store is empty.
+			 * @return bool
 			 */
-			void setInArray (const std::string & name, const std::string & value) noexcept;
-
-			/**
-			 * @brief Sets a new variable in an array of the store.
-			 * @param name A reference to a string for the array name.
-			 * @param value The variable value.
-			 */
-			inline
-			void
-			setInArray (const std::string & name, const char * value) noexcept
+			[[nodiscard]]
+			bool
+			empty () const noexcept
 			{
-				this->setInArray(name, std::string{value});
-			}
+				if ( !m_variables.empty() )
+				{
+					return false;
+				}
 
-			/**
-			 * @brief Sets a new variable in an array of the store.
-			 * @param name A reference to a string for the array name.
-			 * @param value The variable value.
-			 */
-			template< typename type_t >
-			inline
-			void
-			setInArray (const std::string & name, type_t value) noexcept
-			{
-				this->setInArray(name, std::to_string(value));
+				if ( !m_arrays.empty() )
+				{
+					return false;
+				}
+
+				if ( !m_subStores.empty() )
+				{
+					return false;
+				}
+
+				return true;
 			}
 
 			/**
@@ -118,7 +104,11 @@ namespace Emeraude
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool variableExists (const std::string & name) const noexcept;
+			bool
+			variableExists (const std::string & name) const noexcept
+			{
+				return m_variables.contains(name);
+			}
 
 			/**
 			 * @brief Checks whether an array is present in the store.
@@ -126,7 +116,11 @@ namespace Emeraude
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool arrayExists (const std::string & name) const noexcept;
+			bool
+			arrayExists (const std::string & name) const noexcept
+			{
+				return m_arrays.contains(name);
+			}
 
 			/**
 			 * @brief Checks if a sub-store is present in the store.
@@ -134,15 +128,23 @@ namespace Emeraude
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool subStoreExists (const std::string & storeName) const noexcept;
+			bool
+			subStoreExists (const std::string & storeName) const noexcept
+			{
+				return m_subStores.contains(storeName);
+			}
 
 			/**
-			 * @brief Gets a sub-store. If doesn't exist, it will be created.
-			 * @param storeName The name of the store.
+			 * @brief Gets or creates a sub-store.
+			 * @param storeName A reference to a string for the store name.
 			 * @return SettingStore &
 			 */
 			[[nodiscard]]
-			SettingStore & getSubStore (const std::string & storeName) noexcept;
+			SettingStore &
+			getOrCreateSubStore (const std::string & storeName) noexcept
+			{
+				return m_subStores[storeName];
+			}
 
 			/**
 			 * @brief Returns a sub-store pointer.
@@ -164,70 +166,106 @@ namespace Emeraude
 			/**
 			 * @brief Gets the value of a variable.
 			 * @param name A reference to a string for the variable name.
-			 * @return string
+			 * @return const std::any *
 			 */
 			[[nodiscard]]
-			std::string get (const std::string & name) const noexcept;
+			const std::any * getValuePointer (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Gets the value of a variable. If the variable doesn't exist, it will be set.
 			 * @param name A reference to a string for the variable name.
 			 * @param defaultValue A reference to a string for the default value.
-			 * @return string
+			 * @return const std::any *
 			 */
 			[[nodiscard]]
-			std::string getOrSet (const std::string & name, const std::string & defaultValue) noexcept;
+			const std::any * getValuePointerOrSet (const std::string & name, const std::string & defaultValue) noexcept;
 
 			/**
 			 * @brief Returns a const access to an array of variable.
 			 * @param name A reference to a string for the array name.
-			 * @return const std::vector< std::string > *
+			 * @return const std::vector< std::any > *
 			 */
 			[[nodiscard]]
-			const std::vector< std::string > * getArray (const std::string & name) const noexcept;
+			const std::vector< std::any > * getArrayPointer (const std::string & name) const noexcept;
 
 			/**
-			 * @brief Returns a access to an array of variable.
+			 * @brief Returns access to an array of variable.
 			 * @param name A reference to a string for the array name.
-			 * @return std::vector< std::string > *
+			 * @return std::vector< std::any > *
 			 */
 			[[nodiscard]]
-			std::vector< std::string > * getArray (const std::string & name) noexcept;
+			std::vector< std::any > * getArrayPointer (const std::string & name) noexcept;
 
-			/** @brief Clears the store. */
-			void clear () noexcept;
+			/**
+			 * @brief Clears variable from this store.
+			 * @return void
+			 */
+			void
+			clearData () noexcept
+			{
+				m_variables.clear();
+				m_arrays.clear();
+			}
 
-			/** @brief Clears variable from this store. */
-			void clearData () noexcept;
+			/**
+			 * @brief Clears sub-stores from this store.
+			 * @return void
+			 */
+			void
+			clearSubStores () noexcept
+			{
+				m_subStores.clear();
+			}
 
-			/** @brief Clears sub-stores from this store. */
-			void clearSubStores () noexcept;
+			/**
+			 * @brief Clears the store.
+			 * @note Same as calling SettingStore::clearData() and Settings::clearSubStores().
+			 * @return void
+			 */
+			void
+			clear () noexcept
+			{
+				this->clearData();
+				this->clearSubStores();
+			}
 
 			/**
 			 * @brief Returns variables.
-			 * @return const std::map< std::string, std::string > &
+			 * @return const std::map< std::string, std::any > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string, std::string > & variables () const noexcept;
+			const std::map< std::string, std::any > &
+			variables () const noexcept
+			{
+				return m_variables;
+			}
 
 			/**
 			 * @brief Returns arrays variables.
-			 * @return const std::map< std::string, std::vector< std::string > > &
+			 * @return const std::map< std::string, std::vector< std::any > > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string, std::vector< std::string > > & arrays () const noexcept;
+			const std::map< std::string, std::vector< std::any > > &
+			arrays () const noexcept
+			{
+				return m_arrays;
+			}
 
 			/**
 			 * @brief Returns sub-stores.
 			 * @return const std::map< std::string, SettingStore > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string, SettingStore > & subStores () const noexcept;
+			const std::map< std::string, SettingStore > &
+			subStores () const noexcept
+			{
+				return m_subStores;
+			}
 
 		private:
 
-			std::map< std::string, std::string > m_variables{};
-			std::map< std::string, std::vector< std::string > > m_arrays{};
-			std::map< std::string, SettingStore > m_subStores{};
+			std::map< std::string, std::any > m_variables;
+			std::map< std::string, std::vector< std::any > > m_arrays;
+			std::map< std::string, SettingStore > m_subStores;
 	};
 }

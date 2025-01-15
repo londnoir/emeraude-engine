@@ -1,47 +1,60 @@
 /*
- * Emeraude/Graphics/TextWriter.hpp
- * This file is part of Emeraude
+ * src/Graphics/TextWriter.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <ostream>
 #include <string>
-#include <sstream>
+#include <utility>
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "FontResource.hpp"
-#include "PixelFactory/Margin.hpp"
+#include "Libraries/Math/Vector.hpp"
+#include "Libraries/PixelFactory/Area.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/Margin.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
 
 namespace Emeraude::Graphics
 {
+	/**
+	 * @brief
+	 * @extends Libraries::PixelFactory::Margin
+	 */
 	class TextWriter final : public Libraries::PixelFactory::Margin< size_t >
 	{
 		public:
 
-			enum class Alignment
+			enum class Alignment : uint8_t
 			{
 				TopLeft,
 				TopCenter,
@@ -55,7 +68,7 @@ namespace Emeraude::Graphics
 				AtCursor
 			};
 
-			enum class SpaceAvailability
+			enum class SpaceAvailability : uint8_t
 			{
 				Yes,
 				RequestNewLine,
@@ -70,20 +83,19 @@ namespace Emeraude::Graphics
 				"Ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar. Nulla sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros vitae ligula. Pellentesque rhoncus nunc et augue. Integer id felis. Curabitur aliquet pellentesque diam. Integer quis metus vitae elit lobortis egestas. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi vel erat non mauris convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue eu, quam. Mauris ullamcorper felis vitae erat. Proin feugiat, augue non elementum posuere, metus purus iaculis lectus, et tristique ligula justo vitae magna.\n"
 				"Aliquam convallis sollicitudin purus. Praesent aliquam, enim at fermentum mollis, ligula massa adipiscing nisl, ac euismod nibh nisl eu lectus. Fusce vulputate sem at sapien. Vivamus leo. Aliquam euismod libero eu enim. Nulla nec felis sed leo placerat imperdiet. Aenean suscipit nulla in justo. Suspendisse cursus rutrum augue. Nulla tincidunt tincidunt mi. Curabitur iaculis, lorem vel rhoncus faucibus, felis magna fermentum augue, et ultricies lacus lorem varius purus. Curabitur eu amet.\n";
 
-			/** Default constructor. */
-			TextWriter (Libraries::PixelFactory::Pixmap< uint8_t > * target = nullptr) noexcept;
+			TextWriter () noexcept = default;
 
-			/** Copy constructor. */
+			explicit TextWriter (Libraries::PixelFactory::Pixmap< uint8_t > & target) noexcept;
+
 			TextWriter (const TextWriter & copy) = delete;
 
-			/** Move constructor. */
 			TextWriter (TextWriter && copy) = delete;
 
-			/** Assignment operator. */
 			TextWriter & operator= (const TextWriter & other) = delete;
 
-			/** Move assignment operator. */
 			TextWriter & operator= (TextWriter && other) = delete;
+
+			~TextWriter () override = default;
 
 			[[nodiscard]]
 			bool isReady () const noexcept;
@@ -128,62 +140,92 @@ namespace Emeraude::Graphics
 			[[nodiscard]]
 			const Libraries::PixelFactory::Color< float > & clearColor () const noexcept;
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			setCursor (type_t x, type_t y) noexcept
+			setCursorX (number_t coordX) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				auto _x = static_cast< int >(x);
-				auto _y = static_cast< int >(y);
+				if constexpr ( std::is_integral_v< number_t > )
+				{
+					const auto _coordX = static_cast< int >(coordX);
 
-				m_originCursor[Libraries::Math::X] = _x;
-				m_originCursor[Libraries::Math::Y] = _y;
+					m_originCursor[Libraries::Math::X] = _coordX;
+					m_currentCursor[Libraries::Math::X] = _coordX;
+				}
 
-				m_currentCursor[Libraries::Math::X] = _x;
-				m_currentCursor[Libraries::Math::Y] = _y;
+				if constexpr ( std::is_floating_point_v< number_t > )
+				{
+					const auto _coordX = static_cast< int >(std::round(coordX));
+
+					m_originCursor[Libraries::Math::X] = _coordX;
+					m_currentCursor[Libraries::Math::X] = _coordX;
+				}
 			}
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			setCursorX (type_t x) noexcept
+			setCursorY (number_t coordY) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				auto _x = static_cast< int >(x);
+				if constexpr ( std::is_integral_v< number_t > )
+				{
+					const auto _coordY = static_cast< int >(coordY);
 
-				m_originCursor[Libraries::Math::X] = _x;
+					m_originCursor[Libraries::Math::Y] = _coordY;
+					m_currentCursor[Libraries::Math::Y] = _coordY;
+				}
 
-				m_currentCursor[Libraries::Math::X] = _x;
+				if constexpr ( std::is_floating_point_v< number_t > )
+				{
+					const auto _coordY = static_cast< int >(std::round(coordY));
+
+					m_originCursor[Libraries::Math::Y] = _coordY;
+					m_currentCursor[Libraries::Math::Y] = _coordY;
+				}
 			}
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			setCursorY (type_t y) noexcept
+			setCursor (number_t coordX, number_t coordY) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				auto _y = static_cast< int >(y);
-
-				m_originCursor[Libraries::Math::Y] = _y;
-
-				m_currentCursor[Libraries::Math::Y] = _y;
+				this->setCursorX(coordX);
+				this->setCursorY(coordY);
 			}
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			moveCursor (type_t x, type_t y) noexcept
+			moveCursorX (number_t coordX) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				m_currentCursor[Libraries::Math::X] += static_cast< int >(x);
-				m_currentCursor[Libraries::Math::Y] += static_cast< int >(y);
+				if constexpr ( std::is_integral_v< number_t > )
+				{
+					m_currentCursor[Libraries::Math::X] += static_cast< int >(coordX);
+				}
+
+				if constexpr ( std::is_floating_point_v< number_t > )
+				{
+					m_currentCursor[Libraries::Math::X] += static_cast< int >(std::round(coordX));
+				}
 			}
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			moveCursorX (type_t x) noexcept
+			moveCursorY (number_t coordY) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				m_currentCursor[Libraries::Math::X] += static_cast< int >(x);
+				if constexpr ( std::is_integral_v< number_t > )
+				{
+					m_currentCursor[Libraries::Math::Y] += static_cast< int >(coordY);
+				}
+
+				if constexpr ( std::is_floating_point_v< number_t > )
+				{
+					m_currentCursor[Libraries::Math::Y] += static_cast< int >(std::round(coordY));
+				}
 			}
 
-			template< typename type_t >
+			template< typename number_t >
 			void
-			moveCursorY (type_t y) noexcept
+			moveCursor (number_t coordX, number_t coordY) noexcept requires (std::is_arithmetic_v< number_t >)
 			{
-				m_currentCursor[Libraries::Math::Y] += static_cast< int >(y);
+				this->moveCursorX(coordX);
+				this->moveCursorY(coordY);
 			}
 
 			void resetCursorToOrigin () noexcept;
@@ -208,7 +250,7 @@ namespace Emeraude::Graphics
 			 *
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const TextWriter & obj);
 
@@ -216,7 +258,7 @@ namespace Emeraude::Graphics
 			 * Stringify the object.
 			 *
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const TextWriter & obj) noexcept;
 
@@ -224,22 +266,19 @@ namespace Emeraude::Graphics
 
 		private:
 
-			/* Flag names. */
-			static constexpr auto WrappingEnabled = 0UL;
-			static constexpr auto AutoLineFeedEnabled = 1UL;
-			static constexpr auto ScrollUpEnabled = 2UL;
-			static constexpr auto AllCharactersEnabled = 3UL;
-
 			[[nodiscard]]
-			inline
 			size_t
 			OpenGLCursorY (size_t height) const noexcept
 			{
+				if ( m_target == nullptr )
+				{
+					return 0;
+				}
+
 				return (m_target->height() - (static_cast< size_t >(m_currentCursor[Libraries::Math::Y]) + 1)) - (height - 1);
 			}
 
 			[[nodiscard]]
-			inline
 			Libraries::PixelFactory::Area< size_t >
 			getArea (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) const noexcept
 			{
@@ -260,10 +299,16 @@ namespace Emeraude::Graphics
 
 			bool moveUp (size_t distance, const Libraries::PixelFactory::Color< float > & color) noexcept;
 
-			Libraries::PixelFactory::Pixmap< uint8_t > * m_target = nullptr;
+			/* Flag names. */
+			static constexpr auto WrappingEnabled{0UL};
+			static constexpr auto AutoLineFeedEnabled{1UL};
+			static constexpr auto ScrollUpEnabled{2UL};
+			static constexpr auto AllCharactersEnabled{3UL};
+
+			Libraries::PixelFactory::Pixmap< uint8_t > * m_target{nullptr};
 			std::shared_ptr< FontResource > m_font{};
 			Libraries::PixelFactory::Color< float > m_color{};
-			Libraries::PixelFactory::Color< float > m_clearColor = Libraries::PixelFactory::Transparent;
+			Libraries::PixelFactory::Color< float > m_clearColor{Libraries::PixelFactory::Transparent};
 			Libraries::Math::Vector< 2, int > m_originCursor{};
 			Libraries::Math::Vector< 2, int > m_currentCursor{};
 			int m_spacing = 0;

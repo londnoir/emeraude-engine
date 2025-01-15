@@ -1,40 +1,49 @@
 /*
- * Emeraude/Vulkan/SharedUniformBuffer.hpp
- * This file is part of Emeraude
+ * src/Vulkan/SharedUniformBuffer.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <cmath>
+#include <vector>
 #include <memory>
 #include <mutex>
-#include <vector>
+#include <functional>
 
 /* Local inclusions for usages. */
-#include "Saphir/Declaration/UniformBlock.hpp"
 #include "UniformBufferObject.hpp"
+#include "DescriptorSet.hpp"
+
+namespace Emeraude::Vulkan
+{
+	class Device;
+}
 
 namespace Emeraude::Vulkan
 {
@@ -49,20 +58,48 @@ namespace Emeraude::Vulkan
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"VulkanSharedUniformBuffer"};
 
+			using DescriptorSetCreator = std::function< std::unique_ptr< DescriptorSet > (UniformBufferObject & uniformBufferObject) >;
+
 			/**
 			 * @brief Constructs a shared uniform buffer.
 			 * @param device A reference to the device smart pointer.
-			 * @param uniformBlock The declaration of a uniform block [std::move].
-			 * @param maxElementCount The max number of element to hold in one UBO. Default, compute the maximum according to structure size and UBO properties.
+			 * @param uniformBlockSize The size of the uniform block.
+			 * @param maxElementCount The max number of element to hold in one UBO. Default, compute the maximum according to structure size and UBO properties. Default is the max limit.
 			 */
-			SharedUniformBuffer (const std::shared_ptr< Device > & device, Saphir::Declaration::UniformBlock uniformBlock, size_t maxElementCount = 0) noexcept;
+			SharedUniformBuffer (const std::shared_ptr< Device > & device, size_t uniformBlockSize, size_t maxElementCount = 0) noexcept;
+
+			/**
+			 * @brief Constructs a shared uniform buffer with an unique descriptor set.
+			 * @note This version use a dynamic uniform buffer to switch from element to element instead of binding an other descriptor set.
+			 * @warning The descriptor set is unique for all elements, so all other binds will be the same for each element.
+			 * @param device A reference to the device smart pointer.
+			 * @param descriptorSetCreator A reference to a lambda to build the associated descriptor set.
+			 * @param uniformBlockSize The size of the uniform block.
+			 * @param maxElementCount The max number of element to hold in one UBO. Default, compute the maximum according to structure size and UBO properties. Default is the max limit.
+			 */
+			SharedUniformBuffer (const std::shared_ptr< Device > & device, const DescriptorSetCreator & descriptorSetCreator, size_t uniformBlockSize, size_t maxElementCount = 0) noexcept;
 
 			/**
 			 * @brief Returns whether the shared uniform buffer is usable.
-			 * @return
+			 * @return bool
 			 */
 			[[nodiscard]]
-			bool usable () const noexcept;
+			bool
+			usable () const noexcept
+			{
+				return !m_uniformBufferObjects.empty();
+			}
+
+			/**
+			 * @brief Returns whether the shared uniform buffer is dynamic (use a single descriptor set).
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isDynamic () const noexcept
+			{
+				return !m_descriptorSets.empty();
+			}
 
 			/**
 			 * @brief Returns the uniform buffer object pointer.
@@ -79,6 +116,14 @@ namespace Emeraude::Vulkan
 			 */
 			[[nodiscard]]
 			UniformBufferObject * uniformBufferObject (uint32_t index) noexcept;
+
+			/**
+			 * @brief Returns the descriptor set pointer.
+			 * @param index The element index.
+			 * @return UniformBufferObject *
+			 */
+			[[nodiscard]]
+			DescriptorSet * descriptorSet (uint32_t index) noexcept;
 
 			/**
 			 * @brief Adds a new element to the uniform buffer object.
@@ -113,14 +158,41 @@ namespace Emeraude::Vulkan
 			[[nodiscard]]
 			bool writeElementData (uint32_t index, const void * data) noexcept;
 
+			/**
+			 * @brief Returns the element aligned size in the UBO.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			blockAlignedSize () const noexcept
+			{
+				return static_cast< uint32_t >(m_blockAlignedSize);
+			}
+
 		private:
 
 			/**
-			 * @brief Adds a buffer to the UBO list.
+			 * @brief Computes internal sizes of the UBO.
+			 * @param elementCount The desired element count for the whole shared uniform buffer.
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			size_t computeBlockAlignment (size_t elementCount) noexcept;
+
+			/**
+			 * @brief Adds a buffer to the UBO list without creating a descriptor set associated.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool addBuffer () noexcept;
+
+			/**
+			 * @brief Adds a buffer to the UBO list.
+			 * @param descriptorSetCreator A reference to a lambda to build the associated descriptor set.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool addBuffer (const DescriptorSetCreator & descriptorSetCreator) noexcept;
 
 			/**
 			 * @brief Returns the right UBO index from element index.
@@ -128,15 +200,19 @@ namespace Emeraude::Vulkan
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t bufferIndex (uint32_t index) const noexcept;
+			size_t
+			bufferIndex (uint32_t index) const noexcept
+			{
+				return std::floor(index / m_maxElementCountPerUBO);
+			}
 
 			std::shared_ptr< Device > m_device;
-			Saphir::Declaration::UniformBlock m_uniformBlock;
 			size_t m_uniformBlockSize;
 			size_t m_maxElementCountPerUBO{0};
 			size_t m_blockAlignedSize{0};
-			std::vector< std::unique_ptr< UniformBufferObject > > m_uniformBufferObjects{};
-			std::vector< const void * > m_elements{};
-			mutable std::mutex m_memoryAccess{};
+			std::vector< std::unique_ptr< UniformBufferObject > > m_uniformBufferObjects;
+			std::vector< std::unique_ptr< DescriptorSet > > m_descriptorSets;
+			std::vector< const void * > m_elements;
+			mutable std::mutex m_memoryAccess;
 	};
 }

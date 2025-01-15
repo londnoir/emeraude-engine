@@ -1,41 +1,50 @@
 /*
- * Emeraude/Saphir/EffectInterface.hpp
- * This file is part of Emeraude
+ * src/Saphir/EffectInterface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <set>
+/* STL inclusions. */
 #include <memory>
+#include <set>
+
+/* Forward declarations */
+namespace Emeraude::Saphir
+{
+	namespace Generator
+	{
+		class Abstract;
+	}
+
+	class VertexShader;
+	class FragmentShader;
+}
 
 namespace Emeraude::Saphir
 {
-	/* Forward declarations. */
-	class ShaderGenerator;
-
 	/**
 	 * @brief The effect interface.
 	 */
@@ -75,12 +84,22 @@ namespace Emeraude::Saphir
 			virtual ~EffectInterface () = default;
 
 			/**
-			 * @brief Generates the source code for this effect.
-			 * @param generator A reference to shader generator.
+			 * @brief Generates the code responsible for the vertex shader.
+			 * @param generator A reference to the graphics shader generator.
+			 * @param vertexShader A reference to the vertex shader.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool generate (ShaderGenerator & generator) const noexcept = 0;
+			virtual bool generateVertexShaderCode (Generator::Abstract & generator, VertexShader & vertexShader) const noexcept = 0;
+
+			/**
+			 * @brief Generates the code responsible for the fragment shader.
+			 * @param generator A reference to the graphics shader generator.
+			 * @param vertexShader A reference to the fragment shader.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			virtual bool generateFragmentShaderCode (Generator::Abstract & generator, FragmentShader & fragmentShader) const noexcept = 0;
 
 		protected:
 

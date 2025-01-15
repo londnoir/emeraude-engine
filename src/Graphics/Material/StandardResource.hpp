@@ -1,48 +1,82 @@
 /*
- * Emeraude/Graphics/Material/StandardResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Material/StandardResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Resources/Container.hpp"
 #include "Component/Interface.hpp"
+#include "Graphics/TextureResource/Abstract.hpp"
+#include "Graphics/Types.hpp"
+#include "Physics/PhysicalSurfaceProperties.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Resources/Container.hpp"
+#include "Resources/ResourceTrait.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
+{
+	namespace Graphics
+	{
+		namespace Material::Component
+		{
+			class Texture;
+		}
+
+		class Renderer;
+	}
+
+	namespace Vulkan
+	{
+		class SharedUniformBuffer;
+	}
+
+	namespace Resources
+	{
+		class Manager;
+	}
+}
 
 namespace Emeraude::Graphics::Material
 {
 	/**
 	 * @brief The standard material resource of the engine.
+	 * @extends Emeraude::Graphics::Material::Interface This is a material.
 	 */
 	class StandardResource final : public Interface
 	{
@@ -55,6 +89,15 @@ namespace Emeraude::Graphics::Material
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"MaterialStandardResource"};
 
+			/* Shader specific keys. */
+			static constexpr auto SurfaceAmbientColor{"SurfaceAmbientColor"};
+			static constexpr auto SurfaceDiffuseColor{"SurfaceDiffuseColor"};
+			static constexpr auto SurfaceSpecularColor{"SurfaceSpecularColor"};
+			static constexpr auto SurfaceAutoIlluminationColor{"SurfaceAutoIlluminationColor"};
+			static constexpr auto SurfaceOpacityAmount{"SurfaceOpacityAmount"};
+			static constexpr auto SurfaceNormalVector{"SurfaceNormalVector"};
+			static constexpr auto SurfaceReflectionColor{"SurfaceReflectionColor"};
+
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
@@ -66,15 +109,45 @@ namespace Emeraude::Graphics::Material
 			explicit StandardResource (const std::string & name, int resourceFlagBits = 0) noexcept;
 
 			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			StandardResource (const StandardResource & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			StandardResource (StandardResource && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return StandardResource &
+			 */
+			StandardResource & operator= (const StandardResource & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return StandardResource &
+			 */
+			StandardResource & operator= (StandardResource && copy) noexcept = delete;
+			
+			/**
 			 * @brief Destructs the material.
 			 */
 			~StandardResource () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
@@ -84,200 +157,287 @@ namespace Emeraude::Graphics::Material
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::ShaderGenerationInterface::generateShaderCode() */
-			[[nodiscard]]
-			bool generateShaderCode (Saphir::ShaderGenerator & generator, const Graphics::Geometry::Interface & geometry) const noexcept override;
+			/** @copydoc Emeraude::Graphics::Material::Interface::create() */
+			bool create (Renderer & renderer) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::create() */
-			bool create () noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Material::destroy() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::destroy() */
 			void destroy () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::isCreated() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::isCreated() */
 			[[nodiscard]]
 			bool isCreated () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::physicalSurfaceProperties() const */
+			/** @copydoc Emeraude::Graphics::Material::Interface::isCreated() */
+			[[nodiscard]]
+			bool isComplex () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::setupLightGenerator() */
+			[[nodiscard]]
+			bool setupLightGenerator (Saphir::LightGenerator & lightGenerator) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::generateVertexShaderCode() */
+			[[nodiscard]]
+			bool generateVertexShaderCode (Saphir::Generator::Abstract & generator, Saphir::VertexShader & vertexShader) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::generateFragmentShaderCode() */
+			[[nodiscard]]
+			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::LightGenerator & lightGenerator, Saphir::FragmentShader & fragmentShader) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::physicalSurfaceProperties() const */
 			[[nodiscard]]
 			const Physics::PhysicalSurfaceProperties & physicalSurfaceProperties () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::physicalSurfaceProperties() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::physicalSurfaceProperties() */
 			[[nodiscard]]
 			Physics::PhysicalSurfaceProperties & physicalSurfaceProperties () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::frameCount() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::frameCount() */
 			[[nodiscard]]
-			size_t frameCount () const noexcept override;
+			uint32_t frameCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::duration() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::duration() */
 			[[nodiscard]]
-			float duration () const noexcept override;
+			uint32_t duration () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::isTranslucent() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::frameIndexAt() */
 			[[nodiscard]]
-			bool isTranslucent () const noexcept override;
+			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::enableBlending() */
-			void enableBlending () noexcept override;
+			/** @copydoc Emeraude::Graphics::Material::Interface::enableBlending() */
+			void enableBlending (BlendingMode mode) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::setBlendingMode() */
-			void setBlendingMode (BlendingMode mode) noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Material::blendingMode() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::blendingMode() */
 			[[nodiscard]]
 			BlendingMode blendingMode () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::descriptorSetLayout() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::fragmentColor() */
+			[[nodiscard]]
+			std::string fragmentColor () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::descriptorSetLayout() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::DescriptorSetLayout > descriptorSetLayout () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::descriptorSet() */
+			/** @copydoc Emeraude::Graphics::Material::Interface::UBOIndex() */
+			[[nodiscard]]
+			uint32_t UBOIndex () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::UBOAlignment() */
+			[[nodiscard]]
+			uint32_t UBOAlignment () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::UBOOffset() */
+			[[nodiscard]]
+			uint32_t UBOOffset () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::descriptorSet() */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet * descriptorSet () const noexcept override;
 
-			/**
-			 * @brief Sets a color for the ambient, diffuse and ComponentTypeInterface.
-			 * @param color A reference to a color.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setColor (const Libraries::PixelFactory::Color< float > & color, float shininess = 32.0F) noexcept;
-
-			/**
-			 * @brief Sets a color for the diffuse component and another for ambient and specular component.
-			 * @param diffuseColor A reference to a color.
-			 * @param altColor A reference to a color.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setColor (const Libraries::PixelFactory::Color< float > & diffuseColor, const Libraries::PixelFactory::Color< float > & altColor, float shininess = 32.0F) noexcept;
-
-			/**
-			 * @brief Sets a texture for the ambient, diffuse and specular component.
-			 * @param texture A reference to a texture smart pointer.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setTexture (const std::shared_ptr< TextureResource::Abstract > & texture, float shininess = 32.0F) noexcept;
-
-			/**
-			 * @brief Sets a texture for the diffuse component and another for ambient and specular component.
-			 * @param diffuseTexture A reference to a texture smart pointer.
-			 * @param altTexture A reference to a texture smart pointer.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setTexture (const std::shared_ptr< TextureResource::Abstract > & diffuseTexture, const std::shared_ptr< TextureResource::Abstract > & altTexture, float shininess = 32.0F) noexcept;
-
-			/**
-			 * @brief Sets a texture for the diffuse component and a color for ambient and specular component.
-			 * @param diffuseTexture A reference to a texture smart pointer.
-			 * @param altColor A reference to a color.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setTexture (const std::shared_ptr< TextureResource::Abstract > & diffuseTexture, const Libraries::PixelFactory::Color< float > & altColor, float shininess = 32.0F) noexcept;
+			/** @copydoc Emeraude::Graphics::Material::Interface::getUniformBlock() */
+			[[nodiscard]]
+			Saphir::Declaration::UniformBlock getUniformBlock (uint32_t set, uint32_t binding) const noexcept override;
 
 			/**
 			 * @brief Sets the ambient component as a color.
+			 * @warning This function is available before creation time.
 			 * @param color A reference to a color.
-			 * @return void
+			 * @return bool
 			 */
-			void setAmbientComponent (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			bool setAmbientComponent (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the ambient component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
-			 * @return void
+			 * @return bool
 			 */
-			void setAmbientComponent (const std::shared_ptr< TextureResource::Abstract > & texture) noexcept;
+			bool setAmbientComponent (const std::shared_ptr< TextureResource::Abstract > & texture) noexcept;
 
 			/**
 			 * @brief Sets the diffuse component as a color.
+			 * @warning This function is available before creation time.
 			 * @param color A reference to a color.
-			 * @return void
+			 * @return bool
 			 */
-			void setDiffuseComponent (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			bool setDiffuseComponent (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the diffuse component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
-			 * @return void
+			 * @return bool
 			 */
-			void setDiffuseComponent (const std::shared_ptr< TextureResource::Abstract > & texture) noexcept;
+			bool setDiffuseComponent (const std::shared_ptr< TextureResource::Abstract > & texture) noexcept;
 
 			/**
 			 * @brief Sets the specular component as a color.
+			 * @warning This function is available before creation time.
 			 * @param color A reference to a color.
 			 * @param shininess A positive value.
-			 * @return void
+			 * @return bool
 			 */
-			void setSpecularComponent (const Libraries::PixelFactory::Color< float > & color, float shininess = 32.0F) noexcept;
+			bool setSpecularComponent (const Libraries::PixelFactory::Color< float > & color, float shininess = DefaultShininess) noexcept;
 
 			/**
 			 * @brief Sets the specular component as a texture.
-			 * @param color A reference to a texture smart pointer.
-			 * @param shininess A positive value. Default 32.0.
-			 * @return void
-			 */
-			void setSpecularComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float shininess = 32.0F) noexcept;
-
-			/**
-			 * @brief Sets the auto-illumination component as a value.
-			 * @param value The initial amount of auto-illumination.
-			 * @param amount The control amount. Default 100%.
-			 * @return void
-			 */
-			void setAutoIlluminationComponent (float value, float amount = 1.0F) noexcept;
-
-			/**
-			 * @brief Sets the auto-illumination component as a color.
-			 * @param color A reference to a color.
-			 * @param amount The control amount. Default 100%.
-			 * @return void
-			 */
-			void setAutoIlluminationComponent (const Libraries::PixelFactory::Color< float > & color, float amount = 1.0F) noexcept;
-
-			/**
-			 * @brief Sets the auto-illumination component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
-			 * @param amount The control amount. Default 100%.
-			 * @return void
+			 * @param shininess A positive value. Default 32.0.
+			 * @return bool
 			 */
-			void setAutoIlluminationComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = 1.0F) noexcept;
+			bool setSpecularComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float shininess = DefaultShininess) noexcept;
 
 			/**
 			 * @brief Sets the opacity component as a value.
-			 * @param value The initial amount of opacity.
+			 * @warning This function is available before creation time.
 			 * @param amount The control amount. Default 100%.
-			 * @return void
+			 * @return bool
 			 */
-			void setOpacityComponent (float value, float amount = 1.0F) noexcept;
+			bool setOpacityComponent (float amount = DefaultOpacity) noexcept;
 
 			/**
-			 * @brief Sets the opacity component as a texure.
+			 * @brief Sets the opacity component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
 			 * @param amount The control amount. Default 100%.
-			 * @return void
+			 * @return bool
 			 */
-			void setOpacityComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = 1.0F) noexcept;
+			bool setOpacityComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = DefaultOpacity) noexcept;
 
 			/**
-			 * @brief Sets the normal component as a texure.
+			 * @brief Sets the auto-illumination component as a value.
+			 * @warning This function is available before creation time.
+			 * @note The auto-illumination will light globally up the diffuse color.
+			 * @param amount The control amount. Default 100%.
+			 * @return bool
+			 */
+			bool setAutoIlluminationComponent (float amount = DefaultAutoIlluminationAmount) noexcept;
+
+			/**
+			 * @brief Sets the auto-illumination component as a color.
+			 * @warning This function is available before creation time.
+			 * @note The auto-illumination will light globally up a custom color over the final result.
+			 * @param color A reference to a color.
+			 * @param amount The control amount. Default 100%.
+			 * @return bool
+			 */
+			bool setAutoIlluminationComponent (const Libraries::PixelFactory::Color< float > & color, float amount = DefaultAutoIlluminationAmount) noexcept;
+
+			/**
+			 * @brief Sets the auto-illumination component as a texture.
+			 * @warning This function is available before creation time.
+			 * @note The auto-illumination will light up the final result using a texture.
+			 * @param texture A reference to a texture smart pointer.
+			 * @param amount The control amount. Default 100%.
+			 * @return bool
+			 */
+			bool setAutoIlluminationComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = DefaultAutoIlluminationAmount) noexcept;
+
+			/**
+			 * @brief Sets the normal component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
 			 * @param scale The scale value. Default 1.0.
-			 * @return void
+			 * @return bool
 			 */
-			void setNormalComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float scale = 1.0F) noexcept;
+			bool setNormalComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float scale = DefaultNormalScale) noexcept;
 
 			/**
-			 * @brief Sets the reflection component as a texure.
+			 * @brief Sets the reflection component as a texture.
+			 * @warning This function is available before creation time.
 			 * @param texture A reference to a texture smart pointer.
 			 * @param amount The control amount. Default 50%.
+			 * @return bool
+			 */
+			bool setReflectionComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = DefaultReflectionAmount) noexcept;
+
+			/**
+			 * @brief Returns whether a material component is present.
+			 * @param componentType The type of component.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool isComponentPresent (ComponentType componentType) const noexcept;
+
+			/**
+			 * @brief Changes the ambient color.
+			 * @note This is a dynamic property.
+			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setReflectionComponent (const std::shared_ptr< TextureResource::Abstract > & texture, float amount = 0.5F) noexcept;
+			void setAmbientColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+
+			/**
+			 * @brief Changes the diffuse color.
+			 * @note This is a dynamic property.
+			 * @param color A reference to a color.
+			 * @return void
+			 */
+			void setDiffuseColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+
+			/**
+			 * @brief Changes the specular color.
+			 * @note This is a dynamic property.
+			 * @param color A reference to a color.
+			 * @return void
+			 */
+			void setSpecularColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+
+			/**
+			 * @brief Changes the auto-illumination color.
+			 * @note This is a dynamic property.
+			 * @param color A reference to a color.
+			 * @return void
+			 */
+			void setAutoIlluminationColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+
+			/**
+			 * @brief Changes the specular shininess amount.
+			 * @note This is a dynamic property.
+			 * @param value A positive value.
+			 * @return void
+			 */
+			void setShininess (float value) noexcept;
+
+			/**
+			 * @brief Changes the opacity.
+			 * @note This is a dynamic property.
+			 * @param value A value between 0.0 and 1.0
+			 * @return void
+			 */
+			void setOpacity (float value) noexcept;
+
+			/**
+			 * @brief Sets an alpha value below the pixel will be discarded.
+			 * @param value A value between 0.0 and 1.0
+			 * @return void
+			 */
+			void setAlphaThresholdToDiscard (float value) noexcept;
+
+			/**
+			 * @brief Changes the auto-illumination amount of light.
+			 * @note This is a dynamic property.
+			 * @param value A positive value.
+			 * @return void
+			 */
+			void setAutoIlluminationAmount (float value) noexcept;
+
+			/**
+			 * @brief Changes the normal mapping scale factor.
+			 * @note This is a dynamic property.
+			 * @param value A value.
+			 * @return void
+			 */
+			void setNormalScale (float value) noexcept;
+
+			/**
+			 * @brief Changes the reflection amount.
+			 * @note This is a dynamic property.
+			 * @param value A value between 0.0 and 1.0
+			 * @return void
+			 */
+			void setReflectionAmount (float value) noexcept;
 
 			/**
 			 * @brief Returns a standard material resource by its name.
@@ -297,11 +457,178 @@ namespace Emeraude::Graphics::Material
 
 		private:
 
-			std::shared_ptr< Vulkan::DescriptorSetLayout > m_descriptorSetLayout{};
-			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet{};
+			/** @copydoc Emeraude::Graphics::Material::Interface::getSharedUniformBufferIdentifier() */
+			[[nodiscard]]
+			std::string getSharedUniformBufferIdentifier () const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::createElementInSharedBuffer() */
+			[[nodiscard]]
+			bool createElementInSharedBuffer (Renderer & renderer, const std::string & identifier) noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::createDescriptorSetLayout() */
+			[[nodiscard]]
+			bool createDescriptorSetLayout (Vulkan::LayoutManager & layoutManager, const std::string & identifier) noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::createDescriptorSet() */
+			[[nodiscard]]
+			bool createDescriptorSet (Renderer & renderer, const Vulkan::UniformBufferObject & uniformBufferObject) noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Material::Interface::onMaterialLoaded() */
+			void onMaterialLoaded () noexcept override;
+
+			/**
+			 * @brief Parses the ambient component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseAmbientComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the diffuse component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseDiffuseComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the specular component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseSpecularComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the opacity component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseOpacityComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the auto-illumination component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseAutoIlluminationComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the normal component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseNormalComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Parses the reflection component from JSON data.
+			 * @param data A reference to the JSON data.
+			 * @param resources A reference to the resource manager.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool parseReflectionComponent (const Json::Value & data, Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Creates the necessary data onto the GPU for this material.
+			 * @param renderer A reference to the graphics renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createVideoMemory (Renderer & renderer) noexcept;
+
+			/**
+			 * @brief Updates the UBO with material properties.
+			 * @return void
+			 */
+			bool updateVideoMemory () noexcept;
+
+			/**
+			 * @brief Generates the fragment shader code for a specific component.
+			 * @param componentType The component type to find in the material.
+			 * @param codeGenerator A reference to a function to generate the actual code.
+			 * @param fragmentShader A reference to the fragment shader being generated.
+			 * @param materialSet The current material set.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool generateTextureComponentFragmentShader (ComponentType componentType, const std::function< bool (Saphir::FragmentShader &, const Component::Texture *) > & codeGenerator, Saphir::FragmentShader & fragmentShader, uint32_t materialSet) const noexcept;
+
+			/**
+			 * @brief Returns the right texture coordinates for a component.
+			 * @param component A pointer to the texture component.
+			 * @return const char *
+			 */
+			[[nodiscard]]
+			static const char * textCoords (const Component::Texture * component) noexcept;
+
+			/* Flag names. */
+			static constexpr auto VideoMemoryUpdateRequested{0UL};
+
+			/* Uniform buffer object offset to write data. */
+			static constexpr auto AmbientColorOffset{0UL};
+			static constexpr auto DiffuseColorOffset{4UL};
+			static constexpr auto SpecularColorOffset{8UL};
+			static constexpr auto AutoIlluminationColorOffset{12UL};
+			static constexpr auto ShininessOffset{16UL};
+			static constexpr auto OpacityOffset{17UL};
+			static constexpr auto AutoIlluminationAmountOffset{18UL};
+			static constexpr auto NormalScaleOffset{19UL};
+			static constexpr auto ReflectionAmountOffset{20UL};
+
+			/* Default values. */
+			static constexpr auto DefaultAmbientColor{Libraries::PixelFactory::DarkGrey};
+			static constexpr auto DefaultDiffuseColor{Libraries::PixelFactory::Grey};
+			static constexpr auto DefaultSpecularColor{Libraries::PixelFactory::White};
+			static constexpr auto DefaultAutoIlluminationColor{Libraries::PixelFactory::White};
+			static constexpr auto DefaultShininess{32.0F};
+			static constexpr auto DefaultOpacity{1.0F};
+			static constexpr auto DefaultAutoIlluminationAmount{1.0F};
+			static constexpr auto DefaultNormalScale{1.0F};
+			static constexpr auto DefaultReflectionAmount{0.5F};
+
 			Physics::PhysicalSurfaceProperties m_physicalSurfaceProperties{};
 			std::unordered_map< ComponentType, std::unique_ptr< Component::Interface > > m_components{};
 			BlendingMode m_blendingMode{BlendingMode::None};
+			std::array< float, 24 > m_materialProperties{
+				/* Ambient color (4), */
+				DefaultAmbientColor.red(), DefaultAmbientColor.green(), DefaultAmbientColor.blue(), DefaultDiffuseColor.alpha(),
+				/* Diffuse color (4), */
+				DefaultDiffuseColor.red(), DefaultDiffuseColor.green(), DefaultDiffuseColor.blue(), DefaultDiffuseColor.alpha(),
+				/* Specular color (4), */
+				DefaultSpecularColor.red(), DefaultSpecularColor.green(), DefaultSpecularColor.blue(), DefaultSpecularColor.alpha(),
+				/* Auto-illumination color (4), */
+				DefaultAutoIlluminationColor.red(), DefaultAutoIlluminationColor.green(), DefaultAutoIlluminationColor.blue(), DefaultAutoIlluminationColor.alpha(),
+				/* Shininess (1), Opacity (1), AutoIlluminationColor (1), NormalScale (1). */
+				DefaultShininess, DefaultOpacity, DefaultAutoIlluminationAmount, DefaultNormalScale,
+				/* ReflectionAmount (1), Unused (1), Unused (1), Unused (1). */
+				DefaultReflectionAmount, 0.0F, 0.0F, 0.0F
+			};
+			std::shared_ptr< Vulkan::DescriptorSetLayout > m_descriptorSetLayout{};
+			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet{};
+			std::shared_ptr< Vulkan::SharedUniformBuffer > m_sharedUniformBuffer{};
+			float m_alphaThresholdToDiscard{0.1F};
+			uint32_t m_sharedUBOIndex{0};
+			std::array< bool, 8 > m_flags{
+				true/*VideoMemoryUpdateRequested*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }
 

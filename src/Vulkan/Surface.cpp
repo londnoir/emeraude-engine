@@ -1,35 +1,39 @@
 /*
- * Emeraude/Vulkan/Surface.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Surface.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Surface.hpp"
 
+/* STL inclusions. */
+#include <sstream>
+
 /* Local inclusions. */
 #include "Instance.hpp"
 #include "PhysicalDevice.hpp"
+#include "Device.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
@@ -39,7 +43,8 @@ namespace Emeraude::Vulkan
 	Surface::Surface (const Instance & instance, const VkSurfaceKHR & surface) noexcept
 		: m_instance(instance), m_handle(surface)
 	{
-
+		/* NOTE: This is a resource given "as is" from the OS. */
+		this->setCreated();
 	}
 
 	Surface::~Surface ()
@@ -54,6 +59,8 @@ namespace Emeraude::Vulkan
 			vkDestroySurfaceKHR(m_instance.handle(), m_handle, nullptr);
 
 			m_handle = VK_NULL_HANDLE;
+
+			this->setDestroyed();
 		}
 	}
 
@@ -120,46 +127,10 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	VkSurfaceKHR
-	Surface::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	const VkSurfaceCapabilitiesKHR &
-	Surface::capabilities () const noexcept
-	{
-		return m_capabilities;
-	}
-
-	const std::vector< VkSurfaceFormatKHR > &
-	Surface::formats () const noexcept
-	{
-		return m_formats;
-	}
-
-	const std::vector< VkPresentModeKHR > &
-	Surface::presentModes () const noexcept
-	{
-		return m_presentModes;
-	}
-
-	const std::vector< VkRect2D > &
-	Surface::presentRectangles () const noexcept
-	{
-		return m_presentRectangles;
-	}
-
-	bool
-	Surface::presentationSupported () const noexcept
-	{
-		return m_supported;
-	}
-
 	std::string
 	Surface::getCapabilitiesString (const VkSurfaceCapabilitiesKHR & capabilities) noexcept
 	{
-		std::stringstream output{};
+		std::stringstream output;
 
 		output <<
 			"Minimum image count : " << capabilities.minImageCount << "\n"

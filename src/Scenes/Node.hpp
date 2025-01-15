@@ -1,36 +1,39 @@
 /*
- * Emeraude/Scenes/Node.hpp
- * This file is part of Emeraude
+ * src/Scenes/Node.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <string>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <any>
 #include <map>
 #include <memory>
+#include <string>
 
 /* Local inclusions for inheritances. */
 #include "AbstractEntity.hpp"
@@ -38,18 +41,19 @@
 #include "Animations/AnimatableInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Audio/SoundResource.hpp"
+#include "Libraries/Variant.hpp"
 #include "Graphics/Frustum.hpp"
 
 namespace Emeraude::Scenes
 {
 	/**
 	 * @brief The Node class is the key component to build the scene node tree.
+	 * @extends std::enable_shared_from_this A node need to self replicate its smart pointer.
 	 * @extends Emeraude::Scenes::AbstractEntity A node is an entity of the 3D world.
 	 * @extends Emeraude::Physics::MovableTrait A node is a movable entity in the 3D world.
 	 * @extends Emeraude::Animations::AnimatableInterface A node can be animated by the engine logics.
 	 */
-	class Node final : public AbstractEntity, public Physics::MovableTrait, public Animations::AnimatableInterface
+	class Node final : public std::enable_shared_from_this< Node >, public AbstractEntity, public Physics::MovableTrait, public Animations::AnimatableInterface
 	{
 		public:
 
@@ -62,8 +66,11 @@ namespace Emeraude::Scenes
 			/** @brief Observable notification codes. */
 			enum NotificationCode
 			{
-				NodeCreated = AbstractEntity::MaxEnum,
-				NodeDeleted,
+				SubNodeCreating = AbstractEntity::MaxEnum,
+				SubNodeCreated,
+				SubNodeDeleting,
+				SubNodeDeleted,
+				NodeCollision,
 				/* Enumeration boundary. */
 				MaxEnum
 			};
@@ -109,63 +116,139 @@ namespace Emeraude::Scenes
 			static constexpr auto WorldYRotation = 35;
 			static constexpr auto WorldZRotation = 36;
 
-			static constexpr auto Root = "root";
+			static constexpr auto Root{"root"};
 
 			/**
 			 * @brief Constructs the root node.
-			 * @param parentScene A pointer to scene holding this node.
 			 */
-			explicit Node (Scene * parentScene) noexcept;
+			Node () noexcept;
 
 			/**
 			 * @brief Constructs a child node.
 			 * @param name The name of the sub child node.
 			 * @param parent a reference to the smart pointer of the parent.
+			 * @param sceneTimeMS The scene current time in milliseconds.
 			 * @param coordinates A reference to a coordinates. Default Origin.
 			 */
-			Node (const std::string & name, const std::shared_ptr< Node > & parent, const Libraries::Math::Coordinates< float > & coordinates = {}) noexcept;
+			Node (const std::string & name, const std::shared_ptr< Node > & parent, uint32_t sceneTimeMS, const Libraries::Math::CartesianFrame< float > & coordinates = {}) noexcept;
 
-			/** @brief Deleted copy constructor. */
-			Node (const Node & copy) = delete;
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Node (const Node & copy) noexcept = delete;
 
-			/** @brief Deleted move constructor. */
-			Node (Node && copy) = delete;
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Node (Node && copy) noexcept = delete;
 
-			/** @brief Destructor. */
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Node &
+			 */
+			Node & operator= (const Node & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Node &
+			 */
+			Node & operator= (Node && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the node.
+			 */
 			~Node () override;
 
-			/** @brief Deleted assignment operator. */
-			Node & operator= (const Node & other) = delete;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::setPosition(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
+			void setPosition (const Libraries::Math::Vector< 3, float > & position, Libraries::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @brief Deleted move assignment operator. */
-			Node & operator= (Node && other) = delete;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::setXPosition(float, Libraries::Math::TransformSpace) */
+			void setXPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Libraries::Observable::is() */
-			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::setYPosition(float, Libraries::Math::TransformSpace) */
+			void setYPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::AbstractEntity::isRenderable() */
-			[[nodiscard]]
-			bool isRenderable () const noexcept override;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::setZPosition(float, Libraries::Math::TransformSpace) */
+			void setZPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::AbstractEntity::hasPhysicalObjectProperties() */
-			[[nodiscard]]
-			bool hasPhysicalObjectProperties () const noexcept override;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::move(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
+			void move (const Libraries::Math::Vector< 3, float > & distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setLocalCoordinates() */
-			void setLocalCoordinates (const Libraries::Math::Coordinates< float > & coordinates) noexcept override;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::moveX(float, Libraries::Math::TransformSpace) */
+			void moveX (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::moveY(float, Libraries::Math::TransformSpace) */
+			void moveY (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::moveZ(float, Libraries::Math::TransformSpace) */
+			void moveZ (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::rotate(float, const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
+			void rotate (float radian, const Libraries::Math::Vector< 3, float > & axis, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::pitch(float, Libraries::Math::TransformSpace) */
+			void pitch (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::yaw(float, Libraries::Math::TransformSpace) */
+			void yaw (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::roll(float, Libraries::Math::TransformSpace) */
+			void roll (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::scale(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
+			void scale (const Libraries::Math::Vector< 3, float > & factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::scale(float, Libraries::Math::TransformSpace) */
+			void scale (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleX(float, Libraries::Math::TransformSpace) */
+			void scaleX (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleY(float, Libraries::Math::TransformSpace) */
+			void scaleY (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleZ(float, Libraries::Math::TransformSpace) */
+			void scaleZ (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::lookAt(const Libraries::Math::Vector< 3, float > &, bool) */
+			void
+			lookAt (const Libraries::Math::Vector< 3, float > & target, bool flipZAxis) noexcept override
+			{
+				m_cartesianFrame.lookAt(target, flipZAxis);
+
+				this->onLocationDataUpdate();
+			}
+
+			/** @copydoc Emeraude::Scenes::LocatableInterface::setLocalCoordinates(const Libraries::Math::CartesianFrame< float > &) */
+			void
+			setLocalCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates) noexcept override
+			{
+				m_cartesianFrame = coordinates;
+			}
 
 			/** @copydoc Emeraude::Scenes::LocatableInterface::localCoordinates() const */
 			[[nodiscard]]
-			const Libraries::Math::Coordinates< float > & localCoordinates () const noexcept override;
+			const Libraries::Math::CartesianFrame< float > &
+			localCoordinates () const noexcept override
+			{
+				return m_cartesianFrame;
+			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::getWritableLocalCoordinates() */
+			/** @copydoc Emeraude::Scenes::LocatableInterface::localCoordinates() */
 			[[nodiscard]]
-			Libraries::Math::Coordinates< float > & getWritableLocalCoordinates () noexcept override;
+			Libraries::Math::CartesianFrame< float > &
+			localCoordinates () noexcept override
+			{
+				return m_cartesianFrame;
+			}
 
 			/** @copydoc Emeraude::Scenes::LocatableInterface::getWorldCoordinates() const */
 			[[nodiscard]]
-			Libraries::Math::Coordinates< float > getWorldCoordinates () const noexcept override;
+			Libraries::Math::CartesianFrame< float > getWorldCoordinates () const noexcept override;
 
 			/** @copydoc Emeraude::Scenes::LocatableInterface::getWorldBoundingBox() const */
 			[[nodiscard]]
@@ -175,93 +258,104 @@ namespace Emeraude::Scenes
 			[[nodiscard]]
 			Libraries::Math::Sphere< float > getWorldBoundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Physics::PhysicalInterface::enableSphereCollision() const */
-			void enableSphereCollision (bool state) noexcept override;
+			/** @copydoc Emeraude::Scenes::LocatableInterface::enableSphereCollision(bool) */
+			void
+			enableSphereCollision (bool state) noexcept override
+			{
+				this->setFlag(SphereCollisionEnabled, state);
+			}
 
-			/** @copydoc Emeraude::Physics::PhysicalInterface::sphereCollisionIsEnabled() */
+			/** @copydoc Emeraude::Scenes::LocatableInterface::sphereCollisionIsEnabled() const */
 			[[nodiscard]]
-			bool sphereCollisionIsEnabled () const noexcept override;
+			bool
+			sphereCollisionIsEnabled () const noexcept override
+			{
+				return this->isFlagEnabled(SphereCollisionEnabled);
+			}
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::setMovingAbility() */
-			void setMovingAbility (bool state) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::MovableTrait::isMovable() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool isMovable () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::pauseSimulation() */
-			void pauseSimulation (bool state) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::MovableTrait::isSimulationPaused() */
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool isSimulationPaused () const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::enableFreeFlyMode() */
-			void enableFreeFlyMode (bool state) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::MovableTrait::isFreeFlyModeEnabled() */
+			/** @copydoc Emeraude::Scenes::AbstractEntity::hasMovableAbility() const */
 			[[nodiscard]]
-			bool isFreeFlyModeEnabled () const noexcept override;
+			bool
+			hasMovableAbility () const noexcept override
+			{
+				return true;
+			}
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::enableNoClippingMode() */
-			void enableNoClippingMode (bool state) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::MovableTrait::isNoClippingModeEnabled() */
+			/** @copydoc Emeraude::Scenes::AbstractEntity::isMoving() const */
 			[[nodiscard]]
-			bool isNoClippingModeEnabled () const noexcept override;
+			bool
+			isMoving () const noexcept override
+			{
+				return this->hasVelocity();
+			}
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::getWorldVelocity() */
+			/** @copydoc Emeraude::Scenes::AbstractEntity::getMovableTrait() */
+			[[nodiscard]]
+			MovableTrait *
+			getMovableTrait () noexcept override
+			{
+				return this;
+			}
+
+			/** @copydoc Emeraude::Physics::MovableTrait::getWorldVelocity() const */
 			[[nodiscard]]
 			Libraries::Math::Vector< 3, float > getWorldVelocity () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::MovableTrait::getWorldAcceleration() */
-			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getWorldAcceleration () const noexcept override;
-
-			/** @copydoc Emeraude::Scenes::MovableTrait::getWorldCenterOfMass() */
+			/** @copydoc Emeraude::Physics::MovableTrait::getWorldCenterOfMass() const */
 			[[nodiscard]]
 			Libraries::Math::Vector< 3, float > getWorldCenterOfMass () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::isSimulationPaused::moveTo() */
-			void moveTo (const Libraries::Math::Vector< 3, float > & position, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
+			/** @copydoc Emeraude::Physics::MovableTrait::onHit() */
+			void
+			onHit (float impactForce) noexcept override
+			{
+				this->notify(NodeCollision, impactForce);
+			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnXAxisTo() */
-			void moveOnXAxisTo (float xPosition, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnYAxisTo() */
-			void moveOnYAxisTo (float yPosition, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnZAxisTo() */
-			void moveOnZAxisTo (float zPosition, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveBy() */
-			void moveBy (const Libraries::Math::Vector< 3, float > & distance, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnXAxisBy() */
-			void moveOnXAxisBy (float xShift, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnYAxisBy() */
-			void moveOnYAxisBy (float yShift, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveOnZAxisBy() */
-			void moveOnZAxisBy (float zShift, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Parent) noexcept override;
-
-			/** @copydoc Emeraude::Scenes::LocatableInterface::rotate() */
-			void rotate (float radian, const Libraries::Math::Vector< 3, float > & axis, Libraries::Math::TransformSpace transformSpace = Libraries::Math::TransformSpace::Local) noexcept override;
+			/** @copydoc Emeraude::Physics::MovableTrait::onImpulse() */
+			void
+			onImpulse () noexcept override
+			{
+				this->pauseSimulation(false);
+			}
 
 			/**
 			 * @brief Returns whether the node is the top tree one. Parent pointer is nullptr.
 			 * @return bool.
 			 */
 			[[nodiscard]]
-			bool isRoot () const noexcept;
+			bool
+			isRoot () const noexcept
+			{
+				return m_parent.expired();
+			}
 
 			/**
 			 * @brief Returns true if the node have no child.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isLeaf () const noexcept;
+			bool
+			isLeaf () const noexcept
+			{
+				return m_children.empty();
+			}
 
 			/**
 			 * @brief Returns the level below the root of this node.
@@ -271,146 +365,156 @@ namespace Emeraude::Scenes
 			size_t getDepth () const noexcept;
 
 			/**
-			 * @brief Returns the parent node or nullptr is the current one is root.
-			 * @return shared_ptr< Node >.
+			 * @brief Returns the parent node smart pointer.
+			 * @warning If the node is root, it will be nullptr.
+			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > parentNode () noexcept;
-
-			/**
-			 * @brief Returns the parent node or nullptr is the current one is root.
-			 * @return shared_ptr< const Node >.
-			 */
-			[[nodiscard]]
-			std::shared_ptr< const Node > parentNode () const noexcept;
-
-			/**
-			 * @brief Returns the root node.
-			 * @return shared_ptr< Node >.
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Node > getRootNode () noexcept;
-
-			/**
-			 * @brief Returns the root node.
-			 * @return shared_ptr< const Node >.
-			 */
-			[[nodiscard]]
-			std::shared_ptr< const Node > getRootNode () const noexcept;
-
-			/**
-			 * @brief Returns the children nodes.
-			 * @return const map< string, shared_ptr< Node > > &
-			 */
-			[[nodiscard]]
-			const std::map< std::string, std::shared_ptr< Node > > & subNodes () const noexcept;
-
-			/**
-			 * @brief Returns the children nodes.
-			 * @return map< string, shared_ptr< Node > > &
-			 */
-			[[nodiscard]]
-			std::map< std::string, std::shared_ptr< Node > > & subNodes () noexcept;
-
-			/**
-			 * @brief Returns the neighbor nodes.
-			 * @return set< shared_ptr< Node > >
-			 */
-			[[nodiscard]]
-			std::set< std::shared_ptr< Node > > getNeighborNodes (float radius) const noexcept;
-
-			/**
-			 * @brief Creates a sub node at a given coordinates.
-			 * @warning  If the node already exists, the coordinates will be ignored.
-			 * @param name The name of the new node.
-			 * @param coordinates Set the coordinates of the new node. Default Origin.
-			 * @return shared_ptr< Node >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Node > createSubNode (const std::string & name, const Libraries::Math::Coordinates< float > & coordinates = {}) noexcept;
-
-			/**
-			 * @brief Creates a sub node at a given position.
-			 * @warning  If the node already exists the position will be ignored.
-			 * @param name The name of the new node.
-			 * @param position Set the position of the new node.
-			 * @return shared_ptr< Node >
-			 */
-			[[nodiscard]]
-			inline
 			std::shared_ptr< Node >
-			createSubNode (const std::string & name, const Libraries::Math::Vector< 3, float > & position) noexcept
+			parent () noexcept
 			{
-				return this->createSubNode(name, Libraries::Math::Coordinates< float >{position});
+				return m_parent.lock();
 			}
 
 			/**
-			 * @brief Search for a named sub node.
+			 * @brief Returns the parent node smart pointer.
+			 * @warning If the node is root, it will be nullptr.
+			 * @return std::shared_ptr< const Node >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< const Node >
+			parent () const noexcept
+			{
+				return m_parent.lock();
+			}
+
+			/**
+			 * @brief Returns the children nodes.
+			 * @return const std::map< std::string, std::shared_ptr< Node > > &
+			 */
+			[[nodiscard]]
+			const std::map< std::string, std::shared_ptr< Node > > &
+			children () const noexcept
+			{
+				return m_children;
+			}
+
+			/**
+			 * @brief Returns the children nodes.
+			 * @return std::map< std::string, std::shared_ptr< Node > > &
+			 */
+			[[nodiscard]]
+			std::map< std::string, std::shared_ptr< Node > > &
+			children () noexcept
+			{
+				return m_children;
+			}
+
+			/**
+			 * @brief Returns the root node.
+			 * @return std::shared_ptr< Node >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Node > getRoot () noexcept;
+
+			/**
+			 * @brief Returns the root node.
+			 * @return std::shared_ptr< const Node >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< const Node > getRoot () const noexcept;
+
+			/**
+			 * @brief Creates a sub node at a given coordinates.
+			 * @warning If the node already exists, the method will return a null pointer.
+			 * @param name A reference to a string.
+			 * @param sceneTimeMS The scene current time in milliseconds.
+			 * @param coordinates Set the coordinates of the new node. Default Origin.
+			 * @return std::shared_ptr< Node >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Node > createChild (const std::string & name, uint32_t sceneTimeMS, const Libraries::Math::CartesianFrame< float > & coordinates = {}) noexcept;
+
+			/**
+			 * @brief Creates a sub node at a given position.
+			 * @warning If the node already exists, the method will return a null pointer.
+			 * @param name A reference to a string.
+			 * @param sceneTimeMS The scene current time in milliseconds.
+			 * @param position Set the position of the new node.
+			 * @return std::shared_ptr< Node >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Node >
+			createChild (const std::string & name, uint32_t sceneTimeMS, const Libraries::Math::Vector< 3, float > & position) noexcept
+			{
+				return this->createChild(name, sceneTimeMS, Libraries::Math::CartesianFrame< float >{position});
+			}
+
+			/**
+			 * @brief Returns a sub node by its name.
 			 * @warning Can be nullptr !
-			 * @param nodeName The name of the node.
-			 * @return shared_ptr< Node >.
+			 * @param name A reference to a string.
+			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > findSubNode (const std::string & nodeName) const noexcept;
+			std::shared_ptr< Node > findChild (const std::string & name) const noexcept;
 
 			/**
-			 * @brief Destroys a sub node by his name.
-			 * @param nodeName The name of the node.
+			 * @brief Destroys a sub node by its name and returns true if the sub node existed.
+			 * @param name A reference to a string.
 			 * @return bool
 			 */
-			bool destroySubNode (const std::string & nodeName) noexcept;
-
-			/** @brief Destroys every sub node and their content. */
-			void destroyAllSubNode () noexcept;
+			bool destroyChild (const std::string & name) noexcept;
 
 			/**
-			 * @brief Short-hand for Coordinates class, but use the tree to get the right model matrix.
-			 * @todo This is the expensive function of the engine. The multiplication operation of matrices.
-			 * @return Matrix< 4, float >
+			 * @brief Destroys every sub node and their content.
+			 * @return void
+			 */
+			void
+			destroyChildren () noexcept
+			{
+				m_children.clear();
+			}
+
+			/**
+			 * @brief Returns for how long this node exists in microseconds.
+			 * @return uint64_t
 			 */
 			[[nodiscard]]
-			Libraries::Math::Matrix< 4, float > getModelMatrix () const noexcept;
+			uint64_t
+			lifeTime () const noexcept
+			{
+				return m_lifetime;
+			}
 
 			/**
-			 * @brief Short-hand for Coordinates class, but use the tree to get the right view matrix.
-			 * @param rotateOnly Don't set translation in final matrices.
-			 * @return Matrix< 4, float >
+			 * @brief Plans a destruction for this Node. Thread-safe.
+			 * @return void
 			 */
-			[[nodiscard]]
-			Libraries::Math::Matrix< 4, float > getViewMatrix (bool rotateOnly = false) const noexcept;
-
-			/**
-			 * @brief Returns for how long this node exists in milliseconds.
-			 * @return unsigned long
-			 */
-			[[nodiscard]]
-			unsigned long getLifeTime () const noexcept;
-
-			/**
-			 * @brief This function is called from Core::processLogics() to update the logic of the node and return if it has been moved.
-			 * @param scene The scene where the node is present.
-			 * @param cycle The engine cycle number to use with time dependent effects.
-			 * @return bool
-			 */
-			bool processLogics (const Scene & scene, size_t cycle) noexcept override;
-
-			/** @brief Plans a destruction for this Node. Thread-safe. */
 			void discard () noexcept;
 
 			/**
-			 * @brief Returns whether the Node will be destroyed in the next cycle update.
+			 * @brief Returns whether the Node will be destroyed in the next cycle processLogics.
 			 * @return bool
 			 */
-			bool isDiscardable () const noexcept;
+			[[nodiscard]]
+			bool
+			isDiscardable () const noexcept
+			{
+				return this->isFlagEnabled(IsDiscardable);
+			}
 
 			/**
-			 * @brief RootNode destroy method.
-			 * @note This is only callable from root node.
+			 * @brief Removes directly all sub node below this node.
+			 * @return void
 			 */
 			void destroyTree () noexcept;
 
-			/** @brief Cleans the tree from dead nodes. */
-			void cleanTree () noexcept;
+			/**
+			 * @brief Check all sub node below this node for discarded marked ones.
+			 * @return void
+			 */
+			void trimTree () noexcept;
 
 			/**
 			 * @brief Checks is this node is visible to frustum.
@@ -418,16 +522,42 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isVisible (const Graphics::Frustum & frustum) const noexcept;
+			bool
+			isVisible (const Graphics::Frustum & frustum) const noexcept
+			{
+				if ( this->sphereCollisionIsEnabled() )
+				{
+					return frustum.isCollidingWith(this->getWorldBoundingSphere()) != Graphics::Frustum::Result::Outside;
+				}
+
+				return frustum.isCollidingWith(this->getWorldBoundingBox()) != Graphics::Frustum::Result::Outside;
+			}
 
 			/**
-			 * @brief Returns the overlap from the intersection with an other node.
+			 * @brief Accelerates the node forward. This is a shortcut.
+			 * @param power The power of acceleration. This can be negative to decelerate.
+			 * @return void
+			 */
+			void accelerate (float power) noexcept;
+
+			/**
+			 * @brief Returns the overlap from the intersection with another node.
 			 * @param nodeA A reference to a node.
 			 * @param nodeB A reference to a node.
 			 * @return float
 			 */
 			[[nodiscard]]
-			static float getIntersectionOverlap (const Node & nodeA, const Node & nodeB) noexcept;
+			static
+			float
+			getIntersectionOverlap (const Node & nodeA, const Node & nodeB) noexcept
+			{
+				if ( &nodeA == &nodeB )
+				{
+					return 0.0F;
+				}
+
+				return Libraries::Math::Sphere< float >::getIntersectionOverlap(nodeA.getWorldBoundingSphere(), nodeB.getWorldBoundingSphere());
+			}
 
 			/**
 			 * @brief Returns the distance between two nodes.
@@ -436,58 +566,69 @@ namespace Emeraude::Scenes
 			 * @return float
 			 */
 			[[nodiscard]]
-			static float getDistance (const Node & nodeA, const Node & nodeB) noexcept;
+			static
+			float
+			getDistance (const Node & nodeA, const Node & nodeB) noexcept
+			{
+				if ( &nodeA == &nodeB )
+				{
+					return 0.0F;
+				}
+
+				return Libraries::Math::Vector< 3, float >::distance(nodeA.getWorldCoordinates().position(), nodeB.getWorldCoordinates().position());
+			}
 
 		private:
 
-			/** @copydoc Emeraude::Scenes::AbstractEntity::setRenderingAbilityState() */
-			void setRenderingAbilityState (bool state) noexcept override;
+			/** @copydoc Emeraude::Physics::MovableTrait::getObjectProperties() */
+			[[nodiscard]]
+			const Physics::PhysicalObjectProperties &
+			getObjectProperties () const noexcept override
+			{
+				return this->physicalObjectProperties();
+			}
 
-			/** @copydoc Emeraude::Scenes::AbstractEntity::setPhysicalObjectPropertiesState() */
-			void setPhysicalObjectPropertiesState (bool state) noexcept override;
+			/** @copydoc Emeraude::Physics::MovableTrait::getWorldPosition() */
+			[[nodiscard]]
+			Libraries::Math::Vector< 3, float >
+			getWorldPosition () const noexcept override
+			{
+				return this->getWorldCoordinates().position();
+			}
 
-			/** @copydoc Emeraude::Scenes::AbstractEntity::onAppNotification() */
-			bool onUnhandledNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept override;
+			/** @copydoc Emeraude::Physics::MovableTrait::simulatedMove() */
+			void
+			simulatedMove (const Libraries::Math::Vector< 3, float > & worldPosition) noexcept override
+			{
+				this->move(worldPosition, Libraries::Math::TransformSpace::World);
+			}
+
+			/** @copydoc Emeraude::Physics::MovableTrait::simulatedRotation() */
+			void
+			simulatedRotation (float radianAngle, const Libraries::Math::Vector< 3, float > & worldDirection) noexcept override
+			{
+				this->rotate(Libraries::Math::Degree(radianAngle), worldDirection, Libraries::Math::TransformSpace::Local);
+			}
+
+			/** @copydoc Emeraude::Scenes::AbstractEntity::onUnhandledNotification() */
+			bool onUnhandledNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
 			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
 
-			/**
-			 * @brief Updates data on transformation on the current node.
-			 * @return void
-			 */
-			void onTransform () noexcept;
+			/** @copydoc Emeraude::Scenes::AbstractEntity::onLocationDataUpdate() */
+			void onLocationDataUpdate () noexcept override;
 
-			/**
-			 * @brief This will clean the Node from the Node tree.
-			 * @return void
-			 */
-			void destroy () noexcept;
+			/** @copydoc Emeraude::Scenes::AbstractEntity::onProcessLogics() */
+			bool onProcessLogics (const Scene & scene) noexcept override;
 
 			/* Flag names. */
-			static constexpr auto IsRenderable = 0UL;
-			static constexpr auto HasPhysicalObjectProperties = 1UL;
-			static constexpr auto IsDiscardable = 2UL;
-			static constexpr auto SphereCollisionEnabled = 3UL;
-			static constexpr auto IsMovable = 4UL;
-			static constexpr auto SimulationPaused = 5UL;
-			static constexpr auto FreeFlyModeEnabled = 6UL;
-			static constexpr auto NoClippingModeEnabled = 7UL;
+			static constexpr auto IsDiscardable{NextFlag + 0UL};
 
 			/* NOTE : If nullptr, this node is the root. */
-			std::shared_ptr< Node > m_parentNode{};
-			std::map< std::string, std::shared_ptr< Node > > m_subNodes{};
-			Libraries::Math::Coordinates< float > m_coordinates{};
-			unsigned long m_lifetime{0};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				false/*IsRenderable*/,
-				false/*HasPhysicalObjectProperties*/,
-				false/*IsDiscardable*/,
-				false/*SphereCollisionEnabled*/,
-				true/*IsMovable*/,
-				false/*SimulationPaused*/,
-				false/*FreeFlyModeEnabled*/,
-				false/*NoClippingModeEnabled*/
-			};
+			std::weak_ptr< Node > m_parent;
+			std::map< std::string, std::shared_ptr< Node > > m_children;
+			Libraries::Math::CartesianFrame< float > m_cartesianFrame;
+			uint64_t m_lifetime{0};
 	};
 }

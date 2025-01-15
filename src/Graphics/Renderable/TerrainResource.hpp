@@ -1,50 +1,53 @@
 /*
- * Emeraude/Graphics/Renderable/TerrainResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/TerrainResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "AbstractSceneArea.hpp"
+#include "SceneAreaInterface.hpp"
 
 /* Local inclusions for usages. */
+#include "Resources/Container.hpp"
 #include "Graphics/Geometry/AdaptiveVertexGridResource.hpp"
+#include "Graphics/Geometry/VertexGridResource.hpp"
 
 namespace Emeraude::Graphics::Renderable
 {
 	/**
-	 * @brief The TerrainResource class
-	 * @extends Emeraude::Graphics::AbstractSceneArea The is a specialized scene area.
+	* @brief The terrain resource class.
+	 * @extends Emeraude::Graphics::Renderable::SceneAreaInterface The is a scene area.
 	 */
-	class TerrainResource final : public AbstractSceneArea
+	class TerrainResource final : public SceneAreaInterface
 	{
 		friend class Resources::Container< TerrainResource >;
 
@@ -57,16 +60,16 @@ namespace Emeraude::Graphics::Renderable
 			static const size_t ClassUID;
 
 			/* JSON key. */
-			static constexpr auto HeightMapKey = "HeightMap";
-				static constexpr auto ImageNameKey = "ImageName";
-				static constexpr auto InverseKey = "Inverse";
-			static constexpr auto MaterialTypeKey = "MaterialType";
-			static constexpr auto MaterialNameKey = "MaterialName";
-			static constexpr auto PerlinNoiseKey = "PerlinNoise";
-			static constexpr auto VertexColorKey = "VertexColor";
+			static constexpr auto HeightMapKey{"HeightMap"};
+				static constexpr auto ImageNameKey{"ImageName"};
+				static constexpr auto InverseKey{"Inverse"};
+			static constexpr auto MaterialTypeKey{"MaterialType"};
+			static constexpr auto MaterialNameKey{"MaterialName"};
+			static constexpr auto PerlinNoiseKey{"PerlinNoise"};
+			static constexpr auto VertexColorKey{"VertexColor"};
 
-			static constexpr auto DefaultSize = 4096.0F;
-			static constexpr auto DefaultDivision = 4096;
+			static constexpr auto DefaultSize{4096.0F};
+			static constexpr auto DefaultDivision{4096};
 
 			/**
 			 * @brief Constructs a terrain resource.
@@ -75,86 +78,71 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit TerrainResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
-			bool isOpaque (size_t layerIndex = 0UL) const noexcept override;
+			bool isOpaque (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
-			const Material::Interface * material (size_t layerIndex = 0UL) const noexcept override;
+			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			[[nodiscard]]
+			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
 			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
 			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::prepareShaders() */
-			[[nodiscard]]
-			bool prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept override;
-
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/**
-			 * @brief getLevelAt
-			 * @param worldPosition
-			 * @return float
-			 */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(const Libraries::Math::Vector< 3, float > &) const */
 			[[nodiscard]]
 			float getLevelAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
 
-			/**
-			 * @brief getLevelAt
-			 * @param x
-			 * @param z
-			 * @param delta
-			 * @return Libraries::Math::Vector< 3, float > getLevelAt
-			 */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(float, float, float) const */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getLevelAt (float x, float z, float delta = 0.0F) const noexcept override;
+			Libraries::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept override;
 
-			/**
-			 * @brief getNormalAt
-			 * @param worldPosition
-			 * @return Libraries::Math::Vector< 3, float >
-			 */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getNormalAt() const */
 			[[nodiscard]]
 			Libraries::Math::Vector< 3, float > getNormalAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
 
 			/**
-			 * @brief isOnGround
-			 * @param node
-			 * @return bool
-			 */
-			bool isOnGround (Scenes::Node & node) const noexcept override;
-
-			/**
 			 * @brief Loads a parametric terrain with a material.
+			 * @param size
+			 * @param division
 			 * @param material A pointer to a material resource.
 			 * @return bool
 			 */

@@ -1,36 +1,46 @@
 /*
- * Emeraude/Resources/ResourceTrait.cpp
- * This file is part of Emeraude
+ * src/Resources/ResourceTrait.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Resources/ResourceTrait.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <algorithm>
+#include <cstdint>
+#include <fstream>
+#include <mutex>
+#include <string>
 
-/* Local inclusions */
+/* Third-party inclusions. */
+#include "json/json.h"
+
+/* Local inclusions. */
+#include "Libraries/String.hpp"
+#include "Stores.hpp"
+#include "Types.hpp"
 #include "Manager.hpp"
 #include "Tracer.hpp"
 
@@ -38,10 +48,10 @@ namespace Emeraude::Resources
 {
 	using namespace Libraries;
 
-	constexpr auto TracerTag{"ResourceChain"};
+	static constexpr auto TracerTag{"ResourceChain"};
 
-	ResourceTrait::ResourceTrait (const std::string & resourceName, uint32_t flagBits) noexcept
-		: NamedItem(resourceName), FlagTrait(flagBits)
+	ResourceTrait::ResourceTrait (const std::string & resourceName, uint32_t initialResourceFlagBits) noexcept
+		: NameableTrait(resourceName), FlagTrait(initialResourceFlagBits)
 	{
 
 	}
@@ -87,6 +97,7 @@ namespace Emeraude::Resources
 				break;
 
 			case Status::Failed :
+			default:
 				break;
 		}
 	}
@@ -103,16 +114,11 @@ namespace Emeraude::Resources
 		{
 			case Status::Unloaded :
 				m_status = manual ? Status::ManualEnqueuing : Status::Enqueuing;
-
-				return true;
-
+				[[fallthrough]];
 			case Status::Enqueuing :
 			case Status::ManualEnqueuing :
-				TraceWarning{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") is already enqueuing dependencies !";
-
 				return true;
 
-			/* This is an error, the resource use manual loading. */
 			case Status::Loading :
 				TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") is already loading !";
 
@@ -124,24 +130,11 @@ namespace Emeraude::Resources
 				return false;
 
 			case Status::Failed :
+			default:
 				TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") has previously tried to be loaded, but failed !";
 
 				return false;
 		}
-
-		return false;
-	}
-
-	bool
-	ResourceTrait::beginLoading () noexcept
-	{
-		return this->initializeEnqueuing(false);
-	}
-
-	bool
-	ResourceTrait::enableManualLoading () noexcept
-	{
-		return this->initializeEnqueuing(true);
 	}
 
 	bool
@@ -175,6 +168,7 @@ namespace Emeraude::Resources
 				break;
 
 			case Status::Failed :
+			default:
 				TraceError{TracerTag} <<
 					"The resource '" << this->name() << "' (" << this->classLabel() << ") is failed !"
 					"This resource should be removed.";
@@ -189,13 +183,14 @@ namespace Emeraude::Resources
 			return false;
 		}
 
-		/* If the dependency is loaded. we don't need to add it. */
-		if ( dependency->isLoaded() )
+		/* If the dependency is loaded or already present.
+		 * we don't need to add it. */
+		if ( dependency->isLoaded() || m_dependencies.contains(dependency) )
 		{
 			if ( Stores::s_operationVerboseEnabled )
 			{
 				TraceInfo{TracerTag} <<
-					"Resource dependency '" << dependency->name() << "' (" << dependency->classLabel() << ") is already loaded. "
+					"Resource dependency '" << dependency->name() << "' (" << dependency->classLabel() << ") is already loaded or in the queue. "
 					"Skipping this dependency ...";
 			}
 
@@ -263,29 +258,22 @@ namespace Emeraude::Resources
 			case Status::ManualEnqueuing :
 				if ( Stores::s_operationVerboseEnabled )
 				{
-					TraceInfo{TracerTag} <<
-						"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-						"still enqueuing dependencies !";
+					TraceInfo{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") still enqueuing dependencies !";
 				}
 				break;
 
 			/* This is the state where we want to know if dependencies are loaded. */
 			case Status::Loading :
 			{
-				const auto stillLoading = std::any_of(m_dependencies.cbegin(), m_dependencies.cend(), [] (const auto & dependency) {
-					return !dependency->isLoaded();
-				});
-
-				if ( stillLoading )
+				/* NOTE: If any of dependencies are in a loading state. */
+				if ( std::ranges::any_of(m_dependencies, [] (const auto & dependency) {return !dependency->isLoaded();}) )
 				{
 					return;
 				}
 
 				if ( Stores::s_operationVerboseEnabled )
 				{
-					TraceInfo{TracerTag} <<
-						"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-						"has no more dependency to wait for loading !";
+					TraceInfo{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") has no more dependency to wait for loading !";
 				}
 
 				if ( this->onDependenciesLoaded() )
@@ -296,9 +284,7 @@ namespace Emeraude::Resources
 
 					if ( Stores::s_operationVerboseEnabled )
 					{
-						TraceSuccess{TracerTag} <<
-							"Resource '" << this->name() << "' (" << this->classLabel() << ") "
-							"is successfully loaded !";
+						TraceSuccess{TracerTag} << "Resource '" << this->name() << "' (" << this->classLabel() << ") is successfully loaded !";
 					}
 
 					if ( !this->isTopResource() )
@@ -321,9 +307,7 @@ namespace Emeraude::Resources
 
 					if ( Stores::s_operationVerboseEnabled )
 					{
-						TraceError{TracerTag} <<
-							"Resource '" << this->name() << "' (" << this->classLabel() << ") "
-							"failed to load !";
+						TraceError{TracerTag} << "Resource '" << this->name() << "' (" << this->classLabel() << ") failed to load !";
 					}
 				}
 			}
@@ -332,18 +316,16 @@ namespace Emeraude::Resources
 			case Status::Loaded :
 				if ( !m_dependencies.empty() )
 				{
-					TraceError{TracerTag} <<
-						"The resource '" << this->name() << "' (" << this->classLabel() << ") status is loaded, "
-						"but still have " << m_dependencies.size() << " dependencies.";
+					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") status is loaded, but still have " << m_dependencies.size() << " dependencies.";
 				}
 
 				/* NOTE: We don't want to check again dependencies. */
 				break;
 
 			case Status::Failed :
+			default:
 				TraceError{TracerTag} <<
-					"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-					"status is failed !"
+					"The resource '" << this->name() << "' (" << this->classLabel() << ") status is failed ! "
 					"This resource should be removed !";
 				break;
 		}
@@ -363,23 +345,18 @@ namespace Emeraude::Resources
 		{
 			case Status::Unloaded :
 				TraceError{TracerTag} <<
-					"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-					"is not in a building stage !"
+					"The resource '" << this->name() << "' (" << this->classLabel() << ") is not in a building stage ! "
 					"You must call call ResourceTrait::beginLoading() before.";
 
 				return false;
 
 			case Status::Loaded :
-				TraceError{TracerTag} <<
-					"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-					"is already loaded !";
+				TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") is already loaded !";
 
 				return false;
 
 			case Status::Failed :
-				TraceError{TracerTag} <<
-					"The resource '" << this->name() << "' (" << this->classLabel() << ") "
-					"has previously failed to load !";
+				TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") has previously failed to load !";
 
 				return false;
 
@@ -393,7 +370,7 @@ namespace Emeraude::Resources
 			 * NOTE: No more sub-resource enqueuing is possible after this point. */
 			m_status = Status::Loading;
 
-			/* We want to check every dependencies status.
+			/* We want to check every dependency status.
 			 * NOTE: This will eventually fire up the 'LoadFinished' event. */
 			this->checkDependencies();
 		}
@@ -403,9 +380,7 @@ namespace Emeraude::Resources
 
 			this->notify(LoadFailed);
 
-			TraceError{TracerTag} <<
-				"Resource '" << this->name() << "' (" << this << ") "
-				"failed to load ...";
+			TraceError{TracerTag} << "Resource '" << this->name() << "' (" << this << ") failed to load ...";
 		}
 
 		return status;
@@ -425,20 +400,12 @@ namespace Emeraude::Resources
 		return this->setLoadSuccess(status);
 	}
 
-	ResourceTrait::Status
-	ResourceTrait::status () const noexcept
-	{
-		return m_status;
-	}
-
 	bool
-	ResourceTrait::load (const Libraries::Path::File & filepath) noexcept
+	ResourceTrait::load (const std::filesystem::path & filepath) noexcept
 	{
-		const auto filepathStr = to_string(filepath);
-
 		const Json::CharReaderBuilder builder{};
 
-		std::ifstream json{filepathStr, std::ifstream::binary};
+		std::ifstream json{filepath, std::ifstream::binary};
 
 		Json::Value root{};
 
@@ -446,9 +413,7 @@ namespace Emeraude::Resources
 
 		if ( !Json::parseFromStream(builder, json, &root, &errors) )
 		{
-			TraceError{TracerTag} <<
-				"Unable to parse JSON file ! "
-				"Errors :" "\n" << errors;
+			TraceError{TracerTag} << "Unable to parse JSON file ! Errors :" "\n" << errors;
 
 			/* NOTE: Set status here. */
 			m_status = Status::Failed;
@@ -459,59 +424,21 @@ namespace Emeraude::Resources
 		}
 
 		/* Checks if additional stores before loading (optional) */
-		Manager::instance()->stores().update(root, filepathStr);
+		Manager::instance()->stores().update(root, filepath.string());
 
 		return this->load(root);
 	}
 
-	bool
-	ResourceTrait::isTopResource () const noexcept
+	std::string
+	ResourceTrait::getResourceNameFromFilepath (const std::filesystem::path & filepath, const std::string & storeName) noexcept
 	{
-		return m_parents.empty();
-	}
+		const auto filename = String::right(filepath.string(), storeName + IO::Separator);
 
-	size_t
-	ResourceTrait::dependencyCount () const noexcept
-	{
-		return m_dependencies.size();
-	}
-
-	bool
-	ResourceTrait::isUnloaded () const noexcept
-	{
-		switch ( m_status )
-		{
-			case Status::Unloaded :
-			case Status::Enqueuing :
-			case Status::ManualEnqueuing :
-				return true;
-
-			default :
-				return false;
-		}
-	}
-
-	bool
-	ResourceTrait::isLoading () const noexcept
-	{
-		return m_status == Status::Loading;
-	}
-
-	bool
-	ResourceTrait::isLoaded () const noexcept
-	{
-		return m_status == Status::Loaded;
-	}
-
-	void
-	ResourceTrait::setDirectLoadingHint () noexcept
-	{
-		m_directLoad = true;
-	}
-
-	bool
-	ResourceTrait::isDirectLoading () const noexcept
-	{
-		return m_directLoad;
+#if IS_WINDOWS
+	    /* NOTE: Resource name use the UNIX convention. */
+	    return String::replace(IO::Separator, '/', String::removeFileExtension(filename));
+#else
+	    return String::removeFileExtension(filename);
+#endif
 	}
 }

@@ -1,55 +1,61 @@
 /*
- * Emeraude/Scenes/Scene.hpp
- * This file is part of Emeraude
+ * src/Scenes/Scene.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <string>
-#include <set>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <array>
+#include <map>
 #include <vector>
+#include <set>
+#include <string>
+#include <any>
 #include <memory>
+#include <mutex>
 
 /* Local inclusions for inheritances. */
-#include "NamedItem.hpp"
-#include "Time/TimedEventsInterface.hpp"
-#include "Observer.hpp"
-#include "Observable.hpp"
+#include "Libraries/NameableTrait.hpp"
+#include "Libraries/ObservableTrait.hpp"
+#include "Libraries/ObserverTrait.hpp"
+#include "Libraries/Time/EventTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "MasterControl/Console.hpp"
-#include "Physics/PhysicalEnvironmentProperties.hpp"
-#include "Physics/Collider.hpp"
 #include "Graphics/Renderable/AbstractBackground.hpp"
-#include "Graphics/Renderable/AbstractSceneArea.hpp"
-#include "Graphics/Renderable/AbstractSeaLevel.hpp"
-#include "RenderBatch.hpp"
+#include "Graphics/Renderable/SceneAreaInterface.hpp"
+#include "Graphics/Renderable/SeaLevelInterface.hpp"
+#include "Saphir/EffectInterface.hpp"
+#include "LightSet.hpp"
+#include "OctreeSector.hpp"
 #include "StaticEntity.hpp"
 #include "Node.hpp"
-#include "OctreeSector.hpp"
+#include "NodeController.hpp"
+#include "RenderBatch.hpp"
 
 /* Forward Declarations */
 namespace Emeraude::Graphics
@@ -60,25 +66,30 @@ namespace Emeraude::Graphics
 namespace Emeraude::Scenes
 {
 	/**
-	 * @brief Class that describe a whole scene through a nodes structure.
-	 * @extends Libraries::NamedItem A scene is a named object in the engine.
-	 * @extends Libraries::Time::TimedEventsInterface A scene can have timed events.
-	 * @extends Libraries::Observer The scene will observe the scene node tree and static entity list.
-	 * @extends Libraries::Observable Scene will notifies its content change.
+	 * @brief Structure to configure the scene octree initialization.
 	 */
-	class Scene final : public Libraries::NamedItem, public Libraries::Time::TimedEventsInterface, public Libraries::Observer, public Libraries::Observable
+	struct SceneOctreeOptions
+	{
+		size_t renderingOctreeAutoExpandAt{256};
+		size_t renderingOctreeReserve{0};
+		size_t physicsOctreeAutoExpandAt{32};
+		size_t physicsOctreeReserve{3};
+	};
+
+	/**
+	 * @brief Class that describe a whole scene through a nodes structure.
+	 * @extends Libraries::NameableTrait A scene is a named object in the engine.
+	 * @extends Libraries::Time::EventTrait A scene can have timed events.
+	 * @extends Libraries::ObserverTrait The scene will observe the scene node tree and static entity list.
+	 * Libraries::ObservableTrait Scene will notify its content change.
+	 */
+	class Scene final : public Libraries::NameableTrait, public Libraries::Time::EventTrait< uint32_t, std::milli >, public Libraries::ObserverTrait, public Libraries::ObservableTrait
 	{
 		public:
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
 			{
-				NodeCreated,
-				NodeDeleting,
-				NodeDeleted,
-				StaticCreated,
-				StaticDeleting,
-				StaticDeleted,
 				/* Enumeration boundary. */
 				MaxEnum
 			};
@@ -88,67 +99,74 @@ namespace Emeraude::Scenes
 
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
-			
-			static const std::string DefaultOctreeName;
 
 			/**
 			 * @brief Constructs a scene.
+			 * @param graphicsRenderer A reference to the graphics renderer.
+			 * @param audioManager A reference to the audio manager.
 			 * @param name A reference to a string to name it.
 			 * @param boundary The distance in all directions to limit the area.
 			 * @param background A reference to a background smart pointer. Default autogenerated.
 			 * @param sceneArea A reference to a sceneArea smart pointer. Default autogenerated.
 			 * @param seaLevel A reference to a seaLevel smart pointer. Default none.
+			 * @param octreeOptions A reference to an option struct. Defaults.
 			 */
-			explicit Scene (const std::string & name, float boundary, const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background = nullptr, const std::shared_ptr< Graphics::Renderable::AbstractSceneArea > & sceneArea = nullptr, const std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > & seaLevel = nullptr) noexcept;
+			Scene (Graphics::Renderer & graphicsRenderer, Audio::Manager & audioManager, const std::string & name, float boundary, const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background = nullptr, const std::shared_ptr< Graphics::Renderable::SceneAreaInterface > & sceneArea = nullptr, const std::shared_ptr< Graphics::Renderable::SeaLevelInterface > & seaLevel = nullptr, const SceneOctreeOptions & octreeOptions = {}) noexcept;
 
-			/** @brief Deleted copy constructor. */
-			Scene (const Scene & copy) = delete;
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Scene (const Scene & copy) noexcept = delete;
 
-			/** @brief Deleted move constructor. */
-			Scene (Scene && copy) = delete;
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Scene (Scene && copy) noexcept = delete;
 
-			/** @brief Deleted assignment operator. */
-			Scene & operator= (const Scene & other) = delete;
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Scene &
+			 */
+			Scene & operator= (const Scene & copy) noexcept = delete;
 
-			/** @brief Deleted move assignment operator. */
-			Scene & operator= (Scene && other) = delete;
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Scene &
+			 */
+			Scene & operator= (Scene && copy) noexcept = delete;
 
-			/** @brief Destroy the scene. */
+			/**
+			 * @brief Destructs the scene.
+			 */
 			~Scene () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
-			/**
-			 * @brief Sets the scene boundary.
-			 * @return void
-			 */
-			void setBoundary (float boundary) noexcept;
-
-			/**
-			 * @brief Returns the boundary in one direction.
-			 * @note To get the total size of an axis, you need to multiply it by two or use AbstractSceneArea::size().
-			 * @return float
-			 */
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
-			float boundary () const noexcept;
-
-			/**
-			 * @brief Returns the square size of the area.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float size () const noexcept;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/**
 			 * @brief Initializes the scene and get it ready for playing.
-			 * @param coreSettings A reference to core settings.
-			 * @param renderer A reference to renderer.
+			 * @param settings A reference to core settings.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool initialize (Settings & coreSettings, Graphics::Renderer & renderer) noexcept;
+			bool initialize (Settings & settings) noexcept;
 
 			/**
 			 * @brief Prepares the scene to be removed from playing.
@@ -157,11 +175,85 @@ namespace Emeraude::Scenes
 			void shutdown () noexcept;
 
 			/**
+			 * @brief Sets the scene boundary.
+			 * @param boundary A value from the center of the scene to limit of the scene.
+			 * @return void
+			 */
+			void setBoundary (float boundary) noexcept
+			{
+				m_boundary = std::abs(boundary);
+
+				this->rebuildRenderingOctree(true);
+
+				this->rebuildPhysicsOctree(true);
+			}
+
+			/**
+			 * @brief Returns the boundary in one direction.
+			 * @note To get the total size of an axis, you need to multiply it by two or use SceneAreaInterface::size().
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			boundary () const noexcept
+			{
+				return m_boundary;
+			}
+
+			/**
+			 * @brief Returns the square size of the area.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			size () const noexcept
+			{
+				return m_boundary * 2;
+			}
+
+			/**
+			 * @brief Returns the execution time of the scene in microseconds.
+			 * @return uint64_t
+			 */
+			[[nodiscard]]
+			uint64_t
+			lifetimeUS () const noexcept
+			{
+				return m_lifetimeUS;
+			}
+
+			/**
+			 * @brief Returns the execution time of the scene in milliseconds.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			lifetimeMS () const noexcept
+			{
+				return m_lifetimeMS;
+			}
+
+			/**
+			 * @brief Returns the number of cycles executed by the scene.
+			 * @return size_t
+			 */
+			[[nodiscard]]
+			size_t
+			cycle () const noexcept
+			{
+				return m_cycle;
+			}
+
+			/**
 			 * @brief Sets the scene physical environment properties.
 			 * @param properties A reference to a physical environment properties.
 			 * @return void
 			 */
-			void setPhysicalEnvironmentProperties (const Physics::PhysicalEnvironmentProperties & properties) noexcept;
+			void
+			setPhysicalEnvironmentProperties (const Physics::PhysicalEnvironmentProperties & properties) noexcept
+			{
+				m_physicalEnvironmentProperties = properties;
+			}
 
 			/**
 			 * @brief Creates a static entity in the scene.
@@ -170,7 +262,7 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< StaticEntity >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< StaticEntity > createStaticEntity (const std::string & name, const Libraries::Math::Coordinates< float > & coordinates = {}) noexcept;
+			std::shared_ptr< StaticEntity > createStaticEntity (const std::string & name, const Libraries::Math::CartesianFrame< float > & coordinates = {}) noexcept;
 
 			/**
 			 * @brief Creates a static entity in the scene using only a position.
@@ -179,24 +271,36 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< StaticEntity >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< StaticEntity >
 			createStaticEntity (const std::string & name, const Libraries::Math::Vector< 3, float > & position) noexcept
 			{
-				return this->createStaticEntity(name, Libraries::Math::Coordinates< float >{position});
+				return this->createStaticEntity(name, Libraries::Math::CartesianFrame< float >{position});
 			}
 
 			/**
 			 * @brief Removes a static entity from the scene.
 			 * @param name A reference to a string for the entity name.
+			 * @return bool
 			 */
 			bool removeStaticEntity (const std::string & name) noexcept;
 
 			/**
 			 * @brief Adds a global effect to the scene.
 			 * @param effect A reference to an effect interface smart pointer.
+			 * @return void
 			 */
-			void addEnvironmentEffect (const std::shared_ptr< Saphir::EffectInterface > & effect) noexcept;
+			void
+			addEnvironmentEffect (const std::shared_ptr< Saphir::EffectInterface > & effect) noexcept
+			{
+				/* We don't want to notify an effect twice. */
+				// FIXME: Use a std::set so !
+				if ( m_environmentEffects.contains(effect) )
+				{
+					return;
+				}
+
+				m_environmentEffects.emplace(effect);
+			}
 
 			/**
 			 * @brief Returns whether a global effect is already present on the scene.
@@ -204,106 +308,60 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isEnvironmentEffectPresent (const std::shared_ptr< Saphir::EffectInterface > & effect) const noexcept;
+			bool
+			isEnvironmentEffectPresent (const std::shared_ptr< Saphir::EffectInterface > & effect) const noexcept
+			{
+				return m_environmentEffects.contains(effect);
+			}
 
 			/**
 			 * @brief Clears every effect from the scene.
 			 * @return void
 			 */
-			void clearEnvironmentEffects () noexcept;
+			void
+			clearEnvironmentEffects () noexcept
+			{
+				m_environmentEffects.clear();
+			}
 
 			/**
-			 * @brief Clears the whole scene.
+			 * @brief Destroys the whole scene.
 			 * @return void
 			 */
-			void clear () noexcept;
+			void destroy () noexcept;
 
 			/**
-			 * @brief Returns whether the default octree is enabled.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool defaultOctreeEnabled () const noexcept;
-
-			/**
-			 * @brief Returns the default octree.
-			 * @note Can be nullptr.
-			 * @return std::shared_ptr< OctreeSector >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< OctreeSector > getDefaultOctree () noexcept;
-
-			/**
-			 * @brief Returns a named octree.
-			 * @note Can be nullptr.
-			 * @param octreeName A reference to a string.
-			 * @return std::shared_ptr< OctreeSector >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< OctreeSector > getOctree (const std::string & octreeName) noexcept;
-
-			/**
-			 * @brief Builds an octree of the scene.
-			 * @param octreeName The octree name.
-			 * @return std::shared_ptr< OctreeSector >
-			 */
-			std::shared_ptr< OctreeSector > buildOctree (const std::string & octreeName) noexcept;
-
-			/**
-			 * @brief Destroys the main octree of the scene.
-			 * @param octreeName The octree name.
-			 * @return bool
-			 */
-			bool destroyOctree (const std::string & octreeName) noexcept;
-
-			/**
-			 * @brief Destroys all octree of the scene.
-			 * @return void
-			 */
-			void destroyAllOctrees () noexcept;
-
-			/**
-			 * @brief Rebuild an octree layer.
-			 * @param octreeName A reference to a string.
-			 * @param keepElements Keep elements from the previous octree. Default true.
-			 * @return bool
-			 */
-			bool rebuildOctree (const std::string & octreeName, bool keepElements = true) noexcept;
-
-			/**
-			 * @brief Rebuild all octree layers.
+			 * @brief Rebuilds the scene rendering octree.
 			 * @param keepElements Keep elements from the previous octrees. Default true.
 			 * @return void
 			 */
-			void rebuildAllOctrees (bool keepElements = true) noexcept;
+			bool rebuildRenderingOctree (bool keepElements = true) noexcept;
+
+			/**
+			 * @brief Rebuilds the physics rendering octree.
+			 * @param keepElements Keep elements from the previous octrees. Default true.
+			 * @return void
+			 */
+			bool rebuildPhysicsOctree (bool keepElements = true) noexcept;
 
 			/**
 			 * @brief Removes all nodes.
 			 * @return void
 			 */
-			void resetNodeTree () noexcept;
+			void resetNodeTree () const noexcept;
 
 			/**
 			 * @brief This method is called by the Core every logic cycle.
-			 * @param cycle The cycle number of the engine.
+			 * @param engineCycle The cycle number of the engine.
+			 * @return void
 			 */
-			void processLogics (size_t cycle) noexcept;
-
-			/**
-			 * @brief Updates the render lists from a point of view.
-			 * @param renderTarget A reference to the render target smart pointer.
-			 * @param opaqueRenderList A reference to a render list for opaque renderable objects.
-			 * @param translucentRenderList A reference to a render list for translucent renderable objects.
-			 * @return bool
-			 */
-			bool getRenderLists (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, RenderBatch::List & opaqueRenderList, RenderBatch::List & translucentRenderList) const noexcept;
+			void processLogics (size_t engineCycle) noexcept;
 
 			/**
 			 * @brief Update the video memory for a render target before the render.
-			 * @param renderTarget A reference to the render target smart pointer.
 			 * @return void
 			 */
-			void updateVideoMemoryForRendering (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
+			void updateVideoMemory () const noexcept;
 
 			/**
 			 * @brief Performs a shadow casting pass of the scene.
@@ -314,100 +372,182 @@ namespace Emeraude::Scenes
 			void castShadows (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) noexcept;
 
 			/**
-			 * @brief Renders the scene.
+			 * @brief Renders the scene to a render target.
 			 * @param renderTarget A reference to the render target smart pointer.
 			 * @param commandBuffer A reference to a command buffer.
 			 * @return void
 			 */
-			void render (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) const noexcept;
+			void render (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) noexcept;
 
 			/**
 			 * @brief Returns the master control console.
 			 * @return const MasterControl::Console &
 			 */
 			[[nodiscard]]
-			const MasterControl::Console & masterControlConsole () const noexcept;
+			const MasterControl::Console &
+			masterControlConsole () const noexcept
+			{
+				return m_masterControlConsole;
+			}
 
 			/**
 			 * @brief Returns the master control console.
 			 * @return MasterControl::Console &
 			 */
 			[[nodiscard]]
-			MasterControl::Console & masterControlConsole () noexcept;
+			MasterControl::Console &
+			masterControlConsole () noexcept
+			{
+				return m_masterControlConsole;
+			}
 
 			/**
 			 * @brief Returns the light set of the scene.
 			 * @return const LightSet &
 			 */
 			[[nodiscard]]
-			const LightSet & lightSet () const noexcept;
+			const LightSet &
+			lightSet () const noexcept
+			{
+				return m_lightSet;
+			}
 
 			/**
 			 * @brief Returns the light set of the scene.
 			 * @return LightSet &
 			 */
 			[[nodiscard]]
-			LightSet & lightSet () noexcept;
+			LightSet &
+			lightSet () noexcept
+			{
+				return m_lightSet;
+			}
+
+			/**
+			 * @brief Returns the node controller.
+			 * @return const NodeController &
+			 */
+			[[nodiscard]]
+			const NodeController &
+			nodeController () const noexcept
+			{
+				return m_nodeController;
+			}
+
+			/**
+			 * @brief Returns the node controller.
+			 * @return NodeController &
+			 */
+			[[nodiscard]]
+			NodeController & nodeController () noexcept
+			{
+				return m_nodeController;
+			}
 
 			/**
 			 * @brief Returns the scene physical environment properties.
 			 * @return const Physics::PhysicalEnvironmentProperties &
 			 */
 			[[nodiscard]]
-			const Physics::PhysicalEnvironmentProperties & physicalEnvironmentProperties () const noexcept;
+			const Physics::PhysicalEnvironmentProperties &
+			physicalEnvironmentProperties () const noexcept
+			{
+				return m_physicalEnvironmentProperties;
+			}
 
 			/**
 			 * @brief Returns the scene physical environment properties.
 			 * @return Physics::PhysicalEnvironmentProperties &
 			 */
 			[[nodiscard]]
-			Physics::PhysicalEnvironmentProperties & physicalEnvironmentProperties () noexcept;
+			Physics::PhysicalEnvironmentProperties &
+			physicalEnvironmentProperties () noexcept
+			{
+				return m_physicalEnvironmentProperties;
+			}
 
 			/**
 			 * @brief Sets the scene background.
 			 * @param background A reference to a background smart pointer.
+			 * @return void
 			 */
-			void setBackground (const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background) noexcept;
+			void
+			setBackground (const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background) noexcept
+			{
+				m_background = background;
+
+				this->registerSceneVisualComponents();
+			}
 
 			/**
 			 * @brief Returns the current background of the scene.
-			 * @return const std::shared_ptr< Graphics::Renderable::AbstractBackground > &
+			 * @return std::shared_ptr< Graphics::Renderable::AbstractBackground >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Graphics::Renderable::AbstractBackground > & background () const noexcept;
+			std::shared_ptr< Graphics::Renderable::AbstractBackground >
+			background () const noexcept
+			{
+				return m_background;
+			}
 
 			/**
 			 * @brief Sets the scene sceneArea.
 			 * @param sceneArea A reference to a sceneArea smart pointer.
+			 * @return void
 			 */
-			void setSceneArea (const std::shared_ptr< Graphics::Renderable::AbstractSceneArea > & sceneArea) noexcept;
+			void
+			setSceneArea (const std::shared_ptr< Graphics::Renderable::SceneAreaInterface > & sceneArea) noexcept
+			{
+				m_sceneArea = sceneArea;
+
+				this->registerSceneVisualComponents();
+			}
 
 			/**
 			 * @brief Returns the current scene area.
-			 * @return const std::shared_ptr< Graphics::Renderable::AbstractSceneArea > &
+			 * @return std::shared_ptr< Graphics::Renderable::SceneAreaInterface >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Graphics::Renderable::AbstractSceneArea > & sceneArea () const noexcept;
+			std::shared_ptr< Graphics::Renderable::SceneAreaInterface >
+			sceneArea () const noexcept
+			{
+				return m_sceneArea;
+			}
 
 			/**
 			 * @brief Sets the scene sea level.
 			 * @param seaLevel A reference to a background smart pointer.
+			 * @return void
 			 */
-			void setSeaLevel (const std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > & seaLevel) noexcept;
+			void
+			setSeaLevel (const std::shared_ptr< Graphics::Renderable::SeaLevelInterface > & seaLevel) noexcept
+			{
+				m_seaLevel = seaLevel;
+
+				this->registerSceneVisualComponents();
+			}
 
 			/**
 			 * @brief Returns the current water level.
-			 * @return const std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > &
+			 * @return std::shared_ptr< Graphics::Renderable::SeaLevelInterface >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > & seaLevel () const noexcept;
+			std::shared_ptr< Graphics::Renderable::SeaLevelInterface >
+			seaLevel () const noexcept
+			{
+				return m_seaLevel;
+			}
 
 			/**
 			 * @brief Returns the root scene node from the scene.
-			 * @return const std::shared_ptr< Node > &
+			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Node > & root () const noexcept;
+			std::shared_ptr< Node >
+			root () const noexcept
+			{
+				return m_rootNode;
+			}
 
 			/**
 			 * @brief Searches from the top oh the node tree the first named node.
@@ -422,21 +562,33 @@ namespace Emeraude::Scenes
 			 * @return const std::map< std::string , std::shared_ptr< StaticEntity > > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string , std::shared_ptr< StaticEntity > > & staticEntities () const noexcept;
+			const std::map< std::string , std::shared_ptr< StaticEntity > > &
+			staticEntities () const noexcept
+			{
+				return m_staticEntities;
+			}
 
 			/**
 			 * @brief Returns a list of modifiers present in the scene.
-			 * @return const std::set< std::shared_ptr< AbstractModifier > > &
+			 * @return const std::set< std::shared_ptr< Component::AbstractModifier > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< AbstractModifier > > & modifiers () const noexcept;
+			const std::set< std::shared_ptr< Component::AbstractModifier > > &
+			modifiers () const noexcept
+			{
+				return m_modifiers;
+			}
 
 			/**
 			 * @brief Returns the list of active global effects in the scene.
 			 * @return const Saphir::EffectsList &
 			 */
 			[[nodiscard]]
-			const Saphir::EffectsList & environmentEffects () const noexcept;
+			const Saphir::EffectsList &
+			environmentEffects () const noexcept
+			{
+				return m_environmentEffects;
+			}
 
 			/**
 			 * @brief Checks if a position is inside the scene area.
@@ -448,9 +600,17 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Returns a random position within the scene area.
-			 * @return Vector< 3, float >
+			 * @return Libraries::Math::Vector< 3, float >
 			 */
-			Libraries::Math::Vector< 3, float > getRandomPosition () const noexcept;
+			Libraries::Math::Vector< 3, float >
+			getRandomPosition () const noexcept
+			{
+				return {
+					Libraries::Utility::quickRandom(-m_boundary, m_boundary),
+					Libraries::Utility::quickRandom(-m_boundary, m_boundary),
+					Libraries::Utility::quickRandom(-m_boundary, m_boundary)
+				};
+			}
 
 			/**
 			 * @brief Returns node count and depth.
@@ -460,130 +620,198 @@ namespace Emeraude::Scenes
 			std::array< size_t, 2 > getNodeStatistics () const noexcept;
 
 			/**
-			 * @brief Returns sector count and depth.
-			 * @param sector A reference to a top sector node smart pointer.
-			 * @return array< size_t, 2 >
+			 * @brief Shows a compass.
+			 * @note This a debug utility.
+			 * @return bool
+			 */
+			bool enableCompassDisplay () noexcept;
+
+			/**
+			 * @brief Removes the scene compass.
+			 * @note This a debug utility.
+			 * @return void
+			 */
+			void disableCompassDisplay () noexcept;
+
+			/**
+			 * @brief Returns whether the scene compass is displayed.
+			 * @note This a debug utility.
+			 * @return bool
 			 */
 			[[nodiscard]]
-			static std::array< size_t, 2 > getSectorStatistics (const std::shared_ptr< Scenes::OctreeSector > & sector) noexcept;
+			bool compassDisplayEnabled () const noexcept;
 
 			/**
-			 * @brief Turns on or off the sector border displaying.
-			 * @note Only populated sector will be shown.
-			 * @param state The state.
-			 */
-			void showSectors (bool state) noexcept;
-
-			/**
-			 * @brief Toggles the sector border displaying and return the current state.
+			 * @brief Toggles the display of the scene compass.
+			 * @note This a debug utility.
 			 * @return bool
 			 */
-			inline
-			bool
-			toggleSectorsDisplay () noexcept
-			{
-				this->showSectors(!m_flags[ShowSectors]);
-
-				return m_flags[ShowSectors];
-			}
+			bool toggleCompassDisplay () noexcept;
 
 			/**
-			 * @brief Turns on or off the artificial horizon displaying.
-			 * @param state The state.
-			 * @param space Space between lines, only useful when enabling.
-			 */
-			void showGroundZero (bool state, float space = 100.0F) noexcept;
-
-			/**
-			 * @brief Toggles the artificial horizon displaying and return the current state.
+			 * @brief Shows the ground zero of the scene.
+			 * @note This a debug utility.
 			 * @return bool
 			 */
-			inline
-			bool
-			toggleGroundZeroDisplay () noexcept
-			{
-				this->showGroundZero(!m_flags[ShowGroundZero]);
-
-				return m_flags[ShowGroundZero];
-			}
+			bool enableGroundZeroDisplay () noexcept;
 
 			/**
-			 * @brief Turns on or off the boundaries displaying.
-			 * @param state The state.
-			 * @param space Space between lines, only useful when enabling.
+			 * @brief Removes the ground zero of the scene.
+			 * @note This a debug utility.
+			 * @return void
 			 */
-			void showBoundaries (bool state, float space = 1000.0F) noexcept; // NOLINT(*-magic-numbers)
+			void disableGroundZeroDisplay () noexcept;
 
 			/**
-			 * @brief Toggles the artificial boundaries and return the current state.
+			 * @brief Returns whether the ground zero is displayed.
+			 * @note This a debug utility.
 			 * @return bool
-			 */
-			inline
-			bool
-			toggleBoundariesDisplay () noexcept
-			{
-				this->showBoundaries(!m_flags[ShowBoundaries]);
-
-				return m_flags[ShowBoundaries];
-			}
-
-			/**
-			 * @brief Returns a string with some statistics about the scene.
-			 * @note Debug purpose.
-			 * @param printNodeSystem Print information about node system.
-			 * @param printStaticEntitySystem Print information about static entity system.
-			 * @param printSectorSystem Print information about sector system.
-			 * @param printTrees Enable the scene node tree and the scene octree.
-			 * @return std::string
 			 */
 			[[nodiscard]]
-			std::string getStatisticsString (bool printNodeSystem, bool printStaticEntitySystem, bool printSectorSystem, bool printTrees = false) const noexcept;
+			bool groundZeroDisplayEnabled () const noexcept;
+
+			/**
+			 * @brief Toggles the display of ground zero.
+			 * @note This a debug utility.
+			 * @return void
+			 */
+			void toggleGroundZeroDisplay () noexcept;
+
+			/**
+			 * @brief Shows the scene boundary planes.
+			 * @note This a debug utility.
+			 * @return bool
+			 */
+			bool enableBoundaryPlanesDisplay () noexcept;
+
+			/**
+			 * @brief Removes the scene boundary planes.
+			 * @note This a debug utility.
+			 * @return void
+			 */
+			void disableBoundaryPlanesDisplay () noexcept;
+
+			/**
+			 * @brief Returns whether the scene boundary planes are displayed.
+			 * @note This a debug utility.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool boundaryPlanesDisplayEnabled () const noexcept;
+
+			/**
+			 * @brief Toggles the display of scene boundary planes.
+			 * @note This a debug utility.
+			 * @return void
+			 */
+			void toggleBoundaryPlanesDisplay () noexcept;
 
 			/**
 			 * @brief Refreshes all renderable instances used in the scene.
-			 * @param renderableInstance A pointer to a renderable instance.
+			 * @param renderTarget A reference to a render target smart pointer.
 			 * @return void
 			 */
 			void refreshRenderableInstances (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
 
+			/**
+			 * @brief Applies scene modifiers on a node.
+			 * @param node A reference to a node.
+			 * @return void
+			 */
+			void applyModifiers (Node & node) const noexcept;
+
+			/**
+			 * @brief Returns a string with the node system statistics.
+			 * @note Debug purpose.
+			 * @param showTree Enable the scene node tree. Default false.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			std::string getNodeSystemStatistics (bool showTree = false) const noexcept;
+
+			/**
+			 * @brief Returns a string with the static entity system statistics.
+			 * @note Debug purpose.
+			 * @param showTree Enable the static entity tree. Default false.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			std::string getStaticEntitySystemStatistics (bool showTree = false) const noexcept;
+
+			/**
+			 * @brief Returns a string with the sector system statistics.
+			 * @note Debug purpose.
+			 * @param showTree Enable the sector tree. Default false.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			std::string getSectorSystemStatistics (bool showTree = false) const noexcept;
+
 		private:
 
-			/** @copydoc Libraries::Observer::onNotification() */
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+
+			/**
+			 * @brief Updates the render lists from a point of view.
+			 * @param renderTarget A reference to the render target smart pointer.
+			 * @param shadowRendering Enable the shadow map render list.
+			 * @return bool
+			 */
+			bool populateRenderLists (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, bool shadowRendering) noexcept;
+
+			/**
+			 * @brief Inserts a renderable instance in render lists.
+			 * @param renderTarget A reference to the render target smart pointer.
+			 * @param renderableInstance A reference to a renderable instance.
+			 * @param distance The distance from the camera.
+			 * @param shadowRendering Enable the shadow map render list.
+			 * @return void
+			 */
+			void insertInRenderLists (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance, float distance, bool shadowRendering) noexcept;
+
+			/**
+			 * @brief Renders a specific selection of objects;
+			 * @param renderTarget A reference to the render target smart pointer.
+			 * @param commandBuffer A reference to the command buffer.
+			 * @param unlightedObjects A reference to an unlighted renderable list.
+			 * @param lightedObjects A reference to a lighted renderable list.
+			 * @return void
+			 */
+			void renderSelection (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer, const RenderBatch::List & unlightedObjects, const RenderBatch::List & lightedObjects) const noexcept;
 
 			/**
 			 * @brief Loops over each renderable instance of the scene
 			 * @param function A reference to a function.
 			 * @return void
 			 */
-			void forEachRenderableInstance (const std::function< bool (Graphics::RenderableInstance::Abstract & renderableInstance) > & function) const noexcept;
+			void forEachRenderableInstance (const std::function< bool (const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance) > & function) const noexcept;
 
 			/**
 			 * @brief Checks a notification from the master console control.
 			 * @param notificationCode The notification code from MasterControl::Console::NotificationCode enum.
 			 * @param data A reference to the notification payload.
-			 * @return bool
+			 * @return void
 			 */
-			bool checkMasterControlConsoleNotification (int notificationCode, const std::any & data) noexcept;
+			void checkMasterControlConsoleNotification (int notificationCode, const std::any & data) const noexcept;
 
 			/**
 			 * @brief Checks a notification from a scene node.
-			 * @param observableNode A pointer to the node.
 			 * @param notificationCode The notification code from Node::NotificationCode enum.
 			 * @param data A reference to the notification payload.
 			 * @return bool
 			 */
-			bool checkNodeNotification (const Node * observableNode, int notificationCode, const std::any & data) noexcept;
+			[[nodiscard]]
+			bool checkRootNodeNotification (int notificationCode, const std::any & data) noexcept;
 
 			/**
 			 * @brief Checks a notification from a scene entity.
-			 * @param observableEntity A pointer to the entity.
 			 * @param notificationCode The notification code from AbstractEntity::NotificationCode enum.
 			 * @param data A reference to the notification payload.
 			 * @return bool
 			 */
-			bool checkEntityNotification (const AbstractEntity * observableEntity, int notificationCode, const std::any & data) noexcept;
+			bool checkEntityNotification (int notificationCode, const std::any & data) noexcept;
 
 			/**
 			 * @brief Initializes the base component (camera, microphone) of the scene.
@@ -591,106 +819,149 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool initializeBaseComponents () noexcept;
+			bool initializeBaseComponents () const noexcept;
 
 			/**
 			 * @brief Saves scene global visual components.
-			 * @param renderer A reference to the renderer.
 			 * @return void
 			 */
-			void registerSceneVisualComponents (Graphics::Renderer & renderer) noexcept;
+			void registerSceneVisualComponents () noexcept;
 
 			/**
-			 * @brief Creates an octree root sector according to the scene boundaries.
-			 * @return std::shared_ptr< OctreeSector >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< OctreeSector > createOctreeRootSector () const noexcept;
-
-			/**
-			 * @brief Rebuilds an octree.
-			 * @param octreeIt A reference to the octree smart pointer.
-			 * @param keepElements Keep elements from the previous octree.
+			 * @brief Builds the scene octrees.
+			 * @param octreeOptions A reference to an octree options struct.
 			 * @return bool
 			 */
-			bool rebuildOctree (const std::map< std::string, std::shared_ptr< Scenes::OctreeSector > >::iterator & octreeIt, bool keepElements) noexcept;
+			bool buildOctrees (const SceneOctreeOptions & octreeOptions) noexcept;
 
 			/**
-			 * @brief Inserts node elements to an existing octree.
-			 * @note The octree sector must be the root.
-			 * @param octree A reference to the octree smart pointer.
-			 * @return bool
+			 * @brief Destroys the scene octrees.
+			 * @return void
 			 */
-			[[deprecated("Unused function")]]
-			bool insertSceneElementsToOctree (const std::shared_ptr< Scenes::OctreeSector > & octree) noexcept;
+			void destroyOctrees () noexcept;
+
+			/**
+			 * @brief Checks the entity location inside all octrees.
+			 * @param entity A reference to an entity smart pointer.
+			 * @return void
+			 */
+			void checkEntityLocationInOctrees (const std::shared_ptr< AbstractEntity > & entity) const noexcept;
 
 			/**
 			 * @brief Executes a collision test between scene at a sector.
 			 * @note This is a recursive method with sub-sector.
 			 * @param sector A reference to the current sector tested.
-			 * @param stats A reference to a array of data to keep track of statistics on the scene collisions.
 			 * @return void
 			 */
-			void sectorCollisionTest (const OctreeSector & sector, std::array< size_t, 3 > & stats) noexcept;
+			void sectorCollisionTest (const OctreeSector< AbstractEntity, true > & sector) noexcept;
 
 			/**
 			 * @brief Checks if a scene node is clipping with the scene area boundaries.
-			 * @param node A reference to a node smart pointer.
-			 * @param hits A reference to the collider.
+			 * @param entity A reference to an entity smart pointer.
 			 * @return void
 			 */
-			void clip (const std::shared_ptr< Node > & node, Physics::Collider & collider) const noexcept;
+			void clipWithBoundingSphere (const std::shared_ptr< AbstractEntity > & entity) const noexcept;
+
+			/**
+			 * @brief Checks if a scene node is clipping with the scene area boundaries.
+			 * @param entity A reference to an entity smart pointer.
+			 * @return void
+			 */
+			void clipWithBoundingBox (const std::shared_ptr< AbstractEntity > & entity) const noexcept;
 
 			/**
 			 * @brief Checks a renderable instance for rendering.
-			 * @param renderer A reference to the graphics renderer.
-			 * @param renderableInstance A pointer to a renderable instance.
+			 * @param renderableInstance A reference to renderable instance smart pointer.
 			 * @return void
 			 */
-			void checkRenderableInstance (Graphics::Renderer & renderer, Graphics::RenderableInstance::Abstract * renderableInstance) noexcept;
+			void checkRenderableInstance (const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance) noexcept;
 
 			/**
-			 * @brief Launches the configuration of a renderable instance for all render targets.
-			 * @param renderer A reference to the graphics renderer.
-			 * @param renderableInstance A pointer to a renderable instance.
+			 * @brief Initializes a renderable instance with the scene render targets.
+			 * @param renderableInstance A reference to renderable instance smart pointer.
 			 * @return void
 			 */
-			void updateRenderableInstanceForRendering (Graphics::Renderer & renderer, Graphics::RenderableInstance::Abstract * renderableInstance) const noexcept;
+			void initializeRenderableInstance (const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance) const noexcept;
 
 			/**
-			 * @brief Updates all renderable instances from the scene with a render target.
-			 * @param renderer A reference to the graphics renderer.
+			 * @brief Initializes a render target with the scene renderable instances.
 			 * @param renderTarget A reference to a render target smart pointer.
 			 * @return void
 			 */
-			void updateRenderableInstancesForRendering (Graphics::Renderer & renderer, const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
+			void initializeRenderTarget (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
+
+			/**
+			 * @brief Prepare the render passes according to the scene.
+			 * @param renderableInstance A reference to the renderable instance.
+			 * @return std::vector< RenderPassType >
+			 */
+			[[nodiscard]]
+			std::vector< Graphics::RenderPassType > prepareRenderPassTypes (const Graphics::RenderableInstance::Abstract & renderableInstance) const noexcept;
+
+			/**
+			 * @brief Prepares a renderable instance for a specific rendering.
+			 * @note The function return false only if the instance cannot be prepared. 'true' can postpone the preparation.
+			 * @param renderableInstance A reference to the renderable instance smart pointer.
+			 * @param renderTarget A reference to a render target smart pointer where the renderable instance must get ready.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool getRenderableInstanceReadyForRender (const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance, const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
+
+			/**
+			 * @brief Refreshes a renderable instance. This will recreate the graphics pipelines.
+			 * @param renderableInstance A reference to the renderable instance.
+			 * @param renderTarget A reference to a render target smart pointer where the renderable instance must get ready.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool refreshRenderableInstance (Graphics::RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) noexcept;
+
+			static constexpr auto CompassDisplay{"+Compass"};
+			static constexpr auto GroundZeroPlaneDisplay{"+GroundZeroPlane"};
+			static constexpr auto BoundaryPlanesDisplay{"+BoundaryPlane"};
 
 			/* Flag names. */
-			static constexpr auto ShowSectors = 0UL;
-			static constexpr auto ShowBoundaries = 1UL;
-			static constexpr auto ShowGroundZero = 2UL;
+			static constexpr auto Initialized{0UL};
 
+			/* Render list types. */
+			static constexpr auto Opaque{0UL};
+			static constexpr auto Translucent{1UL};
+			static constexpr auto OpaqueLighted{2UL};
+			static constexpr auto TranslucentLighted{3UL};
+			static constexpr auto Shadows{4UL};
+
+			Graphics::Renderer & m_graphicsRenderer;
+			Audio::Manager & m_audioManager;
 			MasterControl::Console m_masterControlConsole;
-			std::vector< std::shared_ptr< VisualComponent > > m_sceneVisualComponents{};
-			std::map< std::string , std::shared_ptr< StaticEntity > > m_staticEntities{};
+			std::shared_ptr< Graphics::Renderable::AbstractBackground > m_background;
+			std::shared_ptr< Graphics::Renderable::SceneAreaInterface > m_sceneArea;
+			std::shared_ptr< Graphics::Renderable::SeaLevelInterface > m_seaLevel;
+			std::array< std::shared_ptr< Component::Visual >, 3 > m_sceneVisualComponents{nullptr, nullptr, nullptr};
+			std::map< std::string , std::shared_ptr< StaticEntity > > m_staticEntities;
 			std::shared_ptr< Node > m_rootNode;
-			std::map< std::string, std::shared_ptr< Scenes::OctreeSector > > m_octrees{};
-			LightSet m_lightSet{};
-			std::set< std::shared_ptr< AbstractModifier > > m_modifiers{};
-			Physics::PhysicalEnvironmentProperties m_physicalEnvironmentProperties = Physics::PhysicalEnvironmentProperties::Earth();
-			/* FIXME: Remove the three following smart pointers and use m_sceneVisualComponents instead. */
-			std::shared_ptr< Graphics::Renderable::AbstractBackground > m_background{};
-			std::shared_ptr< Graphics::Renderable::AbstractSceneArea > m_sceneArea{};
-			std::shared_ptr< Graphics::Renderable::AbstractSeaLevel > m_seaLevel{};
-			Saphir::EffectsList m_environmentEffects{};
+			/* FIXME: This shouldn't be a persistent instance here. This is a debug thing. */
+			NodeController m_nodeController;
+			std::shared_ptr< OctreeSector< AbstractEntity, false > > m_renderingOctree;
+			std::shared_ptr< OctreeSector< AbstractEntity, true > > m_physicsOctree;
+			LightSet m_lightSet{m_masterControlConsole};
+			std::set< std::shared_ptr< Component::AbstractModifier > > m_modifiers;
+			Physics::PhysicalEnvironmentProperties m_physicalEnvironmentProperties{Physics::PhysicalEnvironmentProperties::Earth()};
+			Audio::SoundEnvironmentProperties m_soundEnvironmentProperties;
+			std::array< RenderBatch::List, 5 > m_renderLists{};
+			Saphir::EffectsList m_environmentEffects;
 			float m_boundary{0};
-			mutable std::mutex m_sceneNodesMutex{};
-			mutable std::mutex m_staticEntitiesMutex{};
-			mutable std::mutex m_octreesMutex{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				false/*ShowSectors*/,
-				false/*ShowBoundaries*/,
-				false/*ShowGroundZero*/,
+			uint64_t m_lifetimeUS{0};
+			uint32_t m_lifetimeMS{0};
+			size_t m_cycle{0};
+			mutable std::mutex m_sceneNodesMutex;
+			mutable std::mutex m_staticEntitiesMutex;
+			mutable std::mutex m_renderingOctreeMutex;
+			mutable std::mutex m_physicsOctreeMutex;
+			std::array< bool, 8 > m_flags{
+				false/*Initialized*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

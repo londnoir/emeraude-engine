@@ -1,55 +1,47 @@
 /*
- * Emeraude/Graphics/ViewMatricesInterface.hpp
- * This file is part of Emeraude
+ * src/Graphics/ViewMatricesInterface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <array>
+/* STL inclusions. */
+#include <memory>
 
 /* Local inclusions for usages. */
-#include "Math/Vector.hpp"
-#include "Math/Matrix.hpp"
-#include "Math/Coordinates.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Vulkan/DescriptorSetLayout.hpp"
+#include "Vulkan/DescriptorSet.hpp"
 #include "Frustum.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace Emeraude::Graphics
 {
-	namespace Graphics::RenderTarget
-	{
-		class Abstract;
-	}
-
-	namespace Vulkan
-	{
-		class UniformBufferObject;
-		class DescriptorSet;
-	}
+	class Renderer;
 }
 
 namespace Emeraude::Graphics
@@ -60,24 +52,6 @@ namespace Emeraude::Graphics
 	class ViewMatricesInterface
 	{
 		public:
-
-			enum class UpdateSet
-			{
-				Regular,
-				Infinity,
-				Both
-			};
-
-			/* View properties UBO layout :
-			 * mat4: view matrix. (64 bytes)
-			 * mat4: projection matrix. (64 bytes)
-			 * mat4: (viewInfinity/view)Projection matrix. (64 bytes)
-			 * vec4: world position. (16 bytes)
-			 * vec4: velocity. (16 bytes)
-			 * vec4: view information [width, height, near, far]. (16 bytes)
-			 */
-			static constexpr auto ViewUBOElementCount = (3 * Graphics::MatrixAlignment) + (3 * Graphics::VectorAlignment);
-			static constexpr auto ViewUBOSize = ViewUBOElementCount * sizeof(float);
 
 			/**
 			 * @brief Copy constructor.
@@ -109,6 +83,13 @@ namespace Emeraude::Graphics
 			 * @brief Destructs the view matrices interface.
 			 */
 			virtual ~ViewMatricesInterface () = default;
+
+			/**
+			 * @brief Returns the descriptor set layout for this view.
+			 * @return std::shared_ptr< Vulkan::DescriptorSetLayout >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::DescriptorSetLayout > getDescriptorSetLayout () const noexcept;
 			
 			/**
 			 * @brief Returns the projection matrix.
@@ -119,57 +100,19 @@ namespace Emeraude::Graphics
 
 			/**
 			 * @brief Returns the view matrix.
-			 * @param index The index of the matrix for the cubemap view. Default 0.
+			 * @param infinity Gives the view matrix for infinite view.
+			 * @param index The index of the matrix for the cubemap view.
 			 * @return const Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & viewMatrix (size_t index) const noexcept = 0;
-
-			/**
-			 * @brief Returns the infinity view matrix.
-			 * @param index The index of the matrix for the cubemap view. Default 0.
-			 * @return const Matrix< 4, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & infinityViewMatrix (size_t index) const noexcept = 0;
-
-			/**
-			 * @brief Returns the view projection matrix.
-			 * @param index The index of the matrix for the cubemap view. Default 0.
-			 * @return const Matrix< 4, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & viewProjectionMatrix (size_t index) const noexcept = 0;
-
-			/**
-			 * @brief Returns the infinity view projection matrix.
-			 * @param index The index of the matrix for the cubemap view. Default 0.
-			 * @return const Matrix< 4, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & infinityViewProjectionMatrix (size_t index) const noexcept = 0;
+			virtual const Libraries::Math::Matrix< 4, float > & viewMatrix (bool infinity, size_t index) const noexcept = 0;
 
 			/**
 			 * @brief Returns the position of the point of view.
-			 * @todo Should be the coordinates instead of the only position.
-			 * @return const Vector< 3, float > &
+			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			virtual const Libraries::Math::Vector< 3, float > & position () const noexcept = 0;
-
-			/**
-			 * @brief Returns the velocity of the point of view.
-			 * @return const Vector< 3, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 3, float > & velocity () const noexcept = 0;
-
-			/**
-			 * @brief Returns the view properties
-			 * @return const Vector< 4, float > &
-			 */
-			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 4, float > & viewProperties () const noexcept = 0;
 
 			/**
 			 * @brief Returns the const access to the frustum for object clipping.
@@ -216,27 +159,35 @@ namespace Emeraude::Graphics
 			virtual void updateOrthographicViewProperties (float width, float height, float distance, float near) noexcept = 0;
 
 			/**
-			 * @brief This should be called everytime the point of view moves.
+			 * @brief Updates the view coordinates. This should be called everytime the point of view moves.
 			 * @param coordinates The absolute coordinates of the camera responsible for this view.
 			 * @param velocity A vector representing a velocity applied to the camera for special effect.
 			 * @return void
 			 */
-			virtual void updateViewCoordinates (const Libraries::Math::Coordinates< float > & coordinates, const Libraries::Math::Vector< 3, float > & velocity) noexcept = 0;
+			virtual void updateViewCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates, const Libraries::Math::Vector< 3, float > & velocity) noexcept = 0;
+
+			/**
+			 * @briefs Update optional ambient color and intensity.
+			 * @param color A reference to a color.
+			 * @param intensity The light intensity.
+			 * @return void
+			 */
+			virtual void updateAmbientLightProperties (const Libraries::PixelFactory::Color< float > & color, float intensity) noexcept = 0;
 
 			/**
 			 * @brief Creates buffer in the video memory.
-			 * @param renderTarget A reference to a render target.
+			 * @param renderer A reference to the renderer.
+			 * @param instanceID A reference to a string.
 			 * @return bool
 			 */
-			virtual bool create (const RenderTarget::Abstract & renderTarget) noexcept = 0;
+			virtual bool create (Graphics::Renderer & renderer, const std::string & instanceID) noexcept = 0;
 
 			/**
 			 * @brief Updates the video memory.
-			 * @param set Which set of matrices should we update. Default UpdateSet::Both.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool updateVideoMemory (UpdateSet set) const noexcept = 0;
+			virtual bool updateVideoMemory () const noexcept = 0;
 
 			/**
 			 * @brief Destroys buffer in the video memory.
@@ -245,65 +196,17 @@ namespace Emeraude::Graphics
 			virtual void destroy () noexcept = 0;
 
 			/**
-			 * @brief Returns the raw pointer on the view uniform buffer object.
-			 * @return const Vulkan::UniformBufferObject *
-			 */
-			[[nodiscard]]
-			virtual const Vulkan::UniformBufferObject * viewUBO (size_t index) const noexcept = 0;
-
-			/**
-			 * @brief Returns the raw pointer on the view infinity uniform buffer object.
-			 * @return const Vulkan::UniformBufferObject *
-			 */
-			[[nodiscard]]
-			virtual const Vulkan::UniformBufferObject * viewInfinityUBO (size_t index) const noexcept = 0;
-
-			/**
 			 * @brief Returns the view descriptor set.
-			 * @param bool infinity Set for the infinite view.
 			 * @return const Vulkan::DescriptorSet *
 			 */
 			[[nodiscard]]
-			virtual const Vulkan::DescriptorSet * descriptorSet (bool infinity) const noexcept = 0;
+			virtual const Vulkan::DescriptorSet * descriptorSet () const noexcept = 0;
 
 		protected:
 
 			/**
 			 * @brief Constructs a view matrices interface.
-			 * @param enableCloseView Enable the matrices for close view.
-			 * @param enableInfinityView Enable the matrices for infinity view.
 			 */
-			ViewMatricesInterface (bool enableCloseView, bool enableInfinityView) noexcept;
-
-			/**
-			 * @return Returns whether the close view is enabled.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool closeViewEnabled () const noexcept;
-
-			/**
-			 * @return Returns whether the infinity view is enabled.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool infinityViewEnabled () const noexcept;
-
-		private:
-
-			/* Flag names. */
-			static constexpr auto EnableCloseView = 0UL;
-			static constexpr auto EnableInfinityView = 1UL;
-			
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				true/*EnableCloseView*/,
-				true/*EnableInfinityView*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/
-			};
+			ViewMatricesInterface () noexcept = default;
 	};
 }

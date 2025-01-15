@@ -1,33 +1,36 @@
 /*
- * Emeraude/Scenes/AbstractEntity.cpp
- * This file is part of Emeraude
+ * src/Scenes/AbstractEntity.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "AbstractEntity.hpp"
 
-/* Local inclusions */
+/* STL inclusions. */
+#include <ranges>
+
+/* Local inclusions. */
 #include "Tracer.hpp"
 
 namespace Emeraude::Scenes
@@ -37,76 +40,66 @@ namespace Emeraude::Scenes
 	using namespace Graphics;
 	using namespace Physics;
 
-	constexpr auto TracerTag{"AbstractEntity"};
+	static constexpr auto TracerTag{"AbstractEntity"};
 
-	AbstractEntity::AbstractEntity (const std::string & name, Scene * parentScene) noexcept
-		: AbstractOctreeElement(name), m_parentScene(parentScene)
+	AbstractEntity::AbstractEntity (const std::string & name, uint32_t sceneTimeMS) noexcept
+		: NameableTrait(name), m_birthTime(sceneTimeMS)
 	{
 
 	}
 
 	bool
-	AbstractEntity::onNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept
+	AbstractEntity::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept
 	{
-		if ( observable->is(AbstractComponent::ClassUID) )
+		bool identifiedObservable = false;
+
+		if ( observable->is(Component::Abstract::ClassUID) )
 		{
-			/* Checks components notifications. */
-			for ( auto componentIt = m_components.begin(); componentIt != m_components.end(); ++componentIt )
+			identifiedObservable = true;
+
+			switch ( notificationCode )
 			{
-				/* Not the right component. */
-				if ( componentIt->second.get() != observable )
-				{
-					continue;
-				}
+				/* NOTE: This signal is used for late object creation. */
+				case Component::Abstract::ComponentContentModified :
+					if ( dynamic_cast< const Component::Abstract * >(observable)->isPhysicalPropertiesEnabled() )
+					{
+						this->updateEntityProperties();
+					}
+					else
+					{
+						this->updateEntityStates();
+					}
+					break;
 
-				switch ( notificationCode )
-				{
-					case AbstractComponent::PropertiesChanged :
-						this->updateGlobalPhysicalObjectProperties();
-						break;
+				default:
+					break;
+			}
+		}
 
-					case AbstractComponent::RemoveBrokenComponent :
-						TraceInfo{TracerTag} << "Removing the broken component '" << componentIt->first << "' !";
+		if ( observable->is(PhysicalObjectProperties::ClassUID) )
+		{
+			identifiedObservable = true;
 
-						m_components.erase(componentIt);
-						break;
-
-					default:
-						break;
-				}
-
-				return true;
+			if ( notificationCode == PhysicalObjectProperties::PropertiesChanged )
+			{
+				this->updateEntityProperties();
 			}
 		}
 
 		/* Let child class look after the notification. */
-		return this->onUnhandledNotification(observable, notificationCode, data);
-	}
+		if ( this->onUnhandledNotification(observable, notificationCode, data) )
+		{
+			return true;
+		}
 
-	const PhysicalObjectProperties &
-	AbstractEntity::physicalObjectProperties () const noexcept
-	{
-		return m_physicalObjectProperties;
-	}
-
-	PhysicalObjectProperties &
-	AbstractEntity::physicalObjectProperties () noexcept
-	{
-		return m_physicalObjectProperties;
-	}
-
-	Scene *
-	AbstractEntity::parentScene () const noexcept
-	{
-		return m_parentScene;
+		return identifiedObservable;
 	}
 
 	void
-	AbstractEntity::updateGlobalPhysicalObjectProperties () noexcept
+	AbstractEntity::updateEntityProperties () noexcept
 	{
 		auto physicalEntityCount = 0;
 
-		/* Reset properties to node base properties. */
 		auto surface = 0.0F;
 		auto mass = 0.0F;
 		auto dragCoefficient = 0.0F;
@@ -115,38 +108,51 @@ namespace Emeraude::Scenes
 
 		this->setRenderingAbilityState(false);
 
-		/* Reset the bounding box to make a valid
-		 * bounding boxes merging from entities. */
-		m_boundingBox.reset();
-		m_boundingSphere.reset();
-
-		for ( const auto & componentPair : m_components )
+		if ( !this->isFlagEnabled(BoundingPrimitivesOverridden) )
 		{
-			const auto & component = componentPair.second;
-			const auto & physicalObjectProperties = component->physicalObjectProperties();
+			/* Reset the bounding box to make a valid
+			 * bounding boxes merging from entities. */
+			m_boundingBox.reset();
+			m_boundingSphere.reset();
+		}
 
-			/* Gets physical properties of a component only if it's a physical object. */
-			if ( !physicalObjectProperties.isMassNull() )
-			{
-				surface += physicalObjectProperties.surface();
-				mass += physicalObjectProperties.mass();
-
-				dragCoefficient += physicalObjectProperties.dragCoefficient();
-				bounciness += physicalObjectProperties.bounciness();
-				stickiness += physicalObjectProperties.stickiness();
-
-				physicalEntityCount++;
-			}
-
+		for ( const auto & component : std::ranges::views::values(m_components) )
+		{
 			/* Checks render ability. */
 			if ( component->isRenderable() )
 			{
 				this->setRenderingAbilityState(true);
 			}
 
-			/* Merge the component local bounding shapes to the scene node local bounding shapes. */
-			m_boundingBox.merge(component->boundingBox());
-			m_boundingSphere.merge(component->boundingSphere());
+			if ( component->isPhysicalPropertiesEnabled() )
+			{
+				const auto & physicalObjectProperties = component->physicalObjectProperties();
+
+				/* Gets physical properties of a component only if it's a physical object. */
+				if ( !physicalObjectProperties.isMassNull() )
+				{
+					surface += physicalObjectProperties.surface();
+					mass += physicalObjectProperties.mass();
+
+					dragCoefficient += physicalObjectProperties.dragCoefficient();
+					bounciness += physicalObjectProperties.bounciness();
+					stickiness += physicalObjectProperties.stickiness();
+
+					physicalEntityCount++;
+				}
+
+				if ( !this->isFlagEnabled(BoundingPrimitivesOverridden) )
+				{
+					/* Merge the component local bounding shapes to the scene node local bounding shapes. */
+					m_boundingBox.merge(component->boundingBox());
+					m_boundingSphere.merge(component->boundingSphere());
+				}
+			}
+		}
+
+		if ( !this->isCollisionDisabled() )
+		{
+			this->setDeflectorState(m_boundingBox.isValid());
 		}
 
 		if ( physicalEntityCount > 0 )
@@ -169,40 +175,68 @@ namespace Emeraude::Scenes
 
 			this->setPhysicalObjectPropertiesState(false);
 		}
+
+		/* NOTE: Update bounding primitive visual representations. */
+		this->updateVisualDebug();
+
+		this->notify(EntityContentModified, this);
 	}
 
 	void
-	AbstractEntity::move () noexcept
+	AbstractEntity::overrideBoundingPrimitives (const Cuboid< float > & box, const Sphere< float > & sphere) noexcept
 	{
-		/* NOTE: Dispatch the move to every component. */
-		for ( auto & pair : m_components )
+		m_boundingBox = box;
+		m_boundingSphere = sphere;
+
+		this->enableFlag(BoundingPrimitivesOverridden);
+
+		/* NOTE: Update bounding primitives visual representation. */
+		this->updateVisualDebug();
+	}
+
+	void
+	AbstractEntity::updateEntityStates () noexcept
+	{
+		this->setRenderingAbilityState(false);
+
+		for ( const auto & component : std::ranges::views::values(m_components) )
 		{
-			pair.second->move();
+			/* Checks render ability. */
+			if ( component->isRenderable() )
+			{
+				this->setRenderingAbilityState(true);
+			}
 		}
+
+		this->notify(EntityContentModified, this);
 	}
 
-	const Cuboid< float > &
-	AbstractEntity::localBoundingBox () const noexcept
+	void
+	AbstractEntity::onContainerMove (const CartesianFrame< float > & worldCoordinates) noexcept
 	{
-		return m_boundingBox;
-	}
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
 
-	const Sphere< float > &
-	AbstractEntity::localBoundingSphere () const noexcept
-	{
-		return m_boundingSphere;
+		/* NOTE: Dispatch the move to every component. */
+		for ( const auto & [componentName, component] : m_components )
+		{
+			component->move(worldCoordinates);
+		}
 	}
 
 	bool
 	AbstractEntity::containsComponent (const std::string & name) const noexcept
 	{
-		return m_components.find(name) != m_components.cend();
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
+		return m_components.contains(name);
 	}
 
 	bool
-	AbstractEntity::containsComponent (const std::shared_ptr< AbstractComponent > & component) const noexcept
+	AbstractEntity::containsComponent (const std::shared_ptr< Component::Abstract > & component) const noexcept
 	{
-		return std::any_of(m_components.cbegin(), m_components.cend(), [component] (const auto & pair) {
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
+		return std::ranges::any_of(m_components, [component] (const auto & pair) {
 			return pair.second == component;
 		});
 	}
@@ -223,67 +257,77 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	AbstractEntity::addComponent (const std::string & name, const std::shared_ptr< AbstractComponent > & component) noexcept
+	AbstractEntity::addComponent (const std::string & name, const std::shared_ptr< Component::Abstract > & component) noexcept
 	{
-		auto result = m_components.emplace(name, component);
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
 
-		if ( !result.second )
+		if ( !m_components.emplace(name, component).second )
 		{
 			TraceError{TracerTag} << "Unable to create the component '" << name << "' !";
 
 			return false;
 		}
 
-		this->updateGlobalPhysicalObjectProperties();
+		/* NOTE: First update properties before sending any signals. */
+		if ( component->isPhysicalPropertiesEnabled() )
+		{
+			this->updateEntityProperties();
+		}
+		else
+		{
+			this->updateEntityStates();
+		}
 
 		this->observe(component.get());
-
-		this->notify(ContentModified, this->shared_from_this());
+		this->observe(&component->physicalObjectProperties()); // NOTE: Don't know if observing non-physical object is useful.
 
 		this->notify(ComponentCreated, component);
 
 		return true;
 	}
 
-	std::map< std::string, std::shared_ptr< AbstractComponent > >::iterator
-	AbstractEntity::removeComponent (const std::map< std::string, std::shared_ptr< AbstractComponent > >::iterator & componentIt) noexcept
+	void
+	AbstractEntity::unlinkComponent (const std::shared_ptr< Component::Abstract > & component) noexcept
 	{
-		const auto * pointer = componentIt->second.get();
+		auto * pointer = component.get();
 
-		this->notify(ComponentDestroyed, componentIt->second);
+		this->forget(pointer);
+		this->forget(&pointer->physicalObjectProperties());
 
-		if ( typeid(*pointer) == typeid(Camera) )
+		if ( typeid(*pointer) == typeid(Component::Camera) )
 		{
-			this->notify(CameraDestroyed, std::static_pointer_cast< Camera >(componentIt->second));
+			this->notify(CameraDestroyed, std::static_pointer_cast< Component::Camera >(component));
 		}
-		else if ( typeid(*pointer) == typeid(Microphone) )
+		else if ( typeid(*pointer) == typeid(Component::Microphone) )
 		{
-			this->notify(MicrophoneDestroyed, std::static_pointer_cast< Microphone >(componentIt->second));
+			this->notify(MicrophoneDestroyed, std::static_pointer_cast< Component::Microphone >(component));
 		}
-		else if ( typeid(*pointer) == typeid(SphericalPushModifier) || typeid(*pointer) == typeid(DirectionalPushModifier) )
+		else if ( typeid(*pointer) == typeid(Component::SphericalPushModifier) || typeid(*pointer) == typeid(Component::DirectionalPushModifier) )
 		{
-			this->notify(ModifierDestroyed, std::static_pointer_cast< AbstractModifier >(componentIt->second));
+			this->notify(ModifierDestroyed, std::static_pointer_cast< Component::AbstractModifier >(component));
 		}
-		else if ( typeid(*pointer) == typeid(DirectionalLight) )
+		else if ( typeid(*pointer) == typeid(Component::DirectionalLight) )
 		{
-			this->notify(DirectionalLightDestroyed, std::static_pointer_cast< DirectionalLight >(componentIt->second));
+			this->notify(DirectionalLightDestroyed, std::static_pointer_cast< Component::DirectionalLight >(component));
 		}
-		else if ( typeid(*pointer) == typeid(PointLight) )
+		else if ( typeid(*pointer) == typeid(Component::PointLight) )
 		{
-			this->notify(PointLightDestroyed, std::static_pointer_cast< PointLight >(componentIt->second));
+			this->notify(PointLightDestroyed, std::static_pointer_cast< Component::PointLight >(component));
 		}
-		else if ( typeid(*pointer) == typeid(SpotLight) )
+		else if ( typeid(*pointer) == typeid(Component::SpotLight) )
 		{
-			this->notify(SpotLightDestroyed, std::static_pointer_cast< SpotLight >(componentIt->second));
+			this->notify(SpotLightDestroyed, std::static_pointer_cast< Component::SpotLight >(component));
 		}
 
-		return m_components.erase(componentIt);
+		this->notify(ComponentDestroyed);
 	}
 
 	bool
 	AbstractEntity::removeComponent (const std::string & name) noexcept
 	{
-		auto componentIt = m_components.find(name);
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
+		const auto componentIt = m_components.find(name);
 
 		if ( componentIt == m_components.end() )
 		{
@@ -294,16 +338,20 @@ namespace Emeraude::Scenes
 			return false;
 		}
 
-		this->removeComponent(componentIt);
+		this->unlinkComponent(componentIt->second);
 
-		this->updateGlobalPhysicalObjectProperties();
+		m_components.erase(componentIt);
+
+		this->updateEntityProperties();
 
 		return true;
 	}
 
 	bool
-	AbstractEntity::removeComponent (const std::shared_ptr< AbstractComponent > & component) noexcept
+	AbstractEntity::removeComponent (const std::shared_ptr< Component::Abstract > & component) noexcept
 	{
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
 		for ( auto componentIt = m_components.begin(); componentIt != m_components.end(); ++componentIt )
 		{
 			if ( componentIt->second != component )
@@ -311,9 +359,11 @@ namespace Emeraude::Scenes
 				continue;
 			}
 
-			this->removeComponent(componentIt);
+			this->unlinkComponent(componentIt->second);
 
-			this->updateGlobalPhysicalObjectProperties();
+			m_components.erase(componentIt);
+
+			this->updateEntityProperties();
 
 			return true;
 		}
@@ -325,21 +375,11 @@ namespace Emeraude::Scenes
 		return false;
 	}
 
-	const std::map< std::string, std::shared_ptr< AbstractComponent > > &
-	AbstractEntity::components () const noexcept
-	{
-		return m_components;
-	}
-
-	std::map< std::string, std::shared_ptr< AbstractComponent > > &
-	AbstractEntity::components () noexcept
-	{
-		return m_components;
-	}
-
-	std::shared_ptr< AbstractComponent >
+	std::shared_ptr< Component::Abstract >
 	AbstractEntity::getComponent (const std::string & name) const noexcept
 	{
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
 		const auto componentIt = m_components.find(name);
 
 		return componentIt != m_components.cend() ? componentIt->second : nullptr;
@@ -348,22 +388,28 @@ namespace Emeraude::Scenes
 	void
 	AbstractEntity::clearComponents () noexcept
 	{
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
 		auto componentIt = std::begin(m_components);
 
 		while ( componentIt != std::end(m_components) )
 		{
-			componentIt = this->removeComponent(componentIt);
+			this->unlinkComponent(componentIt->second);
+
+			componentIt = m_components.erase(componentIt);
 		}
 
-		this->updateGlobalPhysicalObjectProperties();
+		this->updateEntityProperties();
 	}
 
 	void
-	AbstractEntity::forEachComponent (const std::function< bool (const AbstractComponent & component) > & lambda) const noexcept
+	AbstractEntity::forEachComponent (const std::function< bool (const Component::Abstract & component) > & lambda) const noexcept
 	{
-		for ( const auto & item : m_components )
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
+		for ( const auto & component : std::ranges::views::values(m_components) )
 		{
-			if ( lambda(*item.second))
+			if ( lambda(*component))
 			{
 				break;
 			}
@@ -371,8 +417,10 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	AbstractEntity::forEachComponent (const std::function< bool (const AbstractComponent & component, size_t index) > & lambda) const noexcept
+	AbstractEntity::forEachComponent (const std::function< bool (const Component::Abstract & component, size_t index) > & lambda) const noexcept
 	{
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
 		for ( auto componentIt = m_components.cbegin(); componentIt != m_components.cend(); ++componentIt )
 		{
 			const auto index = std::distance(m_components.cbegin(), componentIt);
@@ -385,11 +433,13 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	AbstractEntity::forEachComponent (const std::function< bool (AbstractComponent & component) > & lambda) noexcept
+	AbstractEntity::forEachComponent (const std::function< bool (Component::Abstract & component) > & lambda) noexcept
 	{
-		for ( auto & item : m_components )
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
+		for ( const auto & component : std::ranges::views::values(m_components) )
 		{
-			if ( lambda(*item.second))
+			if ( lambda(*component))
 			{
 				break;
 			}
@@ -397,8 +447,10 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	AbstractEntity::forEachComponent (const std::function< bool (AbstractComponent & component, size_t index) > & lambda) noexcept
+	AbstractEntity::forEachComponent (const std::function< bool (Component::Abstract & component, size_t index) > & lambda) noexcept
 	{
+		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
+
 		for ( auto componentIt = m_components.begin(); componentIt != m_components.end(); ++componentIt )
 		{
 			const auto index = std::distance(m_components.begin(), componentIt);
@@ -410,15 +462,15 @@ namespace Emeraude::Scenes
 		}
 	}
 
-	std::shared_ptr< Camera >
-	AbstractEntity::newCamera (const std::string & componentName, bool primaryDevice, bool enableModel) noexcept
+	std::shared_ptr< Component::Camera >
+	AbstractEntity::newCamera (bool perspective, bool primaryDevice, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
 		{
 			return nullptr;
 		}
 
-		auto component = std::make_shared< Camera >(componentName, *this, true);
+		auto component = std::make_shared< Component::Camera >(componentName, *this, perspective);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -429,50 +481,18 @@ namespace Emeraude::Scenes
 		/* Notify the camera creation. */
 		this->notify(primaryDevice ? PrimaryCameraCreated : CameraCreated, component);
 
-		if ( enableModel )
-		{
-			this->newMeshInstance(Renderable::MeshResource::get("camera"), componentName + "Gizmo");
-		}
-
 		return component;
 	}
 
-	std::shared_ptr< Camera >
-	AbstractEntity::newOrthographicCamera (const std::string & componentName, bool primaryDevice, bool enableModel) noexcept
+	std::shared_ptr< Component::Microphone >
+	AbstractEntity::newMicrophone (bool primaryDevice, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
 		{
 			return nullptr;
 		}
 
-		auto component = std::make_shared< Camera >(componentName, *this, false);
-
-		/* Registering the smart pointer. */
-		if ( !this->addComponent(componentName, component) )
-		{
-			return nullptr;
-		}
-
-		/* Notify the creation. */
-		this->notify(primaryDevice ? PrimaryCameraCreated : CameraCreated, component);
-
-		if ( enableModel )
-		{
-			this->newMeshInstance(Renderable::MeshResource::get("camera"), componentName + "Gizmo");
-		}
-
-		return component;
-	}
-
-	std::shared_ptr< Microphone >
-	AbstractEntity::newMicrophone (const std::string & componentName, bool primaryDevice) noexcept
-	{
-		if ( !this->checkComponentNameAvailability(componentName) )
-		{
-			return nullptr;
-		}
-
-		auto component = std::make_shared< Microphone >(componentName, *this);
+		auto component = std::make_shared< Component::Microphone >(componentName, *this);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -486,15 +506,15 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< DirectionalLight >
-	AbstractEntity::newDirectionalLight (const std::string & componentName) noexcept
+	std::shared_ptr< Component::DirectionalLight >
+	AbstractEntity::newDirectionalLight (uint32_t shadowMapResolution, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
 		{
 			return nullptr;
 		}
 
-		auto component = std::make_shared< DirectionalLight >(componentName, *this);
+		auto component = std::make_shared< Component::DirectionalLight >(componentName, *this, shadowMapResolution);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -508,15 +528,15 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< PointLight >
-	AbstractEntity::newPointLight (const std::string & componentName) noexcept
+	std::shared_ptr< Component::PointLight >
+	AbstractEntity::newPointLight (uint32_t shadowMapResolution, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
 		{
 			return nullptr;
 		}
 
-		auto component = std::make_shared< PointLight >(componentName, *this);
+		auto component = std::make_shared< Component::PointLight >(componentName, *this, shadowMapResolution);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -530,15 +550,15 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< SpotLight >
-	AbstractEntity::newSpotLight (const std::string & componentName) noexcept
+	std::shared_ptr< Component::SpotLight >
+	AbstractEntity::newSpotLight (uint32_t shadowMapResolution, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
 		{
 			return nullptr;
 		}
 
-		auto component = std::make_shared< SpotLight >(componentName, *this);
+		auto component = std::make_shared< Component::SpotLight >(componentName, *this, shadowMapResolution);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -552,7 +572,7 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< SoundEmitter >
+	std::shared_ptr< Component::SoundEmitter >
 	AbstractEntity::newSoundEmitter (const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
@@ -560,7 +580,7 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< SoundEmitter >(componentName, *this);
+		auto component = std::make_shared< Component::SoundEmitter >(componentName, *this);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -574,20 +594,20 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< SoundEmitter >
-	AbstractEntity::newSoundEmitter (const std::shared_ptr< Audio::SoundResource > & resource, bool loop, const std::string & componentName) noexcept
+	std::shared_ptr< Component::SoundEmitter >
+	AbstractEntity::newSoundEmitter (const std::shared_ptr< Audio::SoundResource > & resource, float gain, bool loop, const std::string & componentName) noexcept
 	{
 		auto component = this->newSoundEmitter(componentName);
 
-		component->play(resource, loop);
+		component->play(resource, gain, loop);
 
 		return component;
 	}
 
-	std::shared_ptr< VisualComponent >
-	AbstractEntity::newMeshInstance (const std::shared_ptr< Renderable::MeshResource > & resource, const std::string & componentName) noexcept
+	std::shared_ptr< Component::Visual >
+	AbstractEntity::newVisual (const std::shared_ptr< Renderable::Interface > & resource, bool enablePhysicalProperties, bool enableLighting, const std::string & componentName) noexcept
 	{
-		/* If no name were passed, we use the mesh name. */
+		/* If no name were passed, we use the resource name. */
 		const auto name = componentName.empty() ? resource->name() : componentName;
 
 		if ( !this->checkComponentNameAvailability(name) )
@@ -595,7 +615,13 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< VisualComponent >(name, *this, resource);
+		auto component = std::make_shared< Component::Visual >(name, *this, resource);
+		component->enablePhysicalProperties(enablePhysicalProperties);
+
+		if ( enableLighting )
+		{
+			component->getRenderableInstance()->enableLighting();
+		}
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(name, component) )
@@ -609,33 +635,8 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< VisualComponent >
-	AbstractEntity::newSpriteInstance (const std::shared_ptr< Renderable::SpriteResource > & resource, const std::string & componentName) noexcept
-	{
-		/* If no name were passed, we use the resource name. */
-		const auto name = componentName.empty() ? resource->name() : componentName;
-
-		if ( !this->checkComponentNameAvailability(name) )
-		{
-			return nullptr;
-		}
-
-		auto component = std::make_shared< VisualComponent >(name, *this, resource);
-
-		/* Registering the smart pointer. */
-		if ( !this->addComponent(name, component) )
-		{
-			return nullptr;
-		}
-
-		/* Notify the creation. */
-		this->notify(VisualComponentCreated, component);
-
-		return component;
-	}
-
-	std::shared_ptr< MultipleVisualsComponent >
-	AbstractEntity::newMeshInstance (const std::shared_ptr< Renderable::MeshResource > & resource, const std::vector< Coordinates< float > > & coordinates, const std::string & componentName) noexcept
+	std::shared_ptr< Component::MultipleVisuals >
+	AbstractEntity::newVisual (const std::shared_ptr< Renderable::Interface > & resource, const std::vector< CartesianFrame< float > > & coordinates, bool enablePhysicalProperties, bool enableLighting, const std::string & componentName) noexcept
 	{
 		/* If no name were passed, we use the mesh name. */
 		const auto name = componentName.empty() ? resource->name() : componentName;
@@ -645,7 +646,13 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< MultipleVisualsComponent >(name, *this, resource, coordinates);
+		auto component = std::make_shared< Component::MultipleVisuals >(name, *this, resource, coordinates);
+		component->enablePhysicalProperties(enablePhysicalProperties);
+
+		if ( enableLighting )
+		{
+			component->getRenderableInstance()->enableLighting();
+		}
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(name, component) )
@@ -659,32 +666,7 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< MultipleVisualsComponent >
-	AbstractEntity::newSpriteInstance (const std::shared_ptr< Renderable::SpriteResource > & resource, const std::vector< Coordinates< float > > & coordinates, const std::string & componentName) noexcept
-	{
-		/* If no name were passed, we use the resource name. */
-		const auto name = componentName.empty() ? resource->name() : componentName;
-
-		if ( !this->checkComponentNameAvailability(name) )
-		{
-			return nullptr;
-		}
-
-		auto component = std::make_shared< MultipleVisualsComponent >(name, *this, resource, coordinates);
-
-		/* Registering the smart pointer. */
-		if ( !this->addComponent(name, component) )
-		{
-			return nullptr;
-		}
-
-		/* Notify the creation. */
-		this->notify(MultipleVisualsComponentCreated, component);
-
-		return component;
-	}
-
-	std::shared_ptr< ParticlesEmitter >
+	std::shared_ptr< Component::ParticlesEmitter >
 	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::SpriteResource > & resource, size_t maxParticleCount, const std::string & componentName) noexcept
 	{
 		/* If no name were passed, we use the resource name. */
@@ -695,7 +677,7 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< ParticlesEmitter >(name, *this, resource, maxParticleCount);
+		auto component = std::make_shared< Component::ParticlesEmitter >(name, *this, resource, maxParticleCount);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(name, component) )
@@ -709,7 +691,7 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< ParticlesEmitter >
+	std::shared_ptr< Component::ParticlesEmitter >
 	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::MeshResource > & resource, size_t maxParticleCount, const std::string & componentName) noexcept
 	{
 		/* If no name were passed, we use the resource name. */
@@ -720,7 +702,7 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< ParticlesEmitter >(name, *this, resource, maxParticleCount);
+		auto component = std::make_shared< Component::ParticlesEmitter >(name, *this, resource, maxParticleCount);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(name, component) )
@@ -734,7 +716,7 @@ namespace Emeraude::Scenes
 		return component;
 	}
 
-	std::shared_ptr< DirectionalPushModifier >
+	std::shared_ptr< Component::DirectionalPushModifier >
 	AbstractEntity::newDirectionalPushModifier (const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
@@ -742,7 +724,7 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< DirectionalPushModifier >(componentName, *this);
+		auto component = std::make_shared< Component::DirectionalPushModifier >(componentName, *this);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -751,13 +733,13 @@ namespace Emeraude::Scenes
 		}
 
 		/* Notify the creation. */
-		this->notify(ModifierCreated, std::static_pointer_cast< AbstractModifier >(component));
+		this->notify(ModifierCreated, std::static_pointer_cast< Component::AbstractModifier >(component));
 		this->notify(DirectionalPushModifierCreated, component);
 
 		return component;
 	}
 
-	std::shared_ptr< SphericalPushModifier >
+	std::shared_ptr< Component::SphericalPushModifier >
 	AbstractEntity::newSphericalPushModifier (const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
@@ -765,7 +747,7 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< SphericalPushModifier >(componentName, *this);
+		auto component = std::make_shared< Component::SphericalPushModifier >(componentName, *this);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -774,35 +756,13 @@ namespace Emeraude::Scenes
 		}
 
 		/* Notify the creation. */
-		this->notify(ModifierCreated, std::static_pointer_cast< AbstractModifier >(component));
+		this->notify(ModifierCreated, std::static_pointer_cast< Component::AbstractModifier >(component));
 		this->notify(SphericalPushModifierCreated, component);
 
 		return component;
 	}
 
-	std::shared_ptr< Weight >
-	AbstractEntity::newWeight (const std::string & componentName) noexcept
-	{
-		if ( !this->checkComponentNameAvailability(componentName) )
-		{
-			return nullptr;
-		}
-
-		auto component = std::make_shared< Weight >(componentName, *this);
-
-		/* Registering the smart pointer. */
-		if ( !this->addComponent(componentName, component) )
-		{
-			return nullptr;
-		}
-
-		/* Notify the creation. */
-		this->notify(WeightCreated, component);
-
-		return component;
-	}
-
-	std::shared_ptr< Weight >
+	std::shared_ptr< Component::Weight >
 	AbstractEntity::newWeight (const PhysicalObjectProperties & initialProperties, const std::string & componentName) noexcept
 	{
 		if ( !this->checkComponentNameAvailability(componentName) )
@@ -810,7 +770,8 @@ namespace Emeraude::Scenes
 			return nullptr;
 		}
 
-		auto component = std::make_shared< Weight >(componentName, *this, initialProperties);
+		auto component = std::make_shared< Component::Weight >(componentName, *this, initialProperties);
+		component->enablePhysicalProperties(true);
 
 		/* Registering the smart pointer. */
 		if ( !this->addComponent(componentName, component) )
@@ -822,5 +783,40 @@ namespace Emeraude::Scenes
 		this->notify(WeightCreated, component);
 
 		return component;
+	}
+
+	bool
+	AbstractEntity::processLogics (const Scene & scene, size_t engineCycle) noexcept
+	{
+		/* Updates every entity at this Node. */
+		auto componentIt = m_components.begin();
+
+		while ( componentIt != m_components.end() )
+		{
+			if ( componentIt->second->shouldRemove() )
+			{
+				TraceWarning{TracerTag} << "Removing automatically component '" << componentIt->second->name() << "' ...";
+
+				this->unlinkComponent(componentIt->second);
+
+				componentIt = m_components.erase(componentIt);
+			}
+			else
+			{
+				componentIt->second->processLogics(scene);
+
+				++componentIt;
+			}
+		}
+
+		/* NOTE: If the entity has move, we save the cycle number. */
+		if ( this->onProcessLogics(scene) )
+		{
+			m_lastUpdatedMoveCycle = engineCycle;
+
+			return true;
+		}
+
+		return false;
 	}
 }

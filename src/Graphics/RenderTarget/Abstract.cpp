@@ -1,128 +1,125 @@
 /*
- * Emeraude/Graphics/RenderTarget/Abstract.cpp
- * This file is part of Emeraude
+ * src/Graphics/RenderTarget/Abstract.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Abstract.hpp"
 
+/* STL inclusions. */
+#include <memory>
+#include <string>
+
 /* Local inclusions. */
+#include "Graphics/Renderer.hpp"
+#include "Graphics/FramebufferPrecisions.hpp"
+#include "Graphics/Types.hpp"
+#include "MasterControl/AbstractVirtualVideoDevice.hpp"
+#include "MasterControl/Types.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Instance.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Graphics::RenderTarget
 {
 	using namespace Libraries;
 	using namespace Vulkan;
 
-	constexpr auto TracerTag{"RenderTarget"};
+	static constexpr auto TracerTag{"RenderTarget"};
 
-	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderType renderType, MasterControl::ConnexionType allowedConnexionType) noexcept
-		: MasterControl::AbstractVirtualVideoDevice(name, allowedConnexionType), m_precisions(precisions), m_extent(extent), m_renderType(renderType)
+	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, MasterControl::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept
+		: AbstractVirtualVideoDevice(name, allowedConnexionType),
+		m_precisions(precisions),
+		m_extent(extent),
+		m_renderArea({
+			.offset = {.x = 0, .y = 0},
+			.extent = {.width = extent.width, .height = extent.height}
+		}),
+		m_renderType(renderType)
 	{
-
-	}
-
-	void
-	Abstract::setExtent (const VkExtent3D & extent) noexcept
-	{
-		m_extent = extent;
-	}
-
-	bool
-	Abstract::isRenderOutOfDate () const noexcept
-	{
-		return m_flags[RenderOutOfDate];
+		m_flags[EnableSyncPrimitive] = enableSyncPrimitives;
 	}
 
 	bool
-	Abstract::isAutomaticRendering () const noexcept
+	Abstract::create (Renderer & renderer) noexcept
 	{
-		return m_flags[AutomaticRendering];
-	}
-
-	void
-	Abstract::setAutomaticRenderingState (bool state) noexcept
-	{
-		m_flags[AutomaticRendering] = state;
-
-		if ( this->isAutomaticRendering() )
+		if ( m_flags[EnableSyncPrimitive] )
 		{
-			m_flags[RenderOutOfDate] = true;
-		}
-	}
+			m_fence = std::make_shared< Sync::Fence >(renderer.device());
+			m_fence->setIdentifier(TracerTag, this->id(), "Fence");
 
-	void
-	Abstract::setRenderOutOfDate () noexcept
-	{
-		if ( this->isAutomaticRendering() )
-		{
-			return;
+			if ( !m_fence->createOnHardware() )
+			{
+				Tracer::error(TracerTag, "Unable to create the render target fence !");
+
+				m_fence.reset();
+
+				return false;
+			}
+
+			m_semaphore = std::make_shared< Sync::Semaphore >(renderer.device());
+			m_semaphore->setIdentifier(TracerTag, this->id(), "Semaphore");
+
+			if ( !m_semaphore->createOnHardware() )
+			{
+				Tracer::error(TracerTag, "Unable to create the render target semaphore !");
+
+				m_semaphore.reset();
+
+				return false;
+			}
 		}
 
 		m_flags[RenderOutOfDate] = true;
+
+		return this->onCreate(renderer);
 	}
 
-	void
-	Abstract::setRenderFinished () noexcept
+	bool
+	Abstract::destroy () noexcept
 	{
-		if ( this->isAutomaticRendering() )
+		this->onDestroy();
+
+		if ( m_flags[EnableSyncPrimitive] )
 		{
-			return;
+			if ( m_semaphore != nullptr )
+			{
+				m_semaphore->destroyFromHardware();
+
+				m_semaphore.reset();
+			}
+
+			if ( m_fence != nullptr )
+			{
+				m_fence->destroyFromHardware();
+
+				m_fence.reset();
+			}
 		}
 
-		m_flags[RenderOutOfDate] = false;
-	}
-
-	const FramebufferPrecisions &
-	Abstract::precisions () const noexcept
-	{
-		return m_precisions;
-	}
-
-	const VkExtent3D &
-	Abstract::extent () const noexcept
-	{
-		return m_extent;
-	}
-
-	RenderType
-	Abstract::renderType () const noexcept
-	{
-		return m_renderType;
-	}
-
-	float
-	Abstract::aspectRatio () const noexcept
-	{
-		if ( m_extent.height == 0 )
-		{
-			return 0.0F;
-		}
-
-		return static_cast< float >(m_extent.width) / static_cast< float >(m_extent.height);
+		return true;
 	}
 
 	bool
@@ -162,7 +159,7 @@ namespace Emeraude::Graphics::RenderTarget
 				.baseArrayLayer = 0,
 				.layerCount = imageCreateInfo.arrayLayers
 			}
-			);
+		);
 		imageView->setIdentifier(purposeId + "-ImageView");
 
 		if ( !imageView->createOnHardware() )

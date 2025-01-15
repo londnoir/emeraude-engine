@@ -1,33 +1,33 @@
 /*
- * Emeraude/Graphics/Types.cpp
- * This file is part of Emeraude
+ * src/Graphics/Types.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Types.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <iostream>
 
 namespace Emeraude::Graphics
@@ -39,9 +39,6 @@ namespace Emeraude::Graphics
 		{
 			case RenderPassType::SimplePass :
 				return SimplePassString;
-
-			case RenderPassType::SimpleWithFakeLightPass :
-				return SimpleWithFakeLightPassString;
 
 			case RenderPassType::AmbientPass :
 				return AmbientPassString;
@@ -75,36 +72,51 @@ namespace Emeraude::Graphics
 	to_RenderPassType (const std::string & value) noexcept
 	{
 		if ( value == SimplePassString )
+		{
 			return RenderPassType::SimplePass;
-
-		if ( value == SimpleWithFakeLightPassString )
-			return RenderPassType::SimpleWithFakeLightPass;
+		}
 
 		if ( value == AmbientPassString )
+		{
 			return RenderPassType::AmbientPass;
+		}
 
 		if ( value == DirectionalLightPassString )
+		{
 			return RenderPassType::DirectionalLightPass;
+		}
 
 		if ( value == DirectionalLightPassNoShadowString )
+		{
 			return RenderPassType::DirectionalLightPassNoShadow;
+		}
 
 		if ( value == PointLightPassString )
+		{
 			return RenderPassType::PointLightPass;
+		}
 
 		if ( value == PointLightPassNoShadowString )
+		{
 			return RenderPassType::PointLightPassNoShadow;
+		}
 
 		if ( value == SpotLightPassString )
+		{
 			return RenderPassType::SpotLightPass;
+		}
 
 		if ( value == SpotLightPassNoShadowString )
+		{
 			return RenderPassType::SpotLightPassNoShadow;
+		}
 
 		if ( value == NoneString )
+		{
 			return RenderPassType::None;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' light pass type value. Return None by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'None' by default." << "\n";
 
 		return RenderPassType::None;
 	}
@@ -145,7 +157,7 @@ namespace Emeraude::Graphics
 			return ModelMatrixType::Invalid;
 		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' light pass type value. Return Invalid by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Invalid' by default." << "\n";
 
 		return ModelMatrixType::Invalid;
 	}
@@ -190,33 +202,51 @@ namespace Emeraude::Graphics
 	to_FillingType (const std::string & value) noexcept
 	{
 		if ( value == ValueString )
+		{
 			return FillingType::Value;
+		}
 
 		if ( value == ColorString )
+		{
 			return FillingType::Color;
+		}
 
 		if ( value == GradientString )
+		{
 			return FillingType::Gradient;
+		}
 
 		if ( value == TextureString )
+		{
 			return FillingType::Texture;
+		}
 
 		if ( value == VolumeTextureString )
+		{
 			return FillingType::VolumeTexture;
+		}
 
 		if ( value == CubemapString )
+		{
 			return FillingType::Cubemap;
+		}
 
 		if ( value == AnimatedTextureString )
+		{
 			return FillingType::AnimatedTexture;
+		}
 
 		if ( value == AlphaChannelAsValueString )
+		{
 			return FillingType::AlphaChannelAsValue;
+		}
 
 		if ( value == NoneString )
+		{
 			return FillingType::None;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' filling type value. Return None by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'None' by default." << "\n";
 
 		return FillingType::None;
 	}
@@ -249,21 +279,31 @@ namespace Emeraude::Graphics
 	to_BlendingMode (const std::string & value) noexcept
 	{
 		if ( value == NormalBlendingString )
+		{
 			return BlendingMode::Normal;
+		}
 
 		if ( value == AddBlendingString )
+		{
 			return BlendingMode::Add;
+		}
 
 		if ( value == MultiplyBlendingString )
+		{
 			return BlendingMode::Multiply;
+		}
 
 		if ( value == ScreenBlendingString )
+		{
 			return BlendingMode::Screen;
+		}
 
 		if ( value == NoneString )
+		{
 			return BlendingMode::None;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' blending mode value. Return None by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'None' by default." << "\n";
 
 		return BlendingMode::None;
 	}
@@ -317,33 +357,51 @@ namespace Emeraude::Graphics
 	to_ComponentType (const std::string & value) noexcept
 	{
 		if ( value == AmbientString )
+		{
 			return ComponentType::Ambient;
+		}
 
 		if ( value == DiffuseString )
+		{
 			return ComponentType::Diffuse;
+		}
 
 		if ( value == SpecularString )
+		{
 			return ComponentType::Specular;
+		}
 
 		if ( value == NormalString )
+		{
 			return ComponentType::Normal;
+		}
 
 		if ( value == DisplacementString )
+		{
 			return ComponentType::Displacement;
+		}
 
 		if ( value == OpacityString )
+		{
 			return ComponentType::Opacity;
+		}
 
 		if ( value == AutoIlluminationString )
+		{
 			return ComponentType::AutoIllumination;
+		}
 
 		if ( value == ReflectionString )
+		{
 			return ComponentType::Reflection;
+		}
 
 		if ( value == InvalidString )
+		{
 			return ComponentType::Invalid;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' component type value. Return Invalid by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Invalid' by default." << "\n";
 
 		return ComponentType::Invalid;
 	}
@@ -400,45 +458,71 @@ namespace Emeraude::Graphics
 	to_TopologyType (const std::string & value) noexcept
 	{
 		if ( value == PointListString )
+		{
 			return Topology::PointList;
+		}
 
 		if ( value == LineLineString )
+		{
 			return Topology::LineLine;
+		}
 
 		if ( value == LineStripString )
+		{
 			return Topology::LineStrip;
+		}
 
 		if ( value == TriangleListString )
+		{
 			return Topology::TriangleList;
+		}
 
 		if ( value == TriangleStripString )
+		{
 			return Topology::TriangleStrip;
+		}
 
 		if ( value == TriangleFanString )
+		{
 			return Topology::TriangleFan;
+		}
 
 		if ( value == LineListWithAdjacencyString )
+		{
 			return Topology::LineListWithAdjacency;
+		}
 
 		if ( value == LineStripWithAdjacencyString )
+		{
 			return Topology::LineStripWithAdjacency;
+		}
 
 		if ( value == TriangleListWithAdjacencyString )
+		{
 			return Topology::TriangleListWithAdjacency;
+		}
 
 		if ( value == TriangleStripWithAdjacencyString )
+		{
 			return Topology::TriangleStripWithAdjacency;
+		}
 
 		if ( value == PatchListString )
+		{
 			return Topology::PatchList;
+		}
 
 		if ( value == CustomDataString )
+		{
 			return Topology::CustomData;
+		}
 
 		if ( value == InvalidString )
+		{
 			return Topology::Invalid;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' polygon mode value. Return Invalid by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Invalid' by default." << "\n";
 
 		return Topology::Invalid;
 	}
@@ -471,21 +555,31 @@ namespace Emeraude::Graphics
 	to_PolygonMode (const std::string & value) noexcept
 	{
 		if ( value == FillString )
+		{
 			return PolygonMode::Fill;
+		}
 
 		if ( value == LineString )
+		{
 			return PolygonMode::Line;
+		}
 
 		if ( value == PointString )
+		{
 			return PolygonMode::Point;
+		}
 
 		if ( value == FillRectangleString )
+		{
 			return PolygonMode::FillRectangle;
+		}
 
 		if ( value == InvalidString )
+		{
 			return PolygonMode::Invalid;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' polygon mode value. Return Invalid by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Invalid' by default." << "\n";
 
 		return PolygonMode::Invalid;
 	}
@@ -495,6 +589,9 @@ namespace Emeraude::Graphics
 	{
 		switch ( value )
 		{
+			case CullingMode::None :
+				return NoneString;
+
 			case CullingMode::Back :
 				return BackString;
 
@@ -504,8 +601,8 @@ namespace Emeraude::Graphics
 			case CullingMode::Both :
 				return BothString;
 
-			case CullingMode::None :
-				return NoneString;
+			case CullingMode::Invalid :
+				return InvalidString;
 		}
 
 		return nullptr;
@@ -515,18 +612,26 @@ namespace Emeraude::Graphics
 	to_CullingMode (const std::string & value) noexcept
 	{
 		if ( value == BackString )
+		{
 			return CullingMode::Back;
+		}
 
 		if ( value == FrontString )
+		{
 			return CullingMode::Front;
+		}
 
 		if ( value == BothString )
+		{
 			return CullingMode::Both;
+		}
 
 		if ( value == NoneString )
+		{
 			return CullingMode::None;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' culling mode value. Return None by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'None' by default." << "\n";
 
 		return CullingMode::None;
 	}
@@ -556,18 +661,26 @@ namespace Emeraude::Graphics
 	to_BufferType (const std::string & value) noexcept
 	{
 		if ( value == ColorBufferString )
+		{
 			return BufferType::ColorBuffer;
+		}
 
 		if ( value == DepthBufferString )
+		{
 			return BufferType::DepthBuffer;
+		}
 
 		if ( value == StencilBufferString )
+		{
 			return BufferType::StencilBuffer;
+		}
 
 		if ( value == InvalidString )
+		{
 			return BufferType::Invalid;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' buffer type value. Return Invalid by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Invalid' by default." << "\n";
 
 		return BufferType::Invalid;
 	}
@@ -614,6 +727,12 @@ namespace Emeraude::Graphics
 			case VertexAttributeType::NormalModelMatrixR1 :
 			case VertexAttributeType::NormalModelMatrixR2 :
 				return NormalModelMatrixString;
+
+			case VertexAttributeType::ModelPosition :
+				return ModelPositionString;
+
+			case VertexAttributeType::ModelScaling :
+				return ModelScalingString;
 		}
 
 		return nullptr;
@@ -623,39 +742,61 @@ namespace Emeraude::Graphics
 	to_VertexAttributeType (const std::string & value) noexcept
 	{
 		if ( value == PositionString )
+		{
 			return VertexAttributeType::Position;
+		}
 
 		if ( value == TangentString )
+		{
 			return VertexAttributeType::Tangent;
+		}
 
 		if ( value == BinormalString )
+		{
 			return VertexAttributeType::Binormal;
+		}
 
 		if ( value == NormalString )
+		{
 			return VertexAttributeType::Normal;
+		}
 
 		if ( value == VertexColorString )
+		{
 			return VertexAttributeType::VertexColor;
+		}
 
 		if ( value == Primary2DTextureCoordinatesString )
+		{
 			return VertexAttributeType::Primary2DTextureCoordinates;
+		}
 
 		if ( value == Primary3DTextureCoordinatesString )
+		{
 			return VertexAttributeType::Primary3DTextureCoordinates;
+		}
 
 		if ( value == Secondary2DTextureCoordinatesString )
+		{
 			return VertexAttributeType::Secondary2DTextureCoordinates;
+		}
 
 		if ( value == Secondary3DTextureCoordinatesString )
+		{
 			return VertexAttributeType::Secondary3DTextureCoordinates;
+		}
 
 		if ( value == ModelMatrixString )
+		{
 			return VertexAttributeType::ModelMatrixR0;
+		}
 
 		if ( value == NormalModelMatrixString )
+		{
 			return VertexAttributeType::NormalModelMatrixR0;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' vertex attribute type value. Return Position by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Position' by default." << "\n";
 
 		return VertexAttributeType::Position;
 	}
@@ -691,24 +832,36 @@ namespace Emeraude::Graphics
 	to_CubemapFace (const std::string & value) noexcept
 	{
 		if ( value == PositiveXString )
+		{
 			return CubemapFace::PositiveX;
+		}
 
 		if ( value == NegativeXString )
+		{
 			return CubemapFace::NegativeX;
+		}
 
 		if ( value == PositiveYString )
+		{
 			return CubemapFace::PositiveY;
+		}
 
 		if ( value == NegativeYString )
+		{
 			return CubemapFace::NegativeY;
+		}
 
 		if ( value == PositiveZString )
+		{
 			return CubemapFace::PositiveZ;
+		}
 
 		if ( value == NegativeZString )
+		{
 			return CubemapFace::NegativeZ;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' cubemap face value. Return PositiveX by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'PositiveX' by default." << "\n";
 
 		return CubemapFace::PositiveX;
 	}
@@ -741,21 +894,31 @@ namespace Emeraude::Graphics
 	to_FilterQuality (const std::string & value) noexcept
 	{
 		if ( value == NoneString )
+		{
 			return FilterQuality::None;
+		}
 
 		if ( value == CustomString )
+		{
 			return FilterQuality::Custom;
+		}
 
 		if ( value == LinearString )
+		{
 			return FilterQuality::Linear;
+		}
 
 		if ( value == BilinearString )
+		{
 			return FilterQuality::Bilinear;
+		}
 
 		if ( value == TrilinearString )
+		{
 			return FilterQuality::Trilinear;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' filter quality value. Return None by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'None' by default." << "\n";
 
 		return FilterQuality::None;
 	}
@@ -824,58 +987,139 @@ namespace Emeraude::Graphics
 	to_ShapeType (const std::string & value) noexcept
 	{
 		if ( value == CustomString )
+		{
 			return ShapeType::Custom;
+		}
 
 		if ( value == TriangleString )
+		{
 			return ShapeType::Triangle;
+		}
 
 		if ( value == QuadString )
+		{
 			return ShapeType::Quad;
+		}
 
 		if ( value == CubeString )
+		{
 			return ShapeType::Cube;
+		}
 
 		if ( value == SphereString )
+		{
 			return ShapeType::Sphere;
+		}
 
 		if ( value == GeodesicSphereString )
+		{
 			return ShapeType::GeodesicSphere;
+		}
 
 		if ( value == CylinderString )
+		{
 			return ShapeType::Cylinder;
+		}
 
 		if ( value == ConeString )
+		{
 			return ShapeType::Cone;
+		}
 
 		if ( value == DiskString )
+		{
 			return ShapeType::Disk;
+		}
 
 		if ( value == TorusString )
+		{
 			return ShapeType::Torus;
+		}
 
 		if ( value == TetrahedronString )
+		{
 			return ShapeType::Tetrahedron;
+		}
 
 		if ( value == HexahedronString )
+		{
 			return ShapeType::Hexahedron;
+		}
 
 		if ( value == OctahedronString )
+		{
 			return ShapeType::Octahedron;
+		}
 
 		if ( value == DodecahedronString )
+		{
 			return ShapeType::Dodecahedron;
+		}
 
 		if ( value == IcosahedronString )
+		{
 			return ShapeType::Icosahedron;
+		}
 
 		if ( value == ArrowString )
+		{
 			return ShapeType::Arrow;
+		}
 
 		if ( value == AxisString )
+		{
 			return ShapeType::Axis;
+		}
 
-		std::cerr << __PRETTY_FUNCTION__ << ", unknown '" << value << "' shape type value. Return Cube by default !" << std::endl;
+		std::cerr << __PRETTY_FUNCTION__ << " : Unknown '" << value << "' type ! Returning 'Cube' by default." << "\n";
 
 		return ShapeType::Cube;
+	}
+
+	const char *
+	to_cstring (LightType type) noexcept
+	{
+		switch ( type )
+		{
+			case LightType::Directional :
+				return DirectionalLightString;
+
+			case LightType::Point :
+				return PointLightString;
+
+			case LightType::Spot :
+				return SpotLightString;
+
+			default:
+				return nullptr;
+		}
+	}
+
+	const char *
+	to_cstring (AntiAliasingType type) noexcept
+	{
+		switch ( type )
+		{
+			case AntiAliasingType::MSAA :
+				return MSAAString;
+
+			case AntiAliasingType::SSAA :
+				return SSAAString;
+
+			case AntiAliasingType::TXAA :
+				return TXAAString;
+
+			case AntiAliasingType::FXAA :
+				return FXAAString;
+
+			case AntiAliasingType::SMAA :
+				return SMAAString;
+
+			case AntiAliasingType::TAA :
+				return TAAString;
+
+			default:
+				return nullptr;
+		}
 	}
 }

@@ -1,33 +1,33 @@
 /*
- * Emeraude/Audio/Effects/Echo.cpp
- * This file is part of Emeraude
+ * src/Audio/Effects/Echo.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Echo.hpp"
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Tracer.hpp"
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
@@ -68,7 +68,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_ECHO_MIN_DELAY || value > AL_ECHO_MAX_DELAY )
 		{
-			Tracer::warning(ClassId, Blob() << "Delay must be between " << AL_ECHO_MIN_DELAY << " and " << AL_ECHO_MAX_DELAY << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Delay must be between " << AL_ECHO_MIN_DELAY << " and " << AL_ECHO_MAX_DELAY << ".");
 
 			return;
 		}
@@ -84,7 +84,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_ECHO_MIN_LRDELAY || value > AL_ECHO_MAX_LRDELAY )
 		{
-			Tracer::warning(ClassId, Blob() << "LR Delay must be between " << AL_ECHO_MIN_LRDELAY << " and " << AL_ECHO_MAX_LRDELAY << ".");
+			Tracer::warning(ClassId, BlobTrait() << "LR Delay must be between " << AL_ECHO_MIN_LRDELAY << " and " << AL_ECHO_MAX_LRDELAY << ".");
 
 			return;
 		}
@@ -100,7 +100,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_ECHO_MIN_DAMPING || value > AL_ECHO_MAX_DAMPING )
 		{
-			Tracer::warning(ClassId, Blob() << "Damping must be between " << AL_ECHO_MIN_DAMPING << " and " << AL_ECHO_MAX_DAMPING << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Damping must be between " << AL_ECHO_MIN_DAMPING << " and " << AL_ECHO_MAX_DAMPING << ".");
 
 			return;
 		}
@@ -116,7 +116,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_ECHO_MIN_FEEDBACK || value > AL_ECHO_MAX_FEEDBACK )
 		{
-			Tracer::warning(ClassId, Blob() << "Feedback must be between " << AL_ECHO_MIN_FEEDBACK << " and " << AL_ECHO_MAX_FEEDBACK << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Feedback must be between " << AL_ECHO_MIN_FEEDBACK << " and " << AL_ECHO_MAX_FEEDBACK << ".");
 
 			return;
 		}
@@ -132,7 +132,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_ECHO_MIN_SPREAD || value > AL_ECHO_MAX_SPREAD )
 		{
-			Tracer::warning(ClassId, Blob() << "Spread must be between " << AL_ECHO_MIN_SPREAD << " and " << AL_ECHO_MAX_SPREAD << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Spread must be between " << AL_ECHO_MIN_SPREAD << " and " << AL_ECHO_MAX_SPREAD << ".");
 
 			return;
 		}

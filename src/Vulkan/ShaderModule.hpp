@@ -1,41 +1,39 @@
 /*
- * Emeraude/Vulkan/ShaderModule.hpp
- * This file is part of Emeraude
+ * src/Vulkan/ShaderModule.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 #include <vector>
 
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
-
-/* Local inclusions for usages. */
-#include "Saphir/AbstractShader.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -53,18 +51,20 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Constructs a shader module.
 			 * @param device A reference to a device smart pointer.
-			 * @param shader A reference to smart pointer of the saphir shader.
+			 * @param shaderType The vulkan shader type.
+			 * @param binaryCode A reference to a binary data vector.
 			 * @param createFlags The create info flags. Default none.
 			 */
-			ShaderModule (const std::shared_ptr< Device > & device, const std::shared_ptr< Saphir::AbstractShader > & shader, VkShaderModuleCreateFlags createFlags = 0) noexcept;
+			ShaderModule (const std::shared_ptr< Device > & device, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode, VkShaderModuleCreateFlags createFlags = 0) noexcept;
 
 			/**
 			 * @brief Constructs a shader module with a create info.
 			 * @param device A reference to a smart pointer of the device.
 			 * @param createInfo A reference to the create info.
-			 * @param shader A reference to smart pointer of the saphir shader.
+			 * @param shaderType The vulkan shader type.
+			 * @param binaryCode A reference to a binary data vector.
 			 */
-			ShaderModule (const std::shared_ptr< Device > & device, const VkShaderModuleCreateInfo & createInfo, const std::shared_ptr< Saphir::AbstractShader > & shader) noexcept;
+			ShaderModule (const std::shared_ptr< Device > & device, const VkShaderModuleCreateInfo & createInfo, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -106,28 +106,33 @@ namespace Emeraude::Vulkan
 			 * @return VkShaderModule
 			 */
 			[[nodiscard]]
-			VkShaderModule handle () const noexcept;
+			VkShaderModule
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the shader module create info.
-			 * @return VkShaderModuleCreateInfo
+			 * @return const VkShaderModuleCreateInfo &
 			 */
 			[[nodiscard]]
-			VkShaderModuleCreateInfo createInfo () const noexcept;
+			const VkShaderModuleCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the pipeline shader stage create info.
 			 * @return const VkPipelineShaderStageCreateInfo &
 			 */
 			[[nodiscard]]
-			const VkPipelineShaderStageCreateInfo & pipelineShaderStageCreateInfo () const noexcept;
-
-			/**
-			 * @brief Returns the saphir shader.
-			 * @return std::shared_ptr< Saphir::AbstractShader >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Saphir::AbstractShader > shader () const noexcept;
+			const VkPipelineShaderStageCreateInfo &
+			pipelineShaderStageCreateInfo () const noexcept
+			{
+				return m_pipelineShaderStageCreateInfo;
+			}
 
 		private:
 
@@ -139,8 +144,9 @@ namespace Emeraude::Vulkan
 
 			VkShaderModule m_handle{VK_NULL_HANDLE};
 			VkShaderModuleCreateInfo m_createInfo{};
-			std::shared_ptr< Saphir::AbstractShader > m_shader;
-			std::vector< VkSpecializationMapEntry > m_mapEntries{};
+			VkShaderStageFlagBits m_shaderType{};
+			std::vector< uint32_t > m_binaryCode;
+			std::vector< VkSpecializationMapEntry > m_mapEntries;
 			VkSpecializationInfo m_specializationInfo{};
 			VkPipelineShaderStageCreateInfo m_pipelineShaderStageCreateInfo{};
 	};

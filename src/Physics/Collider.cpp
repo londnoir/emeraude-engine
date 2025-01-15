@@ -1,34 +1,37 @@
 /*
- * Emeraude/Physics/Collider.cpp
- * This file is part of Emeraude
+ * src/Physics/Collider.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Collider.hpp"
 
-/* Local inclusions */
-#include "Math/OrientedCuboid.hpp"
+/* Local inclusions. */
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libraries/Math/OrientedCuboid.hpp"
+#include "Libraries/Math/Sphere.hpp"
+#include "Scenes/AbstractEntity.hpp"
 
 namespace Emeraude::Physics
 {
@@ -36,181 +39,212 @@ namespace Emeraude::Physics
 	using namespace Libraries::Math;
 	using namespace Scenes;
 
-	Collider::Collider (std::shared_ptr< Node > node) noexcept
-		: m_node{std::move(node)}
+	bool
+	Collider::checkCollisionAgainstMovable (AbstractEntity & movableEntityA, AbstractEntity & movableEntityB) noexcept
 	{
+#ifdef DEBUG
+		if ( &movableEntityA ==  &movableEntityB )
+		{
+			Tracer::error(ClassId, "Collision search on the same entity detected !");
+			return false;
+		}
+#endif
 
-	}
-
-	CollisionManifold &
-	Collider::collisionManifold () noexcept
-	{
-		return m_collisionsManifold;
-	}
-
-	const CollisionManifold &
-	Collider::collisionManifold () const noexcept
-	{
-		return m_collisionsManifold;
-	}
-
-	void
-	Collider::checkCollision (Node * against) noexcept
-	{
-		Vector< 3, float > collisionDirection{};
+		Vector< 3, float > collisionDirection;
 		auto collisionOverflow = 0.0F;
 
-		if ( m_node->sphereCollisionIsEnabled() && !Collider::isSphereCollision(m_node.get(), against, collisionOverflow, collisionDirection) )
+		/* TODO: Add sphere against box collision. */
+		if ( movableEntityA.sphereCollisionIsEnabled() && movableEntityB.sphereCollisionIsEnabled() )
 		{
-			return;
-		}
-
-		if ( !Collider::isBoxCollision(m_node.get(), against, collisionOverflow, collisionDirection) )
-		{
-			return;
-		}
-
-		/* NOTE: Add a small gape. */
-		collisionOverflow += CollisionCorrectionDistance;
-
-		/* If the other node is a deflector (Not movable), we just act over current node.
-		 * Otherwise, we share the impact between both nodes. */
-		if ( against->isMovable() )
-		{
-			const auto speedMassA = m_node->getSpeed() * m_node->physicalObjectProperties().mass();
-			const auto totalMass = m_node->physicalObjectProperties().mass() + against->physicalObjectProperties().mass();
-
-			/* Clip position at the intersection to prevent multiple collision. */
+			if ( !isSphereCollisionWith(movableEntityB, movableEntityA, collisionOverflow, collisionDirection) )
 			{
-				const auto influenceA = m_node->physicalObjectProperties().mass() / totalMass;
-				const auto influenceB = against->physicalObjectProperties().mass() / totalMass;
-
-				m_node->moveBy(collisionDirection.scaled(-(collisionOverflow * influenceB)), TransformSpace::World);
-				against->moveBy(collisionDirection.scaled(collisionOverflow * influenceA), TransformSpace::World);
+				return false;
 			}
-
-			/* Force transfer. Momentum problem.
-			 * NOTE : https://www.youtube.com/watch?v=VVC_9Qi6zvw */
-			const auto speedMassB = against->getSpeed() * against->physicalObjectProperties().mass();
-			const auto force = (speedMassA + speedMassB) / totalMass;
-
-			m_node->addRawAcceleration(collisionDirection.scaled(-force));
-			m_node->clearVelocity();
-
-			against->addRawAcceleration(collisionDirection.scaled(force));
-			against->clearVelocity();
 		}
 		else
 		{
-			/* Clip position against the other node. */
-			m_node->moveBy(collisionDirection.scaled(-collisionOverflow), TransformSpace::World);
-
-			/* Adds the collision vector. */
-			m_collisionsManifold.addCollision(Collision::Type::Node, &against, -collisionDirection, 0.0F);
+			if ( !isBoxCollisionWith(movableEntityB, movableEntityA, collisionOverflow, collisionDirection) )
+			{
+				return false;
+			}
 		}
-	}
 
-	void
-	Collider::checkCollision (StaticEntity * against) noexcept
+		/* NOTE: Location correction. */
+		{
+			/* TODO: Use a ratio between node speed to avoid moving back an inert entity with location correction. */
+			const auto halfway = collisionDirection.scaled(collisionOverflow * 0.5F);
+
+			/* NOTE: We move the two entities back halfway. */
+			movableEntityA.move(halfway, TransformSpace::World);
+			movableEntityB.move(-halfway, TransformSpace::World);
+		}
+
+		/* NOTE: Collision declaration. */
+		const auto collisionPosition = Vector< 3, float >::midPoint(
+			movableEntityA.getWorldCoordinates().position(),
+			movableEntityB.getWorldCoordinates().position()
+		);
+
+		this->addCollision(CollisionType::MovableEntity, &movableEntityB, collisionPosition, collisionDirection);
+		
+		return true;
+	}
+	
+	bool
+	Collider::checkCollisionAgainstStatic (AbstractEntity & movableEntityA, AbstractEntity & staticEntityB) noexcept
 	{
-		Vector< 3, float > collisionDirection{};
+		Vector< 3, float > collisionDirection;
 		auto collisionOverflow = 0.0F;
 
-		if ( m_node->sphereCollisionIsEnabled() && !Collider::isSphereCollision(m_node.get(), against, collisionOverflow, collisionDirection) )
+		/* TODO: Add sphere <> box collision. */
+		if ( movableEntityA.sphereCollisionIsEnabled() && staticEntityB.sphereCollisionIsEnabled() )
 		{
-			return;
+			if ( !isSphereCollisionWith(staticEntityB, movableEntityA, collisionOverflow, collisionDirection) )
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if ( !isBoxCollisionWith(staticEntityB, movableEntityA, collisionOverflow, collisionDirection) )
+			{
+				return false;
+			}
 		}
 
-		if ( !Collider::isBoxCollision(m_node.get(), against, collisionOverflow, collisionDirection) )
-		{
-			return;
-		}
+		/* NOTE: Location correction. */
+		movableEntityA.move(collisionDirection.scaled(collisionOverflow), TransformSpace::World);
 
-		/* NOTE: Add a small gape. */
-		collisionOverflow += CollisionCorrectionDistance;
+		/* NOTE: Collision declaration. */
+		const auto collisionPosition = Vector< 3, float >::midPoint(
+			movableEntityA.getWorldCoordinates().position(),
+			staticEntityB.getWorldCoordinates().position()
+		);
 
-		/* Clip position against the other node. */
-		m_node->moveBy(collisionDirection.scaled(-collisionOverflow), TransformSpace::World);
+		this->addCollision(CollisionType::StaticEntity, &staticEntityB, collisionPosition, collisionDirection);
 
-		/* Adds the collision vector. */
-		m_collisionsManifold.addCollision(Collision::Type::StaticEntity, &against, -collisionDirection, 0.0F);
+		return true;
 	}
 
 	void
-	Collider::resolveCollisions () const noexcept
+	Collider::resolveCollisions (AbstractEntity & targetEntity) noexcept
 	{
-		Vector< 3, float > globalCollision{};
-
-		for ( const auto & collision : m_collisionsManifold.collisions() )
+		for ( const auto & collision : m_collisions )
 		{
-			globalCollision += collision.direction();
-
-			/* FIXME: Scene look to notify itself ... */
-			//m_node->notify(Node::Hit, &node);
-
 			switch ( collision.type() )
 			{
-				case Collision::Type::SceneAreaBoundaries :
-					//m_node->notify(Node::HitSceneAreaBoundaries, &node);
+				/* TODO: Get physical properties from the scene. */
+				case CollisionType::SceneBoundary :
+				{
+					auto * movableTrait = targetEntity.getMovableTrait();
+					const auto speedAtHit = movableTrait->deflect(collision.direction(), 1.0F);
+
+					movableTrait->onHit(speedAtHit * targetEntity.physicalObjectProperties().mass());
+				}
 					break;
 
-				case Collision::Type::SceneAreaGround :
-					//m_node->notify(Node::HitSceneAreaGround, &node);
+				/* TODO: Get physical properties from the scene ground. */
+				case CollisionType::SceneGround :
+				{
+					auto * movableTrait = targetEntity.getMovableTrait();
+					const auto speedAtHit = movableTrait->deflect(collision.direction(), 0.5F);
 
-					if ( m_node->getSpeed() <= InertiaThreshold< float > )
-					{
-						/* Completely stops the object. */
-						/* FIXME: Incorrect way, should use mass and forces to stop the movement naturally. */
-						m_node->stopMovement();
-
-						/* Prevent the object to add gravity and drag force. */
-						m_node->pauseSimulation(true);
-					}
+					movableTrait->onHit(speedAtHit * targetEntity.physicalObjectProperties().mass());
+				}
 					break;
 
-				case Collision::Type::StaticEntity :
+				/* NOTE: As the main entity is static, we only modify the collided movable trajectory. */
+				case CollisionType::StaticEntity :
+				{
+					auto * movableTrait = targetEntity.getMovableTrait();
+					const auto speedAtHit = movableTrait->deflect(collision.direction(), collision.entity()->physicalObjectProperties().bounciness());
+
+					movableTrait->onHit(speedAtHit * targetEntity.physicalObjectProperties().mass());
+				}
 					break;
 
-				case Collision::Type::Node :
-					//m_node->notify(Node::HitNode, &node);
+				/* NOTE: Both entities are movable, we modify both trajectories. */
+				case CollisionType::MovableEntity :
+				{
+					const auto & objectAProperties = targetEntity.physicalObjectProperties();
+					const auto & objectBProperties = collision.entity()->physicalObjectProperties();
+
+					auto * movableTraitA = targetEntity.getMovableTrait();
+					auto * movableTraitB = collision.entity()->getMovableTrait();
+
+					/* Force transfer. Momentum problem.
+					 * TODO: Incorrect impact forces distribution.
+					 * NOTE : https://www.youtube.com/watch?v=VVC_9Qi6zvw */
+					const auto totalMass = objectAProperties.mass() + objectBProperties.mass();
+					const auto speedMassA = movableTraitA->linearSpeed() * targetEntity.physicalObjectProperties().mass();
+					const auto speedMassB = movableTraitB->linearSpeed() * collision.entity()->physicalObjectProperties().mass();
+					const auto force = (speedMassA - speedMassB) / totalMass;
+					const auto totalSpeedMass = speedMassA + speedMassB;
+
+					const auto transferredSpeedB = movableTraitB->linearSpeed() * objectBProperties.bounciness();
+					movableTraitA->addAcceleration(collision.direction().scaled(force + transferredSpeedB));
+					movableTraitA->stopMovement();
+					movableTraitA->onHit(totalSpeedMass);
+
+					const auto transferredSpeedA = movableTraitA->linearSpeed() * objectAProperties.bounciness();
+					movableTraitB->addAcceleration(-collision.direction().scaled(force + transferredSpeedA));
+					movableTraitB->stopMovement();
+					movableTraitB->onHit(totalSpeedMass);
+				}
 					break;
 			}
 		}
 
-		m_node->deflect(globalCollision.normalize());
+		m_collisions.clear();
 	}
 
 	bool
-	Collider::isSphereCollision (const AbstractEntity * entityA, const AbstractEntity * entityB, float & overflow, Vector< 3, float > & direction) noexcept
+	Collider::isSphereCollisionWith (const AbstractEntity & sphereEntityA, const AbstractEntity & sphereEntityB, float & overflow, Vector< 3, float > & direction) noexcept
 	{
-		overflow = Sphere< float >::getIntersectionOverlap(entityA->getWorldBoundingSphere(), entityB->getWorldBoundingSphere());
+		const auto sphereA = sphereEntityA.getWorldBoundingSphere();
+		const auto sphereB = sphereEntityB.getWorldBoundingSphere();
+
+		overflow = Sphere< float >::getIntersectionOverlap(sphereA, sphereB);
 
 		if ( overflow <= 0.0F )
 		{
 			return false;
 		}
 
-		direction = (entityB->getWorldCoordinates().position() - entityA->getWorldCoordinates().position()).normalize();
+		direction = (sphereB.position() - sphereA.position()).normalize();
 
 		return true;
 	}
 
 	bool
-	Collider::isBoxCollision (const AbstractEntity * entityA, const AbstractEntity * entityB, float & overflow, Vector< 3, float > & direction) noexcept
+	Collider::isBoxCollisionWith (const AbstractEntity & boxEntityA, const AbstractEntity & boxEntityB, float & overflow, Vector< 3, float > & direction) noexcept
 	{
-		/* Axis aligned bounding box test first. */
-		if ( !entityA->getWorldBoundingBox().isCollidingWith(entityB->getWorldBoundingBox()) )
+		/* NOTE: We check first with axis-aligned bounding box ... */
+		if ( !boxEntityA.getWorldBoundingBox().isCollidingWith(boxEntityB.getWorldBoundingBox()) )
 		{
 			return false;
 		}
 
-		/* Oriented bounding box then. */
+		/* NOTE: Then with oriented bounding box ... */
 		overflow = OrientedCuboid< float >::isIntersecting(
-			{entityA->localBoundingBox(), entityA->getWorldCoordinates()},
-			{entityB->localBoundingBox(), entityB->getWorldCoordinates()},
+			{boxEntityA.localBoundingBox(), boxEntityA.getWorldCoordinates()},
+			{boxEntityB.localBoundingBox(), boxEntityB.getWorldCoordinates()},
 			direction
 		);
 
 		return overflow > 0.0F;
+	}
+
+	bool
+	Collider::isBoxSphereCollisionWith (const AbstractEntity & /*boxEntity*/, const AbstractEntity & /*sphereEntity*/, float & /*overflow*/, Vector< 3, float > & /*direction*/) noexcept
+	{
+		/*const auto box = boxEntity.getWorldBoundingBox();
+		const auto sphere = sphereEntity.getWorldBoundingSphere();
+
+		overflow = Cuboid< float >::getIntersectionOverlap(box, sphere);
+
+		return overflow > 0.0F;*/
+
+		return false;
 	}
 }

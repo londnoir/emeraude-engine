@@ -1,40 +1,68 @@
 /*
- * Emeraude/Vulkan/UniformBufferObject.cpp
- * This file is part of Emeraude
+ * src/Vulkan/UniformBufferObject.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "UniformBufferObject.hpp"
 
 /* Local inclusions. */
+#include "PhysicalDevice.hpp"
 #include "Device.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
-	UniformBufferObject::UniformBufferObject (const std::shared_ptr< Device > & device, VkDeviceSize size) noexcept
-		: AbstractHostBuffer(device, 0, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+	UniformBufferObject::UniformBufferObject (const std::shared_ptr< Device > & device, VkDeviceSize size, uint32_t blockAlignedSize) noexcept
+		: AbstractHostBuffer(device, 0, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT), m_blockAlignedSize(blockAlignedSize)
 	{
 
+	}
+
+	uint32_t
+	UniformBufferObject::maxElementCount () const noexcept
+	{
+		if ( m_blockAlignedSize == 0 )
+		{
+			return 1;
+		}
+
+		const auto maxUBOSize = this->device()->physicalDevice()->properties().limits.maxUniformBufferRange;
+
+		return maxUBOSize / m_blockAlignedSize;
+	}
+
+	VkDescriptorBufferInfo
+	UniformBufferObject::getDescriptorInfo (uint32_t elementOffset) const noexcept
+	{
+		if ( m_blockAlignedSize == 0 )
+		{
+			TraceWarning{ClassId} << "The uniform buffer object '" << this->identifier() << "' has been built with no block size !";
+
+			return this->getDescriptorInfo(0, this->bytes());
+		}
+
+		return this->getDescriptorInfo(elementOffset, m_blockAlignedSize);
 	}
 }

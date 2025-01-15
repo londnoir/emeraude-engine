@@ -1,35 +1,58 @@
 /*
- * Emeraude/Vulkan/CommandBuffer.cpp
- * This file is part of Emeraude
+ * src/Vulkan/CommandBuffer.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "CommandBuffer.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <array>
+#include <memory>
+#include <vector>
+
+/* Local inclusions. */
+#include "Graphics/Geometry/Interface.hpp"
+#include "Sync/Event.hpp"
+#include "Sync/MemoryBarrier.hpp"
+#include "Sync/ImageMemoryBarrier.hpp"
+#include "Sync/BufferMemoryBarrier.hpp"
+#include "CommandPool.hpp"
+#include "PipelineLayout.hpp"
+#include "DescriptorSet.hpp"
+#include "IndexBufferObject.hpp"
+#include "ComputePipeline.hpp"
+#include "GraphicsPipeline.hpp"
+#include "Buffer.hpp"
 #include "Utility.hpp"
+#include "VertexBufferObject.hpp"
+#include "Framebuffer.hpp"
+#include "Image.hpp"
+#include "RenderPass.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -54,8 +77,6 @@ namespace Emeraude::Vulkan
 		}
 
 		this->setCreated();
-
-		TraceSuccess{ClassId} << "The command buffer " << m_handle << " successfully allocated !";
 	}
 
 	CommandBuffer::~CommandBuffer ()
@@ -71,34 +92,14 @@ namespace Emeraude::Vulkan
 		{
 			m_commandPool->freeCommandBuffer(m_handle);
 
-			TraceSuccess{ClassId} << "The command buffer " << m_handle << " gracefully freed !";
-
 			m_handle = VK_NULL_HANDLE;
 		}
 
 		this->setDestroyed();
 	}
 
-	VkCommandBuffer
-	CommandBuffer::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	const std::shared_ptr< CommandPool > &
-	CommandBuffer::commandPool () const noexcept
-	{
-		return m_commandPool;
-	}
-
 	bool
-	CommandBuffer::isBufferLevelPrimary () const noexcept
-	{
-		return m_primaryLevel;
-	}
-
-	bool
-	CommandBuffer::begin (VkCommandBufferUsageFlagBits usage) noexcept
+	CommandBuffer::begin (VkCommandBufferUsageFlagBits usage) const noexcept
 	{
 		if ( !this->isCreated() )
 		{
@@ -126,7 +127,7 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
-	CommandBuffer::end () noexcept
+	CommandBuffer::end () const noexcept
 	{
 		if ( !this->isCreated() )
 		{
@@ -148,7 +149,7 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
-	CommandBuffer::reset (VkCommandBufferResetFlags flags) noexcept
+	CommandBuffer::reset (VkCommandBufferResetFlags flags) const noexcept
 	{
 		if ( !this->isCreated() )
 		{
@@ -170,28 +171,19 @@ namespace Emeraude::Vulkan
 	}
 
 	void
-	CommandBuffer::beginRenderPass (const RenderPass & renderPass, const Framebuffer & framebuffer, const VkRect2D & renderArea, const std::array< VkClearValue, 2 > & clearValues, VkSubpassContents subpassContents) const noexcept
+	CommandBuffer::beginRenderPass (const Framebuffer & framebuffer, const VkRect2D & renderArea, const std::array< VkClearValue, 2 > & clearValues, VkSubpassContents subpassContents) const noexcept
 	{
 #ifdef DEBUG
-		if ( !renderPass.isCreated() )
-		{
-			Tracer::error(ClassId, "The render pass is not created.");
-
-			return;
-		}
-
 		if ( !framebuffer.isCreated() )
 		{
-			Tracer::error(ClassId, "The framebuffer is not created.");
+			Tracer::error(ClassId, "The framebuffer is not created !");
 
 			return;
 		}
 
 		if ( !this->isCreated() )
 		{
-			TraceError{ClassId} <<
-				"The command buffer is not created !" "\n"
-				"Unable to begin the render pass " << renderPass.handle() << " with the framebuffer " << framebuffer.handle();
+			Tracer::error(ClassId, "The command buffer is not created !");
 
 			return;
 		}
@@ -200,7 +192,7 @@ namespace Emeraude::Vulkan
 		VkRenderPassBeginInfo renderPassBeginInfo{};
 		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassBeginInfo.pNext = nullptr;
-		renderPassBeginInfo.renderPass = renderPass.handle();
+		renderPassBeginInfo.renderPass = framebuffer.renderPass()->handle();
 		renderPassBeginInfo.framebuffer = framebuffer.handle();
 		renderPassBeginInfo.renderArea= renderArea;
 		renderPassBeginInfo.clearValueCount = static_cast< uint32_t >(clearValues.size());
@@ -355,12 +347,12 @@ namespace Emeraude::Vulkan
 		imageCopy.srcSubresource.mipLevel = 0;
 		imageCopy.srcSubresource.baseArrayLayer = 0;
 		imageCopy.srcSubresource.layerCount = src.createInfo().arrayLayers;
-		imageCopy.srcOffset = {0, 0, 0};
+		imageCopy.srcOffset = {.x=0, .y=0, .z=0};
 		imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageCopy.dstSubresource.mipLevel = 0;
 		imageCopy.dstSubresource.baseArrayLayer = 0;
 		imageCopy.dstSubresource.layerCount = dst.createInfo().arrayLayers;
-		imageCopy.dstOffset = {0, 0, 0};
+		imageCopy.dstOffset = {.x=0, .y=0, .z=0};
 		/* FIXME: Use the source image extent for now. */
 		imageCopy.extent = src.createInfo().extent; //
 
@@ -401,50 +393,39 @@ namespace Emeraude::Vulkan
 		}
 #endif
 
-		const auto layerCount = dst.createInfo().arrayLayers;
-		const auto mipLevelCount = dst.createInfo().mipLevels;
+		constexpr VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		const auto baseWidth = dst.createInfo().extent.width;
 		const auto baseHeight = dst.createInfo().extent.height;
-
-		std::vector< VkBufferImageCopy > regions{};
-		regions.reserve(static_cast< size_t >(layerCount) * static_cast< size_t >(mipLevelCount));
+		const auto pixelBytes = dst.pixelBytes();
+		const auto layerCount = dst.createInfo().arrayLayers;
 
 		for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 		{
-			// TODO : compute offset to skip one layer with all mip levels.
-			const uint32_t layerOffset = layerIndex * (baseWidth * baseHeight * 4);
+			const uint32_t layerOffset = layerIndex * (baseWidth * baseHeight * pixelBytes);
 
-			for ( uint32_t mipLevelIndex = 0; mipLevelIndex < mipLevelCount; mipLevelIndex++ )
-			{
-				// TODO : compute sub-offset to pass mip level to this layer.
-				const uint32_t offset = layerOffset + 0;
+			/* FIXME: Check parameters and what to expose for a correct copy. */
+			VkBufferImageCopy bufferImageCopy{};
+			bufferImageCopy.bufferOffset = layerOffset;
+			bufferImageCopy.bufferRowLength = 0;
+			bufferImageCopy.bufferImageHeight = 0;
+			bufferImageCopy.imageSubresource.aspectMask = aspectMask;
+			bufferImageCopy.imageSubresource.mipLevel = 0;
+			bufferImageCopy.imageSubresource.baseArrayLayer = layerIndex;
+			bufferImageCopy.imageSubresource.layerCount = 1;
+			bufferImageCopy.imageOffset.x = 0;
+			bufferImageCopy.imageOffset.y = 0;
+			bufferImageCopy.imageOffset.z = 0;
+			bufferImageCopy.imageExtent.width = baseWidth;
+			bufferImageCopy.imageExtent.height = baseHeight;
+			bufferImageCopy.imageExtent.depth = 1;
 
-				/* FIXME: Check parameters and what to expose for a correct copy. */
-				VkBufferImageCopy bufferImageCopy{};
-				bufferImageCopy.bufferOffset = offset;
-				bufferImageCopy.bufferRowLength = 0;
-				bufferImageCopy.bufferImageHeight = 0;
-				bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				bufferImageCopy.imageSubresource.mipLevel = mipLevelIndex;
-				bufferImageCopy.imageSubresource.baseArrayLayer = layerIndex;
-				bufferImageCopy.imageSubresource.layerCount = 1;
-				bufferImageCopy.imageOffset.x = 0;
-				bufferImageCopy.imageOffset.y = 0;
-				bufferImageCopy.imageOffset.z = 0;
-				bufferImageCopy.imageExtent.width = baseWidth >> mipLevelIndex;
-				bufferImageCopy.imageExtent.height = baseHeight >> mipLevelIndex;
-				bufferImageCopy.imageExtent.depth = 1;
-
-				regions.emplace_back(bufferImageCopy);
-			}
+			vkCmdCopyBufferToImage(
+				m_handle,
+				src.handle(),
+				dst.handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1, &bufferImageCopy
+			);
 		}
-
-		vkCmdCopyBufferToImage(
-			m_handle,
-			src.handle(),
-			dst.handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			static_cast< uint32_t >(regions.size()), regions.data()
-		);
 	}
 
 	void
@@ -484,7 +465,7 @@ namespace Emeraude::Vulkan
 		bufferImageCopy.imageSubresource.mipLevel = 0;
 		bufferImageCopy.imageSubresource.baseArrayLayer = 0;
 		bufferImageCopy.imageSubresource.layerCount = src.createInfo().arrayLayers;
-		bufferImageCopy.imageOffset = {0, 0, 0};
+		bufferImageCopy.imageOffset = {.x=0, .y=0, .z=0};
 		bufferImageCopy.imageExtent = src.createInfo().extent;
 
 		/* FIXME: Check the image layout consistency with the operation. */
@@ -530,21 +511,21 @@ namespace Emeraude::Vulkan
 		imageBlit.srcSubresource.mipLevel = 0;
 		imageBlit.srcSubresource.baseArrayLayer = 0;
 		imageBlit.srcSubresource.layerCount = src.createInfo().arrayLayers;
-		imageBlit.srcOffsets[0] = {0, 0, 0};
-		imageBlit.srcOffsets[1] = {0, 0, 0};
+		imageBlit.srcOffsets[0] = {.x=0, .y=0, .z=0};
+		imageBlit.srcOffsets[1] = {.x=0, .y=0, .z=0};
 		imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlit.dstSubresource.mipLevel = 0;
 		imageBlit.dstSubresource.baseArrayLayer = 0;
 		imageBlit.dstSubresource.layerCount = dst.createInfo().arrayLayers;
-		imageBlit.dstOffsets[0] = {0, 0, 0};
-		imageBlit.dstOffsets[1] = {0, 0, 0};
+		imageBlit.dstOffsets[0] = {.x=0, .y=0, .z=0};
+		imageBlit.dstOffsets[1] = {.x=0, .y=0, .z=0};
 
 		vkCmdBlitImage(
 			m_handle,
 			src.handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			dst.handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &imageBlit,
-			VK_FILTER_CUBIC_EXT
+			VK_FILTER_LINEAR // VK_FILTER_CUBIC_EXT
 		);
 	}
 
@@ -617,7 +598,7 @@ namespace Emeraude::Vulkan
 		/* FIXME: Check if the image is a color one. */
 		/* FIXME: Set the possibility to choose the depth, or stencil and the value. */
 
-		const VkClearDepthStencilValue depthStencilValue{};
+		constexpr VkClearDepthStencilValue depthStencilValue{};
 
 		/* NOTE: The whole image as depth/stencil for now. */
 		VkImageSubresourceRange subresourceRange{};
@@ -656,7 +637,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			static_cast< uint32_t >(memoryBarriers.size()), memoryBarriers.data(),
 			static_cast< uint32_t >(bufferMemoryBarriers.size()), bufferMemoryBarriers.data(),
@@ -685,7 +667,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			static_cast< uint32_t >(memoryBarriers.size()), memoryBarriers.data(),
 			0, VK_NULL_HANDLE,
@@ -714,7 +697,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			0, VK_NULL_HANDLE,
 			static_cast< uint32_t >(bufferMemoryBarriers.size()), bufferMemoryBarriers.data(),
@@ -743,7 +727,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			0, VK_NULL_HANDLE,
 			0, VK_NULL_HANDLE,
@@ -765,7 +750,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			1, &memoryBarrier.get(),
 			0, VK_NULL_HANDLE,
@@ -787,7 +773,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			0, VK_NULL_HANDLE,
 			1, &bufferMemoryBarrier.get(),
@@ -809,7 +796,8 @@ namespace Emeraude::Vulkan
 
 		vkCmdPipelineBarrier(
 			m_handle,
-			srcStageMask, dstStageMask,
+			srcStageMask,
+			dstStageMask,
 			dependencyFlags,
 			0, VK_NULL_HANDLE,
 			0, VK_NULL_HANDLE,
@@ -874,7 +862,7 @@ namespace Emeraude::Vulkan
 	}
 
 	void
-	CommandBuffer::waitEvents (const std::vector< VkEvent > & events, VkPipelineStageFlags srcFlags, VkPipelineStageFlags dstFlags, const std::vector< VkMemoryBarrier > & memoryBarriers, const std::vector< VkBufferMemoryBarrier > & bufferMemoryBarriers, const std::vector< VkImageMemoryBarrier > & imageMemoryBarriers) noexcept
+	CommandBuffer::waitEvents (const std::vector< VkEvent > & events, VkPipelineStageFlags srcFlags, VkPipelineStageFlags dstFlags, const std::vector< VkMemoryBarrier > & memoryBarriers, const std::vector< VkBufferMemoryBarrier > & bufferMemoryBarriers, const std::vector< VkImageMemoryBarrier > & imageMemoryBarriers) const noexcept
 	{
 #ifdef DEBUG
 		if ( !this->isCreated() )
@@ -986,20 +974,20 @@ namespace Emeraude::Vulkan
 		}
 #endif
 
-		const uint32_t firstBinding = 0;
+		constexpr uint32_t firstBinding = 0;
 
-		std::array< VkBuffer, 1 > vertexBuffers{
+		const std::array< VkBuffer, 1 > vertexBuffers{
 			vertexBufferObject.handle()
 		};
 
-		std::array< VkDeviceSize, 1 > offsets{
+		const std::array< VkDeviceSize, 1 > offsets{
 			offset
 		};
 
 		vkCmdBindVertexBuffers(
 			m_handle,
 			firstBinding,
-			vertexBuffers.size(), vertexBuffers.data(), offsets.data()
+			static_cast< uint32_t >(vertexBuffers.size()), vertexBuffers.data(), offsets.data()
 		);
 	}
 
@@ -1033,7 +1021,7 @@ namespace Emeraude::Vulkan
 	}
 
 	void
-	CommandBuffer::bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet, const std::vector< uint32_t > & dynamicOffsets) const noexcept
+	CommandBuffer::bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet) const noexcept
 	{
 #ifdef DEBUG
 		if ( !pipelineLayout.isCreated() )
@@ -1068,12 +1056,52 @@ namespace Emeraude::Vulkan
 			pipelineLayout.handle(),
 			firstSet,
 			1, &descriptorSetHandle,
-			static_cast< uint32_t >(dynamicOffsets.size()), dynamicOffsets.data()
+			0, nullptr
 		);
 	}
 
 	void
-	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, size_t subGeometryIndex) const noexcept
+	CommandBuffer::bind (const DescriptorSet & descriptorSet, const PipelineLayout & pipelineLayout, VkPipelineBindPoint bindPoint, uint32_t firstSet, uint32_t dynamicOffset) const noexcept
+	{
+#ifdef DEBUG
+		if ( !pipelineLayout.isCreated() )
+		{
+			Tracer::error(ClassId, "The pipeline layout is not created !");
+
+			return;
+		}
+
+		if ( !descriptorSet.isCreated() )
+		{
+			Tracer::error(ClassId, "The descriptor set is not created !");
+
+			return;
+		}
+
+		if ( !this->isCreated() )
+		{
+			TraceError{ClassId} <<
+				"The command buffer is not created !" "\n"
+				"Unable to bind descriptor set " << descriptorSet.handle() << " with pipeline layout " << pipelineLayout.handle();
+
+			return;
+		}
+#endif
+
+		auto * descriptorSetHandle = descriptorSet.handle();
+
+		vkCmdBindDescriptorSets(
+			m_handle,
+			bindPoint,
+			pipelineLayout.handle(),
+			firstSet,
+			1, &descriptorSetHandle,
+			1, &dynamicOffset
+		);
+	}
+
+	void
+	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, size_t /*subGeometryIndex*/) const noexcept
 	{
 #ifdef DEBUG
 		if ( !this->isCreated() )
@@ -1086,11 +1114,9 @@ namespace Emeraude::Vulkan
 		}
 #endif
 
-		/* Binding vertex buffer object if exists. */
 		{
 			auto * vertexBufferObjectHandle = geometry.vertexBufferObject()->handle();
-
-			const VkDeviceSize offset = geometry.subGeometryOffset(subGeometryIndex);
+			constexpr VkDeviceSize offset = 0;
 
 			vkCmdBindVertexBuffers(
 				m_handle,
@@ -1100,11 +1126,10 @@ namespace Emeraude::Vulkan
 			);
 		}
 
-		/* Binding index buffer object if exists. */
 		if ( geometry.useIndexBuffer() )
 		{
-			const VkDeviceSize offset = 0;
-			const VkIndexType indexType = VK_INDEX_TYPE_UINT32;
+			constexpr VkDeviceSize offset = 0;
+			constexpr VkIndexType indexType = VK_INDEX_TYPE_UINT32;
 
 			vkCmdBindIndexBuffer(
 				m_handle,
@@ -1131,30 +1156,31 @@ namespace Emeraude::Vulkan
 
 		/* Binding vertex buffer object if exists. */
 		{
-			const uint32_t firstBinding = 0;
+			const auto range = geometry.subGeometryRange(subGeometryIndex);
+			constexpr uint32_t firstBinding = 0;
 
-			std::array< VkBuffer, 2 > vertexBuffers{
+			const std::array< VkBuffer, 2 > vertexBuffers{
 				geometry.vertexBufferObject()->handle(),
 				modelVBO.handle()
 			};
 
-			std::array< VkDeviceSize, 2 > offsets{
-				geometry.subGeometryOffset(subGeometryIndex),
+			const std::array< VkDeviceSize, 2 > offsets{
+				range[0],
 				modelVBOOffset
 			};
 
 			vkCmdBindVertexBuffers(
 				m_handle,
 				firstBinding,
-				vertexBuffers.size(), vertexBuffers.data(), offsets.data()
+				static_cast< uint32_t >(vertexBuffers.size()), vertexBuffers.data(), offsets.data()
 			);
 		}
 
 		/* Binding index buffer object if exists. */
 		if ( geometry.useIndexBuffer() )
 		{
-			const VkDeviceSize offset = 0;
-			const VkIndexType indexType = VK_INDEX_TYPE_UINT32;
+			constexpr VkDeviceSize offset = 0;
+			constexpr VkIndexType indexType = VK_INDEX_TYPE_UINT32;
 
 			vkCmdBindIndexBuffer(
 				m_handle,
@@ -1182,31 +1208,39 @@ namespace Emeraude::Vulkan
 
 			return;
 		}
+
+		if ( !geometry.isCreated() )
+		{
+			TraceError{ClassId} << "The geometry '" << geometry.name() << "' is not created !";
+
+			return;
+		}
 #endif
+
+		const auto range = geometry.subGeometryRange(subGeometryIndex);
 
 		if ( geometry.useIndexBuffer() )
 		{
-			const uint32_t firstIndex = 0;
-			const int32_t vertexOffset = 0;
-			const uint32_t firstInstance = 0;
+			constexpr int32_t vertexOffset{0};
+			constexpr uint32_t firstInstance{0};
 
 			vkCmdDrawIndexed(
 				m_handle,
-				geometry.indexBufferObject()->indexCount(),
+				range[1]/*indexCount*/,
 				instanceCount,
-				firstIndex,
+				range[0]/*firstIndex*/,
 				vertexOffset,
 				firstInstance
 			);
 		}
 		else
 		{
-			const uint32_t firstVertex = 0;
-			const uint32_t firstInstance = 0;
+			constexpr uint32_t firstVertex{0};
+			constexpr uint32_t firstInstance{0};
 
 			vkCmdDraw(
 				m_handle,
-				geometry.subGeometryLength(subGeometryIndex),
+				range[1]/*vertexCount*/,
 				instanceCount,
 				firstVertex,
 				firstInstance

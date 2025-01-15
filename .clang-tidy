@@ -1,0 +1,1 @@
+-*,clang-analyzer-*,concurrency-*,openmp-*,performance-*,portability-*,bugprone-*,-bugprone-easily-swappable-parameters,cppcoreguidelines-*,-cppcoreguidelines-avoid-magic-numbers,misc-*,-misc-include-cleaner,modernize-*,-modernize-use-trailing-return-type,readability-*,-readability-identifier-length,-readability-magic-numbers,-readability-math-missing-parentheses

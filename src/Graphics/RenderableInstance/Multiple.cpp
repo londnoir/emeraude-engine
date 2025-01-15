@@ -1,37 +1,53 @@
 /*
- * Emeraude/Graphics/RenderableInstance/Multiple.cpp
- * This file is part of Emeraude
+ * src/Graphics/RenderableInstance/Multiple.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Multiple.hpp"
 
+/* STL inclusions. */
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <mutex>
+#include <vector>
+
 /* Local inclusions. */
+#include "Abstract.hpp"
+#include "Graphics/Renderable/Interface.hpp"
+#include "Graphics/Types.hpp"
+#include "Graphics/ViewMatricesInterface.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libraries/Math/Matrix.hpp"
 #include "Tracer.hpp"
+#include "Saphir/Program.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/PipelineLayout.hpp"
 #include "Vulkan/TransferManager.hpp"
+#include "Vulkan/Types.hpp"
 
 namespace Emeraude::Graphics::RenderableInstance
 {
@@ -39,173 +55,255 @@ namespace Emeraude::Graphics::RenderableInstance
 	using namespace Libraries::Math;
 	using namespace Emeraude::Vulkan;
 
-	Multiple::Multiple (const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< Coordinates< float > > & instanceLocations) noexcept
-		: Abstract(renderable, LightingEnabled | ShadowsCastingEnabled | ReceivingShadows | EnableInstancing), m_instanceCount(instanceLocations.size())
-	{
-		if ( !this->commonInitialization(&instanceLocations, renderable.get()) )
-		{
-			Tracer::error(ClassId, "Unable to create the renderable multiple instance !");
-		}
-	}
-
-	Multiple::Multiple (const std::shared_ptr< Renderable::Interface > & renderable, size_t instanceCount) noexcept
-		: Abstract(renderable, LightingEnabled | ShadowsCastingEnabled | ReceivingShadows | EnableInstancing), m_instanceCount(instanceCount)
-	{
-		if ( !this->commonInitialization(nullptr, renderable.get()) )
-		{
-			Tracer::error(ClassId, "Unable to create the renderable multiple instance !");
-		}
-	}
-
-	bool
-	Multiple::commonInitialization (const std::vector< Coordinates< float > > * instanceLocations, Renderable::Interface * renderable) noexcept
+	Multiple::Multiple (const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< CartesianFrame< float > > & instanceLocations, uint32_t flagBits) noexcept
+		: Abstract(renderable, EnableInstancing | flagBits),
+		m_instanceCount(instanceLocations.size()),
+		m_activeInstanceCount(m_instanceCount)
 	{
 		if ( m_instanceCount == 0 )
 		{
-			this->setBroken("The location list is empty !");
+			this->setBroken("The instance location list is empty !");
 
-			return false;
+			return;
 		}
 
 		/* NOTE: Reserve the actual data place to speed up the local storage. */
-		m_localData.resize(m_instanceCount * Multiple::VBOElementCount());
-
-		if ( instanceLocations != nullptr )
+		if ( this->isFacingCamera() )
 		{
-			if ( !this->setLocalData(*instanceLocations, 0) )
-			{
-				this->setBroken("Unable to set local matrix data !");
+			m_localData.resize(m_instanceCount * SpriteVBOElementCount);
+		}
+		else
+		{
+			m_localData.resize(m_instanceCount * MeshVBOElementCount);
+		}
 
-				return false;
+		if ( this->updateLocalData(instanceLocations, 0) )
+		{
+			/* Create a vertex buffer object to hold locations in video memory
+			 * according to the size of local data. */
+			if ( this->createModelMatrices() )
+			{
+				this->observe(renderable.get());
+			}
+			else
+			{
+				this->setBroken("Unable to create the model matrices VBO !");
 			}
 		}
 		else
 		{
-			this->resetLocalData();
+			this->setBroken("Unable to write the local data !");
 		}
+	}
+
+	Multiple::Multiple (const std::shared_ptr< Renderable::Interface > & renderable, size_t instanceCount, uint32_t flagBits) noexcept
+		: Abstract(renderable, EnableInstancing | flagBits),
+		m_instanceCount(instanceCount)
+	{
+		if ( m_instanceCount == 0 )
+		{
+			this->setBroken("The location count is zero !");
+
+			return;
+		}
+
+		/* NOTE: Reserve the actual data place to speed up the local storage. */
+		if ( this->isFacingCamera() )
+		{
+			m_localData.resize(m_instanceCount * SpriteVBOElementCount);
+		}
+		else
+		{
+			m_localData.resize(m_instanceCount * MeshVBOElementCount);
+		}
+
+		this->resetLocalData();
 
 		/* Create a vertex buffer object to hold locations in video memory
 		 * according to the size of local data. */
-		if ( !this->createModelMatrices() )
+		if ( this->createModelMatrices() )
 		{
-			this->setBroken("Unable to initialize the model matrix VBO !");
+			this->observe(renderable.get());
+		}
+		else
+		{
+			this->setBroken("Unable to create the model matrices VBO !");
+		}
+	}
+
+	bool
+	Multiple::updateLocalData (const CartesianFrame< float > & instanceLocation, size_t instanceIndex) noexcept
+	{
+		/* Check against the local data. */
+		if ( instanceIndex >= m_instanceCount )
+		{
+			TraceError{ClassId} << "Instance index out of bounds (" << instanceIndex << " >= " << m_instanceCount << ") !";
 
 			return false;
 		}
 
-		this->observe(renderable);
+		if ( this->isFacingCamera() )
+		{
+			/* Starting offset to write vectors */
+			size_t elementOffset = instanceIndex * SpriteVBOElementCount;
+
+			/* Position */
+			{
+				const auto & position = instanceLocation.position();
+
+				m_localData[elementOffset++] = position[X];
+				m_localData[elementOffset++] = position[Y];
+				m_localData[elementOffset++] = position[Z];
+			}
+
+			/* Scaling */
+			{
+				const auto & scaling = instanceLocation.scalingFactor();
+
+				m_localData[elementOffset++] = scaling[X];
+				m_localData[elementOffset++] = scaling[Y];
+				m_localData[elementOffset++] = scaling[Z];
+			}
+		}
+		else
+		{
+			/* Starting offset to write matrices */
+			size_t elementOffset = instanceIndex * MeshVBOElementCount;
+
+			/* Write model matrix for this instance. */
+			const auto modelMatrix = instanceLocation.getModelMatrix();
+			modelMatrix.copy(m_localData.data() + elementOffset);
+
+			if ( !this->isFacingCamera() )
+			{
+				/* Advance offset for the normal matrix (16 floats). */
+				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+
+				/* Write normal matrix for this instance. */
+				const auto normalModelMatrix = modelMatrix.inverse().transpose().toMatrix3();
+				normalModelMatrix.copy(m_localData.data() + elementOffset);
+			}
+		}
+
+		/* Mark GPU data out of date. */
+		this->disableFlag(ArePositionsSynchronized);
 
 		return true;
 	}
 
 	bool
-	Multiple::isModelMatricesCreated () const noexcept
+	Multiple::updateLocalData (const std::vector< CartesianFrame< float > > & instanceLocations, size_t instanceOffset) noexcept
 	{
-		if ( m_vertexBufferObject == nullptr )
+		/* Check against the local data. */
+		const auto endOffset = instanceOffset + instanceLocations.size();
+
+		if ( endOffset > m_instanceCount )
 		{
+			TraceError{ClassId} << "Instance range out of bounds (" << instanceOffset << " + " << instanceLocations.size() << "(=" << endOffset << ") > " << m_instanceCount << ") !";
+
 			return false;
 		}
 
-		return m_vertexBufferObject->isCreated();
-	}
+		if ( this->isFacingCamera() )
+		{
+			/* Starting offset to write vectors */
+			auto elementOffset = instanceOffset * SpriteVBOElementCount;
 
-	size_t
-	Multiple::instanceCount () const noexcept
-	{
-		return m_instanceCount;
-	}
+			for ( const auto & instanceLocation : instanceLocations )
+			{
+				/* Position */
+				{
+					const auto & position = instanceLocation.position();
 
-	bool
-	Multiple::useModelUniformBufferObject () const noexcept
-	{
-		return false;
-	}
+					m_localData[elementOffset++] = position[X];
+					m_localData[elementOffset++] = position[Y];
+					m_localData[elementOffset++] = position[Z];
+				}
 
-	bool
-	Multiple::useModelVertexBufferObject () const noexcept
-	{
+				/* Scaling */
+				{
+					const auto & scaling = instanceLocation.scalingFactor();
+
+					m_localData[elementOffset++] = scaling[X];
+					m_localData[elementOffset++] = scaling[Y];
+					m_localData[elementOffset++] = scaling[Z];
+				}
+			}
+		}
+		else
+		{
+			/* Starting offset to write matrices */
+			auto elementOffset = instanceOffset * MeshVBOElementCount;
+
+			for ( const auto & instanceLocation : instanceLocations )
+			{
+				/* Write model matrix for this instance. */
+				const auto modelMatrix = instanceLocation.getModelMatrix();
+				modelMatrix.copy(m_localData.data() + elementOffset);
+
+				/* Advance offset for the normal matrix (16 floats). */
+				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+
+				/* Write normal matrix for this instance. */
+				const auto normalModelMatrix = modelMatrix.inverse().transpose().toMatrix3();
+				normalModelMatrix.copy(m_localData.data() + elementOffset);
+
+				/* Advance offset for the next instance model matrix (9 floats). */
+				elementOffset += 3UL * attributeSize(VertexAttributeType::NormalModelMatrixR0);
+			}
+		}
+
+		/* Mark GPU data out of date. */
+		this->disableFlag(ArePositionsSynchronized);
+
 		return true;
-	}
-
-	bool
-	Multiple::updateVideoMemoryForRendering (const std::shared_ptr< Graphics::RenderTarget::Abstract > & /*renderTarget*/) noexcept
-	{
-		return true;
-	}
-
-	size_t
-	Multiple::VBOElementCount () noexcept
-	{
-		const auto modelMatrixElementCount = 4 * attributeSize(VertexAttributeType::ModelMatrixR0);
-		const auto normalModelMatrixElementCount = 3 * attributeSize(VertexAttributeType::NormalModelMatrixR0);
-
-		return modelMatrixElementCount + normalModelMatrixElementCount;
 	}
 
 	void
 	Multiple::resetLocalData () noexcept
 	{
-		const auto limit = this->instanceCount();
-		constexpr auto identity3 = Matrix< 3, float >::identity();
-		constexpr auto identity4 = Matrix< 4, float >::identity();
+		const auto limit = m_instanceCount;
 
-		/* Starting offset in video memory */
-		size_t elementOffset = 0;
-
-		// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-		for ( size_t instanceIndex = 0; instanceIndex < limit; instanceIndex++ )
+		if ( this->isFacingCamera() )
 		{
-			identity4.copy(m_localData.data() + elementOffset);
+			for ( size_t instanceIndex = 0; instanceIndex < limit; instanceIndex++ )
+			{
+				auto offset = instanceIndex * SpriteVBOElementCount;
 
-			elementOffset += 4 * attributeSize(VertexAttributeType::ModelMatrixR0); /* mat4 is 4 vectors */
+				/* Position */
+				m_localData[offset++] = 0.0F;
+				m_localData[offset++] = 0.0F;
+				m_localData[offset++] = 0.0F;
 
-			identity3.copy(m_localData.data() + elementOffset);
+				/* Scaling */
+				m_localData[offset++] = 1.0F;
+				m_localData[offset++] = 1.0F;
+				m_localData[offset++] = 1.0F;
+			}
+		}
+		else
+		{
+			constexpr auto identity3 = Matrix< 3, float >::identity();
+			constexpr auto identity4 = Matrix< 4, float >::identity();
 
-			elementOffset += 3 * attributeSize(VertexAttributeType::NormalModelMatrixR0); /* mat4 is 3 vectors */
+			/* Starting offset in video memory */
+			size_t elementOffset = 0;
+
+			for ( size_t instanceIndex = 0; instanceIndex < limit; instanceIndex++ )
+			{
+				identity4.copy(m_localData.data() + elementOffset);
+
+				/* Advance offset for the normal matrix (16 floats). */
+				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+
+				identity3.copy(m_localData.data() + elementOffset);
+
+				/* Advance offset for the next instance model matrix (9 floats). */
+				elementOffset += 3UL * attributeSize(VertexAttributeType::NormalModelMatrixR0);
+			}
 		}
 
-		// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-		this->disableFlag(IsPositionSynchronized);
-	}
-
-	bool
-	Multiple::setLocalData (const std::vector< Coordinates< float > > & instanceLocations, size_t localDataOffset) noexcept
-	{
-		/* Check against the local data. */
-		if ( instanceLocations.size() + localDataOffset > m_instanceCount )
-		{
-			Tracer::error(ClassId, "Local data overflow !");
-
-			return false;
-		}
-
-		/* Starting offset in video memory */
-		size_t elementOffset = localDataOffset * Multiple::VBOElementCount();
-
-		// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-		for ( const auto & instanceLocation : instanceLocations )
-		{
-			const auto modelMatrix = instanceLocation.modelMatrix();
-
-			modelMatrix.copy(m_localData.data() + elementOffset);
-
-			elementOffset += 4 * attributeSize(VertexAttributeType::ModelMatrixR0); /* mat4 is 4 vectors */
-
-			const auto normalModelMatrix = modelMatrix.inverse().transpose().toMatrix3();
-
-			normalModelMatrix.copy(m_localData.data() + elementOffset);
-
-			elementOffset += 3 * attributeSize(VertexAttributeType::NormalModelMatrixR0); /* mat4 is 3 vectors */
-		}
-
-		// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-		this->disableFlag(IsPositionSynchronized);
-
-		return true;
+		this->disableFlag(ArePositionsSynchronized);
 	}
 
 	bool
@@ -218,9 +316,9 @@ namespace Emeraude::Graphics::RenderableInstance
 			return true;
 		}
 
-		auto * transferManager = TransferManager::instance(TransferType::Graphics);
+		auto * transferManager = TransferManager::instance(GPUWorkType::Graphics);
 
-		const auto vertexElementCount = Multiple::VBOElementCount();
+		const auto vertexElementCount = this->isFacingCamera() ? SpriteVBOElementCount : MeshVBOElementCount;
 		const auto vertexCount = m_localData.size() / vertexElementCount;
 
 		m_vertexBufferObject = std::make_unique< VertexBufferObject >(transferManager->device(), vertexCount, vertexElementCount);
@@ -235,13 +333,13 @@ namespace Emeraude::Graphics::RenderableInstance
 			return false;
 		}
 
-		this->enableFlag(IsPositionSynchronized);
+		this->enableFlag(ArePositionsSynchronized);
 
 		return true;
 	}
 
 	bool
-	Multiple::updateModelMatrices (const std::vector< Coordinates< float > > & instanceLocations, size_t localDataOffset) noexcept
+	Multiple::updateVideoMemory () noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_GPUMemoryAccess};
 
@@ -254,77 +352,101 @@ namespace Emeraude::Graphics::RenderableInstance
 		}
 #endif
 
-		/* FIXME: Check this functionality
-		if ( this->isFlagEnabled(IsPositionSynchronized) )
+		if ( this->isFlagEnabled(ArePositionsSynchronized) )
 		{
 			return true;
-		}*/
-
-		/* NOTE: Create the data vector to init the VBO directly. */
-		if ( !this->setLocalData(instanceLocations, localDataOffset) )
-		{
-			return false;
 		}
 
-		if ( !m_vertexBufferObject->writeData(*TransferManager::instance(TransferType::Graphics), {m_localData.data(), m_localData.size()}) )
+		auto * transferManager = TransferManager::instance(GPUWorkType::Graphics);
+
+		if ( !m_vertexBufferObject->writeData(*transferManager, m_localData) )
 		{
 			Tracer::error(ClassId, "Unable to write data to the VBO.");
 
 			return false;
 		}
 
-		this->enableFlag(IsPositionSynchronized);
-
-		return true;
-	}
-
-	bool
-	Multiple::resetModelMatrices () noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_GPUMemoryAccess};
-
-#ifdef DEBUG
-		if ( !this->isModelMatricesCreated() )
-		{
-			Tracer::error(ClassId, "Trying to map an uninitialized VBO.");
-
-			return false;
-		}
-#endif
-
-		this->resetLocalData();
-
-		if ( !m_vertexBufferObject->writeData(*TransferManager::instance(TransferType::Graphics), {m_localData.data(), m_localData.size()}) )
-		{
-			Tracer::error(ClassId, "Unable to write data to the VBO.");
-
-			return false;
-		}
-
-		this->enableFlag(IsPositionSynchronized);
+		/* Mark GPU data synchronized with local data. */
+		this->enableFlag(ArePositionsSynchronized);
 
 		return true;
 	}
 
 	void
-	Multiple::bindInstanceLayer (const CommandBuffer & commandBuffer, const PipelineLayout & pipelineLayout, size_t layerIndex, uint32_t & setOffset) const noexcept
+	Multiple::pushMatrices (const CommandBuffer & commandBuffer, const PipelineLayout & pipelineLayout, const ViewMatricesInterface & viewMatrices, const Saphir::Program & program) const noexcept
 	{
-		const auto * geometry = this->renderable()->geometry();
+		constexpr uint32_t MatrixBytes{Matrix4Alignment * sizeof(float)};
 
-		/* Bind the material UBO (Should be set #1). */
-		commandBuffer.bind(
-			*this->renderable()->material(layerIndex)->descriptorSet(),
-			pipelineLayout,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			setOffset++
-		);
+		const VkShaderStageFlags stageFlags = program.hasGeometryShader() ?
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT :
+			VK_SHADER_STAGE_VERTEX_BIT;
 
-		/*  Bind the geometry VBO(/IBO) and the model matrix VBO */
-		commandBuffer.bind(*geometry, *m_vertexBufferObject, layerIndex);
+		const auto & viewMatrix = viewMatrices.viewMatrix(this->isUsingInfinityView(), 0);
+		const auto viewProjectionMatrix = viewMatrices.projectionMatrix() * viewMatrix;
+
+		/* [VULKAN-PUSH-CONSTANT:4] Push camera related matrices. */
+		if ( program.wasAdvancedMatricesEnabled() || program.wasBillBoardingEnabled() )
+		{
+#ifndef SPLIT_PUSH_CONSTANTS
+			/* NOTE: Create a single buffer for 2x mat4x4. */
+			std::array< float, 32 > buffer{};
+			std::memcpy(buffer.data(), viewMatrix.data(), MatrixBytes);
+			std::memcpy(&buffer[Matrix4Alignment], viewProjectionMatrix.data(), MatrixBytes);
+
+			/* NOTE: Push the view matrix (V) and the view projection matrix (VP). */
+			vkCmdPushConstants(
+				commandBuffer.handle(),
+				pipelineLayout.handle(),
+				stageFlags,
+				0,
+				MatrixBytes * 2,
+				buffer.data()
+			);
+#else
+			/* NOTE: Push the view matrix (V). */
+			vkCmdPushConstants(
+				commandBuffer.handle(),
+				pipelineLayout.handle(),
+				stageFlags,
+				0,
+				MatrixBytes,
+				viewMatrix.data()
+			);
+
+			/* NOTE: Push the view projection matrix (VP). */
+			vkCmdPushConstants(
+				commandBuffer.handle(),
+				pipelineLayout.handle(),
+				stageFlags,
+				MatrixBytes,
+				MatrixBytes,
+				viewProjectionMatrix.data()
+			);
+#endif
+		}
+		else
+		{
+			/* NOTE: Push the view projection matrix (VP). */
+			vkCmdPushConstants(
+				commandBuffer.handle(),
+				pipelineLayout.handle(),
+				stageFlags,
+				0,
+				MatrixBytes,
+				viewProjectionMatrix.data()
+			);
+		}
+	}
+
+	void
+	Multiple::bindInstanceModelLayer (const CommandBuffer & commandBuffer, size_t layerIndex) const noexcept
+	{
+		/*  Bind the geometry VBO and the optional IBO with the model matrix VBO. */
+		commandBuffer.bind(*this->renderable()->geometry(), *m_vertexBufferObject, layerIndex);
 	}
 
 	bool
-	Multiple::coordinatesToModelMatrices (const std::vector< Libraries::Math::Coordinates< float > > & coordinates, std::vector< Libraries::Math::Matrix< 4, float > > & modelMatrices, bool strict) noexcept
+	Multiple::coordinatesToModelMatrices (const std::vector< CartesianFrame< float > > & coordinates, std::vector< Matrix< 4, float > > & modelMatrices, bool strict) noexcept
 	{
 		if ( coordinates.empty() )
 		{
@@ -340,7 +462,7 @@ namespace Emeraude::Graphics::RenderableInstance
 
 		for ( size_t index = 0; index < limit; index++ )
 		{
-			modelMatrices[index] = coordinates[index].modelMatrix();
+			modelMatrices[index] = coordinates[index].getModelMatrix();
 		}
 
 		return true;

@@ -1,38 +1,47 @@
 /*
- * Emeraude/Overlay/Elements/Picture.hpp
- * This file is part of Emeraude
+ * src/Overlay/Elements/Picture.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
+/* STL inclusions. */
+#include <cstdint>
+#include <string>
+
 /* Local inclusions for inheritances. */
-#include "../Surface.hpp"
+#include "../ComposedSurface.hpp"
+#include "Libraries/Math/Rectangle.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
-	class Picture final : public Surface
+	/**
+	 * @brief The picture element.
+	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
+	 */
+	class Picture final : public ComposedSurface
 	{
 		public:
 
@@ -41,8 +50,13 @@ namespace Emeraude::Overlay::Elements
 				FitToSurface
 			};
 
-			/** Default constructor. */
-			Picture () noexcept = default;
+			/**
+			 * @brief Constructs a picture.
+			 * @param name A reference to a string.
+			 * @param geometry A reference to a rectangle for the sufarce geometry on screen. Default the whole screen.
+			 * @param depth A depth value to order surface on the screen. Default 0.0.
+			 */
+			explicit Picture (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** Sets an image and an alignment as the background of this surface. */
 			void setImage (const std::shared_ptr< Graphics::ImageResource > & image, Alignment alignment = Alignment::FitToSurface) noexcept;
@@ -57,7 +71,7 @@ namespace Emeraude::Overlay::Elements
 
 		private:
 
-			bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept final;
+			bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
 
 			std::shared_ptr< Graphics::ImageResource > m_image{};
 			float m_opacity = 1.0F;

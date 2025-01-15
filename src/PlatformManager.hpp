@@ -1,42 +1,48 @@
 /*
- * Emeraude/PlatformManager.hpp
- * This file is part of Emeraude
+ * src/PlatformManager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
+/* STL inclusions. */
+#include <array>
+
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
+/* Forward declarations. */
 namespace Emeraude
 {
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
+}
 
+namespace Emeraude
+{
 	/**
-	 * @brief The platform manager service class.
+	 * @brief The platform manager service class initialize check Vulkan and initialize GLFW with it.
 	 * @extends Emeraude::ServiceInterface This is a service.
 	 */
 	class PlatformManager final : public ServiceInterface
@@ -51,12 +57,15 @@ namespace Emeraude
 
 			/**
 			 * @brief Constructs the platform manager.
-			 * @param arguments A reference to Arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 */
-			PlatformManager (const Arguments & arguments, Settings & coreSettings) noexcept;
+			explicit PlatformManager (PrimaryServices & primaryServices) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -72,10 +81,20 @@ namespace Emeraude
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			bool m_usable = false;
+			/* Flag names */
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto ShowInformation{1UL};
+
+			PrimaryServices & m_primaryServices;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
+				false/*ShowInformation*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

@@ -1,65 +1,67 @@
 /*
- * Emeraude/Vulkan/Device.hpp
- * This file is part of Emeraude
+ * src/Vulkan/Device.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <algorithm>
+/* STL inclusions. */
 #include <array>
-#include <memory>
-#include <optional>
-#include <string>
+#include <cstdint>
+#include <map>
+#include <mutex>
 #include <vector>
+#include <memory>
 
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
-#include "NamedItem.hpp"
+#include "Libraries/NameableTrait.hpp"
 
-/* Local inclusions for usages. */
-#include "DeviceRequirements.hpp"
-#include "PhysicalDevice.hpp"
-#include "QueueFamilyInterface.hpp"
+/* Local inclusions for usage. */
+#include "Types.hpp"
 
+/* Forward declarations. */
 namespace Emeraude::Vulkan
 {
 	class Instance;
+	class PhysicalDevice;
+	class DeviceRequirements;
+	class QueueFamilyInterface;
+	class Queue;
+}
 
+namespace Emeraude::Vulkan
+{
 	/**
 	 * @brief Defines a logical device from a physical device.
 	 * @extends Emeraude::Vulkan::AbstractObject Obviously this is the device, so simple object is ok.
-	 * @extends Libraries::NamedItem to set a name on a device.
+	 * @extends Libraries::NameableTrait to set a name on a device.
 	 */
-	class Device final : public std::enable_shared_from_this< Device >, public AbstractObject, public Libraries::NamedItem
+	class Device final : public std::enable_shared_from_this< Device >, public AbstractObject, public Libraries::NameableTrait
 	{
 		public:
-
-			/* Settings keys */
-			static constexpr auto EnableDeviceDebugKey = "Video/Vulkan/EnableDeviceDebug";
-			static constexpr auto ShowAvailableDeviceExtensionsKey = "Video/Vulkan/Extensions/ShowAvailableForDevice";
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"VulkanDevice"};
@@ -116,45 +118,69 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Returns the physical device smart pointer.
-			 * @return const std::shared_ptr< PhysicalDevice > &
+			 * @return std::shared_ptr< PhysicalDevice >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< PhysicalDevice > & physicalDevice () const noexcept;
+			std::shared_ptr< PhysicalDevice >
+			physicalDevice () const noexcept
+			{
+				return m_physicalDevice;
+			}
 
 			/**
 			 * @brief Returns the device handle.
 			 * @return VkDevice
 			 */
 			[[nodiscard]]
-			VkDevice handle () const noexcept;
+			VkDevice
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the Vulkan validation layer state.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isDebugModeEnabled () const noexcept;
+			bool
+			isDebugModeEnabled () const noexcept
+			{
+				return m_flags[DebugMode];
+			}
 
 			/**
 			 * @brief Set the debug mode state.
 			 * @param state The state.
 			 * @return void
 			 */
-			void enableDebugMode (bool state) noexcept;
+			void
+			enableDebugMode (bool state) noexcept
+			{
+				m_flags[DebugMode] = state;
+			}
 
 			/**
 			 * @brief Returns whether the device has only one family queue for all.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasBasicSupport () const noexcept;
+			bool
+			hasBasicSupport () const noexcept
+			{
+				return m_flags[HasBasicSupport];
+			}
 
 			/**
 			 * @brief Returns whether the device has been setup for graphics.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasGraphicsQueues () const noexcept;
+			bool
+			hasGraphicsQueues () const noexcept
+			{
+				return m_queueFamilyPerJob.contains(QueueJob::Graphics);
+			}
 
 			/**
 			 * @brief Returns the queue family index for graphics.
@@ -169,7 +195,11 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasComputeQueues () const noexcept;
+			bool
+			hasComputeQueues () const noexcept
+			{
+				return m_queueFamilyPerJob.contains(QueueJob::Compute);
+			}
 
 			/**
 			 * @brief Returns the queue family index for compute queues.
@@ -184,7 +214,11 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasTransferQueues () const noexcept;
+			bool
+			hasTransferQueues () const noexcept
+			{
+				return m_queueFamilyPerJob.contains(QueueJob::Transfer);
+			}
 
 			/**
 			 * @brief Returns the queue family index for transfer-only queues.
@@ -230,6 +264,17 @@ namespace Emeraude::Vulkan
 			[[nodiscard]]
 			VkFormat findSupportedFormat (const std::vector< VkFormat > & formats, VkImageTiling tiling, VkFormatFeatureFlags featureFlags) const noexcept;
 
+			/**
+			 * @brief Returns the lock for the device resources access.
+			 * @return std::mutex &
+			 */
+			[[nodiscard]]
+			std::mutex &
+			deviceAccessLock () const noexcept
+			{
+				return m_mutex;
+			}
+
 		private:
 
 			/**
@@ -270,15 +315,15 @@ namespace Emeraude::Vulkan
 			bool createDevice (const DeviceRequirements & requirements, const std::vector< VkDeviceQueueCreateInfo > & queueCreateInfos, const std::vector< const char * > & extensions) noexcept;
 
 			/* Flag names. */
-			static constexpr auto DebugMode = 0UL;
-			static constexpr auto HasBasicSupport = 1UL;
+			static constexpr auto DebugMode{0UL};
+			static constexpr auto HasBasicSupport{1UL};
 
 			std::shared_ptr< PhysicalDevice > m_physicalDevice;
 			VkDevice m_handle{VK_NULL_HANDLE};
-			std::vector< std::shared_ptr< QueueFamilyInterface > > m_queueFamilies{};
-			std::map< QueueJob, std::shared_ptr< QueueFamilyInterface > > m_queueFamilyPerJob{};
-			mutable std::mutex m_mutex{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
+			std::vector< std::shared_ptr< QueueFamilyInterface > > m_queueFamilies;
+			std::map< QueueJob, std::shared_ptr< QueueFamilyInterface > > m_queueFamilyPerJob;
+			mutable std::mutex m_mutex;
+			std::array< bool, 8 > m_flags{
 				false/*DebugMode*/,
 				false/*HasBasicSupport*/,
 				false/*UNUSED*/,

@@ -1,67 +1,75 @@
 /*
- * Emeraude/Console.cpp
- * This file is part of Emeraude
+ * src/Console.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Console.hpp"
 
-/* C/C++ standard libraries. */
-#include <chrono>
-#include <future>
+/* STL inclusions. */
+#include <algorithm>
+#include <cstddef>
 #include <iostream>
+#include <map>
+#include <ranges>
+#include <vector>
 
-/* Local inclusions */
-#include "Arguments.hpp"
+/* Local inclusions. */
+#include "PrimaryServices.hpp"
 #include "ConsoleControllable.hpp"
-#include "FileSystem.hpp"
-#include "Graphics/Geometry/IndexedVertexResource.hpp"
+#include "Graphics/FontResource.hpp"
 #include "Graphics/ImageResource.hpp"
-#include "Input/KeyboardController.hpp"
+#include "Input/KeyboardListenerInterface.hpp"
+#include "Input/Types.hpp"
 #include "Input/Manager.hpp"
 #include "Overlay/Elements/Picture.hpp"
 #include "Overlay/Elements/Text.hpp"
 #include "Overlay/Manager.hpp"
-#include "Overlay/Screen.hpp"
-#include "Settings.hpp"
-#include "Tracer.hpp"
+#include "Overlay/ComposedSurface.hpp"
+#include "Overlay/UIScreen.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "ServiceInterface.hpp"
+#include "Libraries/BlobTrait.hpp"
+#include "Types.hpp"
+#include "platform.hpp"
 
 namespace Emeraude
 {
-	// NOLINTBEGIN(*-magic-numbers)
 	using namespace Libraries;
+	using namespace Libraries::Math;
+	using namespace Libraries::PixelFactory;
 
-	const size_t Console::ClassUID{Observable::getClassUID()};
-	Console * Console::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t Console::ClassUID{getClassUID(ClassId)};
+	Console * Console::s_instance{nullptr};
 
-	Console::Console (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, Input::Manager & inputManager, Overlay::Manager & overlayManager) noexcept
-		: ServiceInterface(ClassId), KeyboardListenerInterface(true, true, false),
-		  m_arguments(arguments), m_fileSystem(fileSystem), m_coreSettings(coreSettings), m_inputManager(inputManager), m_overlayManager(overlayManager)
+	Console::Console (PrimaryServices & primaryServices, Input::Manager & inputManager, Overlay::Manager & overlayManager) noexcept
+		: ServiceInterface(ClassId), KeyboardListenerInterface(false, true),
+		  m_primaryServices(primaryServices), m_inputManager(inputManager), m_overlayManager(overlayManager)
 	{
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
@@ -80,34 +88,42 @@ namespace Emeraude
 		return s_instance;
 	}
 
+	size_t
+	Console::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	Console::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
 	bool
 	Console::usable () const noexcept
 	{
+		if ( !m_flags[ServiceInitialized] )
+		{
+			return false;
+		}
+
 		return !m_consoleObjects.empty();
 	}
 
 	bool
 	Console::onInitialize () noexcept
 	{
+		m_flags[ServiceInitialized] = true;
+
 		return true;
 	}
 
 	bool
 	Console::onTerminate () noexcept
 	{
+		m_flags[ServiceInitialized] = false;
+
 		m_consoleObjects.clear();
 
 		return true;
@@ -116,27 +132,25 @@ namespace Emeraude
 	bool
 	Console::buildGUI () noexcept
 	{
-		using namespace PixelFactory;
-
 		if ( m_inputText != nullptr && m_outputText != nullptr )
 		{
 			return true;
 		}
 
-		auto screen = m_overlayManager.createScreen(ScreenName);
+		const auto screen = m_overlayManager.createScreen("ConsoleScreen", true, false);
 
 		{
-			auto background = screen->create< Overlay::Elements::Picture >("Background", 1.0F, 1.0F);
+			const auto background = screen->createSurface< Overlay::Elements::Picture >("Background", Math::Rectangle{1.0F, 1.0F}, 1.0F);
 			background->setImage(Graphics::ImageResource::get("UI/Console", true));
 			background->setOpacity(0.75F);
 			background->drawFinished();
 		}
 
-		auto font = Graphics::FontResource::get("old", true);
+		const auto font = Graphics::FontResource::get("old", true);
 
 		{
-			m_inputText = screen->create< Overlay::Elements::Text >(InputTextName, 1.0F, 0.1F);
-			m_inputText->setPosition(Overlay::Surface::Position::Bottom);
+			m_inputText = screen->createSurface< Overlay::Elements::Text >(InputTextName, Math::Rectangle{1.0F, 0.1F}, 1.0F);
+			m_inputText->setPosition(Overlay::Position::Bottom);
 
 			auto & writer = m_inputText->textWriter();
 			writer.setFont(font);
@@ -147,8 +161,8 @@ namespace Emeraude
 		}
 
 		{
-			m_outputText = screen->create< Overlay::Elements::Text >(OutputTextName, 1.0F, 0.9F);
-			m_outputText->setPosition(Overlay::Surface::Position::Top);
+			m_outputText = screen->createSurface< Overlay::Elements::Text >(OutputTextName, Math::Rectangle{1.0F, 0.9F}, 1.0F);
+			m_outputText->setPosition(Overlay::Position::Top);
 
 			auto & writer = m_outputText->textWriter();
 			writer.setFont(font);
@@ -170,9 +184,9 @@ namespace Emeraude
 
 		/* If the direct querying state of the keyboard is enabled.
 		 * Disables it to stop it during the console session. */
-		if ( m_inputManager.isDirectQueryEnabled() )
+		if ( m_inputManager.isCopyKeyboardStateEnabled() )
 		{
-			m_inputManager.enableDirectQuery(false);
+			m_inputManager.enableCopyKeyboardState(false);
 
 			m_flags[DirectInputWasEnabled] = true;
 		}
@@ -193,7 +207,7 @@ namespace Emeraude
 			m_flags[PointerWasLocked] = false;
 		}
 
-		m_overlayManager.enableScreen(ScreenName);
+		m_overlayManager.enableScreen("ConsoleScreen");
 	}
 
 	void
@@ -207,7 +221,7 @@ namespace Emeraude
 		/* Restore the direct querying state of the keyboard behavior, if it was enabled. */
 		if ( m_flags[DirectInputWasEnabled] )
 		{
-			m_inputManager.enableDirectQuery(true);
+			m_inputManager.enableCopyKeyboardState(true);
 		}
 
 		/* If the pointer was locked to control the view, re-lock it. */
@@ -216,42 +230,40 @@ namespace Emeraude
 			m_inputManager.lockPointer();
 		}
 
-		m_overlayManager.disableScreen(ScreenName);
+		m_overlayManager.disableScreen("ConsoleScreen");
 	}
 
 	bool
 	Console::add (ConsoleControllable & controllable) noexcept
 	{
-		if ( m_consoleObjects.find(controllable.identifier()) != m_consoleObjects.cend() )
+		if ( m_consoleObjects.contains(controllable.identifier()) )
 		{
-			Tracer::error(ClassId, Blob() << "Console object named '" << controllable.identifier() << "' already exists !");
+			Tracer::error(ClassId, BlobTrait() << "Console object named '" << controllable.identifier() << "' already exists !");
 
 			return false;
 		}
 
-		auto result = m_consoleObjects.emplace(controllable.identifier(), &controllable);
-
-		return result.second;
+		return m_consoleObjects.emplace(controllable.identifier(), &controllable).second;
 	}
 
 	bool
 	Console::remove (const std::string & identifier) noexcept
 	{
-		auto objectIt = m_consoleObjects.find(identifier);
+		const auto objectIt = m_consoleObjects.find(identifier);
 
-		if ( objectIt != m_consoleObjects.end() )
+		if ( objectIt == m_consoleObjects.cend() )
 		{
-			m_consoleObjects.erase(objectIt);
-
-			return true;
+			return false;
 		}
 
-		return false;
+		m_consoleObjects.erase(objectIt);
+
+		return true;
 	}
 
 
 	bool
-	Console::remove (ConsoleControllable & pointer) noexcept
+	Console::remove (const ConsoleControllable & pointer) noexcept
 	{
 		for ( auto it = m_consoleObjects.begin(); it != m_consoleObjects.end(); ++it )
 		{
@@ -276,7 +288,7 @@ namespace Emeraude
 		{
 			if ( !this->executeBuiltIn(command) )
 			{
-				Tracer::warning(ClassId, Blob() << "Command '" << command << "' with no effect !");
+				Tracer::warning(ClassId, BlobTrait() << "Command '" << command << "' with no effect !");
 
 				return false;
 			}
@@ -289,21 +301,21 @@ namespace Emeraude
 
 		if ( !expression.isValid() )
 		{
-			Tracer::warning(ClassId, Blob() << "Command '" << command << "' is invalid !");
+			Tracer::warning(ClassId, BlobTrait() << "Command '" << command << "' is invalid !");
 
 			return false;
 		}
 
 		/* Gets the first identifier.
 		 * NOTE: It is useless to check if it's empty here. */
-		auto identifier = expression.nextIdentifier();
+		const auto identifier = expression.nextIdentifier();
 
 		/* Retrieve the base object. */
-		auto objectIt = m_consoleObjects.find(identifier);
+		const auto objectIt = m_consoleObjects.find(identifier);
 
 		if ( objectIt == m_consoleObjects.cend() )
 		{
-			Tracer::error(ClassId, Blob() << "Console object '" << identifier << "' not found !");
+			Tracer::error(ClassId, BlobTrait() << "Console object '" << identifier << "' not found !");
 
 			return false;
 		}
@@ -311,7 +323,7 @@ namespace Emeraude
 		/* Send the command to this object. */
 		if ( !objectIt->second->execute(expression) )
 		{
-			Tracer::error(ClassId, Blob() << "Command '" << command << "' failed !");
+			Tracer::error(ClassId, BlobTrait() << "Command '" << command << "' failed !");
 
 			return false;
 		}
@@ -320,7 +332,7 @@ namespace Emeraude
 	}
 
 	void
-	Console::write (const std::string & message, Severity severity) noexcept
+	Console::write (const std::string & message, Severity severity) const noexcept
 	{
 		if ( m_outputText == nullptr )
 		{
@@ -357,21 +369,21 @@ namespace Emeraude
 	bool
 	Console::loopOverObjectsName (const std::map< std::string, ConsoleControllable * > & objects, ConsoleExpression & expression, std::string & identifier, std::vector< std::string > & suggestions) noexcept
 	{
-		for ( const auto & objectIt : objects )
+		for ( const auto & [name, controllable] : objects )
 		{
 			/* Object name is smaller than input, skip it. */
-			if ( identifier.length() > objectIt.first.length() )
+			if ( identifier.length() > name.length() )
 			{
 				continue;
 			}
 
 			/* Perfect match. */
-			if ( identifier == objectIt.first )
+			if ( identifier == name )
 			{
 				/* As we check a new depth, we don't want old suggestions */
 				suggestions.clear();
 
-				objectIt.second->complete(expression, identifier, suggestions);
+				controllable->complete(expression, identifier, suggestions);
 
 				return true;
 			}
@@ -382,7 +394,7 @@ namespace Emeraude
 			for ( size_t chr = 0; chr < identifier.length(); chr++ )
 			{
 				/* Object name mismatch characters from input. */
-				if ( objectIt.first[chr] != identifier[chr] )
+				if ( name[chr] != identifier[chr] )
 				{
 					mismatch = true;
 
@@ -392,7 +404,7 @@ namespace Emeraude
 
 			if ( !mismatch )
 			{
-				suggestions.emplace_back(objectIt.first);
+				suggestions.emplace_back(name);
 			}
 		}
 
@@ -421,15 +433,15 @@ namespace Emeraude
 		}
 
 		/* Checks for multiple commands. */
-		auto commandsList = String::explode(m_input, ';', false);
+		const auto commandsList = String::explode(m_input, ';', false);
 
-		auto success = std::all_of(commandsList.cbegin(), commandsList.cend(), [this](const auto & command) {
+		const auto success = std::ranges::all_of(commandsList, [this](const auto & command) {
 			return this->execute(command);
 		});
 
 		if ( !success )
 		{
-			auto msg = (Blob() << "'" << m_input << "' command has failed !").get();
+			const auto msg = (BlobTrait() << "'" << m_input << "' command has failed !").get();
 
 			if ( m_outputText == nullptr )
 			{
@@ -451,7 +463,7 @@ namespace Emeraude
 		}
 
 		/* Checks form multiple commands. */
-		auto commandsList = String::explode(m_input, ';', false);
+		const auto commandsList = String::explode(m_input, ';', false);
 
 		/* We only check the last term. */
 		ConsoleExpression expression(*commandsList.crbegin());
@@ -466,7 +478,7 @@ namespace Emeraude
 		std::vector< std::string > terms;
 
 		/* For each register object in the console. */
-		Console::loopOverObjectsName(m_consoleObjects, expression, identifier, terms);
+		loopOverObjectsName(m_consoleObjects, expression, identifier, terms);
 
 		/* Shows the result */
 		switch ( terms.size() )
@@ -507,10 +519,31 @@ namespace Emeraude
 
 		if ( command == "listObjects" || command == "lsobj()" )
 		{
-			for ( const auto & objectIt : m_consoleObjects )
+			for ( const auto & objectName : std::ranges::views::keys(m_consoleObjects) )
 			{
-				this->write(Blob() << "'" << objectIt.first << "'", Severity::Info);
+				this->write(BlobTrait() << "'" << objectName << "'", Severity::Info);
 			}
+
+			return true;
+		}
+
+		if ( command == "printArguments" )
+		{
+			this->write(BlobTrait() << "'" << m_primaryServices.arguments() << "'", Severity::Info);
+
+			return true;
+		}
+
+		if ( command == "printFileSystem" )
+		{
+			this->write(BlobTrait() << "'" << m_primaryServices.fileSystem() << "'", Severity::Info);
+
+			return true;
+		}
+
+		if ( command == "printCoreSettings" )
+		{
+			this->write(BlobTrait() << "'" << m_primaryServices.settings() << "'", Severity::Info);
 
 			return true;
 		}
@@ -531,9 +564,11 @@ namespace Emeraude
 		{
 			this->write("Wild exit command invoked !", Severity::Info);
 
-			this->fire([] (double) {
+			this->fire([] (Time::TimerID /*timerID*/) {
 				std::terminate();
-			}, 3000.0);
+
+				return true;
+			}, 3000);
 
 			return true;
 		}
@@ -542,13 +577,13 @@ namespace Emeraude
 	}
 
 	bool
-	Console::onKeyPress (int /*key*/, int /*scanCode*/, int /*modifiers*/, bool /*repeat*/) noexcept
+	Console::onKeyPress (int32_t /*key*/, int32_t /*scancode*/, int32_t /*modifiers*/, bool /*repeat*/) noexcept
 	{
-		return this->isOpaque();
+		return false;
 	}
 
 	bool
-	Console::onKeyRelease (int key, int /*scancode*/, int modifiers) noexcept
+	Console::onKeyRelease (int32_t key, int32_t /*scancode*/, int32_t modifiers) noexcept
 	{
 		switch ( key )
 		{
@@ -580,7 +615,7 @@ namespace Emeraude
 				return true;
 
 			case Input::KeyDown :
-				if ( !m_commandsHistory.empty() && m_historyOffset < (m_commandsHistory.size() - 1) )
+				if ( !m_commandsHistory.empty() && m_historyOffset < m_commandsHistory.size() - 1 )
 				{
 					m_historyOffset++;
 
@@ -613,17 +648,17 @@ namespace Emeraude
 				this->disable();
 
 				/* CTRL+ESC let ESC get to engine level. */
-				return !Input::KeyboardController::isModifierKeyPressed(Input::ModKeyControl, modifiers);
+				return !Input::isKeyboardModifierPressed(Input::ModKeyControl, modifiers);
 
 			default:
 				break;
 		}
 
-		return this->isOpaque();
+		return false;
 	}
 
 	bool
-	Console::onCharacterType (unsigned int unicode, int /*modifiers*/) noexcept
+	Console::onCharacterType (uint32_t unicode) noexcept
 	{
 		if ( unicode < 127 )
 		{
@@ -638,6 +673,4 @@ namespace Emeraude
 
 		return true;
 	}
-
-	// NOLINTEND(*-magic-numbers)
 }

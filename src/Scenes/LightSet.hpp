@@ -1,55 +1,74 @@
 /*
- * Emeraude/Scenes/LightSet.hpp
- * This file is part of Emeraude
+ * src/Scenes/LightSet.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <array>
 #include <set>
+#include <map>
 #include <memory>
+#include <mutex>
 
-/* Local inclusions */
-#include "DirectionalLight.hpp"
-#include "PointLight.hpp"
-#include "SpotLight.hpp"
+/* Local inclusions for inheritances. */
+#include "Libraries/ObservableTrait.hpp"
 
-namespace Emeraude::Graphics::TextureResource
+/* Local inclusions for usage. */
+#include "Component/DirectionalLight.hpp"
+#include "Component/PointLight.hpp"
+#include "Component/SpotLight.hpp"
+#include "Graphics/TextureResource/TextureCubemap.hpp"
+#include "Saphir/StaticLighting.hpp"
+#include "Vulkan/DescriptorSet.hpp"
+#include "MasterControl/Console.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
 {
-	class TextureCubemap;
+	namespace Graphics
+	{
+		class Renderer;
+	}
+
+	namespace Vulkan
+	{
+		class LayoutManager;
+		class DescriptorSetLayout;
+	}
 }
 
 namespace Emeraude::Scenes
 {
-	/**  */
-
 	/**
 	 * @brief This class hold lights from a whole scene.
-	 * @extends Libraries::Observable
+	 * Libraries::ObservableTrait The light set can be observed for light addition or removal.
 	 */
-	class LightSet final : public Libraries::Observable
+	class LightSet final : public Libraries::ObservableTrait
 	{
 		public:
 
@@ -58,6 +77,10 @@ namespace Emeraude::Scenes
 
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
+
+			/* Default variables. */
+			static constexpr auto DefaultLightPercentToAmbient{0.1F};
+			static constexpr auto DefaultAmbientLightIntensity{0.1F};
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
@@ -68,6 +91,7 @@ namespace Emeraude::Scenes
 				DirectionalLightRemoved,
 				PointLightRemoved,
 				SpotLightRemoved,
+				AmbientLightChanged,
 				/* Enumeration boundary. */
 				MaxEnum
 			};
@@ -75,123 +99,375 @@ namespace Emeraude::Scenes
 			/**
 			 * @brief Constructs a light set.
 			 */
-			LightSet () noexcept = default;
+			explicit LightSet (MasterControl::Console & console) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			LightSet (const LightSet & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			LightSet (LightSet && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return LightSet &
+			 */
+			LightSet & operator= (const LightSet & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return LightSet &
+			 */
+			LightSet & operator= (LightSet && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the light set.
+			 */
+			~LightSet () override = default;
+
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
+
+			/**
+			 * @brief Returns the light set mutex.
+			 * @return std::mutex &
+			 */
+			[[nodiscard]]
+			std::mutex &
+			mutex () const noexcept
+			{
+				return m_lightAccess;
+			}
+
+			/**
+			 * @brief Enables the lighting for the scene.
+			 * @return void
+			 */
+			void
+			enable () noexcept
+			{
+				m_flags[Enabled] = true;
+			}
+
+			/**
+			 * @brief Returns whether the lighting has been enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isEnabled () const noexcept
+			{
+				return m_flags[Enabled];
+			}
+
+			/**
+			 * @brief Enables the lighting for the scene with static light.
+			 * @return Saphir::StaticLighting &
+			 */
+			Saphir::StaticLighting &
+			enableAsStaticLighting () noexcept
+			{
+				this->enable();
+				this->setStaticLightingState(true);
+				return this->getStaticLighting(DefaultStaticLightingName);
+			}
+
+			/**
+			 * @brief Initializes the light set GPU resources.
+			 * @param renderer A reference to the renderer.
+			 * @param sceneName A reference to a string.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool initialize (Graphics::Renderer & renderer, const std::string & sceneName) noexcept;
+
+			/**
+			 * @brief Releases the GPU resources.
+			 * @param renderer A reference to the renderer.
+			 * @return bool
+			 */
+			bool terminate (Graphics::Renderer & renderer) noexcept;
+
+			/**
+			 * @brief Enables the use of a static lighting incorporated to the shaders.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			setStaticLightingState (bool state) noexcept
+			{
+				m_flags[UseStaticLighting] = state;
+
+				if ( m_flags[UseStaticLighting] )
+				{
+					this->createDefaultStaticLighting();
+				}
+			}
+
+			/**
+			 * @brief Returns whether a static lighting is used.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isUsingStaticLighting () const noexcept
+			{
+				return m_flags[UseStaticLighting];
+			}
+
+			/**
+			 * @brief Returns the shared buffer uniform for directional light buffer.
+			 * @return std::shared_ptr< Vulkan::SharedUniformBuffer >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::SharedUniformBuffer >
+			directionalLightBuffer () const noexcept
+			{
+				return m_directionalLightBuffer;
+			}
+
+			/**
+			 * @brief Returns the shared buffer uniform for point light buffer.
+			 * @return std::shared_ptr< Vulkan::SharedUniformBuffer >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::SharedUniformBuffer >
+			pointLightBuffer () const noexcept
+			{
+				return m_pointLightBuffer;
+			}
+
+			/**
+			 * @brief Returns the shared buffer uniform for spotlight buffer.
+			 * @return std::shared_ptr< Vulkan::SharedUniformBuffer >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::SharedUniformBuffer >
+			spotLightBuffer () const noexcept
+			{
+				return m_spotLightBuffer;
+			}
 
 			/**
 			 * @brief Sets a base ambient light for the scene.
 			 * @note This will have an effect even if no light are in the scene.
-			 * @param color The color of the global base ambient light.
+			 * @param color The color of the global basis ambient light.
 			 * @return void
 			 */
-			void setGlobalAmbientLight (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void
+			setAmbientLightColor (const Libraries::PixelFactory::Color< float > & color) noexcept
+			{
+				m_ambientLightColor = color;
+
+				this->notify(AmbientLightChanged);
+			}
 
 			/**
 			 * @brief Sets a base ambient light for the scene using a cubemap for averaging the color.
 			 * @note This will have an effect even if there is no are in the scene.
 			 * @param cubemap Use the average color of the cubemap to set the global base ambient light.
-			 * @param percent Set the amount of the retrieved color (intensity) from the cubemap.
+			 * @param percent Set the amount of the retrieved color (intensity) from the cubemap. Default 20%.
 			 * @return void
 			 */
-			void setGlobalAmbientLight (const std::shared_ptr< Graphics::TextureResource::TextureCubemap > & cubemap, float percent = 0.2F) noexcept;
+			void
+			setAmbientLightColor (const std::shared_ptr< Graphics::TextureResource::TextureCubemap > & cubemap, float percent = 0.2F) noexcept
+			{
+				m_ambientLightColor = cubemap->averageColor() * Libraries::Math::clampToUnit(percent);
+
+				this->notify(AmbientLightChanged);
+			}
+
+			/**
+			 * @brief Sets the ambient light intensity.
+			 * @param intensity The light intensity value.
+			 * @return void
+			 */
+			void
+			setAmbientLightIntensity (float intensity) noexcept
+			{
+				m_ambientLightIntensity = intensity;
+
+				this->notify(AmbientLightChanged);
+			}
+
+			/**
+			 * @brief Returns the ambient light color.
+			 * @return const Libraries::PixelFactory::Color< float > &
+			 */
+			[[nodiscard]]
+			const Libraries::PixelFactory::Color< float > &
+			ambientLightColor () const noexcept
+			{
+				return m_ambientLightColor;
+			}
+
+			/**
+			 * @brief Returns the ambient light intensity.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			ambientLightIntensity () const noexcept
+			{
+				return m_ambientLightIntensity;
+			}
 
 			/**
 			 * @brief When computing the final ambient lighting, use a fraction of
 			 * light color instead of the ambient component of each light source.
-			 * @param state Enable the computation.
+			 * FIXME: Re-enable this features !
+			 * @param state Enable or disable the computation.
 			 * @param factor The percent of each color light. Default 10%.
 			 * @return void
 			 */
-			void enableLightColorForAmbientGeneration (bool state, float factor = 0.1F) noexcept;
+			void
+			enableAmbientGenerationFromLights (bool state, float factor = DefaultLightPercentToAmbient) noexcept
+			{
+				m_flags[CreateAmbientFromLights] = state;
+				m_lightPercentToAmbient = Libraries::Math::clampToUnit(factor);
+			}
 
 			/**
 			 * @brief Enables the light distance for ambient generation.
 			 * @param state The state.
 			 * @return void
 			 */
-			void enableLightDistanceForAmbientGeneration (bool state) noexcept;
+			void
+			enableLightDistanceForAmbientGeneration (bool state) noexcept
+			{
+				m_flags[UseLightDistance] = state;
+			}
 
 			/**
 			 * @brief Adds a directional light.
 			 * @param light A smart pointer to the scene directional light.
+			 * @param renderer A reference to the renderer.
 			 * @return void
 			 */
-			void add (const std::shared_ptr< DirectionalLight > & light) noexcept;
+			void add (const std::shared_ptr< Component::DirectionalLight > & light, Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Adds a point light.
 			 * @param light A smart pointer to the scene point light.
+			 * @param renderer A reference to the renderer.
 			 * @return void
 			 */
-			void add (const std::shared_ptr< PointLight > & light) noexcept;
+			void add (const std::shared_ptr< Component::PointLight > & light, Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Adds a spot light.
-			 * @param light A smart pointer to the scene spot light.
+			 * @brief Adds a spotlight.
+			 * @param light A smart pointer to the scene spotlight.
+			 * @param renderer A reference to the renderer.
 			 * @return void
 			 */
-			void add (const std::shared_ptr< SpotLight > & light) noexcept;
+			void add (const std::shared_ptr< Component::SpotLight > & light, Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Removes a directional light.
 			 * @param light A smart pointer to the scene directional light.
 			 * @return void
 			 */
-			void remove (const std::shared_ptr< DirectionalLight > & light) noexcept;
+			void remove (const std::shared_ptr< Component::DirectionalLight > & light) noexcept;
 
 			/**
 			 * @brief Removes a point light.
 			 * @param light A smart pointer to the scene point light.
 			 * @return void
 			 */
-			void remove (const std::shared_ptr< PointLight > & light) noexcept;
+			void remove (const std::shared_ptr< Component::PointLight > & light) noexcept;
 
 			/**
-			 * @brief Removes a spot light.
-			 * @param light A smart pointer to the scene spot light.
+			 * @brief Removes a spotlight.
+			 * @param light A smart pointer to the scene spotlight.
 			 * @return void
 			 */
-			void remove (const std::shared_ptr< SpotLight > & light) noexcept;
+			void remove (const std::shared_ptr< Component::SpotLight > & light) noexcept;
 
 			/**
-			 * @brief Returns the base ambient light.
-			 * @return const Color< float > &
+			 * @brief Returns the light emitter list.
+			 * @return const std::set< std::shared_ptr< Component::DirectionalLight > > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & globalAmbientLight () const noexcept;
+			const std::set< std::shared_ptr< Component::AbstractLightEmitter > > &
+			lights () const noexcept
+			{
+				return m_lights;
+			}
 
 			/**
-			 * @brief lights
-			 * @return const std::set< std::shared_ptr< AbstractLightEmitter > > &
+			 * @brief Returns the directional light list.
+			 * @return const std::set< std::shared_ptr< Component::DirectionalLight > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< AbstractLightEmitter > > & lights () const noexcept;
+			const std::set< std::shared_ptr< Component::DirectionalLight > > &
+			directionalLights () const noexcept
+			{
+				return m_directionalLights;
+			}
 
 			/**
-			 * @brief Returns the fraction of light color for ambient calculation of each light.
+			 * @brief Returns the spotlight list.
+			 * @return const std::set< std::shared_ptr< Component::PointLight > > &
+			 */
+			[[nodiscard]]
+			const std::set< std::shared_ptr< Component::PointLight > > &
+			pointLights () const noexcept
+			{
+				return m_pointLights;
+			}
+
+			/**
+			 * @brief Returns the point light list.
+			 * @return const std::set< std::shared_ptr< Component::SpotLight > > &
+			 */
+			[[nodiscard]]
+			const std::set< std::shared_ptr< Component::SpotLight > > &
+			spotLights () const noexcept
+			{
+				return m_spotLights;
+			}
+
+			/**
+			 * @brief Returns the percent of each light color to use for ambient light calculation.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float lightColorFactorToAmbient () const noexcept;
+			float
+			lightPercentToAmbient () const noexcept
+			{
+				return m_lightPercentToAmbient;
+			}
 
 			/**
-			 * @brief Returns whether we use a fraction of the light color instead of
-			 * the ambient component of each light for global ambien calculation.
+			 * @brief Returns whether we check the distance between the light radius and the camera to add or not the ambient component.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool useLightColorAsAmbient () const noexcept;
-
-			/**
-			 * @brief Returns whether we check the distance between the light radius and
-			 * the camera to add or not the ambient component.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool useLightDistance () const noexcept;
+			bool
+			useLightDistance () const noexcept
+			{
+				return m_flags[UseLightDistance];
+			}
 
 			/**
 			 * @brief Computes the ambient light fraction to add to global ambient light.
@@ -201,35 +477,107 @@ namespace Emeraude::Scenes
 			 */
 			template< typename vectorData_t = float >
 			Libraries::Math::Vector< 4, vectorData_t >
-			getLightAmbientAddition (const std::shared_ptr< AbstractLightEmitter > & light) const noexcept
+			getLightColorFraction (const std::shared_ptr< Component::AbstractLightEmitter > & light) const noexcept
 			{
-				if ( this->useLightColorAsAmbient() )
-					return light->diffuseColor().toVector4< vectorData_t >() * this->lightColorFactorToAmbient();
-
-				return light->ambientColor().toVector4< vectorData_t >();
+				return light->color().toVector4<vectorData_t>() * this->lightPercentToAmbient();
 			}
 
 			/**
 			 * @brief Removes all lights.
 			 * @return void
 			 */
-			void clear () noexcept;
+			void removeAllLights () noexcept;
+
+			/**
+			 * @return Creates the default static lighting.
+			 * @return void
+			 */
+			void createDefaultStaticLighting () noexcept;
+
+			/**
+			 * @brief Returns or creates a static lighting.
+			 * @param name A reference to a string. Default, the default one.
+			 * @return Saphir::StaticLighting &
+			 */
+			[[nodiscard]]
+			Saphir::StaticLighting & getStaticLighting (const std::string & name = DefaultStaticLightingName) noexcept;
+
+			/**
+			 * @brief Returns a named static lighting.
+			 * @param name A reference to a string. Default, the default one.
+			 * @return const Saphir::StaticLighting *
+			 */
+			[[nodiscard]]
+			const Saphir::StaticLighting * getStaticLighting (const std::string & name = DefaultStaticLightingName) const noexcept;
+
+			/**
+			 * @brief Updates all light UBO.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool updateVideoMemory () const noexcept;
+
+			/**
+			 * @brief Returns the descriptor set layout for a light.
+			 * @param layoutManager A reference to the layout manager.
+			 * @return std::shared_ptr< Vulkan::DescriptorSetLayout >
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Vulkan::DescriptorSetLayout > getDescriptorSetLayout (Vulkan::LayoutManager & layoutManager) noexcept;
+
+			/**
+			 * @brief STL streams printable object.
+			 * @param out A reference to the stream output.
+			 * @param obj A reference to the object to print.
+			 * @return std::ostream &
+			 */
+			friend std::ostream & operator<< (std::ostream & out, const LightSet & obj);
+
+			/**
+			 * @brief Stringifies the object.
+			 * @param obj A reference to the object to print.
+			 * @return std::string
+			 */
+			friend std::string to_string (const LightSet & obj) noexcept;
 
 		private:
 
-			/* Flag names */
-			static constexpr auto UseLightColorAsAmbient = 0UL;
-			static constexpr auto UseLightDistance = 1UL;
+			/**
+			 * @brief Creates the descriptor set for a light within the shared uniform buffer object.
+			 * @param uniformBufferObject A reference to the uniform buffer object.
+			 * @return std::unique_ptr< Vulkan::DescriptorSet >
+			 */
+			[[nodiscard]]
+			static std::unique_ptr< Vulkan::DescriptorSet > createDescriptorSet (const Vulkan::UniformBufferObject & uniformBufferObject) noexcept;
 
-			std::set< std::shared_ptr< AbstractLightEmitter > > m_lights{};
-			Libraries::PixelFactory::Color< float > m_globalAmbientLight = Libraries::PixelFactory::Black;
-			float m_lightColorFactorToAmbient = 0.1F;
+			static constexpr auto DefaultStaticLightingName{"Default"};
+
+			/* Flag names */
+			static constexpr auto Enabled{0UL};
+			static constexpr auto Initialized{1UL};
+			static constexpr auto UseStaticLighting{2UL};
+			static constexpr auto CreateAmbientFromLights{3UL};
+			static constexpr auto UseLightDistance{4UL};
+
+			MasterControl::Console & m_console;
+			std::shared_ptr< Vulkan::SharedUniformBuffer > m_directionalLightBuffer;
+			std::shared_ptr< Vulkan::SharedUniformBuffer > m_pointLightBuffer;
+			std::shared_ptr< Vulkan::SharedUniformBuffer > m_spotLightBuffer;
+			std::set< std::shared_ptr< Component::AbstractLightEmitter > > m_lights;
+			std::set< std::shared_ptr< Component::DirectionalLight > > m_directionalLights;
+			std::set< std::shared_ptr< Component::PointLight > > m_pointLights;
+			std::set< std::shared_ptr< Component::SpotLight > > m_spotLights;
+			Libraries::PixelFactory::Color< float > m_ambientLightColor{Libraries::PixelFactory::Black};
+			float m_ambientLightIntensity{DefaultAmbientLightIntensity};
+			float m_lightPercentToAmbient{DefaultLightPercentToAmbient};
+			mutable std::mutex m_lightAccess;
+			std::map< std::string, Saphir::StaticLighting > m_staticLighting;
 			std::array< bool, 8 > m_flags{
-				false/*UseLightColorAsAmbient*/,
+				false/*Enabled*/,
+				false/*Initialized*/,
+				false/*UseStaticLighting*/,
+				false/*CreateAmbientFromLights*/,
 				false/*UseLightDistance*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/

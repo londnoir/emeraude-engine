@@ -1,81 +1,86 @@
 /*
- * Emeraude/Window.cpp
- * This file is part of Emeraude
+ * src/Window.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Window.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "Arguments.hpp"
-#include "Settings.hpp"
-#include "Vulkan/Instance.hpp"
-#include "Vulkan/Utility.hpp"
+/* STL inclusions. */
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-/* Third-party */
-#include "Third-Party-Inclusion/glfw.hpp"
+/* Local inclusions. */
+#include "Vulkan/Instance.hpp"
+#include "Identification.hpp"
+#include "PrimaryServices.hpp"
+#include "SettingKeys.hpp"
 
 namespace Emeraude
 {
-	// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic, cppcoreguidelines-pro-type-reinterpret-cast, *-magic-numbers)
 	using namespace Libraries;
-	using namespace Libraries::Math;
 	using namespace Graphics;
 	using namespace Vulkan;
 
-	const size_t Window::ClassUID{Observable::getClassUID()};
+	const size_t Window::ClassUID{getClassUID(ClassId)};
 
-	Window::Window (const Arguments & arguments, Settings & coreSettings, const Instance & instance, std::string title) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_coreSettings(coreSettings), m_instance(instance), m_title(std::move(title))
+	Window * Window::s_instance{nullptr};
+
+	Window::Window (PrimaryServices & primaryServices, const Instance & instance, const Identification & identification) noexcept
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices),
+		m_instance(instance),
+		m_title(identification.applicationId())
 	{
-
-	}
-
-	bool
-	Window::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
+		if ( s_instance != nullptr )
 		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
-			return false;
+			std::terminate();
 		}
 
-		return classUID == ClassUID;
+		s_instance = this;
 	}
 
-	bool
-	Window::usable () const noexcept
+	Window::~Window ()
 	{
-		return m_handle != nullptr;
+		s_instance = nullptr;
 	}
 
 	bool
 	Window::onInitialize () noexcept
 	{
-		m_flags[ShowInformation] = m_coreSettings.getAs< bool >(ShowInformationKey, DefaultShowInformation);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(VideoWindowShowInformationKey, DefaultVideoWindowShowInformation);
+		m_flags[SaveWindowPropertiesAtExit] = m_primaryServices.settings().get< bool >(VideoSavePropertiesAtExitKey, DefaultVideoSavePropertiesAtExit);
 
 		if ( !m_instance.usable() )
 		{
@@ -87,22 +92,23 @@ namespace Emeraude
 		/* Checks monitor presence. */
 		if ( !this->checkMonitors() )
 		{
-			Tracer::fatal(ClassId, "There is no monitor on the system, graphic API loading cancelled !");
+			Tracer::fatal(ClassId, "There is no monitor connected to the system !");
 
 			return false;
 		}
 
-		const auto preferredMonitor = m_coreSettings.getAs< int >(PreferredMonitorKey, DefaultPreferredMonitor);
+		/* NOTE: One multi monitors system, the preferred monitor will be used to display the window and fetch physical information. */
+		const auto preferredMonitor = m_primaryServices.settings().get< int32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor);
 
-		/* Disabling OpenGL context creation for Vulkan API */
+		/* NOTE: Disabling OpenGL context creation for Vulkan API */
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 		/* Creating window in window or fullscreen mode */
-		if ( m_coreSettings.getAs< bool >(FullscreenEnabledKey, DefaultFullscreenEnabled) )
+		if ( m_primaryServices.settings().get< bool >(VideoFullscreenEnabledKey, DefaultVideoFullscreenEnabled) )
 		{
-			const auto fullscreenWidth = m_coreSettings.getAs< int32_t >(FullscreenWidthKey, DefaultWidth);
-			const auto fullscreenHeight = m_coreSettings.getAs< int32_t >(FullscreenHeightKey, DefaultHeight);
-			const auto refreshRate = m_coreSettings.getAs< int32_t >(RefreshRateKey, DefaultRefreshRate);
+			const auto fullscreenWidth = m_primaryServices.settings().get< int32_t >(VideoFullscreenWidthKey, DefaultVideoFullscreenWidth);
+			const auto fullscreenHeight = m_primaryServices.settings().get< int32_t >(VideoFullscreenHeightKey, DefaultVideoFullscreenHeight);
+			const auto refreshRate = m_primaryServices.settings().get< int32_t >(VideoFullscreenRefreshRateKey, DefaultVideoFullscreenRefreshRate);
 
 			if ( refreshRate > 0 )
 			{
@@ -133,9 +139,9 @@ namespace Emeraude
 		}
 		else
 		{
-			const auto windowWidth = m_coreSettings.getAs< int32_t >(WindowWidthKey, DefaultWidth);
-			const auto windowHeight = m_coreSettings.getAs< int32_t >(WindowHeightKey, DefaultHeight);
-			const auto frameless = m_coreSettings.getAs< bool >(FramelessWindowKey, DefaultFramelessWindow);
+			const auto windowWidth = m_primaryServices.settings().get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+			const auto windowHeight = m_primaryServices.settings().get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+			const auto frameless = m_primaryServices.settings().get< bool >(VideoWindowFramelessKey, DefaultVideoWindowFrameless);
 
 			/* GLFW_RESIZABLE specifies whether the windowed mode window
 			 * will be resizable by the user. The window will still be resizable
@@ -198,19 +204,27 @@ namespace Emeraude
 			 * and pixels always map 1:1 such as Windows and X11. On platforms like
 			 * macOS the resolution of the framebuffer is changed independently
 			 * of the window size.*/
-			glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+			glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
-			/* macOS specific window hints */
-#if IS_MACOS
-			//glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
-			//glfwWindowHintString(GLFW_COCOA_FRAME_NAME, ""); // UTF-8 encoded frame autosave name
-			//glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE);
+#if IS_LINUX
+			/* GLFW_X11_CLASS_NAME and GLFW_X11_INSTANCE_NAME specifies the desired ASCII
+			 * encoded class and instance parts of the ICCCM WM_CLASS window property. */
+			glfwWindowHintString(GLFW_X11_CLASS_NAME, ENGINE_NAME);
+			glfwWindowHintString(GLFW_X11_INSTANCE_NAME, ENGINE_NAME "_instance");
 #endif
 
-			/* X11 specific window hints */
-#if IS_LINUX
-			glfwWindowHintString(GLFW_X11_CLASS_NAME, "Emeraude-Engine"); // An ASCII encoded WM_CLASS class name
-			glfwWindowHintString(GLFW_X11_INSTANCE_NAME, "ProjetAlpha"); // An ASCII encoded WM_CLASS instance name
+#if IS_MACOS
+			/* GLFW_COCOA_RETINA_FRAMEBUFFER specifies whether to use full resolution framebuffers on Retina displays.
+			 * Possible values are GLFW_TRUE and GLFW_FALSE. This is ignored on other platforms. */
+			glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+			/* GLFW_COCOA_FRAME_NAME specifies the UTF-8 encoded name to use for autosaving the window frame, or if
+			 * empty disables frame autosaving for the window. This is ignored on other platforms. */
+			glfwWindowHintString(GLFW_COCOA_FRAME_NAME, ENGINE_NAME);
+			/* GLFW_COCOA_GRAPHICS_SWITCHING specifies whether to in Automatic Graphics Switching, i.e. to allow the
+			 * system to choose the integrated GPU for the OpenGL context and move it between GPUs if necessary or
+			 * whether to force it to always run on the discrete GPU. This only affects systems with both integrated
+			 * and discrete GPUs. Possible values are GLFW_TRUE and GLFW_FALSE. This is ignored on other platforms. */
+			glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE);
 #endif
 
 			if ( this->create(windowWidth, windowHeight, preferredMonitor, false) )
@@ -225,97 +239,70 @@ namespace Emeraude
 			}
 		}
 
-		/* V-Sync : After context creation ! */
-		if ( m_coreSettings.getAs< bool >(VSyncEnabledKey, DefaultVSyncEnabled) )
-		{
-			if ( m_flags[ShowInformation] )
-			{
-				Tracer::info(ClassId, "Vertical synchronization requested.");
-			}
-			
-			//this->setVSyncState(true);
-		}
-
 		if ( this->isFullscreenMode() )
 		{
-			const auto exponent = m_coreSettings.getAs< float >(FullscreenGammaKey, DefaultFullscreenGamma);
+			const auto exponent = m_primaryServices.settings().get< float >(VideoFullscreenGammaKey, DefaultVideoFullscreenGamma);
 
 			this->setGamma(exponent);
 		}
 		else
 		{
-			if ( m_coreSettings.getAs< bool >(AlwaysCenterWindowOnStartupKey, false) )
+			if ( m_primaryServices.settings().get< bool >(VideoWindowAlwaysCenterOnStartupKey, DefaultVideoWindowAlwaysCenterOnStartup) )
 			{
-				const auto windowWidth = m_coreSettings.getAs< uint32_t >(WindowWidthKey, DefaultWidth);
-				const auto windowHeight = m_coreSettings.getAs< uint32_t >(WindowHeightKey, DefaultHeight);
-				const auto centeredPosition = Window::getCenteredPosition({windowWidth, windowHeight}, preferredMonitor);
+				const auto windowWidth = m_primaryServices.settings().get< uint32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+				const auto windowHeight = m_primaryServices.settings().get< uint32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+				const auto centeredPosition = getCenteredPosition({windowWidth, windowHeight}, preferredMonitor);
 
-				TraceInfo{ClassId} << "Center the window position to X: " << centeredPosition[0] << ", Y" << centeredPosition[1] << " ...";
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "Center the window position to X: " << centeredPosition[0] << ", Y: " << centeredPosition[1] << " ...";
+				}
 
 				this->setPosition(centeredPosition[0], centeredPosition[1]);
 			}
 			else
 			{
-				const auto XPosition = m_coreSettings.getAs< int32_t >(WindowXPositionKey, DefaultWindowXPosition);
-				const auto YPosition = m_coreSettings.getAs< int32_t >(WindowYPositionKey, DefaultWindowYPosition);
+				const auto XPosition = m_primaryServices.settings().get< int32_t >(VideoWindowXPositionKey, DefaultVideoWindowXPosition);
+				const auto YPosition = m_primaryServices.settings().get< int32_t >(VideoWindowYPositionKey, DefaultVideoWindowYPosition);
 
-				TraceInfo{ClassId} << "Setting window position to X: " << XPosition << ", Y" << YPosition << " ...";
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "Setting window position to X: " << XPosition << ", Y: " << YPosition << " ...";
+				}
 
 				this->setPosition(XPosition, YPosition);
 			}
 		}
 
-		VkResult result = VK_SUCCESS;
+		const auto useNativeCode = !m_primaryServices.settings().get< bool >(VkCreateSurfaceWithGLFWKey, DefaultVkCreateSurfaceWithGLFW);
 
-		VkSurfaceKHR surfaceHandle{VK_NULL_HANDLE};
-
-#ifdef ENABLE_GLFW_NATIVE_CODE_EXPOSITION
-		if ( !m_coreSettings.getAs< bool >(CreateSurfaceWithGLFWKey, DefaultCreateSurfaceWithGLFW) )
+		if ( !this->createSurface(useNativeCode) )
 		{
-	#ifdef IS_LINUX
-			VkXcbSurfaceCreateInfoKHR createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-			createInfo.pNext = nullptr;
-			createInfo.flags = 0; // VkXcbSurfaceCreateFlagsKHR
-			createInfo.connection = nullptr; // xcb_connection_t *
-			createInfo.handle = glfwGetX11Window(m_handle); // xcb_window_t
-
-			result = vkCreateXcbSurfaceKHR(m_instance.handle(), &createInfo, nullptr, &surfaceHandle);
-	#elif IS_WINDOWS
-			VkWin32SurfaceCreateInfoKHR createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			createInfo.pNext = nullptr;
-			createInfo.hwnd = glfwGetWin32Window(m_handle);
-			createInfo.hinstance = GetModuleHandle(nullptr);
-
-			result = vkCreateWin32SurfaceKHR(m_instance.handle(), &createInfo, nullptr, &surfaceHandle);
-	#elif IS_MACOS
-			/* FIXME: Don't know what to write for now ... */
-	#endif
-		}
-		else
-#endif
-		{
-			result = glfwCreateWindowSurface(m_instance.handle(), m_handle.get(), nullptr, &surfaceHandle);
-		}
-
-		if ( result != VK_SUCCESS )
-		{
-			TraceFatal{ClassId} << "Unable to create a Window : " << Vulkan::vkResultToCString(result) << " !";
+			Tracer::fatal(ClassId, "Unable to get a valid surface !");
 
 			return false;
 		}
 
-		m_surface = std::make_unique< Surface >(m_instance, surfaceHandle);
+		this->initializeState();
+
+		/* NOTE : The window starts non-visible. */
+		glfwShowWindow(m_handle.get());
 
 		if ( m_flags[ShowInformation] )
 		{
-			this->DEV_printWindowAttrib();
-			this->DEV_printWindowGeometry();
+			TraceInfo{ClassId} <<
+				this->getWindowStateString(false) << "\n" <<
+				this->getWindowAttribString();
+
+			TraceSuccess{ClassId} << "A new " << m_state.framebufferWidth << "x" << m_state.framebufferHeight << " window created.";
 		}
 
-		/* Window starts non-visible. */
-		glfwShowWindow(m_handle.get());
+		this->notify(Created);
+
+		if ( !this->initializeNativeWindow() )
+		{
+			Tracer::error(ClassId, "Native dialogs are not available !");
+		}
 
 		return true;
 	}
@@ -323,6 +310,26 @@ namespace Emeraude
 	bool
 	Window::onTerminate () noexcept
 	{
+		this->releaseNativeWindow();
+
+		if ( m_flags[SaveWindowPropertiesAtExit] )
+		{
+			Tracer::info(ClassId, "Saving the window properties ...");
+
+			if ( this->isFullscreenMode() )
+			{
+				m_primaryServices.settings().set(VideoFullscreenWidthKey, m_state.framebufferWidth);
+				m_primaryServices.settings().set(VideoFullscreenHeightKey, m_state.framebufferHeight);
+			}
+			else
+			{
+				m_primaryServices.settings().set(VideoWindowXPositionKey, m_state.windowXPosition);
+				m_primaryServices.settings().set(VideoWindowYPositionKey, m_state.windowYPosition);
+				m_primaryServices.settings().set(VideoWindowWidthKey, m_state.framebufferWidth);
+				m_primaryServices.settings().set(VideoWindowHeightKey, m_state.framebufferHeight);
+			}
+		}
+
 		m_surface.reset();
 
 		/* Reset the window pointer.
@@ -330,6 +337,14 @@ namespace Emeraude
 		m_handle.reset();
 
 		return true;
+	}
+
+	void
+	Window::setTitle (const std::string & title) noexcept
+	{
+		glfwSetWindowTitle(m_handle.get(), title.c_str());
+
+		this->notify(TitleChanged, title);
 	}
 
 	bool
@@ -348,13 +363,13 @@ namespace Emeraude
 			auto perfectFitFound = false;
 
 			std::array< int32_t, 2 > closest{
-				DefaultWidth,
-				DefaultHeight
+				DefaultVideoFullscreenWidth,
+				DefaultVideoFullscreenHeight
 			};
 
 			auto * monitor = glfwGetWindowMonitor(m_handle.get());
 
-			const auto modes = Window::getMonitorModes(monitor);
+			const auto modes = getMonitorModes(monitor);
 
 			for ( const auto & mode : modes )
 			{
@@ -410,7 +425,7 @@ namespace Emeraude
 	std::array< int32_t, 2 >
 	Window::getCenteredPosition (uint32_t monitorNumber) const noexcept
 	{
-		const auto monitors = Window::getMonitors();
+		const auto monitors = getMonitors();
 
 		if ( monitors.empty() )
 		{
@@ -431,8 +446,8 @@ namespace Emeraude
 		auto * monitor = monitors[monitorNumber];
 
 		/* Get the monitor virtual position and dimensions and the window dimension. */
-		const auto desktopPosition = Window::getDesktopPosition(monitor);
-		const auto desktopSize = Window::getDesktopSize(monitor);
+		const auto desktopPosition = getDesktopPosition(monitor);
+		const auto desktopSize = getDesktopSize(monitor);
 		const auto windowSize = this->getSize();
 
 #ifdef DEBUG
@@ -452,11 +467,11 @@ namespace Emeraude
 	std::array< int32_t, 2 >
 	Window::getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, uint32_t monitorNumber) noexcept
 	{
-		const auto monitors = Window::getMonitors();
+		const auto monitors = getMonitors();
 
 		if ( monitors.empty() )
 		{
-			Tracer::error(ClassId, "There is no monitor on the system !");
+			Tracer::error(ClassId, "There is no monitor connected to the system !");
 
 			return {0, 0};
 		}
@@ -473,13 +488,19 @@ namespace Emeraude
 		auto * monitor = monitors[monitorNumber];
 
 		/* Get the monitor virtual position and dimensions and the window dimension. */
-		const auto desktopPosition = Window::getDesktopPosition(monitor);
-		const auto desktopSize = Window::getDesktopSize(monitor);
+		const auto desktopPosition = getDesktopPosition(monitor);
+		const auto desktopSize = getDesktopSize(monitor);
+
+		// FIXME: Fails on weird configuration !
+		/*TraceInfo{ClassId} <<
+			"Desktop size on monitor #" << monitorNumber << " : " << desktopSize[0] << 'x' << desktopSize[1] << "." "\n"
+			"Desktop position in system : " << desktopPosition[0] << ", " << desktopPosition[1] << "\n"
+			"Window requested size : " << windowSize[0] << 'x' << windowSize[1];*/
 
 		/* Get the window position center on the selected monitor. */
 		return {
-			static_cast< int32_t >((desktopSize[0] - windowSize[0]) / 2) + desktopPosition[0],
-			static_cast< int32_t >((desktopSize[1] - windowSize[1]) / 2) + desktopPosition[1]
+			static_cast< int32_t >(desktopPosition[0] + ((desktopSize[0] - windowSize[0]) / 2)),
+			static_cast< int32_t >(desktopPosition[1] + ((desktopSize[1] - windowSize[1]) / 2))
 		};
 	}
 
@@ -635,20 +656,18 @@ namespace Emeraude
 			return;
 		}
 
-		const auto colorNumber = 256U;
+		constexpr auto colorNumber{256UL};
 
-		std::array< unsigned short, colorNumber > red{};
-		std::array< unsigned short, colorNumber > green{};
-		std::array< unsigned short, colorNumber > blue{};
+		std::array< uint16_t, colorNumber > red{};
+		std::array< uint16_t, colorNumber > green{};
+		std::array< uint16_t, colorNumber > blue{};
 
 		/* FIXME: Check what to pass as value. */
 		for ( size_t i = 0;  i < colorNumber;  i++ )
 		{
-			// NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 			red[i] = 0;
 			green[i] = 0;
 			blue[i] = 0;
-			// NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 		}
 
 		/* Creates a gamma ramp to pass to monitor. */
@@ -662,7 +681,7 @@ namespace Emeraude
 	}
 
 	void
-	Window::setFullscreenMode (bool state) noexcept
+	Window::setFullscreenMode (bool state) const noexcept
 	{
 		/* State still the same. */
 		if ( this->isFullscreenMode() == state )
@@ -670,15 +689,15 @@ namespace Emeraude
 			return;
 		}
 
-		const auto preferredMonitor = m_coreSettings.getAs< int >(PreferredMonitorKey, DefaultPreferredMonitor);
+		const auto preferredMonitor = m_primaryServices.settings().get< int32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor);
 
 		if ( state )
 		{
-			auto * monitor = Window::getMonitor(preferredMonitor);
+			auto * monitor = getMonitor(preferredMonitor);
 
-			const auto fullscreenWidth = m_coreSettings.getAs< int32_t >(FullscreenWidthKey, DefaultWidth);
-			const auto fullscreenHeight = m_coreSettings.getAs< int32_t >(FullscreenHeightKey, DefaultHeight);
-			const auto refreshRate = m_coreSettings.getAs< int32_t >(RefreshRateKey, DefaultRefreshRate);
+			const auto fullscreenWidth = m_primaryServices.settings().get< int32_t >(VideoFullscreenWidthKey, DefaultVideoFullscreenWidth);
+			const auto fullscreenHeight = m_primaryServices.settings().get< int32_t >(VideoFullscreenHeightKey, DefaultVideoFullscreenHeight);
+			const auto refreshRate = m_primaryServices.settings().get< int32_t >(VideoFullscreenRefreshRateKey, DefaultVideoFullscreenRefreshRate);
 
 			glfwSetWindowMonitor(
 				m_handle.get(),
@@ -690,10 +709,10 @@ namespace Emeraude
 		}
 		else
 		{
-			const auto windowWidth = m_coreSettings.getAs< int32_t >(WindowWidthKey, DefaultWidth);
-			const auto windowHeight = m_coreSettings.getAs< int32_t >(WindowHeightKey, DefaultHeight);
-			const auto XPosition = m_coreSettings.getAs< int32_t >(WindowXPositionKey, DefaultWindowXPosition);
-			const auto YPosition = m_coreSettings.getAs< int32_t >(WindowYPositionKey, DefaultWindowYPosition);
+			const auto windowWidth = m_primaryServices.settings().get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+			const auto windowHeight = m_primaryServices.settings().get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+			const auto XPosition = m_primaryServices.settings().get< int32_t >(VideoWindowXPositionKey, DefaultVideoWindowXPosition);
+			const auto YPosition = m_primaryServices.settings().get< int32_t >(VideoWindowYPositionKey, DefaultVideoWindowYPosition);
 
 			glfwSetWindowMonitor(
 				m_handle.get(),
@@ -705,50 +724,12 @@ namespace Emeraude
 		}
 	}
 
-	void
-	Window::setVSyncState (bool state) noexcept
-	{
-		m_flags[VerticalSyncEnabled] = state;
-	}
-
-	bool
-	Window::getVSyncState () const noexcept
-	{
-		return m_flags[VerticalSyncEnabled];
-	}
-
 	bool
 	Window::isFullscreenMode () const noexcept
 	{
 		/* If there is no monitor attached to the handle,
 		 * so this is not a fullscreen mode. */
 		return glfwGetWindowMonitor(m_handle.get()) != nullptr;
-	}
-
-	std::array< int32_t, 2 >
-	Window::getDesktopPosition (GLFWmonitor * monitor) noexcept
-	{
-		int xPosition = -1;
-		int yPosition = -1;
-
-		glfwGetMonitorPos(monitor, &xPosition, &yPosition);
-
-		/* NOTE : We use the glfw handler to display errors. */
-		switch ( glfwGetError(nullptr) )
-		{
-			case GLFW_NOT_INITIALIZED :
-			case GLFW_PLATFORM_ERROR :
-				return {0, 0};
-
-			case GLFW_NO_ERROR :
-			default:
-				break;
-		}
-
-		return {
-			static_cast< int32_t >(xPosition),
-			static_cast< int32_t >(yPosition)
-		};
 	}
 
 	std::array< int32_t, 2 >
@@ -771,10 +752,7 @@ namespace Emeraude
 				break;
 		}
 
-		return {
-			static_cast< int32_t >(xPosition),
-			static_cast< int32_t >(yPosition)
-		};
+		return {xPosition, yPosition};
 	}
 
 	std::array< uint32_t, 2 >
@@ -790,7 +768,7 @@ namespace Emeraude
 		{
 			case GLFW_NOT_INITIALIZED :
 			case GLFW_PLATFORM_ERROR :
-				return {DefaultWidth, DefaultHeight};
+				return {DefaultVideoWindowWidth, DefaultVideoWindowHeight};
 
 			case GLFW_NO_ERROR :
 			default:
@@ -833,6 +811,42 @@ namespace Emeraude
 		};
 	}
 
+	std::array< int32_t, 2 >
+	Window::getDesktopPosition (GLFWmonitor * monitor) noexcept
+	{
+		/* Get the proper monitor to query */
+		if ( monitor == nullptr )
+		{
+			monitor = glfwGetPrimaryMonitor();
+
+			if ( monitor == nullptr )
+			{
+				Tracer::error(ClassId, "Unable to query the primary monitor !");
+
+				return {0, 0};
+			}
+		}
+
+		int xPosition = -1;
+		int yPosition = -1;
+
+		glfwGetMonitorPos(monitor, &xPosition, &yPosition);
+
+		/* NOTE : We use the glfw handler to display errors. */
+		switch ( glfwGetError(nullptr) )
+		{
+			case GLFW_NOT_INITIALIZED :
+			case GLFW_PLATFORM_ERROR :
+				return {0, 0};
+
+			case GLFW_NO_ERROR :
+				default:
+					break;
+		}
+
+		return {xPosition, yPosition};
+	}
+
 	std::array< uint32_t, 2 >
 	Window::getDesktopSize (GLFWmonitor * monitor) noexcept
 	{
@@ -864,7 +878,7 @@ namespace Emeraude
 	}
 
 	std::array< uint32_t, 2 >
-	Window::getFramebufferSize () const noexcept
+	Window::getFramebufferSize (bool applyScale) const noexcept
 	{
 		int widthPx = -1;
 		int heightPx = -1;
@@ -876,11 +890,23 @@ namespace Emeraude
 		{
 			case GLFW_NOT_INITIALIZED :
 			case GLFW_PLATFORM_ERROR :
-				return {DefaultWidth, DefaultHeight};
+				return {DefaultVideoWindowWidth, DefaultVideoWindowHeight};
 
 			case GLFW_NO_ERROR :
 			default:
 				break;
+		}
+
+		if ( applyScale )
+		{
+			const auto scale = this->getContentScale();
+			const auto scaledWidth = std::floor(static_cast< float >(widthPx) / scale.at(0));
+			const auto scaledHeight = std::floor(static_cast< float >(heightPx) / scale.at(0));
+
+			return {
+				static_cast< uint32_t >(scaledWidth),
+				static_cast< uint32_t >(scaledHeight)
+			};
 		}
 
 		return {
@@ -901,7 +927,9 @@ namespace Emeraude
 		{
 			case GLFW_NOT_INITIALIZED :
 			case GLFW_PLATFORM_ERROR :
-				return {1.0F, 1.0F};
+				scale[0] = 1.0F;
+				scale[1] = 1.0F;
+				break;
 
 			case GLFW_NO_ERROR :
 			default:
@@ -914,41 +942,15 @@ namespace Emeraude
 	float
 	Window::aspectRatio () const noexcept
 	{
-		auto framebufferSize = this->getFramebufferSize();
-
-		if ( framebufferSize[0] == 0 || framebufferSize[1] == 0 )
+		if ( m_state.framebufferWidth == 0 || m_state.framebufferHeight == 0 )
 		{
 			return 1.0F;
 		}
 
-		return static_cast< float >(framebufferSize[0]) / static_cast< float >(framebufferSize[1]);
+		return static_cast< float >(m_state.framebufferWidth) / static_cast< float >(m_state.framebufferHeight);
 	}
 
-	const GLFWwindow *
-	Window::handle () const noexcept
-	{
-		return m_handle.get();
-	}
-
-	GLFWwindow *
-	Window::handle () noexcept
-	{
-		return m_handle.get();
-	}
-
-	const Surface *
-	Window::surface () const noexcept
-	{
-		return m_surface.get();
-	}
-
-	Surface *
-	Window::surface () noexcept
-	{
-		return m_surface.get();
-	}
-
-	bool
+	void
 	Window::waitValidWindowSize () const noexcept
 	{
 		bool validSizeFound = false;
@@ -964,103 +966,91 @@ namespace Emeraude
 
 			glfwWaitEvents();
 		}
-
-		return true;
 	}
 
-	void
-	Window::DEV_printWindowGeometry () const noexcept
+	std::string
+	Window::getWindowStateString (bool directData) const noexcept
 	{
+		if ( directData )
 		{
 			const auto position = this->getPosition();
 			const auto size = this->getSize();
-
-			TraceInfo{ClassId} <<
-				"Window position and size (Screen coordinates) - "
-				"X: " << position[0] <<
-				"Y: " << position[1] <<
-				"width: " << size[0] << "pts, "
-				"height: " << size[1] << "pts.";
-		}
-
-		{
 			const auto borderSize = this->getBorderSize();
-
-			TraceInfo{ClassId} <<
-				"Window frame borders (Screen coordinates) - "
-				"left border:" << borderSize[0] << "pts, "
-				"top border:" << borderSize[1] << "pts, "
-				"right border: " << borderSize[2] << "pts, "
-				"bottom border:" << borderSize[3] << "pts.";
-		}
-
-		{
 			const auto scale = this->getContentScale();
+			const auto framebufferSize = this->getFramebufferSize();
 
-			TraceInfo{ClassId} <<
-				"Window content scale - "
-				"X scale:" << scale[0] << ", "
-				"Y scale:" << scale[1];
+			return (std::stringstream{} <<
+				"Desktop direct info :" "\n"
+				" - Window X position : " << position[0] << "\n"
+				" - Window Y position : " << position[1] << "\n"
+
+				"Window direct info :" "\n"
+				" - Width : " << size[0] << "pt" "\n"
+				" - Height : " << size[1] << "pt" "\n"
+				" - Left border size : " << borderSize[0] << "pt" "\n"
+				" - Top border size : " << borderSize[1] << "pt" "\n"
+				" - Right border size : " << borderSize[2] << "pt" "\n"
+				" - Bottom border size : " << borderSize[3] << "pt" "\n"
+				" - Content scale on X axis : " << scale[0] << "\n"
+				" - Content scale on Y axis : " << scale[1] << "\n"
+
+				"Framebuffer direct info :" "\n"
+				" - Width : " << framebufferSize[0] << "px" "\n"
+				" - Height : " << framebufferSize[1] << "px" "\n"
+			).str();
 		}
 
-		{
-			const auto size = this->getFramebufferSize();
+		return (std::stringstream{} <<
+			"Desktop info :" "\n"
+			" - Window X position : " << m_state.windowXPosition << "\n"
+			" - Window Y position : " << m_state.windowYPosition << "\n"
 
-			TraceInfo{ClassId} <<
-				"Framebuffer size (In pixels) - "
-				"width: " << size[0] << "px, "
-				"height: " << size[1] << "px.";
-		}
+			"Window info :" "\n"
+			" - Width : " << m_state.windowWidth << "pt" "\n"
+			" - Height : " << m_state.windowHeight << "pt" "\n"
+			" - Left border size : " << m_state.borderLeftSize << "pt" "\n"
+			" - Top border size : " << m_state.borderTopSize << "pt" "\n"
+			" - Right border size : " << m_state.borderRightSize << "pt" "\n"
+			" - Bottom border size : " << m_state.borderBottomSize << "pt" "\n"
+			" - Content scale on X axis : " << m_state.contentXScale << "\n"
+			" - Content scale on Y axis : " << m_state.contentYScale << "\n"
+
+			"Framebuffer info :" "\n"
+			" - Width : " << m_state.framebufferWidth << "px" "\n"
+			" - Height : " << m_state.framebufferHeight << "px" "\n"
+		).str();
 	}
 
-	void
-	Window::DEV_printWindowAttrib () const noexcept
+	std::string
+	Window::getWindowAttribString () const noexcept
 	{
-		TraceInfo{ClassId} <<
-			"Window related attributes:" "\n" <<
-			/* indicates whether the specified window has input focus.
-			* Initial input focus is controlled by the window hint with the same name. */
+		return (std::stringstream{} <<
+			"Window related attributes :" "\n"
 			" - GLFW_FOCUSED : " << glfwGetWindowAttrib(m_handle.get(), GLFW_FOCUSED) << "\n"
-			/* indicates whether the specified window is iconified,
-			* whether by the user or with glfwIconifyWindow. */
 			" - GLFW_ICONIFIED : " << glfwGetWindowAttrib(m_handle.get(), GLFW_ICONIFIED) << "\n"
-			/* indicates whether the specified window is visible.
-			* Window visibility can be controlled with glfwShowWindow and glfwHideWindow
-			* and initial visibility is controlled by the window hint with the same name. */
+			" - GLFW_MAXIMIZED : " << glfwGetWindowAttrib(m_handle.get(), GLFW_MAXIMIZED) << "\n"
+			" - GLFW_HOVERED : " << glfwGetWindowAttrib(m_handle.get(), GLFW_HOVERED) << "\n"
 			" - GLFW_VISIBLE : " << glfwGetWindowAttrib(m_handle.get(), GLFW_VISIBLE) << "\n"
-			/* indicates whether the specified window is resizable by the user.
-			* This is set on creation with the window hint with the same name. */
 			" - GLFW_RESIZABLE : " << glfwGetWindowAttrib(m_handle.get(), GLFW_RESIZABLE) << "\n"
-			/* indicates whether the specified window has decorations such as a border,
-			* a close widget, etc. This is set on creation with the handle
-			* hint with the same name. */
 			" - GLFW_DECORATED : " << glfwGetWindowAttrib(m_handle.get(), GLFW_DECORATED) << "\n"
-			/* indicates whether the specified window is floating, also called topmost
-			* or always-on-top. This is controlled by the window hint with the same name. */
-			" - GLFW_FLOATING : " << glfwGetWindowAttrib(m_handle.get(), GLFW_FLOATING) << '\n';
+			" - GLFW_AUTO_ICONIFY : " << glfwGetWindowAttrib(m_handle.get(), GLFW_AUTO_ICONIFY) << "\n"
+			" - GLFW_FLOATING : " << glfwGetWindowAttrib(m_handle.get(), GLFW_FLOATING) << "\n"
+			" - GLFW_TRANSPARENT_FRAMEBUFFER : " << glfwGetWindowAttrib(m_handle.get(), GLFW_TRANSPARENT_FRAMEBUFFER) << "\n"
+			" - GLFW_FOCUS_ON_SHOW : " << glfwGetWindowAttrib(m_handle.get(), GLFW_FOCUS_ON_SHOW) << "\n\n"
 
-		TraceInfo{ClassId} <<
-						   "Context related attributes:\n" <<
-			/* indicates the client API provided by the handle's context; either GLFW_OPENGL_API or GLFW_OPENGL_ES_API. */
+			"Context related attributes :" "\n"
 			" - GLFW_CLIENT_API : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CLIENT_API) << "\n"
-			/* indicate the client API version of the handle's context. */
+			" - GLFW_CONTEXT_CREATION_API : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_CREATION_API) << "\n"
 			" - GLFW_CONTEXT_VERSION_MAJOR : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_VERSION_MAJOR) << "\n"
 			" - GLFW_CONTEXT_VERSION_MINOR : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_VERSION_MINOR) << "\n"
 			" - GLFW_CONTEXT_REVISION : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_REVISION) << "\n"
-			/* is GLFW_TRUE if the handle's context is an OpenGL forward-compatible one, or GLFW_FALSE otherwise. */
 			" - GLFW_OPENGL_FORWARD_COMPAT : " << glfwGetWindowAttrib(m_handle.get(), GLFW_OPENGL_FORWARD_COMPAT) << "\n"
-			/* is GLFW_TRUE if the handle's context is an OpenGL debug context, or GLFW_FALSE otherwise. */
 			" - GLFW_OPENGL_DEBUG_CONTEXT : " << glfwGetWindowAttrib(m_handle.get(), GLFW_OPENGL_DEBUG_CONTEXT) << "\n"
-			/* indicates the OpenGL profile used by the context. This is GLFW_OPENGL_CORE_PROFILE or
-			* GLFW_OPENGL_COMPAT_PROFILE if the context uses a known profile, or GLFW_OPENGL_ANY_PROFILE
-			* if the OpenGL profile is unknown or the context is an OpenGL ES context. Note that the returned
-			* profile may not match the profile bits of the context flags, as GLFW will try other means of
-			* detecting the profile when no bits are set. */
 			" - GLFW_OPENGL_PROFILE : " << glfwGetWindowAttrib(m_handle.get(), GLFW_OPENGL_PROFILE) << "\n"
-			/* indicates the robustness strategy used by the context. This is GLFW_LOSE_CONTEXT_ON_RESET or
-			* GLFW_NO_RESET_NOTIFICATION if the handle's context supports robustness,
-			* or GLFW_NO_ROBUSTNESS otherwise. */
-			" - GLFW_CONTEXT_ROBUSTNESS : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_ROBUSTNESS) << '\n';
+			" - GLFW_CONTEXT_RELEASE_BEHAVIOR : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_RELEASE_BEHAVIOR) << "\n"
+			" - GLFW_CONTEXT_NO_ERROR : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_NO_ERROR) << "\n"
+			" - GLFW_CONTEXT_ROBUSTNESS : " << glfwGetWindowAttrib(m_handle.get(), GLFW_CONTEXT_ROBUSTNESS) << '\n'
+		).str();
 	}
 
 	bool
@@ -1071,7 +1061,7 @@ namespace Emeraude
 
 		if ( fullscreenMode )
 		{
-			monitor = Window::getMonitor(monitorNumber);
+			monitor = getMonitor(monitorNumber);
 
 			/* If one of the size is automatic,
 			 * we use the current mode of the monitor */
@@ -1105,29 +1095,64 @@ namespace Emeraude
 			return false;
 		}
 
-		TraceSuccess{ClassId} << "A new " << width << "x" << height << " window created.";
-
-		this->notify(Created, Vector< 2, size_t >{static_cast< size_t >(width), static_cast< size_t >(height)});
+		m_state.framebufferWidth = width;
+		m_state.framebufferHeight = height;
 
 		/* Register all callbacks related to the window object. */
 		glfwSetWindowUserPointer(m_handle.get(), this);
-		glfwSetWindowPosCallback(m_handle.get(), Window::windowPositionCallback);
-		glfwSetWindowSizeCallback(m_handle.get(), Window::windowSizeCallback);
-		glfwSetWindowCloseCallback(m_handle.get(), Window::windowCloseCallback);
-		glfwSetWindowRefreshCallback(m_handle.get(), Window::windowRefreshCallback);
-		glfwSetWindowFocusCallback(m_handle.get(), Window::windowFocusCallback);
-		glfwSetWindowIconifyCallback(m_handle.get(), Window::windowIconifyCallback);
-		glfwSetWindowMaximizeCallback(m_handle.get(), Window::windowMaximizeCallback);
-		glfwSetFramebufferSizeCallback(m_handle.get(), Window::framebufferSizeCallback);
-		glfwSetWindowContentScaleCallback(m_handle.get(), Window::windowContentScaleCallback);
+		glfwSetWindowPosCallback(m_handle.get(), windowPositionCallback);
+		glfwSetWindowSizeCallback(m_handle.get(), windowSizeCallback);
+		glfwSetWindowCloseCallback(m_handle.get(), windowCloseCallback);
+		glfwSetWindowRefreshCallback(m_handle.get(), windowRefreshCallback);
+		glfwSetWindowFocusCallback(m_handle.get(), windowFocusCallback);
+		glfwSetWindowIconifyCallback(m_handle.get(), windowIconifyCallback);
+		glfwSetWindowMaximizeCallback(m_handle.get(), windowMaximizeCallback);
+		glfwSetFramebufferSizeCallback(m_handle.get(), framebufferSizeCallback);
+		glfwSetWindowContentScaleCallback(m_handle.get(), windowContentScaleCallback);
 
 		return true;
+	}
+
+	void
+	Window::initializeState () noexcept
+	{
+		/* The position (top left) of the window in the desktop screen. */
+		const auto position = this->getPosition();
+
+		m_state.windowXPosition = position[0];
+		m_state.windowYPosition = position[1];
+
+		/* The window dimension expressed in the OS/desktop screen. */
+		const auto size = this->getSize();
+
+		m_state.windowWidth = size[0];
+		m_state.windowHeight = size[1];
+
+		/* The window borders sizes (Depend of the OS/desktop). */
+		const auto borderSize = this->getBorderSize();
+
+		m_state.borderLeftSize = static_cast< int32_t >(borderSize[0]);
+		m_state.borderTopSize = static_cast< int32_t >(borderSize[1]);
+		m_state.borderRightSize = static_cast< int32_t >(borderSize[2]);
+		m_state.borderBottomSize = static_cast< int32_t >(borderSize[3]);
+
+		/* The content scale factor from the desktop (HDPI screen). */
+		const auto scale = this->getContentScale();
+
+		m_state.contentXScale = scale[0];
+		m_state.contentYScale = scale[1];
+
+		/* The framebuffer of the window expressed in pixels. */
+		const auto framebufferSize = this->getFramebufferSize(); // Gives incorrect data at startup.
+
+		m_state.framebufferWidth = framebufferSize[0];
+		m_state.framebufferHeight = framebufferSize[1];
 	}
 
 	bool
 	Window::checkMonitors () const noexcept
 	{
-		const auto monitors = Window::getMonitors();
+		const auto monitors = getMonitors();
 
 		if ( monitors.empty() )
 		{
@@ -1146,22 +1171,22 @@ namespace Emeraude
 			/* NOTE: Display monitors information. */
 			if ( m_flags[ShowInformation] )
 			{
-				TraceInfo{ClassId} << glfwGetMonitorName(monitor) << " monitor added.";
+				const auto modes = getMonitorModes(monitor);
 
-				const auto modes = Window::getMonitorModes(monitor);
+				TraceInfo info{ClassId};
 
-				TraceInfo{ClassId} << modes.size() << " modes available for this monitor.";
+				info << "Monitor '" << glfwGetMonitorName(monitor) << "' added with " << modes.size() << " modes available :" "\n";
 
 				for ( const auto & mode : modes )
 				{
 					const auto bits = mode.redBits + mode.greenBits + mode.blueBits;
 
-					TraceInfo{ClassId} << mode.width << 'x' << mode.height << 'x' << bits << '@' << mode.refreshRate << "hz.";
+					info << "\t" " - " << mode.width << 'x' << mode.height << 'x' << bits << '@' << mode.refreshRate << "hz" "\n";
 				}
 			}
 		}
 
-		glfwSetMonitorCallback(Window::monitorConfigurationChanged);
+		glfwSetMonitorCallback(monitorConfigurationChanged);
 
 		return true;
 	}
@@ -1191,7 +1216,7 @@ namespace Emeraude
 	GLFWmonitor *
 	Window::getMonitor (uint32_t monitorNumber) noexcept
 	{
-		const auto monitors = Window::getMonitors();
+		const auto monitors = getMonitors();
 
 		if ( monitors.empty() )
 		{
@@ -1237,51 +1262,34 @@ namespace Emeraude
 	void
 	Window::framebufferSizeCallback (GLFWwindow * window, int width, int height) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Framebuffer size changed to " << width << "x" << height << " px." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
 			return;
 		}
 
-		_this->notify(OSNotifiesFramebufferResized, std::array< size_t, 2 >{static_cast< size_t >(width), static_cast< size_t >(height)});
-	}
+		/* NOTE: Save the state. */
+		_this->m_state.framebufferWidth = static_cast< uint32_t >(width);
+		_this->m_state.framebufferHeight = static_cast< uint32_t >(height);
 
-	void
-	Window::windowSizeCallback (GLFWwindow * window, int width, int height) noexcept
-	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+		TraceInfo{ClassId} << "The framebuffer has been resized to " << width << 'X' << height << " px.";
 
-		if ( _this == nullptr )
-		{
-			return;
-		}
-
-		/* NOTE: Saves the window position. */
-		if ( !_this->isFullscreenMode() )
-		{
-			_this->m_coreSettings.set(WindowWidthKey, width);
-			_this->m_coreSettings.set(WindowHeightKey, height);
-		}
-
-		std::array< int, 6 > windowData{
-			width,
-			height,
-			0, // Left
-			0, // Top
-			0, // Right
-			0  // Bottom
-		};
-
-		glfwGetWindowFrameSize(window, &windowData[2], &windowData[3], &windowData[4], &windowData[5]);
-
-		_this->notify(OSNotifiesWindowResized, windowData);
+		_this->notify(OSNotifiesFramebufferResized);
 	}
 
 	void
 	Window::windowRefreshCallback (GLFWwindow * window) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window refresh request." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
@@ -1292,8 +1300,63 @@ namespace Emeraude
 	}
 
 	void
+	Window::windowSizeCallback (GLFWwindow * window, int width, int height) noexcept
+	{
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window size changed to " << width << "x" << height << " pt." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
+
+		if ( _this == nullptr )
+		{
+			return;
+		}
+
+		/* NOTE: Save the state. */
+		_this->m_state.windowWidth = static_cast< uint32_t >(width);
+		_this->m_state.windowHeight = static_cast< uint32_t >(height);
+
+		/* NOTE: Refresh the window border sizes in case of, there is no event for this. */
+		glfwGetWindowFrameSize(
+			window,
+			&_this->m_state.borderLeftSize,
+			&_this->m_state.borderTopSize,
+			&_this->m_state.borderRightSize,
+			&_this->m_state.borderBottomSize
+		);
+
+		_this->notify(OSNotifiesWindowResized);
+	}
+
+	void
+	Window::windowPositionCallback (GLFWwindow * window, int xPosition, int yPosition) noexcept
+	{
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window position changed to X:" << xPosition << ", Y:" << yPosition << "." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
+
+		if ( _this == nullptr )
+		{
+			return;
+		}
+
+		/* NOTE: Save the state. */
+		_this->m_state.windowXPosition = xPosition;
+		_this->m_state.windowYPosition = yPosition;
+
+		_this->notify(OSNotifiesWindowMovedTo);
+	}
+
+	void
 	Window::monitorConfigurationChanged (GLFWmonitor * /*monitor*/, int event) noexcept
 	{
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Monitor configuration changed (Monitor " << ( event == GLFW_CONNECTED ? "connected" : "disconnected") << ")." "\n";
+#endif
+
 		switch ( event )
 		{
 			case GLFW_CONNECTED :
@@ -1310,29 +1373,13 @@ namespace Emeraude
 	}
 
 	void
-	Window::windowPositionCallback (GLFWwindow * window, int xPosition, int yPosition) noexcept
-	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
-
-		if ( _this == nullptr )
-		{
-			return;
-		}
-
-		/* NOTE: Saves the window position. */
-		if ( !_this->isFullscreenMode() )
-		{
-			_this->m_coreSettings.set(WindowXPositionKey, xPosition);
-			_this->m_coreSettings.set(WindowYPositionKey, yPosition);
-		}
-		
-		_this->notify(OSNotifiesWindowMovedTo, std::array< int, 2 >{xPosition, yPosition});
-	}
-
-	void
 	Window::windowCloseCallback (GLFWwindow * window) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window close requested." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
@@ -1350,7 +1397,11 @@ namespace Emeraude
 	void
 	Window::windowFocusCallback (GLFWwindow * window, int focused) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window is " << ( focused == GLFW_TRUE ? "focused" : "blurred" ) << "." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
@@ -1363,7 +1414,11 @@ namespace Emeraude
 	void
 	Window::windowIconifyCallback (GLFWwindow * window, int hidden) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window is " << ( hidden == GLFW_TRUE ? "hidden" : "visible" ) << "." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
@@ -1376,7 +1431,11 @@ namespace Emeraude
 	void
 	Window::windowMaximizeCallback (GLFWwindow * window, int maximized) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window is " << ( maximized == GLFW_TRUE ? "maximized" : "minimized" ) << "." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
@@ -1389,14 +1448,21 @@ namespace Emeraude
 	void
 	Window::windowContentScaleCallback (GLFWwindow * window, float xScale, float yScale) noexcept
 	{
-		auto * _this = reinterpret_cast< Window * >(glfwGetWindowUserPointer(window));
+#ifdef WINDOW_EVENTS_DEBUG_ENABLED
+		std::cout << "[DEBUG:WINDOW] Window scale changed to X:" << xScale << ", Y:" << yScale << "." "\n";
+#endif
+
+		auto * _this = static_cast< Window * >(glfwGetWindowUserPointer(window));
 
 		if ( _this == nullptr )
 		{
 			return;
 		}
-		
-		_this->notify(OSRequestsToRescaleContentBy, std::array< float, 2 >{xScale, yScale});
+
+		/* NOTE: Save the state. */
+		_this->m_state.contentXScale = xScale;
+		_this->m_state.contentYScale = yScale;
+
+		_this->notify(OSRequestsToRescaleContentBy);
 	}
-	// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic, cppcoreguidelines-pro-type-reinterpret-cast, *-magic-numbers)
 }

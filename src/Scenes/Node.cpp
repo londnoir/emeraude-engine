@@ -1,34 +1,40 @@
 /*
- * Emeraude/Scenes/Node.cpp
- * This file is part of Emeraude
+ * src/Scenes/Node.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Node.hpp"
 
-/* Local inclusions */
-#include "Math/OrientedCuboid.hpp"
+/* STL inclusions. */
+#include <algorithm>
+#include <memory>
+#include <ranges>
+#include <stack>
+
+/* Local inclusions. */
+#include "Libraries/Math/OrientedCuboid.hpp"
 #include "Scenes/Scene.hpp"
 #include "Tracer.hpp"
 
@@ -41,333 +47,815 @@ namespace Emeraude::Scenes
 	using namespace Graphics;
 	using namespace Physics;
 
-	const size_t Node::ClassUID{Observable::getClassUID()};
+	const size_t Node::ClassUID{getClassUID(ClassId)};
 
-	Node::Node (Scene * parentScene) noexcept
-		: AbstractEntity(Node::Root, parentScene)
+	Node::Node () noexcept
+		: AbstractEntity(Root, 0)
 	{
 		this->setMovingAbility(false);
 	}
 
-	Node::Node (const std::string & name, const std::shared_ptr< Node > & parent, const Coordinates< float > & coordinates) noexcept
-		: AbstractEntity(name, parent->parentScene()), m_parentNode(parent), m_coordinates(coordinates)
+	Node::Node (const std::string & name, const std::shared_ptr< Node > & parent, uint32_t sceneTimeMS, const CartesianFrame< float > & coordinates) noexcept
+		: AbstractEntity(name, sceneTimeMS), m_parent(parent), m_cartesianFrame(coordinates)
 	{
 
 	}
 
 	Node::~Node ()
 	{
+		const auto parentNode = m_parent.lock();
+		
+		if ( parentNode != nullptr )
+		{
+			parentNode->forget(this);
+		}
+	}
+
+	void
+	Node::setPosition (const Vector< 3, float > & position, TransformSpace transformSpace) noexcept
+	{
 		if ( this->isRoot() )
 		{
-			this->notify(NodeDeleted, this);
+			return;
 		}
-		else
+
+		switch ( transformSpace )
 		{
-			m_parentNode->forget(this);
+			case TransformSpace::Local :
+				m_cartesianFrame.setPosition(m_cartesianFrame.getRotationMatrix3() * position);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.setPosition(position);
+				}
+				else
+				{
+					m_cartesianFrame.setPosition(parentNode->m_cartesianFrame.getRotationMatrix3() * position);
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.setPosition(position);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
 		}
+
+		this->onLocationDataUpdate();
 	}
 
-	bool
-	Node::is (size_t classUID) const noexcept
+	void
+	Node::setXPosition (float position, TransformSpace transformSpace) noexcept
 	{
-		if ( ClassUID == 0UL )
+		if ( this->isRoot() )
 		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
+			return;
 		}
 
-		return classUID == ClassUID;
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setPosition(m_cartesianFrame.rightVector() * position);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.setXPosition(position);
+				}
+				else
+				{
+					m_cartesianFrame.setPosition(parentNode->m_cartesianFrame.rightVector() * position);
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.setXPosition(position);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	bool
-	Node::isRenderable () const noexcept
+	void
+	Node::setYPosition (float position, TransformSpace transformSpace) noexcept
 	{
-		return m_flags[IsRenderable];
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setPosition(m_cartesianFrame.downwardVector() * position);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.setYPosition(position);
+				}
+				else
+				{
+					m_cartesianFrame.setPosition(parentNode->m_cartesianFrame.downwardVector() * position);
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.setYPosition(position);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	bool
-	Node::hasPhysicalObjectProperties () const noexcept
+	void
+	Node::setZPosition (float position, TransformSpace transformSpace) noexcept
 	{
-		return m_flags[HasPhysicalObjectProperties];
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setPosition(m_cartesianFrame.backwardVector() * position);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.setZPosition(position);
+				}
+				else
+				{
+					m_cartesianFrame.setPosition(parentNode->m_cartesianFrame.backwardVector() * position);
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.setZPosition(position);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	const Coordinates< float > &
-	Node::localCoordinates () const noexcept
+	void
+	Node::move (const Vector< 3, float > & distance, TransformSpace transformSpace) noexcept
 	{
-		return m_coordinates;
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.translate(distance, true);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.translate(distance, false);
+				}
+				else
+				{
+					m_cartesianFrame.translate(distance, parentNode->localCoordinates());
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.translate(distance, false);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	Coordinates< float > &
-	Node::getWritableLocalCoordinates () noexcept
+	void
+	Node::moveX (float distance, TransformSpace transformSpace) noexcept
 	{
-		return m_coordinates;
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.translateX(distance, true);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.translateX(distance, false);
+				}
+				else
+				{
+					m_cartesianFrame.translateX(distance, parentNode->localCoordinates());
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.translateX(distance, false);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	Coordinates< float >
+	void
+	Node::moveY (float distance, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.translateY(distance, true);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.translateY(distance, false);
+				}
+				else
+				{
+					m_cartesianFrame.translateY(distance, parentNode->localCoordinates());
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.translateY(distance, false);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::moveZ (float distance, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.translateZ(distance, true);
+				break;
+
+			case TransformSpace::Parent :
+			{
+				const auto parentNode = m_parent.lock();
+
+				if ( parentNode->isRoot() )
+				{
+					m_cartesianFrame.translateZ(distance, false);
+				}
+				else
+				{
+					m_cartesianFrame.translateZ(distance, parentNode->localCoordinates());
+				}
+			}
+				break;
+
+			case TransformSpace::World :
+				if ( m_parent.lock()->isRoot() )
+				{
+					m_cartesianFrame.translateZ(distance, false);
+				}
+				else
+				{
+					/* TODO: Pay attention to the node level. */
+				}
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::rotate (float radian, const Vector< 3, float > & axis, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.rotate(radian, axis, true);
+				break;
+
+			case TransformSpace::Parent :
+				m_cartesianFrame.rotate(radian, axis, m_parent.lock()->localCoordinates());
+				break;
+
+			case TransformSpace::World :
+				m_cartesianFrame.rotate(radian, axis, false);
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::pitch (float radian, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.pitch(radian, true);
+				break;
+
+			case TransformSpace::Parent :
+				m_cartesianFrame.pitch(radian, m_parent.lock()->localCoordinates());
+				break;
+
+			case TransformSpace::World :
+				m_cartesianFrame.pitch(radian, false);
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::yaw (float radian, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.yaw(radian, true);
+				break;
+
+			case TransformSpace::Parent :
+				m_cartesianFrame.yaw(radian, m_parent.lock()->localCoordinates());
+				break;
+
+			case TransformSpace::World :
+				m_cartesianFrame.yaw(radian, false);
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::roll (float radian, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.roll(radian, true);
+				break;
+
+			case TransformSpace::Parent :
+				m_cartesianFrame.roll(radian, m_parent.lock()->localCoordinates());
+				break;
+
+			case TransformSpace::World :
+				m_cartesianFrame.roll(radian, false);
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::scale (const Vector< 3, float > & factor, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::scale (float factor, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::scaleX (float factor, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingXFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::scaleY (float factor, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingYFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	void
+	Node::scaleZ (float factor, TransformSpace transformSpace) noexcept
+	{
+		if ( this->isRoot() )
+		{
+			return;
+		}
+
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingZFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
+	}
+
+	CartesianFrame< float >
 	Node::getWorldCoordinates () const noexcept
 	{
-		return Coordinates< float >{this->getModelMatrix()};
+		/* NOTE: As root, return the origin !
+		 * If the parent is the root node, just return the frame. */
+		if ( this->isRoot() || this->parent()->isRoot() )
+		{
+			return m_cartesianFrame;
+		}
+
+		/* Stack up a reversed tree for each cartesian frame. */
+		std::stack< CartesianFrame< float > > reversedTree;
+
+		{
+			const auto * node = this;
+
+			/* While parent is not root. */
+			while ( node != nullptr )
+			{
+				reversedTree.emplace(node->localCoordinates());
+
+				node = node->m_parent.lock().get();
+			}
+		}
+
+		Matrix< 4, float > matrix;
+		Vector< 3, float > scalingVector{1.0F, 1.0F, 1.0F};
+
+		while ( !reversedTree.empty() )
+		{
+			matrix *= reversedTree.top().getModelMatrix();
+			scalingVector *= reversedTree.top().scalingFactor();
+
+			reversedTree.pop();
+		}
+
+		return CartesianFrame< float >{matrix, scalingVector};
 	}
 
 	Cuboid< float >
 	Node::getWorldBoundingBox () const noexcept
 	{
+		if ( this->isRoot() )
+		{
+			/* NOTE: Returns a null box ! */
+			return {};
+		}
+
+		if ( this->parent()->isRoot() )
+		{
+			return OrientedCuboid< float >{this->localBoundingBox(), m_cartesianFrame}.getAxisAlignedBox();
+		}
+
 		return OrientedCuboid< float >{this->localBoundingBox(), this->getWorldCoordinates()}.getAxisAlignedBox();
 	}
 
 	Sphere< float >
 	Node::getWorldBoundingSphere () const noexcept
 	{
+		if ( this->isRoot() )
+		{
+			/* NOTE: Returns a null box ! */
+			return {};
+		}
+
+		if ( this->parent()->isRoot() )
+		{
+			return {
+				this->localBoundingSphere().radius(),
+				m_cartesianFrame.position() + this->localBoundingSphere().position()
+			};
+		}
+
 		return {
 			this->localBoundingSphere().radius(),
 			this->getWorldCoordinates().position() + this->localBoundingSphere().position()
 		};
 	}
 
-	void
-	Node::enableSphereCollision (bool state) noexcept
-	{
-		m_flags[SphereCollisionEnabled] = state;
-	}
-
-	bool
-	Node::sphereCollisionIsEnabled () const noexcept
-	{
-		return m_flags[SphereCollisionEnabled];
-	}
-
-	void
-	Node::setLocalCoordinates (const Coordinates< float > & coordinates) noexcept
-	{
-		m_coordinates = coordinates;
-	}
-
 	std::shared_ptr< Node >
-	Node::createSubNode (const std::string & name, const Coordinates< float > & coordinates) noexcept
+	Node::createChild (const std::string & name, uint32_t sceneTimeMS, const CartesianFrame< float > & coordinates) noexcept
 	{
 		if ( name == Root )
 		{
-			Tracer::error(ClassId, Blob() << "The node name '" << Root << "' is reserved !");
+			TraceError{ClassId} << "The node name '" << Root << "' is reserved !";
 
 			return nullptr;
 		}
 
-		if ( m_subNodes.contains(name) )
+		if ( m_children.contains(name) )
 		{
-			Tracer::error(ClassId, Blob() << "The node name '" << name << "' is already used at this level !");
+			TraceError{ClassId} << "The node name '" << name << "' is already used at this level !";
 
 			return nullptr;
 		}
 
-		auto subNode = m_subNodes.emplace(name, std::make_shared< Node >(name, std::dynamic_pointer_cast< Node >(this->shared_from_this()), coordinates)).first->second;
+		this->notify(SubNodeCreating, this->shared_from_this());
+
+		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
+		auto subNode = m_children.emplace(name, std::make_shared< Node >(name, std::dynamic_pointer_cast< Node >(this->shared_from_this()), sceneTimeMS, coordinates)).first->second;
 
 		this->observe(subNode.get());
 
-		this->notify(NodeCreated, subNode);
+		this->notify(SubNodeCreated, subNode);
 
 		return subNode;
 	}
 
 	void
-	Node::onTransform () noexcept // NOLINT(misc-no-recursion)
+	Node::onLocationDataUpdate () noexcept /* NOLINT(misc-no-recursion) : Indeed the function is recursive as this is a node tree. */
 	{
-		/* Dispatch the movement to every component of the node. */
-		this->move();
-
-		/* Dispatch the movement to every node below this one. */
-		for ( auto & nodePair : m_subNodes )
+		if ( this->isRoot() )
 		{
-			nodePair.second->onTransform();
+			Tracer::warning(ClassId, "The root node cannot changes its location !");
+
+			return;
 		}
+
+		/* Dispatch the movement to every component. */
+		if ( this->parent()->isRoot() )
+		{
+			this->onContainerMove(m_cartesianFrame);
+		}
+		else
+		{
+			this->onContainerMove(this->getWorldCoordinates());
+		}
+
+		/* Dispatch the movement to every sub node. */
+		for ( const auto & [nodeName, subNode] : m_children )
+		{
+			subNode->onLocationDataUpdate();
+		}
+
+		/* The location has been changed, so the physics simulation must be relaunched. */
+		this->pauseSimulation(false);
 	}
 
 	bool
-	Node::processLogics (const Scene & scene, size_t cycle) noexcept
+	Node::onProcessLogics (const Scene & scene) noexcept
 	{
-		/* Updates the lifetime of the scene node. */
-		m_lifetime += static_cast< unsigned long >(EngineUpdateCycleDuration< double > * 1000.0); // NOLINT(*-magic-numbers)
+		this->updateAnimations(scene.cycle());
 
-		/* Updates the position of the scene node. */
-		auto moved = false;
+		m_lifetime += EngineUpdateCycleDurationUS< uint64_t >;
 
-		if ( this->isMovable() && this->hasPhysicalObjectProperties() )
-		{
-			/* Apply scene modifiers. */
-			for ( const auto & modifier : scene.modifiers() )
-			{
-				/* NOTE: Avoid working on the same Node. */
-				if ( this == &modifier->parentEntity() )
-				{
-					continue;
-				}
-
-				modifier->apply(*this);
-			}
-
-			const auto & velocity = this->updateVelocity(scene.physicalEnvironmentProperties());
-
-			if ( !velocity.isNull() )
-			{
-				/* FIXME: Check if this is the right place to modulate physics with engine update frequency. */
-				const auto newVelocity = velocity * EngineUpdateCycleDuration< float >;
-
-				this->moveBy(newVelocity, TransformSpace::World);
-
-				moved = true;
-			}
-		}
-
-		/* Updates each animation attached to this node. */
-		this->updateAnimations(cycle);
-
-		/* Updates every entity at this Node. */
-		for ( auto & pair : this->components() )
-		{
-			pair.second->processLogics(scene, cycle);
-		}
-
-		return moved;
-	}
-
-	float
-	Node::getIntersectionOverlap (const Node & nodeA, const Node & nodeB) noexcept
-	{
-		if ( &nodeA == &nodeB )
-		{
-			return 0.0F;
-		}
-
-		return Sphere< float >::getIntersectionOverlap(nodeA.getWorldBoundingSphere(), nodeB.getWorldBoundingSphere());
-	}
-
-	float
-	Node::getDistance (const Node & nodeA, const Node & nodeB) noexcept
-	{
-		if ( &nodeA == &nodeB )
-		{
-			return 0.0F;
-		}
-
-		return Vector< 3, float >::distance(nodeA.getWorldCoordinates().position(), nodeB.getWorldCoordinates().position());
-	}
-
-	bool
-	Node::isVisible (const Frustum & frustum) const noexcept
-	{
-		if ( this->sphereCollisionIsEnabled() )
-		{
-			return frustum.isCollidingWith(this->getWorldBoundingSphere()) != Frustum::Result::Outside;
-		}
-
-		return frustum.isCollidingWith(this->getWorldBoundingBox()) != Frustum::Result::Outside;
-	}
-
-	std::shared_ptr< Node >
-	Node::parentNode () noexcept
-	{
-		return m_parentNode;
-	}
-
-	std::shared_ptr< const Node >
-	Node::parentNode () const noexcept
-	{
-		return m_parentNode;
-	}
-
-	std::shared_ptr< Node >
-	Node::getRootNode () noexcept
-	{
-		auto currentNode = std::dynamic_pointer_cast< Node >(this->shared_from_this());
-
-		while ( !currentNode->isRoot() )
-		{
-			currentNode = currentNode->m_parentNode;
-		}
-
-		return currentNode;
-	}
-
-	std::shared_ptr< const Node >
-	Node::getRootNode () const noexcept
-	{
-		auto currentNode = std::dynamic_pointer_cast< const Node >(this->shared_from_this());
-
-		while ( !currentNode->isRoot() )
-		{
-			currentNode = currentNode->m_parentNode;
-		}
-
-		return currentNode;
-	}
-
-	const std::map< std::string, std::shared_ptr< Node > > &
-	Node::subNodes () const noexcept
-	{
-		return m_subNodes;
-	}
-
-	std::map< std::string, std::shared_ptr< Node > > &
-	Node::subNodes () noexcept
-	{
-		return m_subNodes;
-	}
-
-	std::set< std::shared_ptr< Node > >
-	Node::getNeighborNodes (float radius) const noexcept
-	{
-		std::set< std::shared_ptr< Node > > nearNodes{};
-
-		const auto sectors = this->mainSector()->getSurroundingSectors(true);
-
-		for ( const auto & sector : sectors )
-		{
-			for ( const auto & element : sector->elements() )
-			{
-				auto node = std::dynamic_pointer_cast< Node >(element);
-
-				if ( node == nullptr )
-				{
-					continue;
-				}
-
-				if ( Node::getDistance(*this, *node) <= radius )
-				{
-					nearNodes.emplace(node);
-				}
-			}
-		}
-
-		return nearNodes;
-	}
-
-	std::shared_ptr< Node >
-	Node::findSubNode (const std::string & nodeName) const noexcept
-	{
-		const auto nodeIt = m_subNodes.find(nodeName);
-
-		return nodeIt != m_subNodes.cend() ? nodeIt->second : nullptr;
-	}
-
-	bool
-	Node::destroySubNode (const std::string & nodeName) noexcept
-	{
-		auto nodeIt = m_subNodes.find(nodeName);
-
-		if ( nodeIt == m_subNodes.end() )
+		/* NOTE: Check if the node has disabled its ability to move. */
+		if ( !this->isMovable() )
 		{
 			return false;
 		}
 
-		m_subNodes.erase(nodeIt);
+		/* NOTE: Apply scene modifiers to modify acceleration vectors.
+		 * This can resume the physics simulation. */
+		scene.applyModifiers(*this);
 
-		return true;
+		/* NOTE: If the physics engine has determined that the entity
+		 * does not need physics calculation, we stop here. */
+		if ( this->isSimulationPaused() )
+		{
+			return false;
+		}
+
+		return this->updateSimulation(scene.physicalEnvironmentProperties());
 	}
 
-	void
-	Node::destroyAllSubNode () noexcept
+	std::shared_ptr< Node >
+	Node::getRoot () noexcept
 	{
-		m_subNodes.clear();
+		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
+		auto currentNode = std::dynamic_pointer_cast< Node >(this->shared_from_this());
+
+		while ( !currentNode->isRoot() )
+		{
+			currentNode = currentNode->m_parent.lock();
+		}
+
+		return currentNode;
+	}
+
+	std::shared_ptr< const Node >
+	Node::getRoot () const noexcept
+	{
+		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
+		auto currentNode = std::dynamic_pointer_cast< const Node >(this->shared_from_this());
+
+		while ( !currentNode->isRoot() )
+		{
+			currentNode = currentNode->m_parent.lock();
+		}
+
+		return currentNode;
+	}
+
+	std::shared_ptr< Node >
+	Node::findChild (const std::string & name) const noexcept
+	{
+		const auto nodeIt = m_children.find(name);
+
+		return nodeIt != m_children.cend() ? nodeIt->second : nullptr;
+	}
+
+	bool
+	Node::destroyChild (const std::string & name) noexcept
+	{
+		const auto nodeIt = m_children.find(name);
+
+		if ( nodeIt == m_children.end() )
+		{
+			return false;
+		}
+
+		m_children.erase(nodeIt);
+
+		return true;
 	}
 
 	void
@@ -380,73 +868,44 @@ namespace Emeraude::Scenes
 			return;
 		}
 
-		/* Say i'm not longer usable. */
-		m_flags[IsDiscardable] = true;
-	}
-
-	bool
-	Node::isDiscardable () const noexcept
-	{
-		return m_flags[IsDiscardable];
-	}
-
-	void
-	Node::destroy () noexcept
-	{
-		/* Removes every component attached to this Node. */
-		this->clearComponents();
-
-		/* Clear every sub Node. */
-		this->destroyAllSubNode();
+		this->enableFlag(IsDiscardable);
 	}
 
 	void
 	Node::destroyTree () noexcept
 	{
-		if ( !this->isRoot() )
-		{
-			Tracer::error(ClassId, "Only the root Node can destroy the whole tree !");
-
-			return;
-		}
-
-		/* Removes every component attached to this Node. */
 		this->clearComponents();
 
-		/* Clear every sub Node. */
-		this->destroyAllSubNode();
+		this->destroyChildren();
 	}
 
 	void
-	Node::cleanTree () noexcept // NOLINT(misc-no-recursion)
+	Node::trimTree () noexcept
 	{
-		auto nodeIt = std::begin(m_subNodes);
+		auto nodeIt = std::begin(m_children);
 
-		while ( nodeIt != std::end(m_subNodes) )
+		while ( nodeIt != std::end(m_children) )
 		{
-			if ( nodeIt->second->isDiscardable() )
+			const auto & subNode = nodeIt->second;
+
+			if ( subNode->isDiscardable() )
 			{
-				nodeIt = m_subNodes.erase(nodeIt);
+				this->notify(SubNodeDeleting, subNode);
+
+				subNode->destroyTree();
+
+				nodeIt = m_children.erase(nodeIt);
+
+				this->notify(SubNodeDeleted, this->shared_from_this());
 			}
 			else
 			{
-				nodeIt->second->cleanTree();
+				/* NOTE: We go deeper in this node. */
+				subNode->trimTree();
 
 				++nodeIt;
 			}
 		}
-	}
-
-	bool
-	Node::isRoot () const noexcept
-	{
-		return m_parentNode == nullptr;
-	}
-
-	bool
-	Node::isLeaf() const noexcept
-	{
-		return m_subNodes.empty();
 	}
 
 	size_t
@@ -459,522 +918,84 @@ namespace Emeraude::Scenes
 
 		size_t depth = 0;
 
-		auto parent = m_parentNode;
+		auto parent = m_parent.lock();
 
 		while ( !parent->isRoot() )
 		{
 			depth++;
 
-			parent = parent->m_parentNode;
+			parent = parent->m_parent.lock();
 		}
 
 		return depth;
 	}
 
-	Matrix< 4, float >
-	Node::getModelMatrix () const noexcept
-	{
-		if ( this->isRoot() )
-		{
-			return {};
-		}
-
-		/* NOTE: beyond this line, we have a parent Node. */
-		std::stack< Matrix< 4, float > > reversedTree;
-
-		/* Gets the tree node into a stack to reverse it. */
-		{
-			auto parent = std::dynamic_pointer_cast< const Node >(this->shared_from_this());
-
-			/* While parent is not Root. */
-			while ( parent != nullptr )
-			{
-				reversedTree.emplace(parent->localCoordinates().modelMatrix());
-
-				parent = parent->m_parentNode;
-			}
-		}
-
-		/* Compute the final matrix by getting back and multiply each matrix from the stack. */
-		Matrix< 4, float > model;
-
-		while ( !reversedTree.empty() )
-		{
-			model *= reversedTree.top();
-
-			reversedTree.pop();
-		}
-
-		return model;
-	}
-
-	Matrix< 4, float >
-	Node::getViewMatrix (bool rotateOnly) const noexcept
-	{
-		return this->getWorldCoordinates().viewMatrix(rotateOnly);
-	}
-
 	void
-	Node::moveTo (const Vector< 3, float > & position, TransformSpace transformSpace) noexcept
+	Node::accelerate (float power) noexcept
 	{
 		if ( this->isRoot() )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root ! " "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			Tracer::warning(ClassId, "You can't set impulse to the root node !");
 
 			return;
 		}
 
-		switch ( transformSpace )
+		if ( this->parent()->isRoot() )
 		{
-			/* We are using the local coordinate system. */
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalAxis(position);
-				break;
-
-			/* We are using the parent coordinates system. If the parent is the root, it's equivalent to world coordinates system. */
-			case TransformSpace::Parent :
-				this->getWritableLocalCoordinates().setPosition(position);
-				break;
-
-			/* We are using the world coordinate system. */
-			case TransformSpace::World :
-				/* If there is no parent or the parent is the root, simply set the new position. */
-				if ( m_parentNode == nullptr || m_parentNode->isRoot() )
-				{
-					this->getWritableLocalCoordinates().setPosition(position);
-				}
-				/* We subtract the world coordinates of the parent node before setting the new position. */
-				else
-				{
-					this->getWritableLocalCoordinates().setPosition(position - m_parentNode->getWorldCoordinates().position());
-				}
-				break;
+			this->addForce(m_cartesianFrame.forwardVector().scale(power));
 		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveOnXAxisTo (float xPosition, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
+		else
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
+			this->addForce(this->getWorldCoordinates().forwardVector().scale(power));
 		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalXAxis(xPosition);
-				break;
-
-			case TransformSpace::Parent :
-				this->getWritableLocalCoordinates().setXPosition(xPosition);
-				break;
-
-			case TransformSpace::World :
-				if ( m_parentNode == nullptr || m_parentNode->isRoot() )
-				{
-					this->getWritableLocalCoordinates().setXPosition(xPosition);
-				}
-				else
-				{
-					auto delta = xPosition - m_parentNode->getWorldCoordinates().position()[X];
-
-					this->getWritableLocalCoordinates().setXPosition(delta);
-				}
-				break;
-		}
-
-		this->onTransform();
 	}
-
-	void
-	Node::moveOnYAxisTo (float yPosition, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalYAxis(yPosition);
-				break;
-
-			case TransformSpace::Parent :
-				this->getWritableLocalCoordinates().setYPosition(yPosition);
-				break;
-
-			case TransformSpace::World :
-				if ( m_parentNode == nullptr || m_parentNode->isRoot() )
-				{
-					this->getWritableLocalCoordinates().setYPosition(yPosition);
-				}
-				else
-				{
-					auto delta = yPosition - m_parentNode->getWorldCoordinates().position()[Y];
-
-					this->getWritableLocalCoordinates().setYPosition(delta);
-				}
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveOnZAxisTo (float zPosition, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalZAxis(zPosition);
-				break;
-
-			case TransformSpace::Parent :
-				this->getWritableLocalCoordinates().setZPosition(zPosition);
-				break;
-
-			case TransformSpace::World :
-				if ( m_parentNode == nullptr || m_parentNode->isRoot() )
-				{
-					this->getWritableLocalCoordinates().setZPosition(zPosition);
-				}
-				else
-				{
-					auto delta = zPosition - m_parentNode->getWorldCoordinates().position()[Z];
-
-					this->getWritableLocalCoordinates().setZPosition(delta);
-				}
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveBy (const Vector< 3, float > & distance, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalAxis(distance);
-				break;
-
-			case TransformSpace::Parent :
-				if ( !this->isRoot() )
-				{
-					this->getWritableLocalCoordinates().translateAlongCustomAxis(distance, m_parentNode->localCoordinates());
-					break;
-				}
-
-				[[fallthrough]];
-
-			case TransformSpace::World :
-				this->getWritableLocalCoordinates().translateAlongWorldAxis(distance);
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveOnXAxisBy (float xShift, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalXAxis(xShift);
-				break;
-
-			case TransformSpace::Parent :
-				if ( !this->isRoot() )
-				{
-					this->getWritableLocalCoordinates().translateAlongCustomXAxis(xShift, m_parentNode->localCoordinates());
-					break;
-				}
-
-				[[fallthrough]];
-
-			case TransformSpace::World :
-				this->getWritableLocalCoordinates().translateAlongWorldXAxis(xShift);
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveOnYAxisBy (float yShift, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalYAxis(yShift);
-				break;
-
-			case TransformSpace::Parent :
-				if ( !this->isRoot() )
-				{
-					this->getWritableLocalCoordinates().translateAlongCustomYAxis(yShift, m_parentNode->localCoordinates());
-					break;
-				}
-
-				[[fallthrough]];
-
-			case TransformSpace::World :
-				this->getWritableLocalCoordinates().translateAlongWorldYAxis(yShift);
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::moveOnZAxisBy (float zShift, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you can't move root !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			case TransformSpace::Local :
-				this->getWritableLocalCoordinates().translateAlongLocalZAxis(zShift);
-				break;
-
-			case TransformSpace::Parent :
-				if ( !this->isRoot() )
-				{
-					this->getWritableLocalCoordinates().translateAlongCustomZAxis(zShift, m_parentNode->localCoordinates());
-					break;
-				}
-
-				[[fallthrough]];
-
-			case TransformSpace::World :
-				this->getWritableLocalCoordinates().translateAlongWorldZAxis(zShift);
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::rotate (float radian, const Vector< 3, float > & axis, TransformSpace transformSpace) noexcept
-	{
-		if ( this->isRoot() )
-		{
-			std::cerr << __PRETTY_FUNCTION__ << ", you cannot rotate the root node !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-			return;
-		}
-
-		switch ( transformSpace )
-		{
-			/* Rotation around the current node X axis. */
-			case TransformSpace::Local :
-				/* NOTE: special cases for straight axis. */
-				if ( axis == Vector< 3, float >::positiveX() )
-				{
-					this->getWritableLocalCoordinates().pitch(radian);
-				}
-				else if ( axis == Vector< 3, float >::positiveY() )
-				{
-					this->getWritableLocalCoordinates().yaw(radian);
-				}
-				else if ( axis == Vector< 3, float >::positiveZ() )
-				{
-					this->getWritableLocalCoordinates().roll(radian);
-				}
-				else
-				{
-					/* NOTE: Avoid an identity matrix rotation. */
-					if ( m_parentNode == nullptr || m_parentNode->isRoot() )
-					{
-						this->getWritableLocalCoordinates().rotate(radian, axis);
-					}
-					else
-					{
-						const auto rotation = (this->localCoordinates().modelMatrix() * Vector< 4, float >(axis,0.0F)).toVector3();
-
-						this->getWritableLocalCoordinates().rotate(radian, rotation);
-					}
-				}
-				break;
-
-			/* Rotation around the parent node X axis. */
-			case TransformSpace::Parent :
-				this->getWritableLocalCoordinates().rotate(radian, axis);
-				break;
-
-			/* Rotation around the world X axis. */
-			case TransformSpace::World :
-				if ( !this->isRoot() && !m_parentNode->isRoot() )
-				{
-					auto mat = m_parentNode->getModelMatrix().inverse();
-
-					this->getWritableLocalCoordinates().rotate(radian, (mat * Vector< 4, float >(axis, 0.0F)).toVector3());
-				}
-				else
-				{
-					this->getWritableLocalCoordinates().rotate(radian, axis);
-				}
-				break;
-		}
-
-		this->onTransform();
-	}
-
-	void
-	Node::setMovingAbility (bool state) noexcept
-	{
-		m_flags[IsMovable] = state;
-	}
-
-	bool
-	Node::isMovable () const noexcept
-	{
-		return m_flags[IsMovable];
-	}
-
-	void
-	Node::pauseSimulation (bool state) noexcept
-	{
-		m_flags[SimulationPaused] = state;
-	}
-
-	bool
-	Node::isSimulationPaused () const noexcept
-	{
-		return m_flags[SimulationPaused];
-	}
-
-	void
-	Node::enableFreeFlyMode (bool state) noexcept
-	{
-		m_flags[FreeFlyModeEnabled] = state;
-	}
-
-	bool
-	Node::isFreeFlyModeEnabled () const noexcept
-	{
-		return m_flags[FreeFlyModeEnabled];
-	}
-
-	void
-	Node::enableNoClippingMode (bool state) noexcept
-	{
-		m_flags[NoClippingModeEnabled] = state;
-	}
-
-	bool
-	Node::isNoClippingModeEnabled () const noexcept
-	{
-		return m_flags[NoClippingModeEnabled];
-	}
-
+	
 	Vector< 3, float >
 	Node::getWorldVelocity () const noexcept
 	{
-		auto velocity = this->velocity();
+		auto velocity = this->linearVelocity();
 
-		auto parent = m_parentNode;
+		auto parent = m_parent.lock();
 
 		while ( parent != nullptr )
 		{
-			velocity += parent->velocity();
+			velocity += parent->linearVelocity();
 
-			parent = parent->m_parentNode;
+			parent = parent->m_parent.lock();
 		}
 
 		return velocity;
 	}
 
 	Vector< 3, float >
-	Node::getWorldAcceleration () const noexcept
-	{
-		auto acceleration = this->acceleration();
-
-		auto parent = m_parentNode;
-
-		while ( parent != nullptr )
-		{
-			acceleration += parent->acceleration();
-
-			parent = parent->m_parentNode;
-		}
-
-		return acceleration;
-	}
-
-	Vector< 3, float >
 	Node::getWorldCenterOfMass () const noexcept
 	{
+		if ( this->isRoot() )
+		{
+			/* NOTE: Returns the origin. */
+			return {};
+		}
+
+		if ( this->parent()->isRoot() )
+		{
+			return m_cartesianFrame.position() + this->centerOfMass();
+		}
+
 		return this->getWorldCoordinates().position() + this->centerOfMass();
 	}
 
-	unsigned long
-	Node::getLifeTime () const noexcept
-	{
-		return m_lifetime;
-	}
-
-	void
-	Node::setRenderingAbilityState (bool state) noexcept
-	{
-		m_flags[IsRenderable] = state;
-	}
-
-	void
-	Node::setPhysicalObjectPropertiesState (bool state) noexcept
-	{
-		m_flags[HasPhysicalObjectProperties] = state;
-	}
-
 	bool
-	Node::onUnhandledNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept
+	Node::onUnhandledNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept
 	{
-		if ( observable->is(Node::ClassUID) )
+		if ( observable->is(Component::Abstract::ClassUID) || observable->is(PhysicalObjectProperties::ClassUID) )
 		{
-			if ( std::any_of(m_subNodes.cbegin(), m_subNodes.cend(), [observable] (const auto & subNode) {return subNode.second.get() == observable;}) )
+			/* Avoid an auto forget. */
+			return true;
+		}
+
+		if ( observable->is(ClassUID) )
+		{
+			if ( std::ranges::any_of(m_children, [observable] (const auto & subNode) {return subNode.second.get() == observable;}) )
 			{
 				this->notify(notificationCode, data);
 
@@ -985,7 +1006,7 @@ namespace Emeraude::Scenes
 #ifdef DEBUG
 		/* NOTE: Don't know what is it, goodbye ! */
 		TraceInfo{ClassId} <<
-			"Received an unhandled event from observable @" << observable << " (code:" << notificationCode << ") ! "
+			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
 #endif
 
@@ -998,39 +1019,39 @@ namespace Emeraude::Scenes
 		switch ( identifier )
 		{
 			case LocalCoordinates :
-				this->setLocalCoordinates(value.asCoordinatesFloat());
+				this->setLocalCoordinates(value.asCartesianFrameFloat());
 				return true;
 
 			case LocalPosition :
-				this->moveTo(value.asVector3Float(), TransformSpace::Local);
+				this->setPosition(value.asVector3Float(), TransformSpace::Local);
 				return true;
 
 			case LocalXPosition :
-				this->moveOnXAxisTo(value.asFloat(), TransformSpace::Local);
+				this->setXPosition(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalYPosition :
-				this->moveOnYAxisTo(value.asFloat(), TransformSpace::Local);
+				this->setYPosition(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalZPosition :
-				this->moveOnZAxisTo(value.asFloat(), TransformSpace::Local);
+				this->setZPosition(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalTranslation :
-				this->moveBy(value.asVector3Float(), TransformSpace::Local);
+				this->move(value.asVector3Float(), TransformSpace::Local);
 				return true;
 
 			case LocalXTranslation :
-				this->moveOnXAxisBy(value.asFloat(), TransformSpace::Local);
+				this->moveX(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalYTranslation :
-				this->moveOnYAxisBy(value.asFloat(), TransformSpace::Local);
+				this->moveY(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalZTranslation :
-				this->moveOnZAxisBy(value.asFloat(), TransformSpace::Local);
+				this->moveZ(value.asFloat(), TransformSpace::Local);
 				return true;
 
 			case LocalRotation :
@@ -1050,35 +1071,35 @@ namespace Emeraude::Scenes
 				return true;
 
 			case ParentPosition :
-				this->moveTo(value.asVector3Float(), TransformSpace::Parent);
+				this->setPosition(value.asVector3Float(), TransformSpace::Parent);
 				return true;
 
 			case ParentXPosition :
-				this->moveOnXAxisTo(value.asFloat(), TransformSpace::Parent);
+				this->setXPosition(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentYPosition :
-				this->moveOnYAxisTo(value.asFloat(), TransformSpace::Parent);
+				this->setYPosition(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentZPosition :
-				this->moveOnZAxisTo(value.asFloat(), TransformSpace::Parent);
+				this->setZPosition(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentTranslation :
-				this->moveBy(value.asVector3Float(), TransformSpace::Parent);
+				this->move(value.asVector3Float(), TransformSpace::Parent);
 				return true;
 
 			case ParentXTranslation :
-				this->moveOnXAxisBy(value.asFloat(), TransformSpace::Parent);
+				this->moveX(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentYTranslation :
-				this->moveOnYAxisBy(value.asFloat(), TransformSpace::Parent);
+				this->moveY(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentZTranslation :
-				this->moveOnZAxisBy(value.asFloat(), TransformSpace::Parent);
+				this->moveZ(value.asFloat(), TransformSpace::Parent);
 				return true;
 
 			case ParentRotation :
@@ -1098,35 +1119,35 @@ namespace Emeraude::Scenes
 				return true;
 
 			case WorldPosition :
-				this->moveTo(value.asVector3Float(), TransformSpace::World);
+				this->setPosition(value.asVector3Float(), TransformSpace::World);
 				return true;
 
 			case WorldXPosition :
-				this->moveOnXAxisTo(value.asFloat(), TransformSpace::World);
+				this->setXPosition(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldYPosition :
-				this->moveOnYAxisTo(value.asFloat(), TransformSpace::World);
+				this->setYPosition(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldZPosition :
-				this->moveOnZAxisTo(value.asFloat(), TransformSpace::World);
+				this->setZPosition(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldTranslation :
-				this->moveBy(value.asVector3Float(), TransformSpace::World);
+				this->move(value.asVector3Float(), TransformSpace::World);
 				return true;
 
 			case WorldXTranslation :
-				this->moveOnXAxisBy(value.asFloat(), TransformSpace::World);
+				this->moveX(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldYTranslation :
-				this->moveOnYAxisBy(value.asFloat(), TransformSpace::World);
+				this->moveY(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldZTranslation :
-				this->moveOnZAxisBy(value.asFloat(), TransformSpace::World);
+				this->moveZ(value.asFloat(), TransformSpace::World);
 				return true;
 
 			case WorldRotation :

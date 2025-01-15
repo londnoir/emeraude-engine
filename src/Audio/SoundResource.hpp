@@ -1,39 +1,46 @@
 /*
- * Emeraude/Audio/SoundResource.hpp
- * This file is part of Emeraude
+ * src/Audio/SoundResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
+#include <cstddef>
 #include <memory>
+#include <string>
 
-/* Local inclusions */
-#include "Resources/ResourceTrait.hpp"
+/* Local inclusions for inheritances. */
 #include "PlayableInterface.hpp"
+#include "Resources/ResourceTrait.hpp"
+
+/* Local inclusions for usage. */
+#include "Libraries/WaveFactory/Wave.hpp"
 #include "Resources/Container.hpp"
+#include "Buffer.hpp"
 
 namespace Emeraude::Audio
 {
@@ -56,43 +63,75 @@ namespace Emeraude::Audio
 			 */
 			explicit SoundResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::Audio::PlayableInterface::streamable() */
 			[[nodiscard]]
-			size_t streamable () const noexcept override;
+			size_t
+			streamable () const noexcept override
+			{
+				return 0;
+			}
 
 			/** @copydoc Emeraude::Audio::PlayableInterface::buffer() */
 			[[nodiscard]]
-			std::shared_ptr< const Buffer > buffer (size_t bufferIndex = 0) const noexcept override;
+			std::shared_ptr< const Buffer >
+			buffer (size_t bufferIndex = 0) const noexcept override
+			{
+				return m_buffer;
+			}
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
 			 * @brief Returns the local data.
-			 * @return const Libraries::WaveFactory::Wave< short int > &
+			 * @return const Libraries::WaveFactory::Wave< int16_t > &
 			 */
 			[[nodiscard]]
-			const Libraries::WaveFactory::Wave< short int > & localData () const noexcept;
+			const Libraries::WaveFactory::Wave< int16_t > &
+			localData () const noexcept
+			{
+				return m_localData;
+			}
 
 			/**
 			 * @brief Returns the local data.
-			 * @return Libraries::WaveFactory::Wave< short int > &
+			 * @return Libraries::WaveFactory::Wave< int16_t > &
 			 */
-			Libraries::WaveFactory::Wave< short int > & localData () noexcept;
+			Libraries::WaveFactory::Wave< int16_t > &
+			localData () noexcept
+			{
+				return m_localData;
+			}
 
 			/**
 			 * @brief Returns a sound resource by its name.
@@ -116,8 +155,8 @@ namespace Emeraude::Audio
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
-			std::shared_ptr< Buffer > m_buffer{};
-			Libraries::WaveFactory::Wave< short int > m_localData{};
+			std::shared_ptr< Buffer > m_buffer;
+			Libraries::WaveFactory::Wave< int16_t > m_localData;
 	};
 }
 

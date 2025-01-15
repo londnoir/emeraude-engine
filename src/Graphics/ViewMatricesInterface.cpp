@@ -1,63 +1,61 @@
 /*
- * Emeraude/Graphics/ViewMatricesInterface.cpp
- * This file is part of Emeraude
+ * src/Graphics/ViewMatricesInterface.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ViewMatricesInterface.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
+#include "Graphics/Renderer.hpp"
 
 namespace Emeraude::Graphics
 {
-	using namespace Libraries;
+	static constexpr auto TracerTag{"ViewMatricesInterface"};
 
-	ViewMatricesInterface::ViewMatricesInterface (bool enableCloseView, bool enableInfinityView) noexcept
+	std::shared_ptr< Vulkan::DescriptorSetLayout >
+	ViewMatricesInterface::getDescriptorSetLayout () const noexcept
 	{
-		if ( !enableCloseView && !enableInfinityView )
+		auto & layoutManager = Renderer::instance()->layoutManager();
+
+		/* NOTE: Create a unique identifier for the descriptor set layout. */
+		const std::string UUID{TracerTag};
+
+		auto descriptorSetLayout = layoutManager.getDescriptorSetLayout(UUID);
+
+		if ( descriptorSetLayout == nullptr )
 		{
-			Tracer::error("ViewMatricesInterface", "Both view type are disabled ! Leaving the close view enabled ...");
+			descriptorSetLayout = layoutManager.prepareNewDescriptorSetLayout(UUID);
+			descriptorSetLayout->setIdentifier(TracerTag, "Matrices", "DescriptorSetLayout");
+			descriptorSetLayout->declareUniformBuffer(0, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
-			m_flags[EnableInfinityView] = false;
+			if ( !layoutManager.createDescriptorSetLayout(descriptorSetLayout) )
+			{
+				return nullptr;
+			}
 		}
-		else
-		{
-			m_flags[EnableCloseView] = enableCloseView;
-			m_flags[EnableInfinityView] = enableInfinityView;
-		}
-	}
 
-	bool
-	ViewMatricesInterface::closeViewEnabled () const noexcept
-	{
-		return m_flags[EnableCloseView];
-	}
-
-	bool
-	ViewMatricesInterface::infinityViewEnabled () const noexcept
-	{
-		return m_flags[EnableInfinityView];
+		return descriptorSetLayout;
 	}
 }

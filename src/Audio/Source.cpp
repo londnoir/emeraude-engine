@@ -1,53 +1,50 @@
 /*
- * Emeraude/Audio/Source.cpp
- * This file is part of Emeraude
+ * src/Audio/Source.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Source.hpp"
 
-/* C/C++ standards libraries */
-#include <iostream>
+/* STL inclusions. */
+#include <cstddef>
+#include <vector>
 
-/* Local inclusions */
-#include "Buffer.hpp"
+/* Local inclusions. */
 #include "Manager.hpp"
-#include "Math/Base.hpp"
-#include "PlayableInterface.hpp"
-#include "Tracer.hpp"
 #include "Utility.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Audio
 {
-	// NOLINTBEGIN(readability-identifier-length)
 	using namespace Libraries;
 	using namespace Libraries::Math;
 
 	Source::Source () noexcept
 	{
 		/* NOTE: Fake a source ID to silent all methods. */
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			*(this->identifierPointer()) = 1;
 
@@ -66,7 +63,7 @@ namespace Emeraude::Audio
 
 	Source::~Source ()
 	{
-		if ( Manager::isAudioAvailable() && this->isCreated() )
+		if ( this->isCreated() )
 		{
 			alDeleteSources(1, this->identifierPointer());
 		}
@@ -75,20 +72,9 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	Source::isCreated () const noexcept
-	{
-		if ( this->identifier() <= 0 )
-		{
-			return false;
-		}
-
-		return alIsSource(this->identifier()) == AL_TRUE;
-	}
-
-	bool
 	Source::prepareEffectSlot (int channel) noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return false;
 		}
@@ -102,7 +88,7 @@ namespace Emeraude::Audio
 
 		if ( channel >= EFX::getMaxAuxiliarySends() )
 		{
-			Tracer::warning(ClassId, Blob() << "There is only max " << EFX::getMaxAuxiliarySends() << " effect slots per source !");
+			Tracer::warning(ClassId, BlobTrait() << "There is only max " << EFX::getMaxAuxiliarySends() << " effect slots per source !");
 
 			return false;
 		}
@@ -126,39 +112,10 @@ namespace Emeraude::Audio
 		return m_effectSlots.emplace(channel, effectSlot).second;
 	}
 
-	int
-	Source::getBuffersQueuedCount () const noexcept
-	{
-		return this->getIntValue(AL_BUFFERS_QUEUED, 0);
-	}
-
-	int
-	Source::getBuffersProcessedCount () const noexcept
-	{
-		return this->getIntValue(AL_BUFFERS_PROCESSED, 0);
-	}
-
-	Source::SourceType
-	Source::getSourceType () const noexcept
-	{
-		switch ( this->getIntValue(AL_SOURCE_TYPE, 0) )
-		{
-			case AL_STATIC :
-				return SourceType::Static;
-
-			case AL_STREAMING :
-				return SourceType::Streaming;
-
-			case AL_UNDETERMINED :
-			default:
-				return SourceType::Undetermined;
-		}
-	}
-
 	void
 	Source::setPosition (const Math::Vector< 3, float > & position) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -169,7 +126,7 @@ namespace Emeraude::Audio
 	void
 	Source::setPosition (const Math::Vector< 4, float > & position) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -180,7 +137,7 @@ namespace Emeraude::Audio
 	void
 	Source::setPosition (float x, float y, float z) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -193,7 +150,7 @@ namespace Emeraude::Audio
 	{
 		Math::Vector< 3, float > position{};
 
-		if ( Manager::isAudioAvailable() )
+		if ( Manager::instance()->usable() )
 		{
 			if ( this->isCreated() )
 			{
@@ -211,7 +168,7 @@ namespace Emeraude::Audio
 	void
 	Source::setDirection (const Math::Vector< 3, float > & direction) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -222,7 +179,7 @@ namespace Emeraude::Audio
 	void
 	Source::setDirection (const Math::Vector< 4, float > & direction) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -233,7 +190,7 @@ namespace Emeraude::Audio
 	void
 	Source::setDirection (float x, float y, float z) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -246,7 +203,7 @@ namespace Emeraude::Audio
 	{
 		Math::Vector< 3, float > direction;
 
-		if ( Manager::isAudioAvailable() )
+		if ( Manager::instance()->usable() )
 		{
 			if ( this->isCreated() )
 			{
@@ -264,7 +221,7 @@ namespace Emeraude::Audio
 	void
 	Source::setVelocity (const Math::Vector< 3, float > & velocity) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -275,7 +232,7 @@ namespace Emeraude::Audio
 	void
 	Source::setVelocity (const Math::Vector< 4, float > & velocity) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -286,7 +243,7 @@ namespace Emeraude::Audio
 	void
 	Source::setVelocity (float x, float y, float z) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -299,7 +256,7 @@ namespace Emeraude::Audio
 	{
 		Math::Vector< 3, float > velocity;
 
-		if ( Manager::isAudioAvailable() )
+		if ( Manager::instance()->usable() )
 		{
 			if ( this->isCreated() )
 			{
@@ -317,7 +274,7 @@ namespace Emeraude::Audio
 	void
 	Source::setGain (float gain) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -332,16 +289,10 @@ namespace Emeraude::Audio
 		alSourcef(this->identifier(), AL_GAIN, gain);
 	}
 
-	float
-	Source::gain () const noexcept
-	{
-		return this->getFloatValue(AL_GAIN, 0.0F);
-	}
-
 	void
 	Source::boundsGain (float minGain, float maxGain) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -350,22 +301,10 @@ namespace Emeraude::Audio
 		alSourcef(this->identifier(), AL_MAX_GAIN, Math::clampToUnit(maxGain));
 	}
 
-	float
-	Source::minimumGain () const noexcept
-	{
-		return this->getFloatValue(AL_MIN_GAIN, 0.0F);
-	}
-
-	float
-	Source::maximumGain () const noexcept
-	{
-		return this->getFloatValue(AL_MAX_GAIN, 0.0F);
-	}
-
 	void
 	Source::setReferenceDistance (float distance) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -382,16 +321,10 @@ namespace Emeraude::Audio
 		alSourcef(this->identifier(), AL_REFERENCE_DISTANCE, distance);
 	}
 
-	float
-	Source::referenceDistance () const noexcept
-	{
-		return this->getFloatValue(AL_REFERENCE_DISTANCE, 0.0F);
-	}
-
 	void
 	Source::setRolloffFactor (float factor) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -407,16 +340,10 @@ namespace Emeraude::Audio
 		alSourcef(this->identifier(), AL_ROLLOFF_FACTOR, factor);
 	}
 
-	float
-	Source::rolloffFactor () const noexcept
-	{
-		return this->getFloatValue(AL_ROLLOFF_FACTOR, 0.0F);
-	}
-
 	void
 	Source::setMaxDistance (float distance) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -434,16 +361,10 @@ namespace Emeraude::Audio
 		alSourcef(this->identifier(), AL_MAX_DISTANCE, distance);
 	}
 
-	float
-	Source::maxDistance () const noexcept
-	{
-		return this->getFloatValue(AL_MAX_DISTANCE, 0.0F);
-	}
-
 	void
 	Source::setCone (float innerAngle, float outerAngle, float outerGain, float gainFacingAway) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -464,51 +385,21 @@ namespace Emeraude::Audio
 		}
 	}
 
-	float
-	Source::coneInnerAngle () const noexcept
-	{
-		return this->getFloatValue(AL_CONE_INNER_ANGLE, FullRevolution< float >);
-	}
-
-	float
-	Source::coneOuterAngle () const noexcept
-	{
-		return this->getFloatValue(AL_CONE_OUTER_ANGLE, FullRevolution< float >);
-	}
-
-	float
-	Source::coneOuterGain () const noexcept
-	{
-		return this->getFloatValue(AL_CONE_OUTER_GAIN, 0.0F);
-	}
-
-	float
-	Source::coneGainFacingAway () const noexcept
-	{
-		return EFX::isAvailable() ? this->getFloatValue(AL_CONE_OUTER_GAINHF, 1.0F) : 1.0F;
-	}
-
 	void
 	Source::setPitch (float pitch) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
 
-		alSourcef(this->identifier(), AL_PITCH, Math::clamp(pitch, 0.5F, 2.0F)); // NOLINT(*-magic-numbers)
-	}
-
-	float
-	Source::pitch () const noexcept
-	{
-		return this->getFloatValue(AL_PITCH, 1.0F);
+		alSourcef(this->identifier(), AL_PITCH, Math::clamp(pitch, 0.5F, 2.0F));
 	}
 
 	void
 	Source::setAirAbsorption (int factor) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -541,7 +432,7 @@ namespace Emeraude::Audio
 	float
 	Source::setRandomPitch (float minPitch, float maxPitch) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return 1.0F;
 		}
@@ -550,7 +441,7 @@ namespace Emeraude::Audio
 		const auto min = std::max(0.5F, minPitch);
 		const auto max = std::min(2.0F, maxPitch);
 
-		auto rand = Utility::random(min, max);
+		auto rand = Utility::quickRandom(min, max);
 
 		alSourcef(this->identifier(), AL_PITCH, rand);
 
@@ -560,7 +451,7 @@ namespace Emeraude::Audio
 	void
 	Source::setMuteState (bool state) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
@@ -580,66 +471,15 @@ namespace Emeraude::Audio
 		}
 	}
 
-	bool
-	Source::toggleMuteState () noexcept
-	{
-		if ( this->isMuted() )
-		{
-			this->setMuteState(false);
-
-			return false;
-		}
-
-		this->setMuteState(true);
-
-		return true;
-	}
-
 	void
 	Source::setRelativeState (bool state) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !this->isCreated() )
+		if ( !Manager::instance()->usable() || !this->isCreated() )
 		{
 			return;
 		}
 
 		alSourcei(this->identifier(), AL_SOURCE_RELATIVE, state ? AL_TRUE : AL_FALSE);
-	}
-
-	bool
-	Source::isMuted () const noexcept
-	{
-		return this->gain() <= 0.0F;
-	}
-
-	bool
-	Source::isPlaying () const noexcept
-	{
-		return this->getIntValue(AL_SOURCE_STATE, AL_PLAYING) == AL_PLAYING;
-	}
-
-	bool
-	Source::isPaused () const noexcept
-	{
-		return this->getIntValue(AL_SOURCE_STATE, AL_PLAYING) == AL_PAUSED;
-	}
-
-	bool
-	Source::isStopped () const noexcept
-	{
-		return this->getIntValue(AL_SOURCE_STATE, AL_PLAYING) == AL_STOPPED;
-	}
-
-	bool
-	Source::isLooping () const noexcept
-	{
-		return this->getIntValue(AL_LOOPING, AL_FALSE) == AL_TRUE;
-	}
-
-	bool
-	Source::isRelative () const noexcept
-	{
-		return this->getIntValue(AL_SOURCE_RELATIVE, AL_FALSE) == AL_TRUE;
 	}
 
 	bool
@@ -708,7 +548,7 @@ namespace Emeraude::Audio
 
 		if ( effectIt == m_effectSlots.cend() )
 		{
-			Tracer::warning(ClassId, Blob() << "There is no effect slot #" << channel << " with this source !");
+			Tracer::warning(ClassId, BlobTrait() << "There is no effect slot #" << channel << " with this source !");
 
 			return;
 		}
@@ -723,7 +563,7 @@ namespace Emeraude::Audio
 
 		if ( effectIt == m_effectSlots.cend() )
 		{
-			Tracer::warning(ClassId, Blob() << "There is no effect slot #" << channel << " with this source !");
+			Tracer::warning(ClassId, BlobTrait() << "There is no effect slot #" << channel << " with this source !");
 
 			return;
 		}
@@ -734,7 +574,7 @@ namespace Emeraude::Audio
 	bool
 	Source::enableDirectFilter (const std::shared_ptr< Filters::Abstract > & filter) noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !EFX::isAvailable() )
+		if ( !Manager::instance()->usable() || !EFX::isAvailable() )
 		{
 			return false;
 		}
@@ -756,7 +596,7 @@ namespace Emeraude::Audio
 	void
 	Source::disableDirectFilter () noexcept
 	{
-		if ( !Manager::isAudioAvailable() || !EFX::isAvailable() )
+		if ( !Manager::instance()->usable() || !EFX::isAvailable() )
 		{
 			return;
 		}
@@ -767,35 +607,16 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	Source::play (const PlayableInterface * sample, PlayMode mode) noexcept
+	Source::play (const std::shared_ptr< PlayableInterface > & playableInterface, PlayMode mode) noexcept
 	{
-		/* FIXME: Check this function */
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->isAudioEnabled() )
 		{
 			return false;
 		}
 
 		alFlushErrors();
 
-		/* 1. Check the sound we wanted to play. */
-		{
-			if ( sample == nullptr )
-			{
-				Tracer::error(ClassId, "Trying to play a null pointer !");
-
-				return false;
-			}
-
-			/* Checks if the buffer is loaded */
-			if ( !sample->buffer()->isCreated() )
-			{
-				Tracer::error(ClassId, "Unable to load buffer into audio memory !");
-
-				return false;
-			}
-		}
-
-		/* 2. Check the audio source. */
+		/* Check the audio source. */
 		if ( !this->isCreated() )
 		{
 			Tracer::error(ClassId, "Source is not on audio memory !");
@@ -803,10 +624,22 @@ namespace Emeraude::Audio
 			return false;
 		}
 
+		if ( playableInterface != m_currentPlayableInterface )
+		{
+			if ( playableInterface == nullptr )
+			{
+				Tracer::error(ClassId, "Trying to play a null pointer !");
+
+				return false;
+			}
+
+			m_currentPlayableInterface = playableInterface;
+		}
+
 		/* Checks if the source is audible. */
 		if ( this->isMuted() )
 		{
-			Tracer::debug(ClassId, "Trying to play on a muted source.");
+			Tracer::debug(ClassId, "Trying to play a sound on a muted source.");
 
 			return false;
 		}
@@ -821,8 +654,6 @@ namespace Emeraude::Audio
 		{
 			case AL_PLAYING :
 			case AL_PAUSED :
-				Tracer::debug(ClassId, "Source was playing something.");
-
 				this->stop();
 
 				if ( this->getSourceType() == SourceType::Streaming )
@@ -838,10 +669,10 @@ namespace Emeraude::Audio
 		/* 3. Playback. */
 		{
 			/* Configuring the looping state. */
-			alSourcei(this->identifier(), AL_LOOPING, ( mode == PlayMode::Loop ) ? AL_TRUE : AL_FALSE);
+			alSourcei(this->identifier(), AL_LOOPING, mode == PlayMode::Loop ? AL_TRUE : AL_FALSE);
 
 			/* Checks if the sample is streamable or not. */
-			const auto bufferCount = sample->streamable();
+			const auto bufferCount = m_currentPlayableInterface->streamable();
 
 			if ( bufferCount > 0 )
 			{
@@ -852,27 +683,27 @@ namespace Emeraude::Audio
 
 				for ( size_t index = 0; index < bufferCount; index++ )
 				{
-					identifiers.push_back(sample->buffer(index)->identifier());
+					identifiers.push_back(m_currentPlayableInterface->buffer(index)->identifier());
 				}
 
 				alSourceQueueBuffers(this->identifier(), static_cast< ALsizei >(bufferCount), identifiers.data());
 			}
 			else
 			{
-				alSourcei(this->identifier(), AL_BUFFER, static_cast< ALint >(sample->buffer()->identifier()));
+				alSourcei(this->identifier(), AL_BUFFER, static_cast< ALint >(m_currentPlayableInterface->buffer()->identifier()));
 			}
 
 			/* Let's play the source. */
 			alSourcePlay(this->identifier());
 		}
 
-		return !alGetErrors(__PRETTY_FUNCTION__, __FILE__, __LINE__); // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+		return !alGetErrors(__PRETTY_FUNCTION__, static_cast< const char * >(__FILE__), __LINE__);
 	}
 
 	void
 	Source::pause () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return;
 		}
@@ -890,7 +721,7 @@ namespace Emeraude::Audio
 	void
 	Source::resume () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return;
 		}
@@ -908,7 +739,7 @@ namespace Emeraude::Audio
 	void
 	Source::rewind () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return;
 		}
@@ -930,7 +761,7 @@ namespace Emeraude::Audio
 	void
 	Source::stop () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return;
 		}
@@ -949,9 +780,25 @@ namespace Emeraude::Audio
 	}
 
 	void
-	Source::clearStream () noexcept
+	Source::removeSound () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( m_currentPlayableInterface == nullptr )
+		{
+			return;
+		}
+
+		if ( m_currentPlayableInterface->streamable() > 0 )
+		{
+			this->clearStream();
+		}
+
+		m_currentPlayableInterface.reset();
+	}
+
+	void
+	Source::clearStream () const noexcept
+	{
+		if ( !Manager::instance()->usable() )
 		{
 			return;
 		}
@@ -972,7 +819,7 @@ namespace Emeraude::Audio
 
 		alSourceUnqueueBuffers(this->identifier(), bufferCount, removedIdentifiers.data());
 
-		if ( !alGetErrors(__PRETTY_FUNCTION__, __FILE__, __LINE__) ) // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+		if ( !alGetErrors(__PRETTY_FUNCTION__, __FILE__, __LINE__) )
 		{
 			Tracer::warning(ClassId, "Something goes wrong with OpenAL when clearing streams !");
 		}
@@ -989,7 +836,7 @@ namespace Emeraude::Audio
 	{
 		auto value = defaultValue;
 
-		if ( Manager::isAudioAvailable() )
+		if ( Manager::instance()->usable() )
 		{
 			if ( this->isCreated() )
 			{
@@ -997,7 +844,7 @@ namespace Emeraude::Audio
 			}
 			else
 			{
-				Tracer::warning(ClassId, Blob() << "Trying to get data (pName: " << pName << ") from an unloaded audio source !");
+				Tracer::warning(ClassId, BlobTrait() << "Trying to get data (pName: " << pName << ") from an unloaded audio source !");
 			}
 		}
 
@@ -1015,7 +862,7 @@ namespace Emeraude::Audio
 	{
 		auto value = defaultValue;
 
-		if ( Manager::isAudioAvailable() )
+		if ( Manager::instance()->usable() )
 		{
 			if ( this->isCreated() )
 			{
@@ -1023,7 +870,7 @@ namespace Emeraude::Audio
 			}
 			else
 			{
-				Tracer::warning(ClassId, Blob() << "Trying to get data (pName: " << pName << ") from an unloaded audio source !");
+				TraceWarning{ClassId} << "Trying to get data (pName: " << pName << ") from an unloaded audio source !";
 			}
 		}
 
@@ -1056,7 +903,10 @@ namespace Emeraude::Audio
 	std::string
 	to_string (const Source & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
-	// NOLINTEND(readability-identifier-length)
 }

@@ -1,35 +1,38 @@
 /*
- * Emeraude/Vulkan/Instance.hpp
- * This file is part of Emeraude
+ * src/Vulkan/Instance.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <vector>
+#include <map>
 #include <array>
 #include <memory>
 
@@ -39,14 +42,18 @@
 /* Local inclusions for usages. */
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "DebugMessenger.hpp"
-#include "PhysicalDevice.hpp"
-#include "Device.hpp"
+#include "Types.hpp"
 
 /* Forward declarations */
 namespace Emeraude
 {
-	class Arguments;
-	class Settings;
+	namespace Vulkan
+	{
+		class PhysicalDevice;
+		class Device;
+	}
+
+	class PrimaryServices;
 	class Window;
 }
 
@@ -66,63 +73,101 @@ namespace Emeraude::Vulkan
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto EnableInstanceDebugKey = "Video/Vulkan/EnableInstanceDebug";
-			static constexpr auto ValidationLayersEnabledKey = "Video/Vulkan/ValidationLayers/Enabled";
-			static constexpr auto ValidationLayersRequestedKey = "Video/Vulkan/ValidationLayers/RequestedLayers";
-			static constexpr auto UseDebugMessengerKey = "Video/Vulkan/ValidationLayers/UseDebugMessenger";
-			static constexpr auto ShowAvailableValidationLayersKey = "Video/Vulkan/ValidationLayers/ShowAvailable";
-			static constexpr auto ShowAvailableInstanceExtensionsKey = "Video/Vulkan/Extensions/ShowAvailableForInstance";
-
 			/**
 			 * @brief Constructs the Vulkan instance.
-			 * @param arguments A reference to Arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 */
-			Instance (const Arguments & arguments, Settings & coreSettings) noexcept;
+			explicit Instance (PrimaryServices & primaryServices) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
-			/** @copydoc Emeraude::Engine::ServiceInterface::usable() */
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
+
+			/** @copydoc Emeraude::ServiceInterface::usable() */
+			[[nodiscard]]
+			bool
+			usable () const noexcept override
+			{
+				return m_instance != nullptr;
+			}
 
 			/**
 			 * @brief Returns the Vulkan instance handle wrapped in a smart pointer.
 			 * @return VkInstance
 			 */
 			[[nodiscard]]
-			VkInstance handle () const noexcept;
+			VkInstance
+			handle () const noexcept
+			{
+				return m_instance;
+			}
 
 			/**
 			 * @brief Returns a reference to the physical device smart pointer list.
 			 * @return const std::vector< std::shared_ptr< PhysicalDevice > > &
 			 */
 			[[nodiscard]]
-			const std::vector< std::shared_ptr< PhysicalDevice > > & physicalDevices () const noexcept;
+			const std::vector< std::shared_ptr< PhysicalDevice > > &
+			physicalDevices () const noexcept
+			{
+				return m_physicalDevices;
+			}
 
 			/**
 			 * @brief Returns a reference to the device smart pointer list.
 			 * @return const std::vector< std::shared_ptr< Device > > &
 			 */
 			[[nodiscard]]
-			const std::vector< std::shared_ptr< Device > > & devices () const noexcept;
+			const std::vector< std::shared_ptr< Device > > &
+			devices () const noexcept
+			{
+				return m_devices;
+			}
 
 			/**
 			 * @brief Returns the Vulkan validation layer state.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isDebugModeEnabled () const noexcept;
+			bool
+			isDebugModeEnabled () const noexcept
+			{
+				return m_flags[DebugMode];
+			}
 
 			/**
-			 * @brief Set the debug mode state.
-			 * @param state The state.
-			 * @return void
+			 * @brief Returns whether the vulkan debug messenger is enabled.
+			 * @return bool
 			 */
-			void enableDebugMode (bool state) noexcept;
+			[[nodiscard]]
+			bool
+			isUsingDebugMessenger () const noexcept
+			{
+				return m_flags[UseDebugMessenger];
+			}
+
+			/**
+			 * @brief Returns whether the dynamic state extensions was enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isDynamicStateExtensionEnabled () const noexcept
+			{
+				return m_flags[DynamicStateExtensionEnabled];
+			}
 
 			/**
 			 * @brief Returns a logical device with graphics capabilities.
@@ -130,7 +175,7 @@ namespace Emeraude::Vulkan
 			 * @return std::shared_ptr< Device >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Device > getGraphicsDevice (Window & window) noexcept;
+			std::shared_ptr< Device > getGraphicsDevice (Window * window = nullptr) noexcept;
 
 			/**
 			 * @brief Returns a logical device with compute capabilities.
@@ -170,16 +215,15 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Finds a suitable color buffer format.
 			 * @param device A reference to a device smart pointer.
-			 * @param precision A reference to a framebuffer prceisions structure.
+			 * @param precision A reference to a framebuffer precision structure.
 			 * @return VkFormat
 			 */
 			[[nodiscard]]
-			inline
 			static
 			VkFormat
-			findColorFormat (const std::shared_ptr< Vulkan::Device > & device, const Graphics::FramebufferPrecisions & precision) noexcept
+			findColorFormat (const std::shared_ptr< Device > & device, const Graphics::FramebufferPrecisions & precision) noexcept
 			{
-				return Instance::findColorFormat(device, precision.redBits(), precision.greenBits(), precision.blueBits(), precision.alphaBits());
+				return findColorFormat(device, precision.redBits(), precision.greenBits(), precision.blueBits(), precision.alphaBits());
 			}
 
 			/**
@@ -195,21 +239,19 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Finds a suitable depth/stencil buffer format.
 			 * @param device A reference to a device smart pointer.
-			 * @param precision A reference to a framebuffer prceisions structure.
+			 * @param precision A reference to a framebuffer precision structure.
 			 * @return VkFormat
 			 */
 			[[nodiscard]]
-			inline
 			static
 			VkFormat
-			findDepthStencilFormat (const std::shared_ptr< Vulkan::Device > & device, const Graphics::FramebufferPrecisions & precision) noexcept
+			findDepthStencilFormat (const std::shared_ptr< Device > & device, const Graphics::FramebufferPrecisions & precision) noexcept
 			{
-				return Instance::findDepthStencilFormat(device, precision.depthBits(), precision.stencilBits());
+				return findDepthStencilFormat(device, precision.depthBits(), precision.stencilBits());
 			}
 
 			/**
 			 * @brief Finds the right Vulkan token for multisampling.
-			 * @param device A reference to a device smart pointer.
 			 * @param samples The number of samples desired.
 			 * @return VkSampleCountFlagBits
 			 */
@@ -219,7 +261,7 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Returns a list of supported validations layers with the current system from a requested list.
 			 * @param requestedValidationLayers A reference to a vector of requested validation layer names.
-			 * @param availableValidationlayers A reference to a vector of available validation layer properties.
+			 * @param availableValidationLayers A reference to a vector of available validation layer properties.
 			 * @return std::vector< const char * >
 			 */
 			[[nodiscard]]
@@ -227,15 +269,10 @@ namespace Emeraude::Vulkan
 
 		private:
 
-			/* Flag names. */
-			static constexpr auto DebugMode = 0UL;
-			static constexpr auto ValidationLayersEnabled = 1UL;
-			static constexpr auto UseDebugMessenger = 2UL;
-
-			/** @copydoc Emeraude::Engine::ServiceInterface::onInitialize() */
+			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::Engine::ServiceInterface::onTerminate() */
+			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**
@@ -245,11 +282,19 @@ namespace Emeraude::Vulkan
 			void readSettings () noexcept;
 
 			/**
-			 * @brief Returns a list of available devices.
-			 * @return std::vector< VkPhysicalDevice >
+			 * @brief Prepares a list of physical device available on the computer.
+			 * @return bool
 			 */
 			[[nodiscard]]
-			std::vector< VkPhysicalDevice > getPhysicalDevices () const noexcept;
+			bool preparePhysicalDevices () noexcept;
+
+			/**
+			 * @brief Returns a list of a scored graphics capable devices.
+			 * @param window A pointer to the current Window.
+			 * @return std::map< size_t, std::shared_ptr< PhysicalDevice > >
+			 */
+			[[nodiscard]]
+			std::map< size_t, std::shared_ptr< PhysicalDevice > > getScoredGraphicsDevices (Window * window) const noexcept;
 
 			/**
 			 * @brief Configures the list of required validation layers.
@@ -269,6 +314,7 @@ namespace Emeraude::Vulkan
 			 * @param deviceProperties A vulkan struct for the device properties.
 			 * @param runningMode The desired running mode.
 			 * @param score A reference to the score.
+			 * @return void
 			 */
 			void modulateDeviceScoring (const VkPhysicalDeviceProperties & deviceProperties, RunningMode runningMode, size_t & score) const noexcept;
 
@@ -287,12 +333,12 @@ namespace Emeraude::Vulkan
 			 * @brief Checks the physical device type for use as a graphics device with presentation supported.
 			 * @param physicalDevice A reference to the physical device smart pointer.
 			 * @param runningMode The desired running mode.
-			 * @param window A reference to the handle where the graphics device will draw to.
+			 * @param window A pointer to the window where rendering will be displayed.
 			 * @param score A reference to a score to sort preferred device.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkDeviceCompatibility (const std::shared_ptr< PhysicalDevice > & physicalDevice, RunningMode runningMode, const Window & window, size_t & score) const noexcept;
+			bool checkDeviceCompatibility (const std::shared_ptr< PhysicalDevice > & physicalDevice, RunningMode runningMode, const Window * window, size_t & score) const noexcept;
 
 			/**
 			 * @brief Checks the device features presence for a specialized device selector.
@@ -322,22 +368,43 @@ namespace Emeraude::Vulkan
 			[[nodiscard]]
 			bool checkDeviceForRequiredExtensions (const std::shared_ptr< PhysicalDevice > & physicalDevice, const std::vector< const char * > & requiredExtensions, size_t & score) const noexcept;
 
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
-			VkInstance m_instance = VK_NULL_HANDLE;
+			/* Flag names. */
+			static constexpr auto DebugMode{0UL};
+			static constexpr auto UseDebugMessenger{1UL};
+			static constexpr auto DynamicStateExtensionEnabled{2UL};
+
+			PrimaryServices & m_primaryServices;
+			VkInstance m_instance{VK_NULL_HANDLE};
 			VkApplicationInfo m_applicationInfo{};
 			VkInstanceCreateInfo m_createInfo{};
 			VkDebugUtilsMessengerCreateInfoEXT m_debugCreateInfo{};
-			std::unique_ptr< DebugMessenger > m_debugMessenger{};
-			std::vector< std::shared_ptr< PhysicalDevice > > m_physicalDevices{};
-			std::vector< std::shared_ptr< Device > > m_devices{};
-			std::vector< std::string > m_requestedValidationLayers{};
-			std::vector< const char * > m_requiredValidationLayers{};
-			std::vector< const char * > m_requiredExtensions{};
+			std::unique_ptr< DebugMessenger > m_debugMessenger;
+			std::vector< std::shared_ptr< PhysicalDevice > > m_physicalDevices;
+			std::vector< std::shared_ptr< Device > > m_devices;
+			std::vector< std::string > m_requestedValidationLayers;
+			std::vector< const char * > m_requiredValidationLayers;
+			std::vector< const char * > m_requiredInstanceExtensions;
+			std::vector< const char * > m_requiredGraphicsDeviceExtensions{
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				//VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME, // Fails on Intel iGPU
+				//VK_EXT_FILTER_CUBIC_EXTENSION_NAME, // Fails on NVidia
+				//VK_KHR_SHARED_PRESENTABLE_IMAGE_EXTENSION_NAME,
+				/* NOTE: Enable dynamic state extension. */
+				//VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,
+				//VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME,
+				//VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,
+				/* NOTE: Video decoding extensions. (To test one day ...) */
+				//VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,
+				//VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME,
+				//VK_KHR_VIDEO_DECODE_H265_EXTENSION_NAME,
+#if IS_MACOS
+                "VK_KHR_portability_subset", // Not found on macOS : VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
+#endif
+			};
 			std::array< bool, 8 > m_flags{
 				false/*DebugMode*/,
-				false/*ValidationLayersEnabled*/,
 				false/*UseDebugMessenger*/,
+				false/*DynamicStateExtensionEnabled*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

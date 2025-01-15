@@ -1,54 +1,56 @@
 /*
- * Emeraude/Physics/PhysicalObjectProperties.hpp
- * This file is part of Emeraude
+ * src/Physics/PhysicalObjectProperties.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
+#include <cstddef>
+#include <ostream>
 #include <string>
-#include <sstream>
-#include <iostream>
+
+/* Third-party inclusions. */
+#ifndef JSON_USE_EXCEPTION
+#define JSON_USE_EXCEPTION 0
+#endif
+#include "json/json.h"
 
 /* Local inclusions for inheritances. */
-#include "Observable.hpp"
+#include "Libraries/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Math/Base.hpp"
 #include "Physics.hpp"
-
-/* Third-party libraries */
-#include "Third-Party-Inclusion/json.hpp"
 
 namespace Emeraude::Physics
 {
 	/**
 	 * @brief Class defining physical properties of an object.
-	 * @extends Libraries::Observable This notifies each physical property changes.
+	 * Libraries::ObservableTrait This notifies each physical property changes.
 	 */
-	class PhysicalObjectProperties final : public Libraries::Observable
+	class PhysicalObjectProperties final : public Libraries::ObservableTrait
 	{
 		public:
 
@@ -59,11 +61,18 @@ namespace Emeraude::Physics
 			static const size_t ClassUID;
 
 			/* JSON keys */
-			static constexpr auto MassKey = "Mass";
-			static constexpr auto SurfaceKey = "Surface";
-			static constexpr auto DragCoefficientKey = "DragCoefficient";
-			static constexpr auto BouncinessKey = "Bounciness";
-			static constexpr auto StickinessKey = "Stickiness";
+			static constexpr auto MassKey{"Mass"};
+			static constexpr auto SurfaceKey{"Surface"};
+			static constexpr auto DragCoefficientKey{"DragCoefficient"};
+			static constexpr auto BouncinessKey{"Bounciness"};
+			static constexpr auto StickinessKey{"Stickiness"};
+
+			/* Variables defaults. */
+			static constexpr auto DefaultMass{0.0F};
+			static constexpr auto DefaultSurface{0.0F};
+			static constexpr auto DefaultDragCoefficient{DragCoefficient::Sphere< float >};
+			static constexpr auto DefaultBounciness{0.5F};
+			static constexpr auto DefaultStickiness{0.5F};
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
@@ -79,16 +88,25 @@ namespace Emeraude::Physics
 			};
 
 			/**
-			 * @brief Constructs a physical properties collection.
-			 * @param mass The mass in kilograms. Default: 0.
-			 * @param surface The average surface in squared meters. Default: 0.
-			 * @param dragCoefficient The drag coefficient. Default: 0.
-			 * @param bounciness A scalar of the bounciness of the object when hitting something. Default:  0.5.
-			 * @param stickiness A scalar of the stickiness of the object when hitting something. Default: 0.5.
+			 * @brief Constructs a default physical properties collection.
 			 */
-			explicit PhysicalObjectProperties (float mass = 0.0F, float surface = 0.0F, float dragCoefficient = 0.0F, float bounciness = 0.5F, float stickiness = 0.5F) noexcept; // NOLINT(*-magic-numbers)
+			PhysicalObjectProperties () noexcept = default;
 
-			/** @copydoc Libraries::Observable::is() */
+			/**
+			 * @brief Constructs a physical property collection.
+			 * @param mass The mass in kilograms.
+			 * @param surface The average surface in square meters.
+			 * @param dragCoefficient The drag coefficient.
+			 * @param bounciness A scalar of the bounciness of the object when hitting something. Default 50%.
+			 * @param stickiness A scalar of the stickiness of the object when hitting something. Default 50%.
+			 */
+			explicit PhysicalObjectProperties (float mass, float surface, float dragCoefficient, float bounciness = DefaultBounciness, float stickiness = DefaultStickiness) noexcept;
+
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -105,7 +123,11 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float mass () const noexcept;
+			float
+			mass () const noexcept
+			{
+				return m_mass;
+			}
 
 			/**
 			 * @brief Returns the inverse of the mass of the object.
@@ -113,30 +135,42 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float inverseMass () const noexcept;
+			float
+			inverseMass () const noexcept
+			{
+				return m_inverseMass;
+			}
 
 			/**
 			 * @brief Returns whether the mass is null.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isMassNull () const noexcept;
+			bool
+			isMassNull () const noexcept
+			{
+				return m_mass <= 0.0F;
+			}
 
 			/**
-			 * @brief Sets the surface of the object in squared meters.
+			 * @brief Sets the surface of the object in square meters.
 			 * @note This should be an approximation of average surface.
-			 * @param value The surface in squared meters.
+			 * @param value The surface in square meters.
 			 * @param fireEvents Controls whether event are fired or not when setting the property. Default true.
 			 * @return bool
 			 */
 			bool setSurface (float value, bool fireEvents = true) noexcept;
 
 			/**
-			 * @brief Returns the surface of the object in squared meters.
+			 * @brief Returns the surface of the object in square meters.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float surface () const noexcept;
+			float
+			surface () const noexcept
+			{
+				return m_surface;
+			}
 
 			/**
 			 * @brief Sets the drag coefficient of the object.
@@ -152,7 +186,11 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float dragCoefficient () const noexcept;
+			float
+			dragCoefficient () const noexcept
+			{
+				return m_dragCoefficient;
+			}
 
 			/**
 			 * @brief Sets the bounciness of the object when hitting something.
@@ -167,7 +205,11 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float bounciness () const noexcept;
+			float
+			bounciness () const noexcept
+			{
+				return m_bounciness;
+			}
 
 			/**
 			 * @brief Sets the stickiness of the object when hitting something.
@@ -182,12 +224,16 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float stickiness () const noexcept;
+			float
+			stickiness () const noexcept
+			{
+				return m_stickiness;
+			}
 
 			/**
 			 * @brief Sets physical properties at once.
 			 * @param mass The mass in kilograms.
-			 * @param surface The average surface in squared meters.
+			 * @param surface The average surface in square meters.
 			 * @param dragCoefficient The drag coefficient.
 			 * @param bounciness A scalar of the bounciness of the object when hitting something.
 			 * @param stickiness A scalar of the stickiness of the object when hitting something.
@@ -204,10 +250,9 @@ namespace Emeraude::Physics
 
 			/**
 			 * @brief Sets physical properties at once from another one.
-			 * @param data A reference to an other properties.
+			 * @param other A reference to another properties.
 			 * @return bool
 			 */
-			inline
 			bool
 			setProperties (const PhysicalObjectProperties & other) noexcept
 			{
@@ -229,24 +274,24 @@ namespace Emeraude::Physics
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const PhysicalObjectProperties & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const PhysicalObjectProperties & obj) noexcept;
 
 		private:
 
-			float m_mass;
-			float m_inverseMass;
-			float m_surface;
-			float m_dragCoefficient;
-			float m_bounciness;
-			float m_stickiness;
+			float m_mass{DefaultMass};
+			float m_inverseMass{0.0F};
+			float m_surface{DefaultSurface};
+			float m_dragCoefficient{DefaultDragCoefficient};
+			float m_bounciness{DefaultBounciness};
+			float m_stickiness{DefaultStickiness};
 	};
 }

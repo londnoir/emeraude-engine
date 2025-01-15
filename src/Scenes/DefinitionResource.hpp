@@ -1,50 +1,50 @@
 /*
- * Emeraude/Scenes/DefinitionResource.hpp
- * This file is part of Emeraude
+ * src/Scenes/DefinitionResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <string>
 
-/* Local inclusions */
+/* Local inclusions for inheritances. */
 #include "Resources/ResourceTrait.hpp"
-#include "FastJSON.hpp"
-#include "PixelFactory/Color.hpp"
-#include "Resources/Container.hpp"
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/json.hpp"
+/* Local inclusions. */
+#include "Resources/Container.hpp"
 
 namespace Emeraude::Scenes
 {
 	class Scene;
 
 	/**
-	 * @brief The Definition class
+	 * @brief The scene definition class.
 	 * @extends Emeraude::Resources::ResourceTrait This is a resource
 	 */
 	class DefinitionResource final : public Resources::ResourceTrait
@@ -60,15 +60,15 @@ namespace Emeraude::Scenes
 			static const size_t ClassUID;
 
 			/* JSON key. */
-			static constexpr auto BackgroundKey = "Background";
-			static constexpr auto SceneAreaKey = "SceneArea";
-			static constexpr auto ExtraDataKey = "ExtraData";
-			static constexpr auto SurfaceGravityKey = "SurfaceGravity";
-			static constexpr auto AtmosphericDensityKey = "AtmosphericDensity";
-			static constexpr auto PlanetRadiusKey = "PlanetRadius";
-			static constexpr auto WaterDensityKey = "WaterDensity";
-			static constexpr auto NodesKey = "Nodes";
-			static constexpr auto ComponentsKey = "Components";
+			static constexpr auto BackgroundKey{"Background"};
+			static constexpr auto SceneAreaKey{"SceneArea"};
+			static constexpr auto ExtraDataKey{"ExtraData"};
+			static constexpr auto SurfaceGravityKey{"SurfaceGravity"};
+			static constexpr auto AtmosphericDensityKey{"AtmosphericDensity"};
+			static constexpr auto PlanetRadiusKey{"PlanetRadius"};
+			static constexpr auto WaterDensityKey{"WaterDensity"};
+			static constexpr auto NodesKey{"Nodes"};
+			static constexpr auto ComponentsKey{"Components"};
 
 			/**
 			 * @brief Constructs a definition resource.
@@ -77,21 +77,25 @@ namespace Emeraude::Scenes
 			 */
 			explicit DefinitionResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::load() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/** @brief Gives the name of the scene. */

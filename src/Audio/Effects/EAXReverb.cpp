@@ -1,33 +1,33 @@
 /*
- * Emeraude/Audio/Effects/EAXReverb.cpp
- * This file is part of Emeraude
+ * src/Audio/Effects/EAXReverb.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "EAXReverb.hpp"
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Tracer.hpp"
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
@@ -87,7 +87,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_DENSITY || value > AL_EAXREVERB_MAX_DENSITY )
 		{
-			Tracer::warning(ClassId, Blob() << "Density must be between " << AL_EAXREVERB_MIN_DENSITY << " and " << AL_EAXREVERB_MAX_DENSITY << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Density must be between " << AL_EAXREVERB_MIN_DENSITY << " and " << AL_EAXREVERB_MAX_DENSITY << ".");
 
 			return;
 		}
@@ -103,7 +103,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_DIFFUSION || value > AL_EAXREVERB_MAX_DIFFUSION )
 		{
-			Tracer::warning(ClassId, Blob() << "Diffusion must be between " << AL_EAXREVERB_MIN_DIFFUSION << " and " << AL_EAXREVERB_MAX_DIFFUSION << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Diffusion must be between " << AL_EAXREVERB_MIN_DIFFUSION << " and " << AL_EAXREVERB_MAX_DIFFUSION << ".");
 
 			return;
 		}
@@ -119,7 +119,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_GAIN || value > AL_EAXREVERB_MAX_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Gain must be between " << AL_EAXREVERB_MIN_GAIN << " and " << AL_EAXREVERB_MAX_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Gain must be between " << AL_EAXREVERB_MIN_GAIN << " and " << AL_EAXREVERB_MAX_GAIN << ".");
 
 			return;
 		}
@@ -135,7 +135,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_GAINHF || value > AL_EAXREVERB_MAX_GAINHF )
 		{
-			Tracer::warning(ClassId, Blob() << "Gain HF must be between " << AL_EAXREVERB_MIN_GAINHF << " and " << AL_EAXREVERB_MAX_GAINHF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Gain HF must be between " << AL_EAXREVERB_MIN_GAINHF << " and " << AL_EAXREVERB_MAX_GAINHF << ".");
 
 			return;
 		}
@@ -151,7 +151,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_GAINLF || value > AL_EAXREVERB_MAX_GAINLF )
 		{
-			Tracer::warning(ClassId, Blob() << "Gain LF must be between " << AL_EAXREVERB_MIN_GAINLF << " and " << AL_EAXREVERB_MAX_GAINLF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Gain LF must be between " << AL_EAXREVERB_MIN_GAINLF << " and " << AL_EAXREVERB_MAX_GAINLF << ".");
 
 			return;
 		}
@@ -167,7 +167,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_DECAY_TIME || value > AL_EAXREVERB_MAX_DECAY_TIME )
 		{
-			Tracer::warning(ClassId, Blob() << "Decay time must be between " << AL_EAXREVERB_MIN_DECAY_TIME << " and " << AL_EAXREVERB_MAX_DECAY_TIME << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Decay time must be between " << AL_EAXREVERB_MIN_DECAY_TIME << " and " << AL_EAXREVERB_MAX_DECAY_TIME << ".");
 
 			return;
 		}
@@ -183,7 +183,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_DECAY_HFRATIO || value > AL_EAXREVERB_MAX_DECAY_HFRATIO )
 		{
-			Tracer::warning(ClassId, Blob() << "Decay HF ratio must be between " << AL_EAXREVERB_MIN_DECAY_HFRATIO << " and " << AL_EAXREVERB_MAX_DECAY_HFRATIO << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Decay HF ratio must be between " << AL_EAXREVERB_MIN_DECAY_HFRATIO << " and " << AL_EAXREVERB_MAX_DECAY_HFRATIO << ".");
 
 			return;
 		}
@@ -199,7 +199,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_DECAY_LFRATIO || value > AL_EAXREVERB_MAX_DECAY_LFRATIO )
 		{
-			Tracer::warning(ClassId, Blob() << "Decay LF ratio must be between " << AL_EAXREVERB_MIN_DECAY_LFRATIO << " and " << AL_EAXREVERB_MAX_DECAY_LFRATIO << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Decay LF ratio must be between " << AL_EAXREVERB_MIN_DECAY_LFRATIO << " and " << AL_EAXREVERB_MAX_DECAY_LFRATIO << ".");
 
 			return;
 		}
@@ -215,7 +215,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_REFLECTIONS_GAIN || value > AL_EAXREVERB_MAX_REFLECTIONS_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Reflections gain must be between " << AL_EAXREVERB_MIN_REFLECTIONS_GAIN << " and " << AL_EAXREVERB_MAX_REFLECTIONS_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Reflections gain must be between " << AL_EAXREVERB_MIN_REFLECTIONS_GAIN << " and " << AL_EAXREVERB_MAX_REFLECTIONS_GAIN << ".");
 
 			return;
 		}
@@ -231,7 +231,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_REFLECTIONS_DELAY || value > AL_EAXREVERB_MAX_REFLECTIONS_DELAY )
 		{
-			Tracer::warning(ClassId, Blob() << "Reflections delay must be between " << AL_EAXREVERB_MIN_REFLECTIONS_DELAY << " and " << AL_EAXREVERB_MAX_REFLECTIONS_DELAY << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Reflections delay must be between " << AL_EAXREVERB_MIN_REFLECTIONS_DELAY << " and " << AL_EAXREVERB_MAX_REFLECTIONS_DELAY << ".");
 
 			return;
 		}
@@ -256,7 +256,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_LATE_REVERB_GAIN || value > AL_EAXREVERB_MAX_LATE_REVERB_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Late reverb gain must be between " << AL_EAXREVERB_MIN_LATE_REVERB_GAIN << " and " << AL_EAXREVERB_MAX_LATE_REVERB_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Late reverb gain must be between " << AL_EAXREVERB_MIN_LATE_REVERB_GAIN << " and " << AL_EAXREVERB_MAX_LATE_REVERB_GAIN << ".");
 
 			return;
 		}
@@ -272,7 +272,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_LATE_REVERB_DELAY || value > AL_EAXREVERB_MAX_LATE_REVERB_DELAY )
 		{
-			Tracer::warning(ClassId, Blob() << "Late reverb delay must be between " << AL_EAXREVERB_MIN_LATE_REVERB_DELAY << " and " << AL_EAXREVERB_MAX_LATE_REVERB_DELAY << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Late reverb delay must be between " << AL_EAXREVERB_MIN_LATE_REVERB_DELAY << " and " << AL_EAXREVERB_MAX_LATE_REVERB_DELAY << ".");
 
 			return;
 		}
@@ -297,7 +297,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_ECHO_TIME || value > AL_EAXREVERB_MAX_ECHO_TIME )
 		{
-			Tracer::warning(ClassId, Blob() << "Echo time must be between " << AL_EAXREVERB_MIN_ECHO_TIME << " and " << AL_EAXREVERB_MAX_ECHO_TIME << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Echo time must be between " << AL_EAXREVERB_MIN_ECHO_TIME << " and " << AL_EAXREVERB_MAX_ECHO_TIME << ".");
 
 			return;
 		}
@@ -313,7 +313,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_ECHO_DEPTH || value > AL_EAXREVERB_MAX_ECHO_DEPTH )
 		{
-			Tracer::warning(ClassId, Blob() << "Echo depth must be between " << AL_EAXREVERB_MIN_ECHO_DEPTH << " and " << AL_EAXREVERB_MAX_ECHO_DEPTH << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Echo depth must be between " << AL_EAXREVERB_MIN_ECHO_DEPTH << " and " << AL_EAXREVERB_MAX_ECHO_DEPTH << ".");
 
 			return;
 		}
@@ -329,7 +329,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_MODULATION_TIME || value > AL_EAXREVERB_MAX_MODULATION_TIME )
 		{
-			Tracer::warning(ClassId, Blob() << "Modulation time must be between " << AL_EAXREVERB_MIN_MODULATION_TIME << " and " << AL_EAXREVERB_MAX_MODULATION_TIME << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Modulation time must be between " << AL_EAXREVERB_MIN_MODULATION_TIME << " and " << AL_EAXREVERB_MAX_MODULATION_TIME << ".");
 
 			return;
 		}
@@ -345,7 +345,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_MODULATION_DEPTH || value > AL_EAXREVERB_MAX_MODULATION_DEPTH )
 		{
-			Tracer::warning(ClassId, Blob() << "Modulation depth must be between " << AL_EAXREVERB_MIN_MODULATION_DEPTH << " and " << AL_EAXREVERB_MAX_MODULATION_DEPTH << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Modulation depth must be between " << AL_EAXREVERB_MIN_MODULATION_DEPTH << " and " << AL_EAXREVERB_MAX_MODULATION_DEPTH << ".");
 
 			return;
 		}
@@ -361,7 +361,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF || value > AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF )
 		{
-			Tracer::warning(ClassId, Blob() << "Air absorption gain HF must be between " << AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF << " and " << AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Air absorption gain HF must be between " << AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF << " and " << AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF << ".");
 
 			return;
 		}
@@ -377,7 +377,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_HFREFERENCE || value > AL_EAXREVERB_MAX_HFREFERENCE )
 		{
-			Tracer::warning(ClassId, Blob() << "HF reference must be between " << AL_EAXREVERB_MIN_HFREFERENCE << " and " << AL_EAXREVERB_MAX_HFREFERENCE << ".");
+			Tracer::warning(ClassId, BlobTrait() << "HF reference must be between " << AL_EAXREVERB_MIN_HFREFERENCE << " and " << AL_EAXREVERB_MAX_HFREFERENCE << ".");
 
 			return;
 		}
@@ -393,7 +393,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_LFREFERENCE || value > AL_EAXREVERB_MAX_LFREFERENCE )
 		{
-			Tracer::warning(ClassId, Blob() << "LF reference must be between " << AL_EAXREVERB_MIN_LFREFERENCE << " and " << AL_EAXREVERB_MAX_LFREFERENCE << ".");
+			Tracer::warning(ClassId, BlobTrait() << "LF reference must be between " << AL_EAXREVERB_MIN_LFREFERENCE << " and " << AL_EAXREVERB_MAX_LFREFERENCE << ".");
 
 			return;
 		}
@@ -409,7 +409,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EAXREVERB_MIN_ROOM_ROLLOFF_FACTOR || value > AL_EAXREVERB_MAX_ROOM_ROLLOFF_FACTOR )
 		{
-			Tracer::warning(ClassId, Blob() << "Room Roll-off factor must be between " << AL_EAXREVERB_MIN_ROOM_ROLLOFF_FACTOR << " and " << AL_EAXREVERB_MAX_ROOM_ROLLOFF_FACTOR << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Room Roll-off factor must be between " << AL_EAXREVERB_MIN_ROOM_ROLLOFF_FACTOR << " and " << AL_EAXREVERB_MAX_ROOM_ROLLOFF_FACTOR << ".");
 
 			return;
 		}

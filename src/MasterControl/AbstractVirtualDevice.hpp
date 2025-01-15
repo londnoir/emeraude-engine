@@ -1,40 +1,40 @@
 /*
- * Emeraude/MasterControl/AbstractVirtualDevice.hpp
- * This file is part of Emeraude
+ * src/MasterControl/AbstractVirtualDevice.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <cstddef>
 #include <memory>
 #include <set>
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Math/Coordinates.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
 #include "Types.hpp"
 
 namespace Emeraude::MasterControl
@@ -83,49 +83,49 @@ namespace Emeraude::MasterControl
 			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			virtual const std::string & id () const noexcept final;
+			const std::string & id () const noexcept;
 
 			/**
 			 * @brief Returns the device type.
 			 * @return DeviceType
 			 */
 			[[nodiscard]]
-			virtual DeviceType type () const noexcept final;
+			DeviceType type () const noexcept;
 
 			/**
 			 * @brief Returns the device allowed connexion type.
 			 * @return ConnexionType
 			 */
 			[[nodiscard]]
-			virtual ConnexionType allowedConnexionType () const noexcept final;
+			ConnexionType allowedConnexionType () const noexcept;
 
 			/**
 			 * @brief Returns whether at least one virtual device is connected as input.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool hasInputConnected () const noexcept final;
+			bool hasInputConnected () const noexcept;
 
 			/**
 			 * @brief Returns all virtual devices connected to input.
 			 * @return const std::set< std::shared_ptr< AbstractVirtualAudioDevice > > &
 			 */
 			[[nodiscard]]
-			virtual const std::set< std::shared_ptr< AbstractVirtualDevice > > & inputs () const noexcept final;
+			const std::set< std::shared_ptr< AbstractVirtualDevice > > & inputs () const noexcept;
 
 			/**
 			 * @brief Returns whether at least one virtual device is connected as output.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool hasOutputConnected () const noexcept final;
+			bool hasOutputConnected () const noexcept;
 
 			/**
 			 * @brief Returns all virtual devices connected to output.
 			 * @return const std::set< std::shared_ptr< AbstractVirtualAudioDevice > > &
 			 */
 			[[nodiscard]]
-			virtual const std::set< std::shared_ptr< AbstractVirtualDevice > > & outputs () const noexcept final;
+			const std::set< std::shared_ptr< AbstractVirtualDevice > > & outputs () const noexcept;
 
 			/**
 			 * @brief Returns whether a device is connected.
@@ -134,7 +134,7 @@ namespace Emeraude::MasterControl
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isConnectedWith (const std::shared_ptr< AbstractVirtualDevice > & device, ConnexionType direction) const noexcept final;
+			bool isConnectedWith (const std::shared_ptr< AbstractVirtualDevice > & device, ConnexionType direction) const noexcept;
 
 			/**
 			 * @brief Checks if a device can be connected to output.
@@ -142,7 +142,7 @@ namespace Emeraude::MasterControl
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool canConnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice) const noexcept final;
+			bool canConnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice) const noexcept;
 
 			/**
 			 * @brief Connects a virtual device to output.
@@ -151,7 +151,7 @@ namespace Emeraude::MasterControl
 			 * @param quietly Do not fire connexion event. Default false.
 			 * @return bool
 			 */
-			virtual bool connect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, bool quietly = false) noexcept final;
+			bool connect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, bool quietly = false) noexcept;
 
 			/**
 			 * @brief Interconnects a virtual device between existing output.
@@ -160,7 +160,7 @@ namespace Emeraude::MasterControl
 			 * @param filterDevice This will only target one device by its name. Default All.
 			 * @return bool
 			 */
-			virtual bool interconnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, const std::string & filterDevice = {}) noexcept final;
+			bool interconnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, const std::string & filterDevice = {}) noexcept;
 
 			/**
 			 * @brief Disconnects the output of this virtual device from the input of a virtual device.
@@ -168,27 +168,27 @@ namespace Emeraude::MasterControl
 			 * @param quietly Do not fire disconnection event. Default false.
 			 * @return bool
 			 */
-			virtual bool disconnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, bool quietly = false) noexcept final;
+			bool disconnect (const std::shared_ptr< AbstractVirtualDevice > & targetDevice, bool quietly = false) noexcept;
 
 			/**
 			 * @brief Disconnects the device from everything.
 			 * @return void
 			 */
-			virtual void disconnectFromAll () noexcept final;
+			void disconnectFromAll () noexcept;
 
 			/**
 			 * @brief Returns a printable state of connexions.
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			virtual std::string getConnexionState () const noexcept final;
+			std::string getConnexionState () const noexcept;
 
 			/**
 			 * @brief Updates the device from object coordinates in world space holding it.
 			 * @param worldCoordinates A reference to the coordinates of the device.
 			 * @param worldVelocity A reference to the velocity vector of the device.
 			 */
-			virtual void updateDeviceFromCoordinates (const Libraries::Math::Coordinates< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept = 0;
+			virtual void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept = 0;
 
 		protected:
 
@@ -202,7 +202,7 @@ namespace Emeraude::MasterControl
 
 		private:
 
-			static size_t s_deviceCount; // NOLINT
+			static size_t s_deviceCount;
 
 			/**
 			 * @brief Builds a device id.
@@ -218,7 +218,7 @@ namespace Emeraude::MasterControl
 			 * @param quietly Do not fire connexion event. Default false.
 			 * @return bool
 			 */
-			virtual bool connectBack (const std::shared_ptr< AbstractVirtualDevice > & sourceDevice, bool quietly) noexcept final;
+			bool connectBack (const std::shared_ptr< AbstractVirtualDevice > & sourceDevice, bool quietly) noexcept;
 
 			/**
 			 * @brief Disconnects back a connected virtual device.
@@ -226,7 +226,7 @@ namespace Emeraude::MasterControl
 			 * @param quietly Do not fire disconnection event. Default false.
 			 * @return bool
 			 */
-			virtual bool disconnectBack (const std::shared_ptr< AbstractVirtualDevice > & sourceDevice, bool quietly) noexcept final;
+			bool disconnectBack (const std::shared_ptr< AbstractVirtualDevice > & sourceDevice, bool quietly) noexcept;
 
 			/**
 			 * @brief Event fired when a virtual device is connected to input.
@@ -238,7 +238,7 @@ namespace Emeraude::MasterControl
 			/**
 			 * @brief Event fired when a virtual device is connected to output.
 			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual device.
+			 * @param targetDevice A pointer to the virtual device.
 			 */
 			virtual void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept = 0;
 
@@ -252,7 +252,7 @@ namespace Emeraude::MasterControl
 			/**
 			 * @brief Event fired when a virtual device is disconnected to output.
 			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual device.
+			 * @param targetDevice A pointer to the virtual device.
 			 */
 			virtual void onTargetDisconnected (AbstractVirtualDevice * targetDevice) noexcept = 0;
 

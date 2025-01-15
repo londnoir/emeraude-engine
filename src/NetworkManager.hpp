@@ -1,57 +1,62 @@
 /*
- * Emeraude/NetworkManager.hpp
- * This file is part of Emeraude
+ * src/NetworkManager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
+#include <map>
+#include <cstddef>
 #include <string>
 #include <vector>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "ParallelizableProcess.hpp"
+#include "Libraries/ParallelizableTrait.hpp"
 
 /* Local inclusions for usages. */
+#include "Libraries/Network/URL.hpp"
 #include "CachedDownloadItem.hpp"
 #include "DownloadItem.hpp"
 
+/* Forward declarations. */
 namespace Emeraude
 {
-	class Arguments;
-	class FileSystem;
-	class Settings;
+	class PrimaryServices;
+}
 
+namespace Emeraude
+{
 	/**
 	 * @brief The network manager service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::ParallelizableProcess This needs to parallelize download processes.
+	 * @extends Libraries::ParallelizableTrait This needs to parallelize download processes.
 	 */
-	class NetworkManager final : public ServiceInterface, public Libraries::ParallelizableProcess< size_t >
+	class NetworkManager final : public ServiceInterface, public Libraries::ParallelizableTrait< size_t >
 	{
 		public:
 
@@ -75,13 +80,15 @@ namespace Emeraude
 
 			/**
 			 * @brief Constructs the network manager.
-			 * @param arguments A reference to Arguments.
-			 * @param fileSystem A reference to the file system service.
-			 * @param coreSettings A reference to the core settings service.
+			 * @param primaryServices A reference to primary services.
 			 */
-			NetworkManager (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings) noexcept;
+			explicit NetworkManager (PrimaryServices & primaryServices) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -96,7 +103,7 @@ namespace Emeraude
 			 * @param replaceExistingFile A switch to replace on exists file.
 			 * @return int
 			 */
-			int download (const Libraries::Network::URL & url, const Libraries::Path::File & output, bool replaceExistingFile = true) noexcept;
+			int download (const Libraries::Network::URL & url, const std::filesystem::path & output, bool replaceExistingFile = true) noexcept;
 
 			/**
 			 * @brief Gets the download status using a ticket got from NetworkManager::newDownloadRequest().
@@ -108,7 +115,6 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the total number of files.
-			 * @param ticket The download ticket.
 			 * @return size_t
 			 */
 			[[nodiscard]]
@@ -124,7 +130,6 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the total number of files currently in downloading.
-			 * @param ticket The download ticket.
 			 * @return size_t
 			 */
 			[[nodiscard]]
@@ -145,14 +150,14 @@ namespace Emeraude
 			size_t totalBytesReceived () const noexcept;
 
 			/**
-			 * @brief Controls download informations output from NetworkManager in console.
+			 * @brief Controls download information output from NetworkManager in console.
 			 * @param state The state of the option.
 			 * @return void
 			 */
 			void showProgressionInConsole (bool state) noexcept;
 
 			/**
-			 * @brief Returns whether the NetworkManager is printing download informations in console.
+			 * @brief Returns whether the NetworkManager is printing download information in console.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -166,23 +171,23 @@ namespace Emeraude
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::ParallelizableProcess::task() */
+			/** @copydoc Libraries::ParallelizableTrait::task() */
 			bool task (const size_t & data) noexcept override;
 
 			/**
 			 * @brief Returns the download cache db filepath.
-			 * @return Libraries::Path::File
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			Libraries::Path::File getDownloadCacheDBFilepath () const noexcept;
+			std::filesystem::path getDownloadCacheDBFilepath () const noexcept;
 
 			/**
 			 * @brief Returns the downloaded item filepath.
 			 * @param cacheId The downloaded item ID.
-			 * @return Libraries::Path::File
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			Libraries::Path::File getDownloadedCacheFilepath (size_t cacheId) const noexcept;
+			std::filesystem::path getDownloadedCacheFilepath (size_t cacheId) const noexcept;
 
 			/**
 			 * @brief Updates the download cache db file.
@@ -205,31 +210,28 @@ namespace Emeraude
 			bool clearDownloadCache () noexcept;
 
 			/* Flag names. */
-			static constexpr auto DownloadEnabled = 0UL;
-			static constexpr auto ShowProgression = 1UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto DownloadEnabled{1UL};
+			static constexpr auto ShowProgression{2UL};
 
-			static constexpr auto DownloadCacheDirectory = "downloads";
-			static constexpr auto DownloadCacheDBFilename = "downloads_db.json";
+			static constexpr auto DownloadCacheDirectory{"downloads"};
+			static constexpr auto DownloadCacheDBFilename{"downloads_db.json"};
 
-			static constexpr auto FileDataBaseKey = "FileDataBase";
-			static constexpr auto FileURLKey = "FileURL";
-			static constexpr auto CacheIdKey = "CacheId";
-			static constexpr auto FilenameKey = "Filename";
-			static constexpr auto FilesizeKey = "Filesize";
+			static constexpr auto FileDataBaseKey{"FileDataBase"};
+			static constexpr auto FileURLKey{"FileURL"};
+			static constexpr auto CacheIdKey{"CacheId"};
+			static constexpr auto FilenameKey{"Filename"};
+			static constexpr auto FilesizeKey{"Filesize"};
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			const FileSystem & m_fileSystem;
-			Settings & m_coreSettings;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			Libraries::Path::Directory m_downloadCacheDirectory{};
-			std::map< std::string, CachedDownloadItem > m_downloadCache{};
+			PrimaryServices & m_primaryServices;
+			std::filesystem::path m_downloadCacheDirectory;
+			std::map< std::string, CachedDownloadItem > m_downloadCache;
 			size_t m_nextCacheItemId{1};
-			std::vector< DownloadItem > m_downloadItems{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
+			std::vector< DownloadItem > m_downloadItems;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
 				false/*DownloadEnabled*/,
 				false/*ShowProgression*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

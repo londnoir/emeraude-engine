@@ -1,43 +1,51 @@
 /*
- * Emeraude/Vulkan/SwapChain.hpp
- * This file is part of Emeraude
+ * src/Vulkan/SwapChain.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <memory>
+/* STL inclusions. */
+#include <cstdint>
+#include <array>
 #include <vector>
+#include <string>
+#include <memory>
 
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
 #include "Graphics/RenderTarget/Abstract.hpp"
 
 /* Local inclusions for usages. */
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Graphics/Renderer.hpp"
 #include "Graphics/ViewMatrices2DUBO.hpp"
+#include "MasterControl/AbstractVirtualVideoDevice.hpp"
+#include "MasterControl/Types.hpp"
 #include "Window.hpp"
+#include "Settings.hpp"
 
 /* Forward declarations. */
 namespace Emeraude::Vulkan
@@ -56,9 +64,29 @@ namespace Emeraude::Vulkan
 namespace Emeraude::Vulkan
 {
 	/**
+	 * @brief Swap chain frame structure.
+	 */
+	struct Frame
+	{
+		/* Framebuffer configuration holder. */
+		std::unique_ptr< Framebuffer > framebuffer;
+		/* Color buffer */
+		std::shared_ptr< Image > colorImage;
+		std::shared_ptr< ImageView > colorImageView;
+		/* Depth+Stencil buffers. */
+		std::shared_ptr< Image > depthStencilImage;
+		std::shared_ptr< ImageView > depthImageView;
+		std::shared_ptr< ImageView > stencilImageView;
+		/* Synchronization. */
+		std::unique_ptr< Sync::Semaphore > imageAvailableSemaphore;
+		std::unique_ptr< Sync::Semaphore > renderFinishedSemaphore;
+		std::unique_ptr< Sync::Fence > inFlightFence;
+	};
+
+	/**
 	 * @brief The vulkan swap chain class.
-	 * @extends Emeraude::AbstractDeviceDependentObject This object needs a device.
-	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render
+	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
 	 */
 	class SwapChain final : public AbstractDeviceDependentObject, public Graphics::RenderTarget::Abstract
 	{
@@ -70,104 +98,144 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Constructs a swap chain.
 			 * @param device A reference to a smart pointer of the device in use with the swap chain.
+			 * @param settings A reference to the settings.
+			 * @param window A reference to the window.
 			 */
-			SwapChain (const std::shared_ptr< Device > & device, Window & window) noexcept;
+			SwapChain (const std::shared_ptr< Device > & device, Settings & settings, Window & window) noexcept;
 
-			/**
-			 * @brief Copy constructor.
-			 * @param copy A reference to the copied instance.
-			 */
-			SwapChain (const SwapChain & copy) noexcept = delete;
+			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			bool
+			createOnHardware () noexcept override
+			{
+				if ( !this->create(*Graphics::Renderer::instance()) )
+				{
+					return false;
+				}
 
-			/**
-			 * @brief Move constructor.
-			 * @param copy A reference to the copied instance.
-			 */
-			SwapChain (SwapChain && copy) noexcept = delete;
+				this->setCreated();
 
-			/**
-			 * @brief Copy assignment.
-			 * @param copy A reference to the copied instance.
-			 */
-			SwapChain & operator= (const SwapChain & copy) noexcept = delete;
+				return true;
+			}
 
-			/**
-			 * @brief Move assignment.
-			 * @param copy A reference to the copied instance.
-			 */
-			SwapChain & operator= (SwapChain && copy) noexcept = delete;
+			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			bool
+			destroyFromHardware () noexcept override
+			{
+				if ( !this->destroy() )
+				{
+					return false;
+				}
 
-			/**
-			 * @brief Destructs the swap chain.
-			 */
-			~SwapChain () override;
+				this->setDestroyed();
 
-			/** @copydoc Emeraude::AbstractDeviceDependentObject::createOnHardware() */
-			bool createOnHardware () noexcept override;
+				return true;
+			}
 
-			/** @copydoc Emeraude::AbstractDeviceDependentObject::recreate() */
+			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() const */
 			[[nodiscard]]
-			bool recreate () noexcept override;
+			MasterControl::VideoType
+			videoType () const noexcept override
+			{
+				return MasterControl::VideoType::View;
+			}
 
-			/** @copydoc Emeraude::AbstractDeviceDependentObject::destroyFromHardware() */
-			bool destroyFromHardware () noexcept override;
-
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() const */
 			[[nodiscard]]
-			MasterControl::VideoType videoType () const noexcept override;
+			bool
+			isCubemap () const noexcept override
+			{
+				return false;
+			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() */
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() const */
 			[[nodiscard]]
-			bool isCubemap () const noexcept override;
+			const Vulkan::Framebuffer *
+			framebuffer () const noexcept override
+			{
+				return m_frames[m_currentFrame].framebuffer.get();
+			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::renderPass() */
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() const */
 			[[nodiscard]]
-			const Vulkan::RenderPass * renderPass () const noexcept final;
+			std::shared_ptr< Vulkan::Image >
+			image () const noexcept override
+			{
+				return m_frames[m_currentFrame].colorImage;
+			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() */
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() const */
 			[[nodiscard]]
-			const Vulkan::Framebuffer * framebuffer () const noexcept final;
-
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() */
-			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Image > & image () const noexcept final;
-
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() */
-			[[nodiscard]]
-			const std::shared_ptr< Vulkan::ImageView > & imageView () const noexcept final;
+			std::shared_ptr< Vulkan::ImageView >
+			imageView () const noexcept override
+			{
+				return m_frames[m_currentFrame].colorImageView;
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() const */
 			[[nodiscard]]
-			const Graphics::ViewMatricesInterface & viewMatrices () const noexcept override;
+			const Graphics::ViewMatrices2DUBO &
+			viewMatrices () const noexcept override
+			{
+				return m_viewMatrices;
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
 			[[nodiscard]]
-			Graphics::ViewMatricesInterface & viewMatrices () noexcept override;
+			Graphics::ViewMatrices2DUBO &
+			viewMatrices () noexcept override
+			{
+				return m_viewMatrices;
+			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() const */
 			[[nodiscard]]
-			bool isValid () const noexcept override;
+			bool
+			isValid () const noexcept override
+			{
+				/* FIXME: Add a better check ! */
+				return m_handle != VK_NULL_HANDLE;
+			}
+
+			/**
+			 * @brief Recreates the swap chain.
+			 * @param renderer A reference to the renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool recreateOnHardware (Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Returns the swap chain vulkan handle.
 			 * @return VkSwapchainKHR
 			 */
 			[[nodiscard]]
-			VkSwapchainKHR handle () const noexcept;
+			VkSwapchainKHR
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the swap chain create info.
-			 * @return VkSwapchainCreateInfoKHR
+			 * @return const VkSwapchainCreateInfoKHR &
 			 */
 			[[nodiscard]]
-			VkSwapchainCreateInfoKHR createInfo () const noexcept;
+			const VkSwapchainCreateInfoKHR &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the number of images in the swap chain.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t imageCount () const noexcept;
+			uint32_t
+			imageCount () const noexcept
+			{
+				return m_imageCount;
+			}
 
 			/**
 			 * @brief Acquires the next image index available in the swap chain.
@@ -189,12 +257,16 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isDegraded () const noexcept;
+			bool
+			isDegraded () const noexcept
+			{
+				return m_flags[SwapChainRecreationRequested];
+			}
 
 		private:
 
 			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::Coordinates< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
 			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
@@ -205,13 +277,39 @@ namespace Emeraude::Vulkan
 			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceDisconnected() */
 			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			[[nodiscard]]
+			bool onCreate (Graphics::Renderer & renderer) noexcept override;
+
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			void onDestroy () noexcept override;
+
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			[[nodiscard]]
+			std::shared_ptr< RenderPass > createRenderPass (Graphics::Renderer & renderer) const noexcept override;
+
+			/**
+			 * @brief Creates the images and the image views for each swap chain frame.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createImages () noexcept;
+
+			/**
+			 * @brief Creates the framebuffer swap chain frame.
+			 * @param renderPass A reference to the render pass smart pointer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createFramebuffers (const std::shared_ptr< RenderPass > & renderPass) noexcept;
+
 			/**
 			 * @brief Returns the minimum image count desired in the swap chain.
-			 * @param surface A reference to the surface.
+			 * @param capabilities
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t chooseMinimumImageCount () const noexcept;
+			uint32_t selectImageCount (const VkSurfaceCapabilitiesKHR & capabilities) noexcept;
 
 			/**
 			 * @brief Returns the best surface format.
@@ -229,21 +327,22 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Returns the dimensions of the swap chain.
+			 * @param capabilities
 			 * @return VkExtent2D
 			 */
 			[[nodiscard]]
-			VkExtent2D chooseSwapExtent () const noexcept;
+			VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR & capabilities) const noexcept;
 
 			/**
 			 * @brief Checks the prerequisites to create a swap chain.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkPrerequisites () noexcept;
+			bool checkPrerequisites () const noexcept;
 
 			/**
 			 * @brief Creates the base swap chain object.
-			 * @param oldSwapChain An handle to the previous swap chain. Default none.
+			 * @param oldSwapChain A handle to the previous swap chain. Default none.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -271,9 +370,10 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Creates the global framebuffer metaphor.
+			 * @param renderer A reference to the renderer.
 			 * @return bool
 			 */
-			bool createFramebuffer () noexcept;
+			bool createFramebuffer (Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Resets the global framebuffer metaphor.
@@ -296,7 +396,19 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createColorBuffer (const VkImage & swapChainImage, std::shared_ptr< Vulkan::Image > & image, std::shared_ptr< Vulkan::ImageView > & imageView, const std::string & purposeId) noexcept;
+			bool createColorBuffer (const VkImage & swapChainImage, std::shared_ptr< Image > & image, std::shared_ptr< ImageView > & imageView, const std::string & purposeId) const noexcept;
+
+			/**
+			 * @brief Creates a depth+stencil buffer.
+			 * @param device A reference to a graphics device smart pointer.
+			 * @param image A reference to an image smart pointer.
+			 * @param depthImageView A reference to an image view smart pointer.
+			 * @param stencilImageView A reference to an image view smart pointer.
+			 * @param purposeId A reference to a string to identify buffers.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createDepthStencilBuffer (const std::shared_ptr< Vulkan::Device > & device, std::shared_ptr< Vulkan::Image > & image, std::shared_ptr< Vulkan::ImageView > & depthImageView, std::shared_ptr< Vulkan::ImageView > & stencilImageView, const std::string & purposeId) noexcept override;
 
 			/**
 			 * @brief Creates the synchronization primitives.
@@ -305,38 +417,26 @@ namespace Emeraude::Vulkan
 			[[nodiscard]]
 			bool createSynchronizationPrimitives () noexcept;
 
-			/**
-			 * @brief Destroys the synchronization primitives.
-			 * @return void
-			 */
-			void destroySynchronizationPrimitives () noexcept;
-
 			/* Flag names. */
-			static constexpr auto Ready = 0UL;
-			static constexpr auto SwapChainRecreationRequested = 1UL;
+			static constexpr auto Ready{0UL};
+			static constexpr auto TripleBufferingEnabled{1UL};
+			static constexpr auto VSyncEnabled{2UL};
+			static constexpr auto SwapChainRecreationRequested{3UL};
+			static constexpr auto ShowInformation{4UL};
 
 			Window * m_window;
 			VkSwapchainKHR m_handle{VK_NULL_HANDLE};
 			VkSwapchainCreateInfoKHR m_createInfo{};
 			uint32_t m_imageCount{0};
 			uint32_t m_currentFrame{0};
-			std::shared_ptr< RenderPass > m_renderPass{};
-			std::vector< std::unique_ptr< Framebuffer > > m_framebuffers{};
-			std::vector< std::shared_ptr< Image > > m_images{};
-			std::vector< std::shared_ptr< ImageView > > m_imageViews{};
-			std::vector< std::shared_ptr< Image > > m_depthStencilImages{};
-			std::vector< std::shared_ptr< ImageView > > m_depthImageViews{};
-			std::vector< std::shared_ptr< ImageView > > m_stencilImageViews{};
-			std::vector< std::unique_ptr< Sync::Semaphore > > m_imageAvailableSemaphores{};
-			std::vector< std::unique_ptr< Sync::Semaphore > > m_renderFinishedSemaphores{};
-			std::vector< std::unique_ptr< Sync::Fence > > m_inFlightFences{};
-			Graphics::ViewMatrices2DUBO m_viewMatrices{};
-			std::array< bool, 8 > m_flags{ /* NOLINT(*-magic-numbers) */
+			std::vector< Frame > m_frames;
+			Graphics::ViewMatrices2DUBO m_viewMatrices;
+			std::array< bool, 8 > m_flags{
 				false/*Ready*/,
+				false/*TripleBufferingEnabled*/,
+				false/*VSyncEnabled*/,
 				false/*SwapChainRecreationRequested*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
+				false/*ShowInformation*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/

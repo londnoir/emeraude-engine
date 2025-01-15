@@ -1,40 +1,47 @@
 /*
- * Emeraude/Input/PointerController.hpp
- * This file is part of Emeraude
+ * src/Input/PointerController.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
+#include <string>
 
 /* Local inclusions for inheritances. */
 #include "ControllerInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "PointerTypes.hpp"
+#include "Types.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
+{
+	class Window;
+}
 
 namespace Emeraude::Input
 {
@@ -46,16 +53,38 @@ namespace Emeraude::Input
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"PointerController"};
+
 			/**
 			 * @brief Constructs a default pointer.
 			 */
 			PointerController () noexcept = default;
 
+			/** @copydoc Emeraude::Input::ControllerInterface::disable() */
+			void
+			disable (bool state) noexcept override
+			{
+				m_disabled = state;
+			}
+
+			/** @copydoc Emeraude::Input::ControllerInterface::disabled() */
+			[[nodiscard]]
+			bool
+			disabled () const noexcept override
+			{
+				return m_disabled;
+			}
+
 			/** @copydoc Emeraude::Input::ControllerInterface::isConnected() */
 			[[nodiscard]]
-			bool isConnected () const noexcept override;
+			bool
+			isConnected () const noexcept override
+			{
+				return true;
+			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::showRawState() */
+			/** @copydoc Emeraude::Input::ControllerInterface::getRawState() */
 			[[nodiscard]]
 			std::string getRawState () const noexcept override;
 
@@ -83,26 +112,16 @@ namespace Emeraude::Input
 			bool isButtonReleased (MouseButton button) const noexcept;
 
 			/**
-			 * @brief xPosition
-			 * @return double
+			 * @brief This function is called by the input manager to update device state.
+			 * @note This must be called by the main thread.
+			 * @param window A reference to the window.
 			 */
-			[[nodiscard]]
-			double xPosition () const noexcept;
-
-			/**
-			 * @brief yPosition
-			 * @return double
-			 */
-			[[nodiscard]]
-			double yPosition () const noexcept;
-
-			/** This function is called by the input manager to update device state.
-			 * @note This must be called by the main thread. */
-			static void readDeviceState (GLFWwindow * window) noexcept;
+			static void readDeviceState (const Window & window) noexcept;
 
 		private:
 
-			static std::array< bool, 8 > s_deviceState; // NOLINT NOTE: Special state copy.
-			static std::array< double, 2 > s_pointerPosition; // NOLINT NOTE: Special state copy.
+			static std::array< char, 8 > s_deviceState;
+
+			bool m_disabled{false};
 	};
 }

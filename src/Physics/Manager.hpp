@@ -1,33 +1,33 @@
 /*
- * Emeraude/Physics/Manager.hpp
- * This file is part of Emeraude
+ * src/Physics/Manager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <vector>
 #include <map>
 #include <array>
@@ -35,6 +35,8 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
+#include "Vulkan/TransferManager.hpp"
+#include "Vulkan/LayoutManager.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
@@ -52,8 +54,7 @@ namespace Emeraude
 		class ComputePipeline;
 	}
 
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
 }
 
 namespace Emeraude::Physics
@@ -72,19 +73,18 @@ namespace Emeraude::Physics
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto AccelerationEnabledKey = "Physics/AccelerationEnabled";
-			static constexpr auto DefaultAccelerationEnabled = false;
-
 			/**
 			 * @brief Constructs the physics manager.
-			 * @param arguments A reference to Arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 * @param instance A reference to the Vulkan instance.
 			 */
-			Manager (const Arguments & arguments, Settings & coreSettings, Vulkan::Instance & instance) noexcept;
+			Manager (PrimaryServices & primaryServices, Vulkan::Instance & instance) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -93,26 +93,70 @@ namespace Emeraude::Physics
 			bool usable () const noexcept override;
 
 			/**
-			 * @brief Returns the selected logical device used for compute.
-			 * @return const std::shared_ptr< Vulkan::Device > &
+			 * @brief Returns the reference to the transfer manager.
+			 * @return Vulkan::TransferManager &
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Device > & device () const noexcept;
+			Vulkan::TransferManager &
+			transferManager () noexcept
+			{
+				return m_transferManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the transfer manager.
+			 * @return const Vulkan::TransferManager &
+			 */
+			[[nodiscard]]
+			const Vulkan::TransferManager &
+			transferManager () const noexcept
+			{
+				return m_transferManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the layout manager.
+			 * @return Vulkan::LayoutManager &
+			 */
+			[[nodiscard]]
+			Vulkan::LayoutManager &
+			layoutManager () noexcept
+			{
+				return m_layoutManager;
+			}
+
+			/**
+			 * @brief Returns the reference to the layout manager.
+			 * @return const Vulkan::LayoutManager &
+			 */
+			[[nodiscard]]
+			const Vulkan::LayoutManager &
+			layoutManager () const noexcept
+			{
+				return m_layoutManager;
+			}
+
+			/**
+			 * @brief Returns the selected logical device used for compute.
+			 * @return std::shared_ptr< Vulkan::Device >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::Device >
+			device () const noexcept
+			{
+				return m_device;
+			}
 
 			/**
 			 * @brief Returns the descriptor pool.
-			 * @return const std::shared_ptr< Vulkan::DescriptorPool > &
+			 * @return std::shared_ptr< Vulkan::DescriptorPool >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::DescriptorPool > & descriptorPool () const noexcept;
-
-			/**
-			 * @brief Returns or creates a pipeline layout according to requirements.
-			 * @param descriptorSetLayouts A reference to a list of descriptor set layout.
-			 * @return std::shared_ptr< Vulkan::PipelineLayout >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Vulkan::PipelineLayout > getPipelineLayout (const std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts) noexcept;
+			std::shared_ptr< Vulkan::DescriptorPool >
+			descriptorPool () const noexcept
+			{
+				return m_descriptorPool;
+			}
 
 			/**
 			 * @brief Returns or creates a graphics pipeline according to requirements.
@@ -127,7 +171,11 @@ namespace Emeraude::Physics
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isPhysicsAccelerationAvailable () noexcept;
+			bool
+			isPhysicsAccelerationAvailable () const noexcept
+			{
+				return m_flags[AccelerationAvailable];
+			}
 
 		private:
 
@@ -143,23 +191,22 @@ namespace Emeraude::Physics
 			void clearCommandBuffers () noexcept;
 
 			/* Flag names. */
-			static constexpr auto Usable = 0UL;
-			static constexpr auto AccelerationAvailable = 1UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto AccelerationAvailable{1UL};
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
+			PrimaryServices & m_primaryServices;
 			Vulkan::Instance & m_vulkanInstance;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			std::shared_ptr< Vulkan::Device > m_device{};
-			std::shared_ptr< Vulkan::DescriptorPool > m_descriptorPool{};
-			std::map< size_t , std::shared_ptr< Vulkan::DescriptorSetLayout > > m_descriptorSetLayouts{};
-			std::shared_ptr< Vulkan::CommandPool > m_commandPool{};
-			std::vector< std::shared_ptr< Vulkan::CommandBuffer > > m_commandBuffers{};
-			std::map< size_t, std::shared_ptr< Vulkan::PipelineLayout > > m_pipelineLayouts{};
-			std::map< size_t, std::shared_ptr< Vulkan::ComputePipeline > > m_pipelines{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				false/*Usable*/,
+			std::shared_ptr< Vulkan::Device > m_device;
+			Vulkan::TransferManager m_transferManager{Vulkan::GPUWorkType::Physics};
+			Vulkan::LayoutManager m_layoutManager{Vulkan::GPUWorkType::Physics};
+			std::vector< ServiceInterface * > m_subServicesEnabled;
+			std::shared_ptr< Vulkan::DescriptorPool > m_descriptorPool;
+			std::shared_ptr< Vulkan::CommandPool > m_commandPool;
+			std::vector< std::shared_ptr< Vulkan::CommandBuffer > > m_commandBuffers;
+			std::map< size_t, std::shared_ptr< Vulkan::PipelineLayout > > m_pipelineLayouts;
+			std::map< size_t, std::shared_ptr< Vulkan::ComputePipeline > > m_pipelines;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
 				false/*AccelerationAvailable*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

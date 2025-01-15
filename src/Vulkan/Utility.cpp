@@ -1,41 +1,43 @@
 /*
- * Emeraude/Vulkan/Utility.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Utility.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Utility.hpp"
 
+/* STL inclusions. */
+#include <sstream>
+
 /* Local inclusions. */
-#include "Tracer.hpp"
-#include "Version.hpp"
+#include "Libraries/Version.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	static constexpr auto TracerTag{"VulkanUtility"};
+	//static constexpr auto TracerTag{"VulkanUtility"};
 
 	const char *
 	vkResultToCString (VkResult code) noexcept
@@ -161,46 +163,48 @@ namespace Emeraude::Vulkan
 		}
 	}
 
-	void
-	printItemList (const std::vector< VkLayerProperties > & validationLayers) noexcept
+	std::string
+	getItemListAsString (const std::vector< VkLayerProperties > & validationLayers) noexcept
 	{
 		if ( validationLayers.empty() )
 		{
-			TraceWarning{TracerTag} << "No validation layers available !";
+			return "No validation layers available !";
 		}
-		else
+
+		std::stringstream output;
+
+		output << "Validation layers available :" "\n";
+
+		for ( const auto & validationLayer : validationLayers )
 		{
-			TraceInfo trace{TracerTag};
+			const Version specVersion{validationLayer.specVersion};
+			const Version implVersion{validationLayer.implementationVersion};
 
-			trace << "Validation layers available :" "\n";
-
-			for ( const auto & validationLayer : validationLayers )
-			{
-				const Version specVersion{validationLayer.specVersion};
-				const Version implVersion{validationLayer.implementationVersion};
-
-				trace << '\t' << validationLayer.layerName << " (" << specVersion << "/" << implVersion << ") : " << validationLayer.description << "\n";
-			}
+			output << '\t' << static_cast< const char * >(validationLayer.layerName) << " (" << specVersion << "/" << implVersion << ") : " << static_cast< const char * >(validationLayer.description) << "\n";
 		}
+
+		return output.str();
 	}
 
-	void
-	printItemList (const char * type, const std::vector< VkExtensionProperties > & extensions) noexcept
+	std::string
+	getItemListAsString (const char * type, const std::vector< VkExtensionProperties > & extensions) noexcept
 	{
+		std::stringstream output;
+
 		if ( extensions.empty() )
 		{
-			TraceWarning{TracerTag} << "No " << type << " extensions available !";
+			output << "No " << type << " extensions available !";
 		}
 		else
 		{
-			TraceInfo trace{TracerTag};
-
-			trace << type << " extensions available :" "\n";
+			output << type << " extensions available :" "\n";
 
 			for ( const auto & extension : extensions )
 			{
-				trace << '\t' << extension.extensionName << " (" << Version{extension.specVersion} << ")" "\n";
+				output << '\t' << static_cast< const char * >(extension.extensionName) << " (" << Version{extension.specVersion} << ")" "\n";
 			}
 		}
+
+		return output.str();
 	}
 }

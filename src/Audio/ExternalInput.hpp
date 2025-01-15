@@ -1,58 +1,64 @@
 /*
- * Emeraude/Audio/ExternalInput.hpp
- * This file is part of Emeraude
+ * src/Audio/ExternalInput.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
+#include <cstddef>
+#include <string>
 #include <thread>
 #include <vector>
+#include <array>
+#include <filesystem>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
-/* Local inclusions for usages. */
-#include "Path/File.hpp"
-#include "WaveFactory/Types.hpp"
+/* Third-party inclusions. */
+#include "AL/al.h"
+#include "AL/alc.h"
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/openal.hpp"
+/* Local inclusions for usages. */
+#include "Libraries/WaveFactory/Types.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
 {
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
 }
 
 namespace Emeraude::Audio
 {
 	/**
-	 * @brief Class that define a device to grab audio from outside of the engine like a real microphone.
-	 * @extends Emeraude::Audio::ServiceInterface This is a service.
+	 * @brief Class that define a device to grab audio from outside the engine like a real microphone.
+	 * @extends Emeraude::ServiceInterface This is a service.
 	 */
 	class ExternalInput final : public ServiceInterface
 	{
@@ -64,18 +70,11 @@ namespace Emeraude::Audio
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto RecorderFrequencyKey = "Audio/Frequency";
-			static constexpr auto DefaultRecorderFrequency = 22050;
-			static constexpr auto RecorderBufferSizeKey = "Audio/BufferSize";
-			static constexpr auto DefaultRecorderBufferSize = 32;
-
 			/**
 			 * @brief Constructs the external audio input.
-			 * @param arguments A reference to the core arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 */
-			ExternalInput (const Arguments & arguments, Settings & coreSettings) noexcept;
+			explicit ExternalInput (PrimaryServices & primaryServices) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -106,7 +105,11 @@ namespace Emeraude::Audio
 			 */
 			~ExternalInput () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -133,10 +136,10 @@ namespace Emeraude::Audio
 
 			/**
 			 * @brief Saves the recording to file.
-			 * @param filepath A reference to a file
+			 * @param filepath A reference to a filesystem path.
 			 * @return bool
 			 */
-			bool saveRecord (const Libraries::Path::File & filepath) noexcept;
+			bool saveRecord (const std::filesystem::path & filepath) const noexcept;
 
 		private:
 
@@ -152,20 +155,30 @@ namespace Emeraude::Audio
 			void process () noexcept;
 
 			/**
-			 * @brief Queries devices informations.
+			 * @brief Queries devices information.
 			 * @return bool.
 			 */
 			bool queryDevices () noexcept;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
-			ALCdevice * m_device = nullptr;
-			std::vector< std::string > m_availableCaptureDevices{};
-			std::vector< ALshort > m_samples{};
-			std::thread m_process{};
+			/* Flag names */
+			static constexpr auto ShowInformation{0UL};
+			static constexpr auto IsRecording{1UL};
+
+			PrimaryServices & m_primaryServices;
+			ALCdevice * m_device{nullptr};
+			std::vector< std::string > m_availableCaptureDevices;
+			std::vector< ALshort > m_samples;
+			std::thread m_process;
 			Libraries::WaveFactory::Frequency m_frequency = Libraries::WaveFactory::Frequency::PCM44100Hz;
-			bool m_isRecording = false;
+			std::array< bool, 8 > m_flags{
+				false/*ShowInformation*/,
+				false/*IsRecording*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

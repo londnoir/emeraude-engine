@@ -1,41 +1,46 @@
 /*
- * Emeraude/Graphics/Geometry/ResourceGenerator.hpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/ResourceGenerator.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <memory>
 
 /* Local inclusions for usages. */
-#include "PixelFactory/Color.hpp"
-#include "GenerationParameters.hpp"
+#include "Libraries/Math/Vector.hpp"
+#include "Libraries/VertexFactory/Shape.hpp"
+#include "Resources/Manager.hpp"
 #include "VertexResource.hpp"
 #include "IndexedVertexResource.hpp"
 #include "VertexGridResource.hpp"
+#include "GenerationParameters.hpp"
 
 namespace Emeraude::Graphics::Geometry
 {
@@ -52,32 +57,41 @@ namespace Emeraude::Graphics::Geometry
 
 			/**
 			 * @brief Constructs the geometry resource generator.
-			 * @param geometryResourceFlagBits Flags value from GeometryFlagBits. Default 0.
+			 * @param resources A reference to the resource manager.
+			 * @param geometryFlagBits Flags value from GeometryFlagBits. Default 0.
 			 */
-			explicit ResourceGenerator (uint32_t geometryResourceFlagBits = 0) noexcept;
+			explicit ResourceGenerator (Resources::Manager & resources, uint32_t geometryFlagBits = 0) noexcept;
 
 			/**
 			 * @brief Returns the generation parameters.
 			 * @return const GenerationParameters &
 			 */
 			[[nodiscard]]
-			const GenerationParameters & parameters () const noexcept;
+			const GenerationParameters &
+			parameters () const noexcept
+			{
+				return m_generationParameters;
+			}
 
 			/**
 			 * @brief Returns the generation parameters.
 			 * @return GenerationParameters &
 			 */
 			[[nodiscard]]
-			GenerationParameters & parameters () noexcept;
+			GenerationParameters &
+			parameters () noexcept
+			{
+				return m_generationParameters;
+			}
 
 			/**
 			 * @brief Generates a geometry from a custom vertex factory shape.
 			 * @param shape A reference to a shape.
-			 * @param resourceName A a reference to a string.
+			 * @param resourceName A reference to a string.
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > shape (const Libraries::VertexFactory::Shape< float > & shape, const std::string & resourceName) noexcept;
+			std::shared_ptr< IndexedVertexResource > shape (const Libraries::VertexFactory::Shape< float > & shape, const std::string & resourceName) const noexcept;
 
 			/**
 			 * @brief Generates a triangle geometry.
@@ -86,7 +100,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< VertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< VertexResource > triangle (float size, std::string resourceName = {}) noexcept;
+			std::shared_ptr< VertexResource > triangle (float size, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a quad geometry.
@@ -96,7 +110,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > quad (float width, float height, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > quad (float width, float height, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a square geometry.
@@ -105,9 +119,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< VertexResource >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< IndexedVertexResource >
-			square (float size, const std::string & resourceName = {}) noexcept
+			square (float size, const std::string & resourceName = {}) const noexcept
 			{
 				return this->quad(size, size, resourceName);
 			}
@@ -121,7 +134,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > cuboid (float width, float height, float depth, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > cuboid (float width, float height, float depth, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a cuboid geometry.
@@ -130,11 +143,12 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< IndexedVertexResource >
-			cuboid (const Libraries::Math::Vector< 3, float > & size, const std::string & resourceName = {}) noexcept
+			cuboid (const Libraries::Math::Vector< 3, float > & size, const std::string & resourceName = {}) const noexcept
 			{
-				return this->cuboid(size[Libraries::Math::X], size[Libraries::Math::Y], size[Libraries::Math::Z], resourceName);
+				using namespace Libraries::Math;
+
+				return this->cuboid(size[X], size[Y], size[Z], resourceName);
 			}
 
 			/**
@@ -145,7 +159,17 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > cuboid (const Libraries::Math::Vector< 3, float > & max, const Libraries::Math::Vector< 3, float > & min, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > cuboid (const Libraries::Math::Vector< 3, float > & max, const Libraries::Math::Vector< 3, float > & min, std::string resourceName = {}) const noexcept;
+
+			/**
+			 * @brief Generates a hollowed cuboid geometry.
+			 * @param size The size of the cube.
+			 * @param borderSize The border size.
+			 * @param resourceName A string. Default auto generated name.
+			 * @return std::shared_ptr< IndexedVertexResource >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< IndexedVertexResource > hollowedCube (float size, float borderSize, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a cube geometry.
@@ -154,9 +178,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< IndexedVertexResource >
-			cube (float size, const std::string & resourceName = {}) noexcept
+			cube (float size, const std::string & resourceName = {}) const noexcept
 			{
 				return this->cuboid(size, size, size, resourceName);
 			}
@@ -164,13 +187,13 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Generates a sphere geometry.
 			 * @param radius The radius of the sphere.
-			 * @param slices The number of slices in the sphere. Default 8.
+			 * @param slices The number of slices in the sphere. Default 16.
 			 * @param stacks The number of stacks in the sphere. Default 8.
 			 * @param resourceName A string. Default auto generated name.
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > sphere (float radius, size_t slices = 8, size_t stacks = 8, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > sphere (float radius, size_t slices = 16, size_t stacks = 8, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a geodesic sphere geometry.
@@ -180,20 +203,20 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > geodesicSphere (float radius, size_t depth = 2, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > geodesicSphere (float radius, size_t depth = 2, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a cylinder geometry.
 			 * @param baseRadius The bottom radius of the cylinder.
 			 * @param topRadius The top radius of the cylinder.
 			 * @param length The length of the cylinder.
-			 * @param slices The number of slices in the the cylinder. Default 8.
+			 * @param slices The number of slices in the cylinder. Default 8.
 			 * @param stacks The number of stacks in the cylinder. Default 1.
 			 * @param resourceName A string. Default auto generated name.
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > cylinder (float baseRadius, float topRadius, float length, size_t slices = 8, size_t stacks = 1, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > cylinder (float baseRadius, float topRadius, float length, size_t slices = 8, size_t stacks = 1, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a cone geometry.
@@ -205,9 +228,8 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< IndexedVertexResource >
-			cone (float radius, float length, size_t slices = 8, size_t stacks = 1, const std::string & resourceName = {}) noexcept
+			cone (float radius, float length, size_t slices = 8, size_t stacks = 1, const std::string & resourceName = {}) const noexcept
 			{
 				return this->cylinder(radius, 0, length, slices, stacks, resourceName);
 			}
@@ -222,7 +244,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > disk (float outerRadius, float innerRadius, size_t slices = 8, size_t stacks = 1, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > disk (float outerRadius, float innerRadius, size_t slices = 8, size_t stacks = 1, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a torus geometry.
@@ -234,7 +256,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > torus (float majorRadius, float minorRadius, size_t slices = 8, size_t stacks = 8, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > torus (float majorRadius, float minorRadius, size_t slices = 8, size_t stacks = 8, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a octahedron geometry.
@@ -243,7 +265,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > octahedron (float radius, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > octahedron (float radius, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a hexahedron geometry.
@@ -252,7 +274,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > hexahedron (float radius, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > hexahedron (float radius, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a tetrahedron geometry.
@@ -270,7 +292,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > dodecahedron (float radius, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > dodecahedron (float radius, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a icosahedron geometry.
@@ -279,17 +301,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > icosahedron (float radius, std::string resourceName = {}) noexcept;
-
-			/**
-			 * @brief Generates an unique uniform area geometry.
-			 * @param size The size³ of the area.
-			 * @param tickness The tickness of lines. Default 0.01.
-			 * @param resourceName A string. Default auto generated name.
-			 * @return std::shared_ptr< IndexedVertexResource >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > uniformArea (float size, float tickness = 0.01F, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > icosahedron (float radius, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates an arrow geometry.
@@ -299,7 +311,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > arrow (float size, PointTo pointTo, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > arrow (float size, PointTo pointTo, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates an axis geometry.
@@ -309,17 +321,17 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > axis (float size, std::string resourceName = {}) noexcept;
+			std::shared_ptr< IndexedVertexResource > axis (float size, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a grid geometry.
-			 * @param size
-			 * @param division
+			 * @param size The size of the whole size of one dimension of the grid. i.e. If the size is 1024, the grid will be from +512 to -512.
+			 * @param division How many cell in one dimension.
 			 * @param resourceName A string. Default auto generated name.
 			 * @return shared_ptr< VertexGridResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< VertexGridResource > surface (float size, size_t division, std::string resourceName = {}) noexcept;
+			std::shared_ptr< VertexGridResource > surface (float size, size_t division, std::string resourceName = {}) const noexcept;
 
 		private:
 
@@ -332,9 +344,7 @@ namespace Emeraude::Graphics::Geometry
 			[[nodiscard]]
 			std::string generateResourceName (const char * type, const std::string & values) const noexcept;
 
-			Resources::VertexGeometries & m_vertexGeometries;
-			Resources::IndexedVertexGeometries & m_indexedVertexGeometries;
-			Resources::VertexGridGeometries & m_vertexGridGeometries;
-			GenerationParameters m_generationParameters{};
+			Resources::Manager * m_resources{nullptr};
+			GenerationParameters m_generationParameters;
 	};
 }

@@ -1,31 +1,34 @@
 /*
- * Emeraude/Physics/MovableTrait.cpp
- * This file is part of Emeraude
+ * src/Physics/MovableTrait.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "MovableTrait.hpp"
+
+/* Local inclusions. */
+#include "Libraries/Math/Base.hpp"
 
 namespace Emeraude::Physics
 {
@@ -33,172 +36,223 @@ namespace Emeraude::Physics
 	using namespace Libraries::Math;
 
 	void
-	MovableTrait::setVelocity (const Vector< 3, float > & velocity, bool resetAcceleration) noexcept
+	MovableTrait::setMinimalVelocity (const Vector< 3, float > & velocity) noexcept
 	{
-		m_velocity = velocity;
-
-		if ( resetAcceleration )
+		for ( size_t axis = 0; axis < 3; ++axis )
 		{
-			m_acceleration.reset();
+			if ( m_linearVelocity[axis] >= 0.0F && velocity[axis] >= 0.0F )
+			{
+				m_linearVelocity[axis] = std::max(m_linearVelocity[axis], velocity[axis]);
+			}
+			else if ( m_linearVelocity[axis] < 0.0F && velocity[axis] < 0.0F )
+			{
+				m_linearVelocity[axis] = std::min(m_linearVelocity[axis], velocity[axis]);
+			}
+			else
+			{
+				m_linearVelocity[axis] += velocity[axis];
+			}
 		}
 
-		/* NOTE: Restart the simulation if it was paused. */
-		this->pauseSimulation(false);
-	}
+		m_linearSpeed = m_linearVelocity.length();
 
-	const Vector< 3, float > &
-	MovableTrait::velocity () const noexcept
-	{
-		return m_velocity;
-	}
-
-	float
-	MovableTrait::getSpeed () const noexcept
-	{
-		return m_velocity.length();
-	}
-
-	void
-	MovableTrait::setAcceleration (const Vector< 3, float > & acceleration) noexcept
-	{
-		m_acceleration = acceleration;
-
-		/* NOTE: Restart the simulation if it was paused. */
-		this->pauseSimulation(false);
-	}
-
-	void
-	MovableTrait::addRawAcceleration (const Vector< 3, float > & acceleration) noexcept
-	{
-		m_acceleration += acceleration;
-
-		/* NOTE: Restart the simulation if it was paused. */
-		this->pauseSimulation(false);
-	}
-
-	const Vector< 3, float > &
-	MovableTrait::acceleration () const noexcept
-	{
-		return m_acceleration;
-	}
-
-	void
-	MovableTrait::setCenterOfMass (const Vector< 3, float > & centerOfMass) noexcept
-	{
-		m_centerOfMass = centerOfMass;
-	}
-
-	const Vector< 3, float > &
-	MovableTrait::centerOfMass () const noexcept
-	{
-		return m_centerOfMass;
+		this->onImpulse();
 	}
 
 	void
 	MovableTrait::addForce (const Vector< 3, float > & force) noexcept
 	{
-		const auto & physicalObjectProperties = this->physicalObjectProperties();
+		const auto & objectProperties = getObjectProperties();
 
 		/* NOTE: If the object mass is null, we discard the force. */
-		if ( physicalObjectProperties.isMassNull() )
+		if ( objectProperties.isMassNull() )
 		{
 			return;
 		}
 
-		/* "F = m * a"
-		 * (Vector)Force = (Number)mass * (Vector)acceleration
-		 * => A = F * 1/m */
-		m_acceleration += force * physicalObjectProperties.inverseMass();
-
-		/* NOTE: Restart the simulation if it was paused. */
-		this->pauseSimulation(false);
+		/* a = F * 1/m */
+		this->addAcceleration(force * objectProperties.inverseMass());
 	}
 
 	void
-	MovableTrait::applyGravityForce (float gravity) noexcept
+	MovableTrait::addTorque (const Vector< 3, float > & torque) noexcept
 	{
-		const auto & physicalObjectProperties = this->physicalObjectProperties();
+		const auto & objectProperties = getObjectProperties();
 
-		/* NOTE: If the object mass is null (or the free fly mode is enabled), we discard the gravity force. */
-		if ( this->isFreeFlyModeEnabled() || physicalObjectProperties.isMassNull() )
+		/* NOTE: If the object mass is null, we discard the force. */
+		if ( objectProperties.isMassNull() )
 		{
 			return;
 		}
 
-		/* NOTE: Just apply the gravity on the Y axis. */
-		m_acceleration[Y] += gravity;
+		/* NOTE: (Vector)Torque = (Matrix)Inertia * (Vector)Angular Acceleration (T = I * w)
+		 * => "w = T / I" */
+		/*const auto & cube = this->getWorldBoundingBox();
+
+		const float sqWith = cube.width() * cube.width();
+		const float sqHeight = cube.height() * cube.height();
+		const float sqDepth = cube.depth() * cube.depth();
+
+		const float inertiaValue = (objectProperties.mass() * (sqWith + sqHeight + sqDepth)) / 12.0F;
+
+		//float ix = cube.width() * cube.width();
+		//cube so all dimensions equal, but other objects may not be
+		//const float inertiaValue = (physicalObjectProperties.mass() * (ix + ix + ix)) / 12.0F;
+
+		Matrix< 3, float > inertia{};
+		inertia[M3x3Col0Row0] = inertiaValue;
+		inertia[M3x3Col1Row1] = inertiaValue;
+		inertia[M3x3Col2Row2] = inertiaValue;
+
+		const auto angularAcceleration = inertia.inverse() * torque;
+
+		m_angularVelocity += angularAcceleration;
+		m_angularSpeed = m_angularVelocity.length();*/
+
+		this->onImpulse();
 	}
 
-	void
-	MovableTrait::applyDragForce (float density) noexcept
-	{
-		const auto & physicalObjectProperties = this->physicalObjectProperties();
-
-		/* NOTE: If there is no velocity, there can't be drag. */
-		if ( m_velocity.isNull() )
-		{
-			return;
-		}
-
-		const auto drag = Physics::getDragMagnitude(physicalObjectProperties.dragCoefficient(), density, m_velocity.length(), physicalObjectProperties.surface());
-
-		if ( drag > physicalObjectProperties.mass() * Gravity::Earth< float > )
-		{
-			return;
-		}
-
-		this->addForce(Physics::getDragForce(m_velocity, drag));
-	}
-
-	void
+	float
 	MovableTrait::deflect (const Vector< 3, float > & surfaceNormal, float surfaceBounciness) noexcept
 	{
-		const auto & physicalObjectProperties = this->physicalObjectProperties();
+		const auto & objectProperties = getObjectProperties();
 
-		/* NOTE: Velocity vector length gives the speed in m/s. */
-		const auto speed = this->getSpeed() * (physicalObjectProperties.bounciness() * Math::clampToUnit(surfaceBounciness));
+		const auto currentSpeed = m_linearSpeed;
+		const auto incidentVector = m_linearVelocity.normalized();
+		const auto dotProduct = Vector< 3, float >::dotProduct(incidentVector, surfaceNormal); // 1.0 or -1.0 = parallel (full hit). 0.0 = perpendicular (no hit).
+		const auto totalBounciness = objectProperties.bounciness() * clampToUnit(surfaceBounciness);
+		const auto modulatedBounciness = modulateNormalizedValue(totalBounciness, 1.0F - std::abs(dotProduct));
 
-		/* NOTE: Velocity vector normalized gives the direction. */
-		m_velocity = Vector< 3, float >::reflect(m_velocity.normalized(), surfaceNormal).scale(speed);
-	}
+		m_linearSpeed = currentSpeed * modulatedBounciness;
+		m_linearVelocity = (incidentVector - (surfaceNormal * (dotProduct * 2.0F))).scale(m_linearSpeed);
 
-	const Vector< 3, float > &
-	MovableTrait::updateVelocity (const PhysicalEnvironmentProperties & properties) noexcept
-	{
-		/* Adds the gravity force. */
-		this->applyGravityForce(properties.gravity());
-
-		/* Then compute the drag force from current velocity to reduce the acceleration. */
-		this->applyDragForce(properties.atmosphericDensity());
-
-		/* Transfer acceleration to the current velocity. */
-		m_velocity += m_acceleration;
-		m_acceleration.reset();
-
-		return m_velocity;
+		return currentSpeed;
 	}
 
 	void
-	MovableTrait::stopMovement ()
+	MovableTrait::stopMovement () noexcept
 	{
-		m_acceleration.reset();
-		m_velocity.reset();
+		m_linearVelocity.reset();
+		m_angularVelocity.reset();
+
+		m_linearSpeed = 0.0F;
+		m_angularSpeed = 0.0F;
+
+		m_inertCheckCount = 0;
 	}
 
 	bool
-	MovableTrait::isMoving () const
+	MovableTrait::updateSimulation (const PhysicalEnvironmentProperties & envProperties) noexcept
 	{
-		if ( !m_velocity.isNull() )
+		const auto & objectProperties = getObjectProperties();
+
+		/* Apply the gravity. */
+		if ( !this->isFreeFlyModeEnabled() && !objectProperties.isMassNull() )
 		{
-			return true;
+			m_linearVelocity[Y] += envProperties.steppedSurfaceGravity();
+			m_linearSpeed = m_linearVelocity.length();
 		}
 
-		return m_acceleration.isNull();
+		/* Apply the drag force, if there is linear speed. */
+		if ( m_linearSpeed > 0.0F )
+		{
+			const auto dragMagnitude = Physics::getDragMagnitude(
+				objectProperties.dragCoefficient(),
+				envProperties.atmosphericDensity(),
+				m_linearSpeed,
+				objectProperties.surface()
+			);
+
+			const auto force = m_linearVelocity.normalized().scale(-dragMagnitude);
+
+			this->addForce(force);
+		}
+
+		bool isMoveOccurs = false;
+
+		/* Apply the movement */
+		if ( m_linearSpeed > 0.0F )
+		{
+			/* Dispatch the final move to the entity according to the new velocity. */
+			this->simulatedMove(m_linearVelocity * EngineUpdateCycleDurationS< float >);
+
+			isMoveOccurs = true;
+		}
+
+		/* Apply the drag force on rotation, if there is angular speed. */
+		if ( m_angularSpeed > 0.0F )
+		{
+			/*
+			 * Td = drag torque
+			 * B = angular drag coefficient
+			 * V = volume of submerged portion of polyhedron
+			 * Vt = total volume of polyhedron
+			 * L = approximation of the average width of the polyhedron
+			 * w = angular velocity
+			 * Td = B * m * (V / Vt) * L^2 * w */
+
+			// TODO: Find the correct way to apply a drag force on rotation.
+			//constexpr auto dragMagnitude = 0.95F;
+
+			//m_angularVelocity *= dragMagnitude;
+
+			/*
+			 * Drag torque is calculated by multiplying the drag force acting
+			 * on the cylinder by the distance between the force and the axis of rotation.
+			 * This distance is known as the lever arm and is typically denoted by the symbol "r".
+			 * The formula for drag torque is: Drag torque = Drag force x Lever arm.
+			 * Reference: https://www.physicsforums.com/threads/drag-torque-of-rotating-cylinder.413114/
+			 */
+
+			/* Dispatch the final rotation to the entity according to the new angular speed. */
+			this->simulatedRotation(2.0F * Pi< float > / EngineUpdateCycleDurationS< float >, m_angularVelocity);
+
+			isMoveOccurs = true;
+		}
+
+		return isMoveOccurs;
 	}
 
-	void
-	MovableTrait::clearVelocity() noexcept
+	bool
+	MovableTrait::checkSimulationInertia () noexcept
 	{
-		m_velocity.reset();
+		/* FIXME: Remove this ! */
+		if ( m_angularSpeed > 0.0F )
+		{
+			return false;
+		}
+
+		/* FIXME: Should be a general settings to tweak physics engine. */
+		constexpr auto MinimalDistance{0.01F};
+		constexpr auto TotalInertiaCheckCount{15};
+
+		/* Compute the last distance made by the entity. */
+		const auto worldPosition = this->getWorldPosition();
+		const auto distance = std::abs((worldPosition - m_lastWorldPosition).length());
+
+		/* Save the "new" last position. */
+		m_lastWorldPosition = worldPosition;
+
+		/* Check if the distance is bigger than the threshold. */
+		if ( distance > MinimalDistance )
+		{
+			m_inertCheckCount = 0;
+
+			return false;
+		}
+
+		/* Check if the test reach the total of tests required
+		 * to declare the entity into inertia state. */
+		m_inertCheckCount++;
+
+		if ( m_inertCheckCount < TotalInertiaCheckCount )
+		{
+			return false;
+		}
+
+		/* Completely stops the motion. */
+		this->stopMovement();
+
+		return true;
 	}
 }

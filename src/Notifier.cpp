@@ -1,62 +1,50 @@
 /*
- * Emeraude/Notifier.cpp
- * This file is part of Emeraude
+ * src/Notifier.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Notifier.hpp"
 
-/* Local inclusions */
-#include "Graphics/Geometry/IndexedVertexResource.hpp"
-#include "Overlay/Manager.hpp"
-#include "Overlay/Screen.hpp"
-#include "Settings.hpp"
+/* STL inclusions. */
+
+/* Local inclusions. */
+#include "Resources/Manager.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude
 {
 	using namespace Libraries;
+	using namespace Libraries::Math;
+	using namespace Libraries::PixelFactory;
 
-	const size_t Notifier::ClassUID{Observable::getClassUID()};
+	const size_t Notifier::ClassUID{getClassUID(ClassId)};
 
-	Notifier::Notifier (Settings & coreSettings, Overlay::Manager & overlayManager) noexcept
-		: ServiceInterface(ClassId), m_coreSettings(coreSettings), m_overlayManager(overlayManager)
+	Notifier::Notifier (Overlay::Manager & overlayManager) noexcept
+		: ServiceInterface(ClassId), m_overlayManager(overlayManager)
 	{
 
-	}
-
-	bool
-	Notifier::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
 	}
 
 	bool
@@ -64,94 +52,149 @@ namespace Emeraude
 	{
 		if ( !m_overlayManager.usable() )
 		{
-			Tracer::error(ClassId, "Unable to create the notifier interface. Overlay manager is not usable !");
+			Tracer::error(ClassId, "The overlay manager is not usable to build the notifier !");
 
 			return false;
 		}
 
-		const std::string screenName{"CoreDefault"};
+		this->observe(&m_overlayManager);
 
-		auto screen = m_overlayManager.createScreen(screenName);
+		m_screen = m_overlayManager.createScreen(ScreenName, false, false);
 
-		if ( screen == nullptr )
+		if ( m_screen == nullptr )
 		{
 			Tracer::error(ClassId, "Unable to get a screen to display the notifier !");
 
 			return false;
 		}
 
-		m_text = screen->create< Overlay::Elements::Text >("Notifier", 1.0F, 0.1F);
-		m_text->setPosition(Overlay::Surface::Position::Top);
-		m_text->setClearColor(PixelFactory::Color{0.5F, 0.5F, 0.5F, 0.33F});
+		m_pixelBuffer = m_screen->createSurface< Overlay::PixelBufferSurface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
+		m_pixelBuffer->pixmap().fill(Transparent);
 
-		auto & writer = m_text->textWriter();
-		writer.setFont(Graphics::FontResource::get("old", true));
-		writer.setColor(PixelFactory::White);
-		writer.setSpacing(-8);
+		m_processor.setPixmap(m_pixelBuffer->pixmap());
 
-		return m_overlayManager.enableScreen(screenName);
+		//auto font = Resources::Manager::instance()->fonts().getResource("old");
+
+		const auto filepath = FileSystem::instance()->getFilepathFromDataDirectories("data-stores/Fonts", "Joystick.ttf");
+		const auto font = std::make_shared< Font< uint8_t > >();
+
+		if ( font->readFile(filepath, 24) )
+		{
+			m_processor.setFont(font);
+			m_processor.setFontColor(White);
+		}
+
+		return m_overlayManager.enableScreen("NotifierScreen");
 	}
 
 	bool
 	Notifier::onTerminate () noexcept
 	{
-		if ( m_autoClearTimerID > 0 )
-		{
-			this->destroyTimer(m_autoClearTimerID);
+		this->destroyTimers();
 
-			m_autoClearTimerID = 0;
-		}
-
-		m_text.reset();
+		m_screen.reset();
+		m_pixelBuffer.reset();
 
 		return true;
 	}
 
 	bool
-	Notifier::usable () const noexcept
+	Notifier::push (const std::string & message, uint32_t duration) noexcept
 	{
-		return m_text != nullptr;
+		if ( !this->usable() )
+		{
+			return false;
+		}
+
+		m_notifications.emplace_back(message, this->createTimer(
+			[&] (Time::TimerID timerID){
+				{
+					const std::lock_guard< std::mutex > lock(m_lock);
+
+					for ( auto notificationIt = m_notifications.begin(); notificationIt != m_notifications.cend(); ++notificationIt )
+					{
+						if ( notificationIt->second == timerID )
+						{
+							m_notifications.erase(notificationIt);
+
+							break;
+						}
+					}
+				}
+
+				this->displayNotifications();
+
+				return true;
+			},
+			duration,
+			true, /* Only once. */
+			true /* Start directly. */
+		));
+
+		this->displayNotifications();
+
+		return true;
 	}
 
 	void
-	Notifier::push (const std::string & message, double time) noexcept
+	Notifier::displayNotifications () noexcept
 	{
-		Tracer::info(ClassId, message);
+		m_pixelBuffer->pixmap().fill(Transparent);
 
-		if ( !this->usable() )
+		if ( !m_notifications.empty() )
 		{
-			return;
+			std::stringstream buffer;
+
+			{
+				const std::lock_guard< std::mutex > lock(m_lock);
+
+				for ( auto rIt = m_notifications.crbegin(); rIt != m_notifications.crend(); ++rIt )
+				{
+					buffer << rIt->first << '\n';
+				}
+			}
+
+			if ( !m_processor.write(buffer.str()) )
+			{
+				return;
+			}
 		}
 
-		m_text->write(message, false);
-
-		/* Start a timer or reset it to clean the message after a while. */
-		if ( m_autoClearTimerID > 0 )
-		{
-			this->setTimerGranularity(m_autoClearTimerID, time);
-		}
-		else
-		{
-			m_autoClearTimerID = this->createTimer(
-				std::bind(&Notifier::clearTask, this, std::placeholders::_1),
-				time,
-				true, /* Only once. */
-				true /* Start directly. */
-			);
-		}
+		m_pixelBuffer->requestVideoMemoryUpdate();
 	}
 
 	void
 	Notifier::clear () noexcept
 	{
-		m_text->clear();
+		/* NOTE: Removes all notifications. */
+		{
+			const std::lock_guard< std::mutex > lock(m_lock);
+
+			this->destroyTimers();
+
+			m_notifications.clear();
+		}
+
+		/* NOTE: Clean up the screen. */
+		if ( m_pixelBuffer->pixmap().fill(Transparent) )
+		{
+			m_pixelBuffer->requestVideoMemoryUpdate();
+		}
 	}
 
-	void
-	Notifier::clearTask (double /*milliseconds*/) noexcept
+	bool
+	Notifier::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
-		this->clear();
+		if ( observable->is(Overlay::Manager::ClassUID) )
+		{
+			if ( notificationCode == Overlay::Manager::OverlayResized )
+			{
+				this->displayNotifications();
+			}
 
-		m_autoClearTimerID = 0;
+			return true;
+		}
+
+		return false;
 	}
 }

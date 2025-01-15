@@ -1,47 +1,54 @@
 /*
- * Emeraude/Core.cpp
- * This file is part of Emeraude
+ * src/Core.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Core.hpp"
 
-/* C/C++ standard libraries. */
-#include <iostream> // DEV
+/* STL inclusions. */
+#include <sstream>
+#include <iostream>
 #include <ranges>
 #include <thread>
 
-/* Local inclusions */
-#include "Constants.hpp"
-#include "Input/KeyboardController.hpp"
-#include "Time/Time.hpp"
+/* Third-party inclusions. */
+#include "GLFW/glfw3.h"
+
+/* Local inclusions. */
+#include "Libraries/Time/Time.hpp"
+#include "Libraries/Version.hpp"
+#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Input/Types.hpp"
 #include "Tool/GeometryDataPrinter.hpp"
 #include "Tool/ShowVulkanInformation.hpp"
+#include "Constants.hpp"
+#include "PlatformSpecific/Desktop/Dialog/Message.hpp"
+#include "PlatformSpecific/Desktop/Dialog/OpenFiles.hpp"
 
 namespace Emeraude
 {
-	// NOLINTBEGIN(*-magic-numbers)
 	using namespace Libraries;
 	using namespace Vulkan;
 	using namespace Graphics;
@@ -49,195 +56,81 @@ namespace Emeraude
 	using namespace Input;
 	using namespace Resources;
 
-	Core * Core::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	Core * Core::s_instance{nullptr};
 
-	Core::Core (int argc, const char * argv[], const char * applicationName, const Libraries::Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
-		: KeyboardListenerInterface(true, false, false), ConsoleControllable(ClassId),
-		  m_applicationName(applicationName),
-		  m_applicationVersion(applicationVersion),
-		  m_applicationOrganization(applicationOrganization),
-		  m_applicationDomain(applicationDomain),
-		  m_arguments(argc, argv)
+#if IS_WINDOWS
+    Core::Core (int argc, wchar_t * * wargv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
+        : KeyboardListenerInterface(false, false), ConsoleControllable(ClassId),
+        m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
+        m_primaryServices(argc, wargv, m_identification, false)
+#else
+	Core::Core (int argc, char * * argv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
+        : KeyboardListenerInterface(false, false), ConsoleControllable(ClassId),
+        m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
+        m_primaryServices(argc, argv, m_identification, false)
+#endif
 	{
 		/* NOTE: Avoid to double construct the engine. */
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
 
 		s_instance = this;
 
-		/* Identification. */
-		{
-			auto date = String::explode(LibraryCompilationDate, ' ');
+		TraceInfo{ClassId} << "\n"
+			"Engine       : " << m_identification.engineId() << "\n"
+			"Application  : " << m_identification.applicationId() << "\n"
+    		"Reverse ID   : " << m_identification.applicationReverseId() << "\n";
 
-			TraceInfo{ClassId} << LibraryName << ' ' << LibraryVersion << " (" << LibraryPlatform << ") - " << LibraryOrganizationName << ' ' << date[2];
+		/* Registering core help. */
+		{
+			m_coreHelp.registerArgument("Show this help.", "help", 'h');
+			m_coreHelp.registerArgument("Disable audio layer.", "disable-audio");
+			m_coreHelp.registerArgument("Display only logs which tags appears. TAG is a list of words separated by comma.", "filter-tag", 't', {"TAG"});
+			m_coreHelp.registerArgument("Set a custom core settings file. FILE_PATH is where to get the settings file and should be writable.", "settings-filepath", 0, {"FILE_PATH"});
+			m_coreHelp.registerArgument("Disable the generation or the saving of settings files.", "disable-settings-autosave");
+			m_coreHelp.registerArgument("Enable log writing.", "enable-log", 'l', {"FILE_PATH"});
+			m_coreHelp.registerArgument("Add a custom data directory.", "add-data-directory", 0, {"DIRECTORY_PATH"});
+			m_coreHelp.registerArgument("Force the use of a cache directory overriding every others.", "cache-directory", 0, {"DIRECTORY_PATH"});
+			m_coreHelp.registerArgument("Force the use of a config directory overriding every others.", "config-directory", 0, {"DIRECTORY_PATH"});
+			m_coreHelp.registerArgument("Force the use of a data directory overriding every others.", "data-directory", 0, {"DIRECTORY_PATH"});
+			m_coreHelp.registerArgument("Execute a specific tool.", "tools-mode", 't');
+
+			m_coreHelp.registerShortcut("Print the active scene content in console.", KeyF1, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF2, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF3, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF4, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF5, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF6, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF7, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF8, ModKeyShift);
+			m_coreHelp.registerShortcut("Clean up unused resources from managers.", KeyF9, ModKeyShift);
+			m_coreHelp.registerShortcut("Suspend core thread execution for 3 seconds.", KeyF10, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF11, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF12, ModKeyShift);
 		}
 
-		/* Initialize arguments. */
-		if ( m_arguments.initialize(m_primaryServicesEnabled) )
+		if ( m_primaryServices.initialize() )
 		{
-			TraceSuccess{ClassId} << m_arguments.name() << " service up !";
-
-			/* Initialize core help. */
-			if ( m_coreHelp.initialize(m_primaryServicesEnabled) )
-			{
-				/* Registering core help. */
-				m_coreHelp.registerArgument("Show this help.", "help", 'h');
-				m_coreHelp.registerArgument("Disable audio layer.", "disable-audio");
-				m_coreHelp.registerArgument("Display only logs which tags appears. TAG is a list of words separated by comma.", "filter-tag", 't', {"TAG"});
-				m_coreHelp.registerArgument("Set a custom core settings file. FILE_PATH is where to get the settings file and should be writable.", "settings-core-filepath", 0, {"FILE_PATH"});
-				m_coreHelp.registerArgument("Set a custom application settings file. FILE_PATH is where to get the settings file and should be writable.", "settings-application-filepath", 0, {"FILE_PATH"});
-				m_coreHelp.registerArgument("Disable the generation or the saving of settings files.", "disable-settings-autosave");
-				m_coreHelp.registerArgument("Enable log writing.", "enable-log", 'l', {"FILE_PATH"});
-				m_coreHelp.registerArgument("Add a custom cache directory.", "cache-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Add a custom config directory.", "config-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Add a custom data directory.", "data-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Force the use of a cache directory overriding every others.", "force-cache-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Force the use of a config directory overriding every others.", "force-config-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Force the use of a data directory overriding every others.", "force-data-directory", 0, {"DIRECTORY_PATH"});
-				m_coreHelp.registerArgument("Execute a specific tool.", "tools-mode", 't');
-
-				m_coreHelp.registerShortcut("Print the active scene content in console.", Input::Key::KeyF1, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF2, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF3, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF4, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF5, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF6, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF7, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF8, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Clean up unused resources from managers.", Input::Key::KeyF9, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Suspend core thread execution for 3 seconds.", Input::Key::KeyF10, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF11, Input::ModKeyShift);
-				m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", Input::Key::KeyF12, Input::ModKeyShift);
-
-				TraceSuccess{ClassId} << m_coreHelp.name() << " service up !";
-			}
-			else
-			{
-				TraceWarning{ClassId} << m_coreHelp.name() << " service failed to execute !";
-			}
-
-			/* Initialize application help. */
-			if ( m_applicationHelp.initialize(m_primaryServicesEnabled) )
-			{
-				TraceSuccess{ClassId} << m_applicationHelp.name() << " service up !";
-			}
-			else
-			{
-				TraceWarning{ClassId} << m_applicationHelp.name() << " service failed to execute !";
-			}
-
-			if ( m_arguments.get("-h", "--help").isPresent() )
-			{
-				m_startupMode = StartupMode::ShowHelp;
-
-				return;
-			}
+			Tracer::success(ClassId, "Primary services up !");
 		}
 		else
 		{
-			TraceFatal{ClassId} << m_arguments.name() << " service failed to execute !";
+			Tracer::fatal(ClassId, "Unable to initialize primary services !");
 
 			m_startupMode = StartupMode::Error;
 
 			return;
 		}
 
-		/* Initialize tracer. */
-		if ( m_tracer.initialize(m_primaryServicesEnabled) )
+		if ( m_primaryServices.arguments().get("-h", "--help").isPresent() )
 		{
-			TraceSuccess{ClassId} << m_tracer.name() << " service up !";
-		}
-		else
-		{
-			TraceFatal{ClassId} << m_tracer.name() << " service failed to execute !";
-
-			m_startupMode = StartupMode::Error;
+			m_flags[ShowHelp] = true;
 
 			return;
-		}
-
-		/* Initialize the file system to reach every useful directories. */
-		if ( m_fileSystem.initialize(m_primaryServicesEnabled) )
-		{
-			TraceSuccess{ClassId} << m_fileSystem.name() << " service up !";
-
-			/* Creating some basic paths */
-			const auto directory = m_fileSystem.userDataDirectory("captures");
-
-			if ( !directory.exists() )
-			{
-				if ( directory.create() )
-				{
-					Tracer::success(ClassId, "Captures directory created.");
-				}
-				else
-				{
-					Tracer::warning(ClassId, "Unable to create captures directory.");
-				}
-			}
-		}
-		else
-		{
-			TraceFatal{ClassId} << m_fileSystem.name() << " service failed to execute !";
-
-			m_startupMode = StartupMode::Error;
-
-			return;
-		}
-
-		/* Initialize core settings.
-		 * NOTE : Settings class manages to write default file. */
-		{
-			const auto filepath = this->getSettingFile(CoreSettingsFilename, "--settings-core-filepath");
-
-			TraceInfo{ClassId} << "Loading core settings file from '" << filepath << "' ...";
-
-			m_coreSettings.setFilepath(filepath);
-
-			if ( m_coreSettings.initialize(m_primaryServicesEnabled) )
-			{
-				TraceSuccess{ClassId} << m_coreSettings.name() << " service up !";
-
-				/* NOTE: Now the core settings is initialized, we can update Tracer service configuration. */
-				m_tracer.readCoreSettings();
-			}
-			else
-			{
-				Tracer::error(ClassId, "There is a problem to read or write the core settings file. The engine will use the default configuration.");
-			}
-
-			if ( m_arguments.get("--disable-settings-autosave").isPresent() )
-			{
-				m_coreSettings.doNotCreateConfigFile();
-			}
-		}
-
-		/* Initialize user settings.
-		 * NOTE : Settings class manages to write default file. */
-		{
-			const auto filepath = this->getSettingFile(ApplicationSettingsFilename, "--settings-application-filepath");
-
-			TraceInfo{ClassId} << "Loading user settings file from '" << filepath << "' ...";
-
-			m_applicationSettings.setFilepath(filepath);
-
-			if ( m_applicationSettings.initialize(m_primaryServicesEnabled) )
-			{
-				TraceSuccess{ClassId} << m_applicationSettings.name() << " service up !";
-			}
-			else
-			{
-				Tracer::error(ClassId, "There is a problem to read or write the application settings file. The engine will use the default configuration.");
-			}
-
-			if ( m_arguments.get("--disable-settings-autosave").isPresent() )
-			{
-				m_applicationSettings.doNotCreateConfigFile();
-			}
 		}
 
 		/* Initialize the console. */
@@ -246,7 +139,13 @@ namespace Emeraude
 			TraceSuccess{ClassId} << m_console.name() << " service up !";
 
 			/* Console commands bindings. */
-			this->bindCommand("exit,quit,shutdown", std::bind(&Core::CFQuit, this, std::placeholders::_1), "Quit the application.");
+			this->bindCommand("exit,quit,shutdown", [this] (const std::vector< std::string > &) {
+				Tracer::info(ClassId, "Shutdown procedure called from console ...");
+
+				this->stop();
+
+				return 0;
+			}, "Quit the application.");
 
 			this->registerToConsole();
 		}
@@ -292,15 +191,19 @@ namespace Emeraude
 			TraceError{ClassId} << m_user.name() << " service failed to execute !";
 		}
 
+		/* Print startup general information. */
+		if ( m_primaryServices.settings().get< bool >(CoreShowInformationKey, BOOLEAN_FOLLOWING_DEBUG) )
+		{
+			Tracer::info(ClassId, m_primaryServices.information());
+		}
+
 		/* Checks if we need to execute the engine in tool mode. */
-		if ( m_arguments.get(ToolsArg, ToolsLongArg).isPresent() )
+		if ( m_primaryServices.arguments().get(ToolsArg, ToolsLongArg).isPresent() )
 		{
 			m_startupMode = StartupMode::ToolsMode;
 		}
 
-#ifdef DEBUG
-		std::cout << "*** Core level created ***" "\n";
-#endif
+		Tracer::success(ClassId, "*** Core level created ***");
 	}
 
 	Core::~Core ()
@@ -316,68 +219,106 @@ namespace Emeraude
 			{
 				TraceError{ClassId} << service->name() << " primary service failed to terminate properly !";
 			}
-
-			m_resourceManager.unloadUnusedResources();
 		}
+
+    	m_resourceManager.unloadUnusedResources();
+
+		m_primaryServices.terminate();
 
 		m_primaryServicesEnabled.clear();
 
-#ifdef DEBUG
-		std::cout << "*** Core level terminated ***" "\n";
-#endif
+		Tracer::success(ClassId, "*** Core level terminated ***");
 
 		s_instance = nullptr;
 	}
 
-	Path::File
-	Core::getSettingFile (const std::string & filename, const std::string & argumentName) noexcept
+	void
+	Core::logicsTask () noexcept
 	{
-		const auto arg = m_arguments.get(argumentName);
+		const std::chrono::duration< uint64_t, std::micro > logicsUpdateFrequency{EngineUpdateCycleDurationUS< uint64_t >};
 
-		if ( arg.isPresent() )
+		while ( m_flags[IsLogicsLoopRunning] )
 		{
-			TraceInfo{ClassId} << "Loading an alternate settings file in '" << arg.value() << "'...";
-
-			return Path::File{arg.value()};
-		}
-
-		for ( const auto & configDirectory : m_fileSystem.configDirectoriesList() )
-		{
-			Path::File filepath{configDirectory, filename};
-
-			if ( !filepath.exists() )
+			if ( m_flags[Paused] )
 			{
+				std::this_thread::sleep_for(std::chrono::milliseconds{100});
+
 				continue;
 			}
 
-			TraceInfo{ClassId} << "Settings file '" << filepath << "' found !";
+			const auto top = std::chrono::steady_clock::now();
 
-			return filepath;
+			{
+				/* NOTE: Prevent an active scene deletion/switch during the logics update task without blocking the rendering task. */
+				const std::shared_lock< std::shared_mutex > activeSceneLock{m_sceneManager.activeSceneAccess()};
+
+				const Time::Elapsed::PrintScopeRealTimeThreshold stat{"logicsTask", 1000.0 / 60.0};
+
+				m_lifetime += EngineUpdateCycleDurationUS< uint64_t >;
+
+				/* Call the application method to update its logics first. */
+				this->onProcessLogics(m_cycle);
+
+				const auto activeScene = m_sceneManager.activeScene();
+
+				if ( activeScene != nullptr )
+				{
+					activeScene->processLogics(m_cycle);
+				}
+
+				m_cycle++;
+			}
+
+			const auto duration = std::chrono::steady_clock::now() - top;
+
+			/* NOTE: Let sleep the thread until the next update. */
+			if ( duration < logicsUpdateFrequency )
+			{
+				std::this_thread::sleep_for(logicsUpdateFrequency - duration);
+			}
 		}
 
-		return Path::File{m_fileSystem.configDirectory(), filename};
+		TraceInfo{ClassId} << "Logics loop ended !";
 	}
 
 	void
-	Core::processLogicsTask (double milliseconds) noexcept
+	Core::renderingTask () noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_processLogicsMutex};
+		uint64_t frames = 0;
 
-		/* NOTE: If option is false, the lifetime will be estimated. */
-		m_lifetime += m_flags[LifetimeUsesRealTime] ? milliseconds : EngineUpdateCycleDuration< double > * 1000.0;
-
-		/* Updates the active scene node position and velocities. */
-		auto activeScene = m_sceneManager.activeScene();
-
-		if ( activeScene != nullptr )
+		while ( m_flags[IsRenderingLoopRunning] )
 		{
-			activeScene->processLogics(m_cycle);
+			if ( m_flags[Paused] )
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds{100});
+
+				continue;
+			}
+
+			{
+				/* NOTE: Prevent an active scene deletion/switch during the rendering task without blocking the logics update task. */
+				const std::shared_lock< std::shared_mutex > activeSceneLock{m_sceneManager.activeSceneAccess()};
+
+				const Time::Elapsed::PrintScopeRealTimeThreshold stat{"renderingTask", 1000.0 / 30.0};
+
+				const auto & activeScene = m_sceneManager.activeScene();
+
+				if ( activeScene != nullptr )
+				{
+					activeScene->updateVideoMemory();
+				}
+
+				m_overlayManager.updateVideoMemory();
+
+				m_graphicsRenderer.renderFrame(activeScene, m_overlayManager);
+
+				frames++;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 
-		/* Call child method ... */
-		this->onProcessLogics(m_cycle);
-
-		m_cycle++;
+		TraceInfo{ClassId} << "Rendering loop ended with " << frames << " frames rendered !";
 	}
 
 	bool
@@ -386,25 +327,15 @@ namespace Emeraude
 		switch ( m_startupMode )
 		{
 			case StartupMode::Error :
-				Tracer::fatal(ClassId, "Engine startup has been aborted by the Core constructor !");
+				Tracer::fatal(ClassId, "Engine startup has been aborted by the core constructor !");
 
 				return false;
 
 			case StartupMode::ToolsMode :
 				return this->executeToolsMode();
 
-			case StartupMode::ShowHelp :
-				std::cout <<
-					"\n\n" "Emeraude Engine help." "\n" <<
-					m_coreHelp.argumentDocsString() << '\n' <<
-					m_coreHelp.shortcutDocsString() << '\n' <<
-					m_applicationHelp.argumentDocsString() << '\n' <<
-					m_applicationHelp.shortcutDocsString() << "\n\n";
-
-				return this->terminate() == 0;
-
 			case StartupMode::Continue :
-				if ( this->readArgumentsBeforeInitialization(m_arguments) )
+				if ( this->readArgumentsBeforeInitialization(m_primaryServices.arguments()) )
 				{
 					return this->terminate() == 0;
 				}
@@ -414,61 +345,50 @@ namespace Emeraude
 					return false;
 				}
 
-				if ( !this->onInitialize() )
-				{
-					Tracer::fatal(ClassId, "An application level error occurred during initialization !");
-
-					return false;
-				}
-
 				Tracer::success(ClassId, "Engine at application level initialized !");
 
-				m_flags[IsRunning] = true;
+				m_flags[IsMainLoopRunning] = true;
+
 				break;
 		}
 
-		if ( this->onStart() )
+		/* Create the logics loop. */
+		std::thread logicsThread{[this] {
+			this->logicsTask();
+		}};
+
+		/* Create the rendering loop. */
+		std::thread renderingThread{[this] {
+			this->renderingTask();
+		}};
+
+    	Tracer::success(ClassId, "Core execution started !");
+
+    	/* Launch the application level. */
+    	if ( this->onStart() )
+    	{
+    		Tracer::success(ClassId, "The application successfully started.");
+
+    		this->notify(ExecutionStarted);
+    	}
+    	else
+    	{
+    		Tracer::fatal(ClassId, "The application failed to start ! Exiting ...");
+
+    		this->stop();
+    	}
+
+		while ( m_flags[IsMainLoopRunning] )
 		{
-			Tracer::info(ClassId, "Core execution started !");
+			const Time::Elapsed::PrintScopeRealTimeThreshold stat{"MainLoop", 1000.0 / 60};
 
-			this->notify(ExecutionStarted);
-		}
-		else
-		{
-			Tracer::fatal(ClassId, "Inherited Core::onStart() method returned an error ! Exiting ...");
-
-			m_flags[IsRunning] = false;
-		}
-
-		Tracer::info(ClassId, "Launching the logics loop in a thread ...");
-
-		/* Create the logics management thread. */
-		m_logicsUpdateTimerID = this->createTimer(
-			std::bind(&Core::processLogicsTask, this, std::placeholders::_1),
-			EngineUpdateCycleDuration< double > * 1000.0,
-			false, /* We want to loop forever... And ever... And ev.. */
-			true, /* We want to start it right now. */
-			true /* We want a precise time. */
-		);
-
-		Tracer::info(ClassId, "Launching the main loop ...");
-
-		while ( m_flags[IsRunning] )
-		{
-			/* [DirectInput] Copy the state of every input device
-			 * to use it to this engine cycle. */
-			m_inputManager.getInputsState();
-
-			/* Asks the graphics renderer a new frame. */
-			m_graphicsRenderer.renderFrame(m_sceneManager.activeScene(), m_overlayManager, m_devManager, m_lifetime);
+			/* Let the child class get call event from the main loop. */
+			this->onMainLoopCycle();
 
 			/* NOTE: Checks whether the engine is running or paused.
 			 * If not, we wait a wake-up event with a blocking function. */
 			if ( m_flags[Paused] )
 			{
-				/* Stop all timers. */
-				this->pauseTimers();
-
 				/* Stop all timers of active scene. */
 				if ( m_sceneManager.hasActiveScene() )
 				{
@@ -478,41 +398,93 @@ namespace Emeraude
 				/* Wait until an event release the pause state. */
 				while ( m_flags[Paused] )
 				{
-					m_inputManager.waitSystemEvents();
-				}
+					/* Let the child class get call event from the main loop. */
+					this->onMainLoopCycle();
 
-				/* Restart all timers. */
-				this->resumeTimers();
+					m_inputManager.waitSystemEvents(0.16);
+				}
 
 				/* Restart all timers of active scene. */
 				if ( m_sceneManager.hasActiveScene() )
 				{
 					m_sceneManager.activeScene()->resumeTimers();
 				}
-
-				continue;
 			}
 
-			/* [EventInput] Update user events. */
+#if DEBUG
+			if ( !m_messages.empty() )
+			{
+				this->checkForDialogMessages();
+			}
+#endif
+
+			/* EventInput: Update user events.
+			 * DirectInput: Copy the state of every input
+			 * device to use it in engine cycle. */
 			m_inputManager.pollSystemEvents();
 		}
 
+		/* Stopping the logics and rendering loops. */
+        m_flags[IsLogicsLoopRunning] = false;
+        m_flags[IsRenderingLoopRunning] = false;
+
+    	if ( renderingThread.joinable() )
+    	{
+    		Tracer::info(ClassId, "Waiting for rendering thread to be joined ...");
+
+    		renderingThread.join();
+    	}
+
+        if ( logicsThread.joinable() )
+        {
+        	Tracer::info(ClassId, "Waiting for core logics thread to be joined ...");
+
+            logicsThread.join();
+        }
+
 		return this->terminate() == 0;
+	}
+
+	void
+	Core::checkForDialogMessages () noexcept
+    {
+    	using namespace PlatformSpecific::Desktop::Dialog;
+
+    	const auto error = m_messages.front();
+
+    	Message dialog{
+    		"Internal engine message !",
+			error,
+			ButtonLayout::OK,
+			MessageType::Info
+		};
+
+    	m_messages.pop();
+
+    	this->pause();
+
+    	dialog.execute(&this->window());
+
+    	this->resume();
+    }
+
+	void
+	Core::onMainLoopCycle () const noexcept
+	{
+		/* Makes nothing special here. */
 	}
 
 	bool
 	Core::initializeCoreLevel () noexcept
 	{
-		Tracer::info(ClassId, "Core engine initialization...");
-
 		/* Initialize platform service (GLFW). */
 		if ( m_platformManager.initialize(m_secondaryServicesEnabled) )
 		{
-			TraceSuccess{ClassId} << m_fileSystem.name() << " service up !";
+			TraceSuccess{ClassId} << m_platformManager.name() << " service up !";
 		}
 		else
 		{
-			TraceFatal{ClassId} << m_fileSystem.name() << " service failed to execute !";
+			TraceFatal{ClassId} << m_platformManager.name() << " service failed to execute !";
 
 			return false;
 		}
@@ -548,8 +520,21 @@ namespace Emeraude
 		{
 			TraceSuccess{ClassId} << m_inputManager.name() << " service up !";
 
+			/* Configure the input manager. */
+			m_inputManager.enableKeyboardListening(true);
+			m_inputManager.enablePointerListening(true);
+			m_inputManager.enableCopyKeyboardState(true);
+			m_inputManager.enableCopyPointerState(true);
+
 			/* Adds Core keyboard listener to input manager. */
 			m_inputManager.addKeyboardListener(this);
+
+#if IS_MACOS
+			m_inputManager.enablePointerScaling(
+				m_window.state().contentXScale,
+				m_window.state().contentYScale
+			);
+#endif
 
 			this->observe(&m_inputManager);
 		}
@@ -568,39 +553,11 @@ namespace Emeraude
 			m_graphicsRenderer.registerToObject(*this);
 
 			this->observe(&m_graphicsRenderer);
-
-			/* Initialize graphics transfer manager. */
-			if ( m_graphicsRenderer.usable() )
-			{
-				m_graphicsTransferManager.setDevice(m_graphicsRenderer.device());
-
-				if ( m_graphicsTransferManager.initialize(m_secondaryServicesEnabled) )
-				{
-					TraceSuccess{ClassId} << m_graphicsTransferManager.name() << " service up !";
-				}
-				else
-				{
-					TraceFatal{ClassId} << m_graphicsTransferManager.name() << " service failed to execute !";
-
-					return false;
-				}
-			}
+			this->observe(&m_graphicsRenderer.shaderManager());
 		}
 		else
 		{
 			TraceFatal{ClassId} << m_graphicsRenderer.name() << " service failed to execute !";
-
-			return false;
-		}
-
-		/* Initialize vertex buffer format manager. */
-		if ( m_vertexBufferFormatManager.initialize(m_secondaryServicesEnabled) )
-		{
-			TraceSuccess{ClassId} << m_vertexBufferFormatManager.name() << " service up !";
-		}
-		else
-		{
-			TraceFatal{ClassId} << m_vertexBufferFormatManager.name() << " service failed to execute !";
 
 			return false;
 		}
@@ -621,61 +578,18 @@ namespace Emeraude
 		if ( m_physicsManager.initialize(m_secondaryServicesEnabled) )
 		{
 			TraceSuccess{ClassId} << m_physicsManager.name() << " service up !";
-
-			/* Initialize physics transfer manager. */
-			if ( m_physicsManager.isPhysicsAccelerationAvailable() )
-			{
-				m_physicsTransferManager.setDevice(m_physicsManager.device());
-
-				if ( m_physicsTransferManager.initialize(m_secondaryServicesEnabled) )
-				{
-					TraceSuccess{ClassId} << m_physicsTransferManager.name() << " service up !";
-				}
-				else
-				{
-					TraceFatal{ClassId} << m_physicsTransferManager.name() << " service failed to execute !";
-
-					return false;
-				}
-			}
 		}
 		else
 		{
 			TraceWarning{ClassId} <<
-				m_physicsTransferManager.name() << " service failed to execute !" "\n"
+				m_physicsManager.name() << " service failed to execute !" "\n"
 				"No physics acceleration available !";
-		}
-
-		/* Shader compiler. */
-		if ( m_shaderCompiler.initialize(m_secondaryServicesEnabled) )
-		{
-			TraceSuccess{ClassId} << m_shaderCompiler.name() << " service up !";
-		}
-		else
-		{
-			TraceFatal{ClassId} << m_shaderCompiler.name() << " service failed to execute !";
-
-			return false;
-		}
-
-		/* Shader manager. */
-		if ( m_shaderManager.initialize(m_secondaryServicesEnabled) )
-		{
-			TraceSuccess{ClassId} << m_shaderManager.name() << " service up !";
-		}
-		else
-		{
-			TraceFatal{ClassId} << m_shaderManager.name() << " service failed to execute !";
-
-			return false;
 		}
 
 		/* Initialize audio manager. */
 		if ( m_audioManager.initialize(m_secondaryServicesEnabled) )
 		{
 			TraceSuccess{ClassId} << m_audioManager.name() << " service up !";
-
-			Tracer::info(ClassId, m_audioManager.getAPIInformation());
 
 			m_audioManager.registerToObject(*this);
 
@@ -706,13 +620,6 @@ namespace Emeraude
 					m_audioExternalInput.name() << " service failed to execute !" "\n"
 					"No audio input available !";
 			}
-
-			/* Preloading engine internal sounds. */
-			auto & sounds = m_resourceManager.sounds();
-
-			m_switchOnSound = sounds.getResource("switch_on");
-			m_switchOffSound = sounds.getResource("switch_off");
-			m_captureSound = sounds.getResource("capture");
 		}
 		else
 		{
@@ -726,30 +633,28 @@ namespace Emeraude
 		{
 			TraceSuccess{ClassId} << m_overlayManager.name() << " service up !";
 
-			/* NOTE: Overlay manager could have been disabled at startup. */
-			if ( m_overlayManager.usable() )
+			m_overlayManager.enable(m_inputManager, true);
+
+			/* Initialization of the notifier. */
+			if ( m_notifier.initialize(m_secondaryServicesEnabled) )
 			{
-				/* Initialization of the notifier. */
-				if ( m_notifier.initialize(m_secondaryServicesEnabled) )
-				{
-					TraceSuccess{ClassId} << m_notifier.name() << " service up !";
-				}
-				else
-				{
-					TraceError{ClassId} << m_notifier.name() << " service failed to execute !";
-				}
+				TraceSuccess{ClassId} << m_notifier.name() << " service up !";
+			}
+			else
+			{
+				TraceError{ClassId} << m_notifier.name() << " service failed to execute !";
+			}
 
-				/* Call the console to build the graphical display. */
-				if ( !m_console.buildGUI() )
-				{
-					Tracer::error(ClassId, "Unable to create the graphical console !");
-				}
+			/* Call the console to build the graphical display. */
+			/*if ( !m_console.buildGUI() )
+			{
+				Tracer::error(ClassId, "Unable to create the graphical console !");
+			}*/
 
-				/* Initialization of the core screen. */
-				if ( !this->initializeCoreScreen() )
-				{
-					Tracer::warning(ClassId, "Unable to create Core screens for information's and basic functions !");
-				}
+			/* Initialization of the core screen. */
+			if ( !this->initializeCoreScreen() )
+			{
+				Tracer::warning(ClassId, "Unable to create Core screens for information's and basic functions !");
 			}
 		}
 		else
@@ -773,18 +678,6 @@ namespace Emeraude
 			return false;
 		}
 
-		/* Initialize dev manager. */
-		if ( m_devManager.initialize(m_secondaryServicesEnabled) )
-		{
-			m_devManager.observe(&m_window);
-
-			TraceSuccess{ClassId} << m_devManager.name() << " service up !";
-		}
-		else
-		{
-			TraceError{ClassId} << m_devManager.name() << " service failed to execute !";
-		}
-
 		Tracer::success(ClassId, "Engine at core level initialized ! Now initialization at the application level ...");
 
 		return true;
@@ -793,9 +686,9 @@ namespace Emeraude
 	bool
 	Core::initializeCoreScreen () noexcept
 	{
-		Tracer::info(ClassId, "Initializing core screen ...");
+		const auto screen = m_overlayManager.createScreen("CoreScreen", false, false);
 
-		return true;
+		return screen != nullptr;
 	}
 
 	void
@@ -806,14 +699,15 @@ namespace Emeraude
 			return;
 		}
 
-		m_flags[Paused] = true;
-
 		/* Dispatch the pause event,
 		 * first by sending the event
 		 * then directly to the sub application. */
 		this->notify(ExecutionPaused);
 
 		this->onPause();
+
+    	/* Pause the core engine last. */
+    	m_flags[Paused] = true;
 	}
 
 	void
@@ -824,6 +718,7 @@ namespace Emeraude
 			return;
 		}
 
+    	/* Pause the core engine first. */
 		m_flags[Paused] = false;
 
 		/* Dispatch the resume event,
@@ -837,13 +732,11 @@ namespace Emeraude
 	void
 	Core::stop () noexcept
 	{
-		/* Wait for the logic processing to finish the update. */
-		const std::lock_guard< std::mutex > lock{m_processLogicsMutex};
-
-		m_flags[IsRunning] = false;
-
-		/* Stop the update interval. */
-		this->stopTimer(m_logicsUpdateTimerID);
+    	Tracer::info(ClassId, "\n"
+    		"*******************************" "\n"
+    		"   Engine is about to stop !   " "\n"
+    		"*******************************" "\n"
+    	);
 
 		/* Dispatch the stop event,
 		 * first by sending the event
@@ -851,34 +744,21 @@ namespace Emeraude
 		this->notify(ExecutionStopped);
 
 		this->onStop();
+
+    	m_sceneManager.deleteAllScenes();
+
+    	/* Release the main loop. */
+    	m_flags[IsMainLoopRunning] = false;
 	}
 
 	unsigned int
 	Core::terminate () noexcept
 	{
-		this->onTermination();
-
-		/* Destroy timers. */
-		{
-			this->destroyTimers();
-
-			m_logicsUpdateTimerID = 0UL;
-		}
-
-		/* Removes all loaded scenes. */
-		m_sceneManager.deleteAllScenes();
-
-		m_switchOnSound.reset();
-		m_switchOffSound.reset();
-		m_captureSound.reset();
-
 		/* Terminate secondary services. */
-		auto error = 0U;
+		unsigned int error = 0;
 
-		for ( auto it = m_secondaryServicesEnabled.rbegin(); it != m_secondaryServicesEnabled.rend(); ++it)
+		for ( auto * service : std::ranges::reverse_view(m_secondaryServicesEnabled) )
 		{
-			auto * service = *it;
-
 			if ( service->terminate() )
 			{
 				TraceSuccess{ClassId} << service->name() << " secondary service terminated gracefully !";
@@ -889,28 +769,28 @@ namespace Emeraude
 
 				TraceError{ClassId} << service->name() << " secondary service failed to terminate properly !";
 			}
-
-			m_resourceManager.unloadUnusedResources();
 		}
+
+    	m_resourceManager.unloadUnusedResources();
 
 		m_secondaryServicesEnabled.clear();
 
-#ifdef VK_TRACKING
+#ifdef VK_TRACKING_ENABLED
 
-		auto vkAliveObjectCount = Vulkan::AbstractObject::s_tracking.size();
+		const auto vkAliveObjectCount = AbstractObject::s_tracking.size();
 
 		if ( vkAliveObjectCount > 0 )
 		{
-			std::cerr << "[VK_TRACKING] There is " << vkAliveObjectCount << " Vulkan objects not properly destructed !" "\n";
+			std::cerr << "[DEBUG:VK_TRACKING] There is " << vkAliveObjectCount << " Vulkan objects not properly destructed !" "\n";
 
 			for ( auto & alloc : Vulkan::AbstractObject::s_tracking )
 			{
-				std::cerr << "[VK_TRACKING] The Vulkan object @" << alloc.first << " '" << alloc.second << "' still alive !" << "\n";
+				std::cerr << "[DEBUG:VK_TRACKING] The Vulkan object @" << alloc.first << " '" << alloc.second << "' still alive !" << "\n";
 			}
 		}
 		else
 		{
-			std::cout << "[VK_TRACKING] All Vulkan objects has been released !" << "\n";
+			std::cout << "[DEBUG:VK_TRACKING] All Vulkan objects has been released !" << "\n";
 		}
 
 #endif
@@ -919,12 +799,12 @@ namespace Emeraude
 	}
 
 	void
-	Core::openFiles (const std::vector< Path::File > & filePaths) noexcept
+	Core::openFiles (const std::vector< std::filesystem::path > & filepaths) noexcept
 	{
-		std::vector< Path::File > appFilePaths;
-		appFilePaths.reserve(filePaths.size());
+		std::vector< std::filesystem::path > verifiedFilepaths;
+		verifiedFilepaths.reserve(filepaths.size());
 
-		for ( const auto & filepath : filePaths )
+		for ( const auto & filepath : filepaths )
 		{
 			TraceInfo{ClassId} << "Check file : " << filepath;
 
@@ -932,19 +812,19 @@ namespace Emeraude
 
 			// TODO : If the file is a resource file, read it to complete the resource store.
 
-			appFilePaths.emplace_back(filepath);
+			verifiedFilepaths.emplace_back(filepath);
 		}
 
-		if ( appFilePaths.empty() )
+		if ( verifiedFilepaths.empty() )
 		{
 			return;
 		}
 
-		this->onOpenFiles(appFilePaths);
+		this->onOpenFiles(verifiedFilepaths);
 	}
 
 	void
-	Core::hangExecution (const std::string & cmd) noexcept
+	Core::hangExecution (const std::string & command) noexcept
 	{
 		std::cout << "\n\n\n"
 			"******************************************************************\n"
@@ -954,9 +834,9 @@ namespace Emeraude
 
 #ifdef DEBUG
 		/* Execute a command (Only in debug) */
-		if ( !cmd.empty() )
+		if ( !command.empty() )
 		{
-			system(cmd.c_str());
+			system(command.c_str());
 		}
 #endif
 
@@ -975,427 +855,135 @@ namespace Emeraude
 		}
 	}
 
-	const std::string &
-	Core::applicationName () const noexcept
-	{
-		return m_applicationName;
-	}
-
-	const Version &
-	Core::applicationVersion () const noexcept
-	{
-		return m_applicationVersion;
-	}
-
-	const std::string &
-	Core::applicationOrganization () const noexcept
-	{
-		return m_applicationOrganization;
-	}
-
-	const std::string &
-	Core::applicationDomain () const noexcept
-	{
-		return m_applicationDomain;
-	}
-
-	std::string
-	Core::applicationFullIdentification () const noexcept
-	{
-		return m_applicationOrganization + " - " + m_applicationName + " (" + to_string(m_applicationVersion) + ")";
-	}
-
-	Arguments &
-	Core::arguments () noexcept
-	{
-		return m_arguments;
-	}
-
-	const Arguments &
-	Core::arguments () const noexcept
-	{
-		return m_arguments;
-	}
-
-	Help &
-	Core::coreHelp () noexcept
-	{
-		return m_coreHelp;
-	}
-
-	const Help &
-	Core::coreHelp () const noexcept
-	{
-		return m_coreHelp;
-	}
-
-	Help &
-	Core::applicationHelp () noexcept
-	{
-		return m_applicationHelp;
-	}
-
-	const Help &
-	Core::applicationHelp () const noexcept
-	{
-		return m_applicationHelp;
-	}
-
-	Tracer &
-	Core::tracer () noexcept
-	{
-		return m_tracer;
-	}
-
-	const Tracer &
-	Core::tracer () const noexcept
-	{
-		return m_tracer;
-	}
-
-	FileSystem &
-	Core::fileSystem () noexcept
-	{
-		return m_fileSystem;
-	}
-
-	const FileSystem &
-	Core::fileSystem () const noexcept
-	{
-		return m_fileSystem;
-	}
-
-	Settings &
-	Core::coreSettings () noexcept
-	{
-		return m_coreSettings;
-	}
-
-	const Settings &
-	Core::coreSettings () const noexcept
-	{
-		return m_coreSettings;
-	}
-
-	Settings &
-	Core::applicationSettings () noexcept
-	{
-		return m_applicationSettings;
-	}
-
-	const Settings &
-	Core::applicationSettings () const noexcept
-	{
-		return m_applicationSettings;
-	}
-
-	Console &
-	Core::console () noexcept
-	{
-		return m_console;
-	}
-
-	const Console &
-	Core::console () const noexcept
-	{
-		return m_console;
-	}
-
-	NetworkManager &
-	Core::networkManager () noexcept
-	{
-		return m_networkManager;
-	}
-
-	const NetworkManager &
-	Core::networkManager () const noexcept
-	{
-		return m_networkManager;
-	}
-
-	Resources::Manager &
-	Core::resourceManager () noexcept
-	{
-		return m_resourceManager;
-	}
-
-	const Resources::Manager &
-	Core::resourceManager () const noexcept
-	{
-		return m_resourceManager;
-	}
-
-	User &
-	Core::user () noexcept
-	{
-		return m_user;
-	}
-
-	const User &
-	Core::user () const noexcept
-	{
-		return m_user;
-	}
-
-	PlatformManager &
-	Core::platformManager () noexcept
-	{
-		return m_platformManager;
-	}
-
-	const PlatformManager &
-	Core::platformManager () const noexcept
-	{
-		return m_platformManager;
-	}
-
-	Vulkan::Instance &
-	Core::vulkanInstance () noexcept
-	{
-		return m_vulkanInstance;
-	}
-
-	const Vulkan::Instance &
-	Core::vulkanInstance () const noexcept
-	{
-		return m_vulkanInstance;
-	}
-
-	Window &
-	Core::window () noexcept
-	{
-		return m_window;
-	}
-
-	const Window &
-	Core::window () const noexcept
-	{
-		return m_window;
-	}
-
-	Input::Manager &
-	Core::inputManager () noexcept
-	{
-		return m_inputManager;
-	}
-
-	const Input::Manager &
-	Core::inputManager () const noexcept
-	{
-		return m_inputManager;
-	}
-
-	Renderer &
-	Core::graphicsRenderer () noexcept
-	{
-		return m_graphicsRenderer;
-	}
-
-	const Renderer &
-	Core::graphicsRenderer () const noexcept
-	{
-		return m_graphicsRenderer;
-	}
-
-	Vulkan::TransferManager &
-	Core::graphicsTransferManager () noexcept
-	{
-		return m_graphicsTransferManager;
-	}
-
-	const Vulkan::TransferManager &
-	Core::graphicsTransferManager () const noexcept
-	{
-		return m_graphicsTransferManager;
-	}
-
-	Graphics::RenderableInstance::VertexBufferFormatManager &
-	Core::vertexBufferFormatManager () noexcept
-	{
-		return m_vertexBufferFormatManager;
-	}
-
-	const Graphics::RenderableInstance::VertexBufferFormatManager &
-	Core::vertexBufferFormatManager () const noexcept
-	{
-		return m_vertexBufferFormatManager;
-	}
-
-	ExternalInput &
-	Core::videoExternalInput () noexcept
-	{
-		return m_videoExternalInput;
-	}
-
-	const ExternalInput &
-	Core::videoExternalInput () const noexcept
-	{
-		return m_videoExternalInput;
-	}
-
-	Physics::Manager &
-	Core::physicsManager () noexcept
-	{
-		return m_physicsManager;
-	}
-
-	const Physics::Manager &
-	Core::physicsManager () const noexcept
-	{
-		return m_physicsManager;
-	}
-
-	Vulkan::TransferManager &
-	Core::physicsTransferManager () noexcept
-	{
-		return m_physicsTransferManager;
-	}
-
-	const Vulkan::TransferManager &
-	Core::physicsTransferManager () const noexcept
-	{
-		return m_physicsTransferManager;
-	}
-
-	const Saphir::ShaderManager &
-	Core::shaderManager () const noexcept
-	{
-		return m_shaderManager;
-	}
-
-	Saphir::ShaderCompiler &
-	Core::shaderCompiler () noexcept
-	{
-		return m_shaderCompiler;
-	}
-
-	const Saphir::ShaderCompiler &
-	Core::shaderCompiler () const noexcept
-	{
-		return m_shaderCompiler;
-	}
-
-	Saphir::ShaderManager &
-	Core::shaderManager () noexcept
-	{
-		return m_shaderManager;
-	}
-
-	Audio::Manager &
-	Core::audioManager () noexcept
-	{
-		return m_audioManager;
-	}
-
-	const Audio::Manager &
-	Core::audioManager () const noexcept
-	{
-		return m_audioManager;
-	}
-
-	Audio::TrackMixer &
-	Core::trackMixer () noexcept
-	{
-		return m_trackMixer;
-	}
-
-	const Audio::TrackMixer &
-	Core::trackMixer () const noexcept
-	{
-		return m_trackMixer;
-	}
-
-	Audio::ExternalInput &
-	Core::audioExternalInput () noexcept
-	{
-		return m_audioExternalInput;
-	}
-
-	const Audio::ExternalInput &
-	Core::audioExternalInput () const noexcept
-	{
-		return m_audioExternalInput;
-	}
-
-	Overlay::Manager &
-	Core::overlayManager () noexcept
-	{
-		return m_overlayManager;
-	}
-
-	const Overlay::Manager &
-	Core::overlayManager () const noexcept
-	{
-		return m_overlayManager;
-	}
-
-	Notifier &
-	Core::notifier () noexcept
-	{
-		return m_notifier;
-	}
-
-	const Notifier &
-	Core::notifier () const noexcept
-	{
-		return m_notifier;
-	}
-
-	Scenes::Manager &
-	Core::sceneManager () noexcept
-	{
-		return m_sceneManager;
-	}
-
-	const Scenes::Manager &
-	Core::sceneManager () const noexcept
-	{
-		return m_sceneManager;
-	}
-
-	Dev::Manager &
-	Core::devManager () noexcept
-	{
-		return m_devManager;
-	}
-
-	const Dev::Manager &
-	Core::devManager () const noexcept
-	{
-		return m_devManager;
-	}
-
-	Core *
-	Core::instance () noexcept
-	{
-		return s_instance;
-	}
-
-	void
-	Core::sleep (int seconds) noexcept
-	{
-		std::cout << "\n *** Sleeping for " << seconds << " second(s) ... *** " "\n";
-
-		std::this_thread::sleep_for(std::chrono::seconds(seconds));
-
-		std::cout << "\n *** Restoring execution ... *** " "\n";
-	}
-
 	bool
-	Core::onKeyPress (int key, int scanCode, int modifiers, bool repeat) noexcept
+	Core::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
 	{
 		/* NOTE: We don't want to do something here and for now ... */
 
 		/* NOTE: Let the user application consume the event. */
-		return this->onAppKeyPress(key, scanCode, modifiers, repeat);
+		return this->onAppKeyPress(key, scancode, modifiers, repeat);
 	}
 
 	bool
-	Core::onKeyRelease (int key, int scanCode, int modifiers) noexcept
+	Core::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
 	{
+		/* NOTE: When the shift modifiers is pressed,
+		 * the core level has the priority to check the key released. */
+		if ( isKeyboardModifierPressed(ModKeyShift, modifiers) )
+		{
+			switch ( key )
+			{
+				case KeyEscape :
+				{
+					Tracer::info(ClassId, "Force quit !");
+
+					this->stop();
+				}
+					return true;
+
+				/* Direct keys reserved by core. */
+				case KeyF1 :
+				{
+					m_audioManager.play("switch_on");
+
+					if ( m_sceneManager.hasActiveScene())
+					{
+						const auto scene = m_sceneManager.activeScene();
+
+						TraceInfo{ClassId} <<
+							"Scene '" << scene->name() << "' content:" "\n" <<
+							"Octree System : " "\n" << scene->getSectorSystemStatistics(true) <<
+							"Static entities : " "\n" << scene->getStaticEntitySystemStatistics(true) <<
+							"Node entities : " "\n" << scene->getNodeSystemStatistics(true) <<
+							"Light set : " "\n" << scene->lightSet();
+					}
+					else
+					{
+						Tracer::info(ClassId, "No active scene !");
+					}
+				}
+					return true;
+
+				case KeyF2 :
+				{
+					m_audioManager.play("switch_on");
+
+					m_sceneManager.refreshScenes();
+				}
+					return true;
+
+				case KeyF3 :
+				{
+					using namespace PlatformSpecific::Desktop::Dialog;
+
+					if ( Message::createConfirmation("Test dialog !", "Do you want to open Text files !", &m_window) == Answer::Yes )
+					{
+						const auto filePaths = OpenFiles::create("Loading text files", {{"Text", {"txt", "doc", "rtf"}}}, &m_window);
+
+						for ( const auto & filePath : filePaths )
+						{
+							Message::create("You choose", filePath, ButtonLayout::OK, MessageType::Info, &m_window);
+						}
+					}
+
+					return true;
+				}
+
+				case KeyF9 :
+				{
+					Tracer::info(ClassId, "Cleaning unused resources...");
+
+					m_audioManager.play("switch_on");
+
+					const auto count = m_resourceManager.unloadUnusedResources();
+
+					TraceInfo{ClassId} << count << " resources cleaned !";
+				}
+					return true;
+
+				case KeyF10 :
+				{
+					Tracer::info(ClassId, "Core engine paused for 3 seconds ...");
+
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+
+					Tracer::info(ClassId, "Core engine wake-up.");
+				}
+					return true;
+
+				case KeyF12 :
+				{
+					Tracer::info(ClassId, "Toggling fullscreen mode ...");
+
+					m_window.setFullscreenMode(!m_window.isFullscreenMode());
+				}
+					return true;
+
+				case KeyF4 :
+				case KeyF5 :
+				case KeyF6 :
+				case KeyF7 :
+				case KeyF8 :
+				case KeyF11 :
+				{
+					Tracer::info(ClassId, "Core reserved SHIFT+Fn shortcut hit.");
+				}
+					return true;
+
+				default:
+					break;
+			}
+		}
+
+		/* NOTE: Let the child application looks for the key pressed. */
+		if ( this->onAppKeyRelease(key, scancode, modifiers) )
+		{
+			return true;
+		}
+
+		/* NOTE: If the application do not catch any key, we let the core having a default behavior. */
 		switch ( key )
 		{
-			/* Direct keys reserved by core. */
 			case KeyGraveAccent :
 				m_console.enable();
 
@@ -1406,117 +994,25 @@ namespace Emeraude
 
 				return true;
 
-			case KeyF1 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					m_audioManager.play(m_switchOnSound.get());
-
-					if ( m_sceneManager.hasActiveScene() )
-					{
-						std::cout << "Scene content:" "\n" << m_sceneManager.activeScene()->getStatisticsString(true, true, true, true) << '\n';
-					}
-					else
-					{
-						std::cout << "No active scene !" << '\n';
-					}
-
-					return true;
-				};
-				break;
-
-			case KeyF2 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					m_audioManager.play(m_switchOnSound.get());
-
-					m_sceneManager.refreshScenes();
-
-					return true;
-				}
-				break;
-
-			case KeyF9 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					Tracer::info(ClassId, "Cleaning unused resources...");
-
-					m_audioManager.play(m_switchOnSound.get());
-
-					auto count = m_resourceManager.unloadUnusedResources();
-
-					TraceInfo{ClassId} << count << " resources cleaned !";
-
-					return true;
-				}
-				break;
-
-			case KeyF10 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					Core::sleep(3);
-
-					return true;
-				}
-				break;
-
-			case KeyF12 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					m_window.setFullscreenMode(!m_window.isFullscreenMode());
-
-					return true;
-				}
-				break;
-
-			case KeyF3 :
-			case KeyF4 :
-			case KeyF5 :
-			case KeyF6 :
-			case KeyF7 :
-			case KeyF8 :
-			case KeyF11 :
-				if ( KeyboardController::isModifierKeyPressed(ModKeyShift, modifiers) )
-				{
-					Tracer::info(ClassId, "Core reserved SHIFT+Fn shortcut hit.");
-
-					return true;
-				}
-				break;
-
-			/* NOTE: Let the user application consume the event. */
 			default:
-				break;
+				return false;
 		}
-
-		return this->onAppKeyRelease(key, scanCode, modifiers);
 	}
 
 	bool
-	Core::onCharacterType (unsigned int unicode, int modifiers) noexcept
+	Core::onCharacterType (uint32_t unicode) noexcept
 	{
 		/* NOTE: Let the user application consume the event. */
-		return this->onAppCharacterType(unicode, modifiers);
-	}
-
-	double
-	Core::lifetime () const noexcept
-	{
-		return m_lifetime;
-	}
-
-	size_t
-	Core::cycle () const noexcept
-	{
-		return m_cycle;
+		return this->onAppCharacterType(unicode);
 	}
 
 	bool
-	Core::screenshot (bool depth, bool stencil) noexcept
+	Core::screenshot (bool /*depth*/, bool /*stencil*/) noexcept
 	{
 		/* Gets the capture directory. */
-		const auto captures = m_fileSystem.userDataDirectory("captures");
+		const auto captures = m_primaryServices.fileSystem().userDataDirectory("Captures");
 
-		if ( !captures.writable() )
+		if ( !IO::writable(captures) )
 		{
 			TraceError{ClassId} << "Unable to write in captures directory '" << captures << "' !";
 
@@ -1532,11 +1028,11 @@ namespace Emeraude
 	Core::dumpFramebuffer () const noexcept
 	{
 		/* Framebuffer dumping directory. */
-		auto directory = m_fileSystem.userDataDirectory("framebuffer-snapshots");
+		const auto directory = m_primaryServices.fileSystem().userDataDirectory("framebuffer-snapshots");
 
-		if ( !directory.exists() )
+		if ( !IO::directoryExists(directory) )
 		{
-			if ( !directory.create() )
+			if ( !IO::createDirectory(directory) )
 			{
 				TraceError{ClassId} << "Unable to create the directory '" << directory << "' !";
 
@@ -1545,7 +1041,7 @@ namespace Emeraude
 		}
 		else
 		{
-			if ( !directory.writable() )
+			if ( !IO::writable(directory) )
 			{
 				TraceError{ClassId} << "Unable to write into directory '" << directory << "' !";
 
@@ -1556,28 +1052,8 @@ namespace Emeraude
 		return true;
 	}
 
-	void
-	Core::setFlag (size_t flag, bool state) noexcept
-	{
-		if ( flag >= 8 && flag <= 15 )
-		{
-			m_flags[flag] = state;
-		}
-	}
-
 	bool
-	Core::getFlag (size_t flag) noexcept
-	{
-		if ( flag <= 15 )
-		{
-			return m_flags[flag];
-		}
-
-		return false;
-	}
-
-	bool
-	Core::onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept
+	Core::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept
 	{
 		if ( observable == &m_networkManager )
 		{
@@ -1597,25 +1073,20 @@ namespace Emeraude
 
 				case Window::OSNotifiesWindowLostFocus :
 				case Window::OSNotifiesWindowHidden :
-					this->pause();
+					if ( m_flags[Pausable] )
+					{
+						this->pause();
+					}
 					break;
 
 				case Window::OSRequestsToTerminate :
 					this->stop();
 					break;
 
-				case Window::Created :
-				case Window::Destroyed :
-				case Window::Centered :
-				case Window::OSNotifiesWindowMovedTo :
-				case Window::OSNotifiesWindowSizeMaximized :
-				case Window::OSNotifiesWindowSizeMinimized :
-				case Window::OSNotifiesWindowResized :
-				case Window::OSNotifiesFramebufferResized :
-				case Window::OSRequestsToRescaleContentBy :
-				case Window::OSRequestsToRefreshContent :
 				default :
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 					TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << Window::ClassId << "' ignored.";
+#endif
 					break;
 			}
 
@@ -1633,31 +1104,69 @@ namespace Emeraude
 		{
 			switch ( notificationCode )
 			{
-				case Graphics::Renderer::SwapChainRecreated :
-					if ( m_sceneManager.refreshScenes() )
-					{
-						Tracer::success(ClassId, "Scenes graphics pipelines has been refreshed.");
-					}
-					else
-					{
-						Tracer::error(ClassId, "Unable to refresh scenes graphics pipelines !");
-					}
+				case Renderer::SwapChainRecreated :
+					m_sceneManager.refreshScenes();
 					break;
 
-				case Graphics::Renderer::SwapChainCreated :
-				case Graphics::Renderer::SwapChainDestroyed :
+				case Renderer::SwapChainCreated :
+				case Renderer::SwapChainDestroyed :
 				default:
-					TraceDebug{ClassId} << "Receiving an event from '" << Graphics::Renderer::ClassId << "' (code:" << notificationCode << ") ...";
+					TraceDebug{ClassId} << "Receiving an event from '" << Renderer::ClassId << "' (code:" << notificationCode << ") ...";
 					break;
 			}
 
 			return true;
 		}
 
+    	if ( observable == &m_graphicsRenderer.shaderManager() )
+    	{
+    		switch ( notificationCode )
+    		{
+    			case Saphir::ShaderManager::ShaderCompilationSucceed :
+    				this->notifyUser(BlobTrait{} << "Shader '" << std::any_cast< std::string >(data) << "' compilation succeeded !");
+    				break;
+
+    			case Saphir::ShaderManager::ShaderCompilationFailed :
+    			{
+    				const auto shaderDetails = std::any_cast< std::pair< std::string, std::string > >(data);
+
+    				this->onShaderCompilationFailed(shaderDetails.first, shaderDetails.second);
+    			}
+    				break;
+
+    			default:
+    				break;
+    		}
+
+    		return true;
+    	}
 
 		if ( observable == &m_trackMixer )
 		{
 			TraceDebug{ClassId} << "Receiving an event from '" << Audio::TrackMixer::ClassId << "' (code:" << notificationCode << ") ...";
+
+			switch ( notificationCode )
+			{
+				case Audio::TrackMixer::MusicPlaying :
+				case Audio::TrackMixer::MusicSwitching :
+					this->notifyUser(std::any_cast< std::string >(data));
+					break;
+
+				case Audio::TrackMixer::MusicPaused :
+					this->notifyUser("Music paused !");
+					break;
+
+				case Audio::TrackMixer::MusicResumed :
+					this->notifyUser("Music resumed !");
+					break;
+
+				case Audio::TrackMixer::MusicStopped :
+					this->notifyUser("Music stopped !");
+					break;
+
+				default:
+					break;
+			}
 
 			return true;
 		}
@@ -1690,18 +1199,18 @@ namespace Emeraude
 	{
 		Tracer::info(ClassId, "Executing in tools mode ...");
 
-		auto tools = m_arguments.get(ToolsArg, ToolsLongArg).value();
+		const auto tools = m_primaryServices.arguments().get(ToolsArg, ToolsLongArg).value();
 
 		if ( tools == VulkanInformationToolName )
 		{
-			Tool::ShowVulkanInformation tool{m_arguments, m_vulkanInstance};
+			Tool::ShowVulkanInformation tool{m_primaryServices.arguments(), m_vulkanInstance};
 
 			return tool.execute();
 		}
 
 		if ( tools == PrintGeometryToolName )
 		{
-			Tool::GeometryDataPrinter tool{m_arguments};
+			Tool::GeometryDataPrinter tool{m_primaryServices.arguments()};
 
 			return tool.execute();
 		}
@@ -1740,5 +1249,4 @@ namespace Emeraude
 			std::cout << text.str() << '\n';
 		}
 	}
-	// NOLINTEND(*-magic-numbers)
 }

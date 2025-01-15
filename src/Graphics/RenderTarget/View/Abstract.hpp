@@ -1,115 +1,86 @@
 /*
- * Emeraude/Graphics/RenderTarget/View/Abstract.hpp
- * This file is part of Emeraude
+ * src/Graphics/RenderTarget/View/Abstract.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <memory>
+#include <cstdint>
 #include <string>
 
 /* Local inclusions for inheritances. */
 #include "Graphics/RenderTarget/Abstract.hpp"
-#include "Graphics/Light/LightableRenderTargetTrait.hpp"
+
+/* Local inclusions for usages. */
+#include "Graphics/FramebufferPrecisions.hpp"
+#include "Graphics/Types.hpp"
+#include "MasterControl/Types.hpp"
 
 namespace Emeraude::Graphics::RenderTarget::View
 {
 	/**
-	 * @brief The base class of every views.
+	 * @brief The base class of every view.
 	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
-	 * @extends Emeraude::Graphics::Light::LightableRenderTargetTrait This render target use lighting.
 	 */
-	class Abstract : public RenderTarget::Abstract, public Light::LightableRenderTargetTrait
+	class Abstract : public RenderTarget::Abstract
 	{
 		public:
 
-			/* Settings keys */
-			static constexpr auto MaxViewableDistanceKey = "Video/View/MaxViewableDistance";
-			static constexpr auto DefaultMaxViewableDistance = 1000U;
-			static constexpr auto WidthKey = "Video/View/Width";
-			static constexpr auto HeightKey = "Video/View/Height";
-			static constexpr auto sRGBEnabledKey = "Video/View/sRGBEnabled";
-			static constexpr auto DefaultsRGBEnabled = true;
-
-			/**
-			 * @brief Copy constructor.
-			 * @param copy A reference to the copied instance.
-			 */
-			Abstract (const Abstract & copy) noexcept = delete;
-
-			/**
-			 * @brief Move constructor.
-			 * @param copy A reference to the copied instance.
-			 */
-			Abstract (Abstract && copy) noexcept = delete;
-
-			/**
-			 * @brief Copy assignment.
-			 * @param copy A reference to the copied instance.
-			 * @return Abstract &
-			 */
-			Abstract & operator= (const Abstract & copy) noexcept = delete;
-
-			/**
-			 * @brief Move assignment.
-			 * @param copy A reference to the copied instance.
-			 * @return Abstract &
-			 */
-			Abstract & operator= (Abstract && copy) noexcept = delete;
-			
-			/**
-			 * @brief Destructs the abstract render to view.
-			 */
-			~Abstract () override;
-
 			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
 			[[nodiscard]]
-			MasterControl::VideoType videoType () const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createOnHardware() */
-			[[nodiscard]]
-			bool createOnHardware () noexcept final;
-
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::destroyFromHardware() */
-			bool destroyFromHardware () noexcept final;
-
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::renderPass() */
-			[[nodiscard]]
-			const Vulkan::RenderPass * renderPass () const noexcept final;
+			MasterControl::VideoType
+			videoType () const noexcept override
+			{
+				return MasterControl::VideoType::View;
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() */
 			[[nodiscard]]
-			const Vulkan::Framebuffer * framebuffer () const noexcept final;
+			const Vulkan::Framebuffer *
+			framebuffer () const noexcept final
+			{
+				return m_framebuffer.get();
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::Image > & image () const noexcept final;
+			std::shared_ptr< Vulkan::Image >
+			image () const noexcept final
+			{
+				return m_colorImage;
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() */
 			[[nodiscard]]
-			const std::shared_ptr< Vulkan::ImageView > & imageView () const noexcept final;
+			std::shared_ptr< Vulkan::ImageView >
+			imageView () const noexcept final
+			{
+				return m_colorImageView;
+			}
 
 			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() */
 			[[nodiscard]]
@@ -117,31 +88,36 @@ namespace Emeraude::Graphics::RenderTarget::View
 
 			/**
 			 * @brief Gives access to the main hardware depth stencil image of the render target.
-			 * @return const std::shared_ptr< Vulkan::Image > &
+			 * @return std::shared_ptr< Vulkan::Image >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::Image > & depthStencilImage () const noexcept final;
+			std::shared_ptr< Vulkan::Image >
+			depthStencilImage () const noexcept
+			{
+				return m_depthStencilImage;
+			}
 
 			/**
 			 * @brief Gives access to the main hardware depth image view object of the render target.
-			 * @return const std::shared_ptr< Vulkan::ImageView > &
+			 * @return std::shared_ptr< Vulkan::ImageView >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::ImageView > & depthImageView () const noexcept final;
+			std::shared_ptr< Vulkan::ImageView >
+			depthImageView () const noexcept
+			{
+				return m_depthImageView;
+			}
 
 			/**
 			 * @brief Gives access to the main hardware stencil image view object of the render target.
-			 * @return const std::shared_ptr< Vulkan::ImageView > &
+			 * @return std::shared_ptr< Vulkan::ImageView >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::ImageView > & stencilImageView () const noexcept final;
-
-			/**
-			 * @brief Returns the max viewable distance from settings.
-			 * @return float
-			 */
-			[[nodiscard]]
-			static float getMaxViewableDistance () noexcept;
+			std::shared_ptr< Vulkan::ImageView >
+			stencilImageView () const noexcept
+			{
+				return m_stencilImageView;
+			}
 
 			/**
 			 * @brief Returns the view width from settings.
@@ -161,20 +137,47 @@ namespace Emeraude::Graphics::RenderTarget::View
 
 			/**
 			 * @brief Constructs an abstract render to view.
+			 * @param name A reference to a string.
 			 * @param precisions The framebuffer precisions.
 			 * @param extent The framebuffer dimensions.
 			 * @param renderType The type of render.
 			 */
-			Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderType renderType) noexcept;
+			Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept;
 
 		private:
 
-			std::shared_ptr< Vulkan::RenderPass > m_renderPass{};
-			std::shared_ptr< Vulkan::Framebuffer > m_framebuffer{};
-			std::shared_ptr< Vulkan::Image > m_colorImage{};
-			std::shared_ptr< Vulkan::ImageView > m_colorImageView{};
-			std::shared_ptr< Vulkan::Image > m_depthStencilImage{};
-			std::shared_ptr< Vulkan::ImageView > m_depthImageView{};
-			std::shared_ptr< Vulkan::ImageView > m_stencilImageView{};
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			[[nodiscard]]
+			bool onCreate (Renderer & renderer) noexcept final;
+
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			void onDestroy () noexcept final;
+
+			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::RenderPass > createRenderPass (Renderer & renderer) const noexcept override;
+
+			/**
+			 * @brief Creates the images and the image views for each swap chain frame.
+			 * @param device A reference to the graphics device smart pointer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createImages (const std::shared_ptr< Vulkan::Device > & device) noexcept;
+
+			/**
+			 * @brief Creates the framebuffer.
+			 * @param renderPass A reference to the render pass smart pointer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createFramebuffer (const std::shared_ptr< Vulkan::RenderPass > & renderPass) noexcept;
+
+			std::shared_ptr< Vulkan::Framebuffer > m_framebuffer;
+			std::shared_ptr< Vulkan::Image > m_colorImage;
+			std::shared_ptr< Vulkan::ImageView > m_colorImageView;
+			std::shared_ptr< Vulkan::Image > m_depthStencilImage;
+			std::shared_ptr< Vulkan::ImageView > m_depthImageView;
+			std::shared_ptr< Vulkan::ImageView > m_stencilImageView;
 	};
 }

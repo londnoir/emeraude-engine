@@ -1,139 +1,159 @@
 /*
- * Emeraude/Scenes/StaticEntity.cpp
- * This file is part of Emeraude
+ * src/Scenes/StaticEntity.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "StaticEntity.hpp"
 
+/* Local inclusions. */
+#include "Scenes/Scene.hpp"
+
 namespace Emeraude::Scenes
 {
 	using namespace Libraries;
 	using namespace Libraries::Math;
+	using namespace Physics;
 
-	const size_t StaticEntity::ClassUID{Observable::getClassUID()};
+	const size_t StaticEntity::ClassUID{getClassUID(ClassId)};
 
-	StaticEntity::StaticEntity (const std::string & name, Scene * parentScene, const Coordinates< float > & coordinates) noexcept
-		: AbstractEntity(name, parentScene), m_coordinates(coordinates)
+	StaticEntity::StaticEntity (const std::string & name, uint32_t sceneTimeMS, const CartesianFrame< float > & coordinates) noexcept
+		: AbstractEntity(name, sceneTimeMS), m_cartesianFrame(coordinates)
 	{
-		TraceInfo{ClassId} << "The static entity '" << this->name() << "' is constructed !";
-	}
 
-	StaticEntity::~StaticEntity ()
-	{
-		TraceInfo{ClassId} << "The static entity '" << this->name() << "' is destructed !";
-	}
-
-	bool
-	StaticEntity::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	StaticEntity::isRenderable () const noexcept
-	{
-		return m_flags[IsRenderable];
-	}
-
-	bool
-	StaticEntity::hasPhysicalObjectProperties () const noexcept
-	{
-		return m_flags[HasPhysicalObjectProperties];
 	}
 
 	void
-	StaticEntity::setLocalCoordinates (const Coordinates< float > & coordinates) noexcept
+	StaticEntity::scale (const Vector< 3, float > & factor, TransformSpace transformSpace) noexcept
 	{
-		m_coordinates = coordinates;
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	const Coordinates< float > &
-	StaticEntity::localCoordinates () const noexcept
+	void
+	StaticEntity::scale (float factor, TransformSpace transformSpace) noexcept
 	{
-		return m_coordinates;
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	Coordinates< float > &
-	StaticEntity::getWritableLocalCoordinates () noexcept
+	void
+	StaticEntity::scaleX (float factor, TransformSpace transformSpace) noexcept
 	{
-		return m_coordinates;
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingXFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	Coordinates< float >
-	StaticEntity::getWorldCoordinates () const noexcept
+	void
+	StaticEntity::scaleY (float factor, TransformSpace transformSpace) noexcept
 	{
-		return m_coordinates;
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingYFactor(factor);
+				break;
+
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
-	Cuboid< float >
-	StaticEntity::getWorldBoundingBox () const noexcept
+	void
+	StaticEntity::scaleZ (float factor, TransformSpace transformSpace) noexcept
 	{
-		return this->localBoundingBox();
-	}
+		switch ( transformSpace )
+		{
+			case TransformSpace::Local :
+				m_cartesianFrame.setScalingZFactor(factor);
+				break;
 
-	Sphere< float >
-	StaticEntity::getWorldBoundingSphere () const noexcept
-	{
-		return this->localBoundingSphere();
+			case TransformSpace::Parent :
+			case TransformSpace::World :
+				/* TODO: Reorient the scale vector to world. */
+				break;
+		}
+
+		this->onLocationDataUpdate();
 	}
 
 	bool
-	StaticEntity::processLogics (const Scene & scene, size_t cycle) noexcept
+	StaticEntity::onProcessLogics (const Scene & scene) noexcept
 	{
-		for ( auto & pair : this->components() )
-			pair.second->processLogics(scene, cycle);
+		this->updateAnimations(scene.cycle());
 
 		return false;
 	}
 
-	void
-	StaticEntity::setRenderingAbilityState (bool state) noexcept
-	{
-		m_flags[IsRenderable] = state;
-	}
-
-	void
-	StaticEntity::setPhysicalObjectPropertiesState (bool state) noexcept
-	{
-		m_flags[HasPhysicalObjectProperties] = state;
-	}
-
 	bool
-	StaticEntity::onUnhandledNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept
+	StaticEntity::onUnhandledNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
+		if ( observable->is(PhysicalObjectProperties::ClassUID) )
+		{
+			return true;
+		}
+
 #ifdef DEBUG
 		/* NOTE: Don't know what is it, goodbye ! */
 		TraceInfo{ClassId} <<
-			"Received an unhandled event from observable @" << observable << " (code:" << notificationCode << ") ! "
+			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
 #endif
 
@@ -141,32 +161,8 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	StaticEntity::playAnimation (Animations::id_t id, const Libraries::Variant & value) noexcept
+	StaticEntity::playAnimation (Animations::id_t /*identifier*/, const Libraries::Variant & /*value*/) noexcept
 	{
 		return false;
-	}
-
-	void
-	StaticEntity::enableSphereCollision (bool state) noexcept
-	{
-		m_flags[SphereCollisionEnabled] = state;
-	}
-
-	bool
-	StaticEntity::sphereCollisionIsEnabled () const noexcept
-	{
-		return m_flags[SphereCollisionEnabled];
-	}
-
-	Matrix< 4, float >
-	StaticEntity::getModelMatrix () const noexcept
-	{
-		return m_coordinates.modelMatrix();
-	}
-
-	Matrix< 4, float >
-	StaticEntity::getViewMatrix (bool rotateOnly) const noexcept
-	{
-		return m_coordinates.viewMatrix(rotateOnly);
 	}
 }

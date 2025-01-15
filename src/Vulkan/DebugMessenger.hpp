@@ -1,27 +1,27 @@
 /*
- * Emeraude/Vulkan/DebugMessenger.hpp
- * This file is part of Emeraude
+ * src/Vulkan/DebugMessenger.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -30,10 +30,14 @@
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
 
+/* Forward declarations. */
 namespace Emeraude::Vulkan
 {
 	class Instance;
+}
 
+namespace Emeraude::Vulkan
+{
 	/**
 	 * @brief Holds the debug messenger extension from the Vulkan API.
 	 * @extends Emeraude::Vulkan::AbstractObject Do not need a device to works.
@@ -85,14 +89,22 @@ namespace Emeraude::Vulkan
 			 * @return VkDebugUtilsMessengerEXT
 			 */
 			[[nodiscard]]
-			VkDebugUtilsMessengerEXT handle () noexcept;
+			VkDebugUtilsMessengerEXT
+			handle () noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns a create info for debugging.
-			 * @return VkDebugUtilsMessengerCreateInfoEXT
+			 * @return const VkDebugUtilsMessengerCreateInfoEXT &
 			 */
 			[[nodiscard]]
-			VkDebugUtilsMessengerCreateInfoEXT createInfo () noexcept;
+			const VkDebugUtilsMessengerCreateInfoEXT &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief getCreateInfo
@@ -113,9 +125,7 @@ namespace Emeraude::Vulkan
 			 */
 			static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT * pCallbackData, void * pUserData) noexcept;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
 			const Instance & m_instance;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
 			VkDebugUtilsMessengerEXT m_handle{VK_NULL_HANDLE};
 			VkDebugUtilsMessengerCreateInfoEXT m_createInfo{};
 	};

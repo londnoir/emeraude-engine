@@ -1,52 +1,64 @@
 /*
- * Emeraude/Resources/ResourceTrait.hpp
- * This file is part of Emeraude
+ * src/Resources/ResourceTrait.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <array>
 #include <set>
 #include <string>
+#include <mutex>
+#include <filesystem>
 
-/* Local inclusions */
-#include "NamedItem.hpp"
-#include "FastJSON.hpp"
-#include "FlagTrait.hpp"
-#include "Observable.hpp"
-#include "Path/File.hpp"
+/* Third-party inclusions. */
+#ifndef JSON_USE_EXCEPTION
+#define JSON_USE_EXCEPTION 0
+#endif
+#include "json/json.h"
+
+/* Local inclusions for inheritances. */
+#include "Libraries/NameableTrait.hpp"
+#include "Libraries/FlagTrait.hpp"
+#include "Libraries/ObservableTrait.hpp"
+
+/* Local inclusions for usages. */
+#include "Types.hpp"
 
 namespace Emeraude::Resources
 {
 	/**
 	 * @brief This class describe a loadable resource with dependencies.
-	 * @extends Libraries::NamedItem A resource is always named.
+	 * @extends Libraries::NameableTrait A resource is always named.
 	 * @extends Libraries::FlagTrait A resource needs flags to change behavior of resource construction.
-	 * @extends Libraries::Observable A resource is observable to keep track of loading states.
+	 * @extends Libraries::ObservableTrait A resource is observable to keep track of loading states.
 	 */
-	class ResourceTrait : public Libraries::NamedItem, public Libraries::FlagTrait< uint32_t >, public Libraries::Observable
+	class ResourceTrait : public Libraries::NameableTrait, public Libraries::FlagTrait< uint32_t >, public Libraries::ObservableTrait
 	{
 		public:
 
@@ -59,37 +71,58 @@ namespace Emeraude::Resources
 				MaxEnum
 			};
 
-			/** @brief This enum define every stages of resource loading. */
-			enum class Status: int
-			{
-				/* This is the status of a new resource instanciation. */
-				Unloaded = 0,
-				/* Define a resource being attached with dependencies. */
-				Enqueuing = 1,
-				/* Define a resource being manually attached with dependencies. */
-				ManualEnqueuing = 2,
-				/* Define a resource being loaded.
-				 * NOTE: In this stage, this is no more possible to add new dependency. */
-				Loading = 3,
-				/* Define a resource fully loaded with all dependencies. */
-				Loaded = 4,
-				/* Define a resource impossible to load. */
-				Failed = 5
-			};
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			ResourceTrait (const ResourceTrait & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			ResourceTrait (ResourceTrait && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return ResourceTrait &
+			 */
+			ResourceTrait & operator= (const ResourceTrait & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return ResourceTrait &
+			 */
+			ResourceTrait & operator= (ResourceTrait && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the resource.
+			 */
+			~ResourceTrait () override;
 
 			/**
 			 * @brief Returns whether the resource is the top of the loadable chain of objects.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isTopResource () const noexcept final;
+			bool
+			isTopResource () const noexcept
+			{
+				return m_parents.empty();
+			}
 
 			/**
 			 * @brief Returns the number of dependencies still waiting to be loaded.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			virtual size_t dependencyCount () const noexcept final;
+			size_t
+			dependencyCount () const noexcept
+			{
+				return m_dependencies.size();
+			}
 
 			/**
 			 * @brief Returns whether this resource object is newly created and no loading is currently occurs.
@@ -98,49 +131,72 @@ namespace Emeraude::Resources
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isUnloaded () const noexcept final;
+			bool
+			isUnloaded () const noexcept
+			{
+				return m_status == Status::Unloaded;
+			}
 
 			/**
 			 * @brief Returns whether this resource is loading.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isLoading () const noexcept final;
+			bool
+			isLoading () const noexcept
+			{
+				return m_status == Status::Loading;
+			}
 
 			/**
 			 * @brief Returns whether this resource is loaded.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isLoaded () const noexcept final;
+			bool
+			isLoaded () const noexcept
+			{
+				return m_status == Status::Loaded;
+			}
 
 			/**
 			 * @brief Enables the manual loading of the resource.
-			 * @note This method will fails if the resource is currently loading in automatic mode.
+			 * @note This method will fail if the resource is currently loading in automatic mode.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool enableManualLoading () noexcept final;
+			bool
+			enableManualLoading () noexcept
+			{
+				return this->initializeEnqueuing(true);
+			}
 
 			/**
 			 * @brief Sets this resource status in manual loading mode.
 			 * @return bool
 			 */
-			[[nodiscard]]
-			virtual bool setManualLoadSuccess (bool status) noexcept final;
+			bool setManualLoadSuccess (bool status) noexcept;
 
 			/**
 			 * @brief Returns the current status of the resource.
 			 * @return Status
 			 */
 			[[nodiscard]]
-			virtual Status status () const noexcept final;
+			Status
+			status () const noexcept
+			{
+				return m_status;
+			}
 
 			/**
 			 * @brief Declares the resource is using the direct loading mode.
 			 * @return void
 			 */
-			virtual void setDirectLoadingHint () noexcept final;
+			void
+			setDirectLoadingHint () noexcept
+			{
+				m_flags[DirectLoading] = true;
+			}
 
 			/**
 			 * @brief Returns the label of resource class.
@@ -158,10 +214,10 @@ namespace Emeraude::Resources
 			/**
 			 * @brief Loads a resource from a disk file.
 			 * @note If not overridden, this method will open the file and tries to read a JSON data and call the load(data) after.
-			 * @param filepath The reference to a file path to the location of the resource.
+			 * @param filepath A reference to a filesystem path.
 			 * @return bool
 			 */
-			virtual bool load (const Libraries::Path::File & filepath) noexcept;
+			virtual bool load (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Loads a resource from a JsonCPP object.
@@ -175,21 +231,20 @@ namespace Emeraude::Resources
 			/**
 			 * @brief Constructs a resource.
 			 * @param resourceName A reference to a string.
-			 * @param flagBits The generic resource flag bits.
+			 * @param initialResourceFlagBits The initial resource flag bits.
 			 */
-			ResourceTrait (const std::string & resourceName, uint32_t flagBits) noexcept;
-
-			/**
-			 * @brief Destructs the resource.
-			 */
-			~ResourceTrait () override;
+			ResourceTrait (const std::string & resourceName, uint32_t initialResourceFlagBits) noexcept;
 
 			/**
 			 * @brief Returns whether the resource use direct loading mode from manager.
 			 * @return Status
 			 */
 			[[nodiscard]]
-			virtual bool isDirectLoading () const noexcept final;
+			bool
+			isDirectLoading () const noexcept
+			{
+				return m_flags[DirectLoading];
+			}
 
 			/**
 			 * @brief Sets the status of this resource to Status::Loading.
@@ -197,7 +252,12 @@ namespace Emeraude::Resources
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool beginLoading () noexcept final;
+			bool
+			beginLoading () noexcept
+			{
+				/* NOTE: The manual enqueuing is disabled. */
+				return this->initializeEnqueuing(false);
+			}
 
 			/**
 			 * @brief Adds a new dependency to this loading object.
@@ -206,7 +266,7 @@ namespace Emeraude::Resources
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool addDependency (ResourceTrait * dependency) noexcept final;
+			bool addDependency (ResourceTrait * dependency) noexcept;
 
 			/**
 			 * @brief Sets the current status of loading by the inherited class.
@@ -214,14 +274,25 @@ namespace Emeraude::Resources
 			 * @param status Set the resource loading status.
 			 * @return bool
 			 */
-			virtual bool setLoadSuccess (bool status) noexcept final;
+			[[nodiscard]]
+			bool setLoadSuccess (bool status) noexcept;
 
 			/**
-			 * @brief This event is called when every dependencies are loaded.
+			 * @brief This event is called when every dependency are loaded.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			virtual bool onDependenciesLoaded () noexcept = 0;
+
+			/**
+			 * @brief Extracts the resource name from a file path.
+			 * @note "APP-DATA/data-stores/Movies/sub_directory/res_name.ext" => "sub_directory/res_name.ext"
+			 * @param filepath A reference to a file path.
+			 * @param storeName A reference to a string for the initial store name.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			static std::string getResourceNameFromFilepath (const std::filesystem::path & filepath, const std::string & storeName) noexcept;
 
 		private:
 
@@ -249,10 +320,22 @@ namespace Emeraude::Resources
 			[[nodiscard]]
 			bool initializeEnqueuing (bool manual) noexcept;
 
-			std::set< ResourceTrait * > m_parents{};
-			std::set< ResourceTrait * > m_dependencies{};
-			Status m_status = Status::Unloaded;
-			mutable std::mutex m_checkAccess{};
-			bool m_directLoad = false;
+			/* Flag names. */
+			static constexpr auto DirectLoading{0UL};
+
+			std::set< ResourceTrait * > m_parents;
+			std::set< ResourceTrait * > m_dependencies;
+			Status m_status{Status::Unloaded};
+			mutable std::mutex m_checkAccess;
+			std::array< bool, 8 > m_flags{
+				false/*DirectLoading*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

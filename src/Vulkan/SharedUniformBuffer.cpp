@@ -1,92 +1,99 @@
 /*
- * Emeraude/Vulkan/SharedUniformBuffer.cpp
- * This file is part of Emeraude
+ * src/Vulkan/SharedUniformBuffer.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "SharedUniformBuffer.hpp"
 
+/* STL inclusions. */
+#include <algorithm>
+
 /* Local inclusions. */
+#include "Libraries/Math/Base.hpp"
+#include "PhysicalDevice.hpp"
 #include "Device.hpp"
+#include "MemoryRegion.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	SharedUniformBuffer::SharedUniformBuffer (const std::shared_ptr< Device > & device, Saphir::Declaration::UniformBlock uniformBlock, size_t maxElementCount) noexcept
-		: m_device(device), m_uniformBlock(std::move(uniformBlock)), m_uniformBlockSize(m_uniformBlock.bytes())
+	SharedUniformBuffer::SharedUniformBuffer (const std::shared_ptr< Device > & device, size_t uniformBlockSize, size_t maxElementCount) noexcept
+		: m_device(device), m_uniformBlockSize(uniformBlockSize)
+	{
+		const auto bufferCount = this->computeBlockAlignment(maxElementCount);
+
+		for ( size_t index = 0; index < bufferCount; index++ )
+		{
+			if ( !this->addBuffer() )
+			{
+				break;
+			}
+		}
+	}
+
+	SharedUniformBuffer::SharedUniformBuffer (const std::shared_ptr< Device > & device, const DescriptorSetCreator & descriptorSetCreator, size_t uniformBlockSize, size_t maxElementCount) noexcept
+		: m_device(device), m_uniformBlockSize(uniformBlockSize)
+	{
+		const auto bufferCount = this->computeBlockAlignment(maxElementCount);
+
+		for ( size_t index = 0; index < bufferCount; index++ )
+		{
+			if ( !this->addBuffer(descriptorSetCreator) )
+			{
+				break;
+			}
+		}
+	}
+
+	size_t
+	SharedUniformBuffer::computeBlockAlignment (size_t maxElementCount) noexcept
 	{
 		/* NOTE: nvidia GTX 1070 : 65536 bytes and 256 bytes alignment, so 256 optimal elements. */
-		const auto & limits = device->physicalDevice()->properties().limits;
+		const auto & limits = m_device->physicalDevice()->properties().limits;
 		const auto maxUBOSize = limits.maxUniformBufferRange;
 		const auto minUBOAlignment =  limits.minUniformBufferOffsetAlignment;
 
-		m_blockAlignedSize = minUBOAlignment * Math::alignCount(m_uniformBlockSize, minUBOAlignment);
+		m_blockAlignedSize = minUBOAlignment * Math::alignCount(m_uniformBlockSize, static_cast< size_t >(minUBOAlignment));
 		m_maxElementCountPerUBO = maxUBOSize / m_blockAlignedSize;
 
-
-		if ( maxElementCount == 0 )
-		{
-#ifdef DEBUG
-			TraceDebug{ClassId} << "Preparing 1 uniform buffer object ...";
-#endif
-			if ( !this->addBuffer() )
-			{
-				return;
-			}
-		}
-		else
-		{
-			const auto bufferCount = Math::alignCount(maxElementCount * m_blockAlignedSize, static_cast< size_t >(maxUBOSize));
-#ifdef DEBUG
-			TraceDebug{ClassId} << "Preparing " << bufferCount << " uniform buffer object ...";
-#endif
-			for ( size_t index = 0; index < bufferCount; index++ )
-			{
-				if ( !this->addBuffer() )
-				{
-					return;
-				}
-			}
-		}
-
-#ifdef DEBUG
-		TraceDebug{ClassId} <<
-			"Shared uniform buffer object data : " "\n"
+		/*TraceInfo{ClassId} <<
+			"Shared uniform buffer data :" "\n"
 			"UBO maximum size : " << maxUBOSize << " bytes" "\n"
 			"UBO minimum alignment : " << minUBOAlignment << " bytes" "\n"
 			"Uniform block structure size : " << m_uniformBlockSize << " bytes" "\n"
 			"Uniform block aligned size : " << m_blockAlignedSize << " bytes" "\n"
-			"Max element per UBO : " << m_maxElementCountPerUBO << "\n";
-#endif
-	}
+			"Max element per UBO : " << m_maxElementCountPerUBO << "\n";*/
 
-	bool
-	SharedUniformBuffer::usable () const noexcept
-	{
-		return !m_uniformBufferObjects.empty();
+		if ( maxElementCount == 0 )
+		{
+			return 1;
+		}
+
+		return Math::alignCount(maxElementCount * m_blockAlignedSize, static_cast< size_t >(maxUBOSize));
 	}
 
 	const UniformBufferObject *
@@ -101,7 +108,7 @@ namespace Emeraude::Vulkan
 			return nullptr;
 		}
 
-		return m_uniformBufferObjects[bufferIndex].get();
+		return m_uniformBufferObjects.at(bufferIndex).get();
 	}
 
 	UniformBufferObject *
@@ -116,7 +123,29 @@ namespace Emeraude::Vulkan
 			return nullptr;
 		}
 
-		return m_uniformBufferObjects[bufferIndex].get();
+		return m_uniformBufferObjects.at(bufferIndex).get();
+	}
+
+	DescriptorSet *
+	SharedUniformBuffer::descriptorSet (uint32_t index) noexcept
+	{
+		if ( !this->isDynamic() )
+		{
+			Tracer::warning(ClassId, "This shared uniform buffer don't use a dynamic uniform buffer with a single descriptor set.");
+
+			return nullptr;
+		}
+
+		const auto bufferIndex = this->bufferIndex(index);
+
+		if ( bufferIndex >= m_descriptorSets.size() )
+		{
+			TraceError{ClassId} << "There is no descriptor set #" << bufferIndex << " !";
+
+			return nullptr;
+		}
+
+		return m_descriptorSets.at(bufferIndex).get();
 	}
 
 	bool
@@ -180,19 +209,19 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		return m_uniformBufferObjects[bufferIndex]->writeData({data, m_uniformBlockSize, m_blockAlignedSize * index});
+		return m_uniformBufferObjects.at(bufferIndex)->writeData({data, m_uniformBlockSize, m_blockAlignedSize * index});
 	}
 
 	bool
 	SharedUniformBuffer::addBuffer () noexcept
 	{
 		const auto & limits = m_device->physicalDevice()->properties().limits;
-		const auto identifier = (std::stringstream{} << "SharedUniformBuffer-Chunk#" << m_uniformBufferObjects.size() << "-UniformBufferObject").str();
+		const auto chunkId = (std::stringstream{} << "Chunk#" << m_uniformBufferObjects.size()).str();
 
-		m_uniformBufferObjects.emplace_back(std::make_unique< UniformBufferObject >(m_device, limits.maxUniformBufferRange));
-		m_uniformBufferObjects.back()->setIdentifier(identifier);
+		auto * uniformBufferObject = m_uniformBufferObjects.emplace_back(std::make_unique< UniformBufferObject >(m_device, limits.maxUniformBufferRange, m_blockAlignedSize)).get();
+		uniformBufferObject->setIdentifier(ClassId, chunkId, "UniformBufferObject");
 
-		if ( !m_uniformBufferObjects.back()->createOnHardware() )
+		if ( !uniformBufferObject->createOnHardware() )
 		{
 			TraceError{ClassId} << "Unable to create an UBO of " << limits.maxUniformBufferRange << " bytes !";
 
@@ -204,9 +233,27 @@ namespace Emeraude::Vulkan
 		return true;
 	}
 
-	size_t
-	SharedUniformBuffer::bufferIndex (uint32_t index) const noexcept
+	bool
+	SharedUniformBuffer::addBuffer (const DescriptorSetCreator & descriptorSetCreator) noexcept
 	{
-		return std::floor(index / m_maxElementCountPerUBO);
+		const auto & limits = m_device->physicalDevice()->properties().limits;
+		const auto chunkId = (std::stringstream{} << "DynamicChunk#" << m_uniformBufferObjects.size()).str();
+
+		auto * uniformBufferObject = m_uniformBufferObjects.emplace_back(std::make_unique< UniformBufferObject >(m_device, limits.maxUniformBufferRange, m_blockAlignedSize)).get();
+		uniformBufferObject->setIdentifier(ClassId, chunkId, "UniformBufferObject");
+
+		if ( !uniformBufferObject->createOnHardware() )
+		{
+			TraceError{ClassId} << "Unable to create an UBO of " << limits.maxUniformBufferRange << " bytes !";
+
+			return false;
+		}
+
+		auto * descriptorSet = m_descriptorSets.emplace_back(descriptorSetCreator(*uniformBufferObject)).get();
+		descriptorSet->setIdentifier(ClassId, chunkId, "DescriptorSet");
+
+		m_elements.resize(m_uniformBufferObjects.size() * m_maxElementCountPerUBO, nullptr);
+
+		return true;
 	}
 }

@@ -1,57 +1,70 @@
 /*
- * Emeraude/Overlay/Elements/Button.cpp
- * This file is part of Emeraude
+ * src/Overlay/Elements/Button.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Button.hpp"
 
-/* Local inclusions */
-#include "Graphics/Geometry/IndexedVertexResource.hpp"
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <memory>
+
+/* Local inclusions. */
 #include "Graphics/ImageResource.hpp"
 #include "Graphics/TextWriter.hpp"
-#include "PixelFactory/Processor.hpp"
+#include "Overlay/ComposedSurface.hpp"
+#include "Libraries/Math/Rectangle.hpp"
+#include "Overlay/FramebufferProperties.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libraries/PixelFactory/Processor.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
 	using namespace Libraries;
+	using namespace Libraries::Math;
 	using namespace Libraries::PixelFactory;
 	using namespace Graphics;
 
-	Button::Button () noexcept
-		: Surface(1.0F, 0.25F), m_textWriter(&this->pixmap())
+	Button::Button (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);
 
-		this->setCapturePointerEventsState(true);
+		this->enablePointerListening(true);
 	}
 
 	void
-	Button::onPointerEnter (float, float) noexcept
+	Button::onPointerEnter (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
+		{
 			return;
+		}
 
 		m_status = Status::Over;
 
@@ -59,32 +72,40 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	void
-	Button::onPointerLeave (float, float) noexcept
+	Button::onPointerLeave (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
+		{
 			return;
+		}
 
 		m_status = Status::Normal;
 
 		this->setTextureOffsetY(0.0F);
 	}
 
-	void
-	Button::onButtonPress (float, float, int, int) noexcept
+	bool
+	Button::onButtonPress (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
-			return;
+		{
+			return false;
+		}
 
 		m_status = Status::Active;
 
 		this->setTextureOffsetY(0.5F);
+
+		return true;
 	}
 
-	void
-	Button::onButtonRelease (float, float, int, int) noexcept
+	bool
+	Button::onButtonRelease (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
-			return;
+		{
+			return false;
+		}
 
 		m_status = Status::Over;
 
@@ -95,10 +116,12 @@ namespace Emeraude::Overlay::Elements
 		{
 			Tracer::debug(ClassId, "There is no function attached to this button !");
 
-			return;
+			return false;
 		}
 
 		m_function();
+
+		return true;
 	}
 
 	TextWriter &
@@ -125,14 +148,14 @@ namespace Emeraude::Overlay::Elements
 		m_image = image;
 	}
 
-	const std::shared_ptr< ImageResource > &
+	std::shared_ptr< ImageResource >
 	Button::image () const noexcept
 	{
 		return m_image;
 	}
 
 	void
-	Button::attachFunction (const Button::Function & function) noexcept
+	Button::attachFunction (const Function & function) noexcept
 	{
 		m_function = function;
 	}
@@ -145,11 +168,14 @@ namespace Emeraude::Overlay::Elements
 
 		/* Write the text on it. */
 		if ( m_label.empty() )
+		{
 			return true;
+		}
 
 		if ( !m_textWriter.isReady() )
 		{
 			Tracer::warning(ClassId, "TextWriter is not ready !");
+
 			return false;
 		}
 
@@ -160,7 +186,7 @@ namespace Emeraude::Overlay::Elements
 
 		for ( size_t num = 0; num < 4; num++ )
 		{
-			auto yOffset = static_cast< int >((quarterHeight * num) + yBaseOffset);
+			const auto yOffset = static_cast< int >((quarterHeight * num) + yBaseOffset);
 
 			m_textWriter.setCursor(xOffset, yOffset);
 

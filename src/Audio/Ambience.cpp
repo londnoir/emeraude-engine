@@ -1,42 +1,41 @@
 /*
- * Emeraude/Audio/Ambience.cpp
- * This file is part of Emeraude
+ * src/Audio/Ambience.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Ambience.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <cmath>
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "Audio/Manager.hpp"
+/* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Resources/Manager.hpp"
-#include "Utility.hpp"
+#include "Audio/Manager.hpp"
 #include "Constants.hpp"
-#include "FastJSON.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Audio
 {
@@ -45,54 +44,13 @@ namespace Emeraude::Audio
 
 	Ambience::~Ambience ()
 	{
-		this->releaseSources();
-	}
-
-	bool
-	Ambience::isPlaying () const noexcept
-	{
-		return m_active;
+		this->reset();
 	}
 
 	bool
 	Ambience::allocateSources () noexcept
 	{
-		if ( !m_sounds.empty() )
-		{
-			if ( m_channelCount == 0 )
-			{
-				Tracer::warning(ClassId, "Channel count parameter must a least be 1 !");
-
-				return false;
-			}
-
-			if ( m_channelCount != m_channels.size() )
-			{
-				m_channels.clear();
-
-				auto * audioManager = Manager::instance();
-
-				for ( size_t channelIndex = 0; channelIndex < m_channelCount; channelIndex++ )
-				{
-					auto source = audioManager->requestSource();
-
-					if ( source == nullptr )
-						return !m_channels.empty();
-
-					source->setRelativeState(false);
-					source->setGain(1.0F);
-					source->setReferenceDistance(m_radius * 0.5F);
-					source->setMaxDistance(m_radius * 2.0F);
-
-					if ( m_directFilter != nullptr )
-						source->enableDirectFilter(m_directFilter);
-
-					m_channels.emplace_back(source);
-				}
-			}
-		}
-
-		if ( m_loopedSoundResource != nullptr )
+		if ( this->requestLoopChannel() )
 		{
 			m_loopedSource = Manager::instance()->requestSource();
 
@@ -105,7 +63,48 @@ namespace Emeraude::Audio
 			m_loopedSource->setGain(m_loopedChannelGain);
 
 			if ( m_directFilter != nullptr )
+			{
 				m_loopedSource->enableDirectFilter(m_directFilter);
+			}
+		}
+
+		if ( this->requestSoundEffectChannels() )
+		{
+			if ( m_channelCount == 0 )
+			{
+				Tracer::warning(ClassId, "Channel count parameter must a least be 1 !");
+
+				return false;
+			}
+
+			if ( m_channelCount != m_channels.size() )
+			{
+				m_channels.clear();
+
+				const auto * audioManager = Manager::instance();
+
+				for ( size_t channelIndex = 0; channelIndex < m_channelCount; channelIndex++ )
+				{
+					auto source = audioManager->requestSource();
+
+					if ( source == nullptr )
+					{
+						return !m_channels.empty();
+					}
+
+					source->setRelativeState(false);
+					source->setGain(1.0F);
+					source->setReferenceDistance(m_radius * Half< float >);
+					source->setMaxDistance(m_radius * Double< float >);
+
+					if ( m_directFilter != nullptr )
+					{
+						source->enableDirectFilter(m_directFilter);
+					}
+
+					m_channels.emplace_back(source);
+				}
+			}
 		}
 
 		return true;
@@ -117,25 +116,21 @@ namespace Emeraude::Audio
 		if ( m_loopedSource != nullptr )
 		{
 			m_loopedSource->stop();
+			m_loopedSource->removeSound();
+
 			m_loopedSource.reset();
 		}
 
-		for ( const auto & channel : m_channels )
-			channel.getSource()->stop();
+		if ( !m_channels.empty() )
+		{
+			for ( const auto & channel : m_channels )
+			{
+				channel.getSource()->stop();
+				channel.getSource()->removeSound();
+			}
 
-		m_channels.clear();
-	}
-
-	void
-	Ambience::setChannelCount (size_t count) noexcept
-	{
-		m_channelCount = std::max(1UL, count);
-	}
-
-	size_t
-	Ambience::channelCount () const noexcept
-	{
-		return m_channelCount;
+			m_channels.clear();
+		}
 	}
 
 	void
@@ -147,28 +142,9 @@ namespace Emeraude::Audio
 		{
 			auto source = channel.getSource();
 
-			source->setReferenceDistance(m_radius * 0.5F);
-			source->setMaxDistance(m_radius * 2.0F);
+			source->setReferenceDistance(m_radius * Half< float >);
+			source->setMaxDistance(m_radius * Double< float >);
 		}
-	}
-
-	float
-	Ambience::radius () const noexcept
-	{
-		return m_radius;
-	}
-
-	void
-	Ambience::setRandomDelayRange (unsigned int delayA, unsigned int delayB) noexcept
-	{
-		m_minDelay = std::min(delayA, delayB);
-		m_maxDelay = std::max(delayA, delayB);
-	}
-
-	unsigned int
-	Ambience::getRandomDelay () const noexcept
-	{
-		return Utility::random(m_minDelay, m_maxDelay);
 	}
 
 	bool
@@ -181,7 +157,7 @@ namespace Emeraude::Audio
 			return false;
 		}
 
-		m_loopedSoundResource = soundResource;
+		m_loopSound = soundResource;
 		m_loopedChannelGain = gain;
 
 		return true;
@@ -197,7 +173,7 @@ namespace Emeraude::Audio
 			return false;
 		}
 
-		m_sounds.emplace_back(sound);
+		m_soundEffects.emplace_back(sound);
 
 		return true;
 	}
@@ -212,7 +188,7 @@ namespace Emeraude::Audio
 			return false;
 		}
 
-		auto & soundEffect = m_sounds.emplace_back(sound);
+		auto & soundEffect = m_soundEffects.emplace_back(sound);
 		soundEffect.setChannelGain(channelGain);
 		soundEffect.setRelativeState(relative);
 		soundEffect.setRandomPitchRange(minPitch, maxPitch);
@@ -227,14 +203,15 @@ namespace Emeraude::Audio
 		m_directFilter = filter;
 
 		if ( m_loopedSource != nullptr )
+		{
 			if ( !m_loopedSource->enableDirectFilter(filter) )
+			{
 				return false;
+			}
+		}
 
-		return !std::any_of(m_channels.cbegin(), m_channels.cend(), [filter] (auto & channel) {
-			if ( !channel.getSource()->enableDirectFilter(filter) )
-				return true;
-
-			return false;
+		return !std::ranges::any_of(std::as_const(m_channels), [filter] (auto & channel) {
+			return static_cast< bool >(!channel.getSource()->enableDirectFilter(filter));
 		});
 	}
 
@@ -242,10 +219,14 @@ namespace Emeraude::Audio
 	Ambience::disableDirectFilter () noexcept
 	{
 		if ( m_loopedSource != nullptr )
+		{
 			m_loopedSource->disableDirectFilter();
+		}
 
 		for ( const auto & channel : m_channels )
+		{
 			channel.getSource()->disableDirectFilter();
+		}
 
 		m_directFilter.reset();
 	}
@@ -254,32 +235,95 @@ namespace Emeraude::Audio
 	Ambience::start () noexcept
 	{
 		if ( m_active )
-			return;
-
-		if ( m_loopedSoundResource == nullptr && m_sounds.empty() )
 		{
-			Tracer::warning(ClassId, "No sound effect in Ambience ! Cancelling ...");
+			return;
+		}
+
+		/* NOTE: If no sound effects or no loop, cancel. */
+		if ( !this->requestLoopChannel() && !this->requestSoundEffectChannels() )
+		{
+			Tracer::warning(ClassId, "No sound effect in ambience ! Cancelling ...");
 
 			return;
 		}
 
-		if ( this->allocateSources() )
+		if ( !this->allocateSources() )
 		{
-			if ( m_loopedSource != nullptr && m_loopedSoundResource != nullptr )
-				m_loopedSource->play(m_loopedSoundResource.get(), Source::PlayMode::Loop);
+			Tracer::error(ClassId, "Unable to allocate sources !");
 
+			this->releaseSources();
+
+			return;
+		}
+
+		/* Launch the loop channel. */
+		if ( this->requestLoopChannel() )
+		{
+			/* NOTE: Delay the sound play if not loaded. */
+			if ( m_loopSound->isLoaded() )
+			{
+				m_loopedSource->play(m_loopSound, Source::PlayMode::Loop);
+			}
+			else
+			{
+				this->observe(m_loopSound.get());
+			}
+		}
+
+		/* Launch the sound effect channels. */
+		if ( this->requestSoundEffectChannels() )
+		{
 			for ( auto & channel : m_channels )
+			{
 				channel.setTimeBeforeNextPlay(this->getRandomDelay());
-
-			m_active = true;
+			}
 		}
+
+		m_active = true;
+	}
+
+	bool
+	Ambience::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
+	{
+		if ( observable->is(SoundResource::ClassUID) )
+		{
+			switch ( notificationCode )
+			{
+				case Resources::ResourceTrait::LoadFinished :
+					m_loopedSource->play(m_loopSound, Source::PlayMode::Loop);
+					break;
+
+				case Resources::ResourceTrait::LoadFailed :
+					m_loopSound.reset();
+					break;
+
+				default:
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
+					TraceDebug{ClassId} << "Event #" << notificationCode << " from a sound resource ignored.";
+#endif
+				break;
+			}
+
+			return false;
+		}
+
+#ifdef DEBUG
+		/* NOTE: Don't know what is it, goodbye ! */
+		TraceInfo{ClassId} <<
+			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << ObservableTrait::whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
+			"Forgetting it ...";
+#endif
+
+		return false;
 	}
 
 	void
 	Ambience::stop () noexcept
 	{
 		if ( !m_active )
+		{
 			return;
+		}
 
 		m_active = false;
 
@@ -290,14 +334,16 @@ namespace Emeraude::Audio
 	Ambience::update () noexcept
 	{
 		if ( !m_active )
+		{
 			return;
+		}
 
 		for ( auto & channel : m_channels )
 		{
 			/* NOTE : Update the time. */
 			if ( !channel.isTimeToPlay() )
 			{
-				channel.update(static_cast< unsigned int >(EngineUpdateCycleDuration< double > * 1000.0));
+				channel.update(EngineUpdateCycleDurationMS< uint32_t >);
 
 				continue;
 			}
@@ -311,7 +357,7 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	Ambience::loadSoundSet (const Path::File & filepath) noexcept
+	Ambience::loadSoundSet (const std::filesystem::path & filepath) noexcept
 	{
 		const auto root = FastJSON::getRootFromFile(filepath);
 
@@ -325,8 +371,8 @@ namespace Emeraude::Audio
 		auto & soundManager = Resources::Manager::instance()->sounds();
 
 		/* 1. Read base sound set information. */
-		this->setChannelCount(FastJSON::getUnsignedInteger(root, JKChannelCount, 4UL));
-		this->setRadius(FastJSON::getFloat(root, JKRadius, 1024.0F));
+		this->setChannelCount(FastJSON::getNumber< size_t >(root, JKChannelCount, DefaultChannelCount));
+		this->setRadius(FastJSON::getNumber< float >(root, JKRadius, DefaultRadius));
 
 		/* 2. Read the loop sound effect. */
 		if ( root.isMember(JKLoopSoundEffect) )
@@ -338,9 +384,13 @@ namespace Emeraude::Audio
 				const auto resourceName = FastJSON::getString(loopSFX, JKResourceName);
 
 				if ( !resourceName.empty() )
-					this->setLoopSound(soundManager.getResource(resourceName, true), FastJSON::getFloat(loopSFX, JKGain, 0.75F));
+				{
+					this->setLoopSound(soundManager.getResource(resourceName), FastJSON::getNumber< float >(loopSFX, JKGain, DefaultGain));
+				}
 				else
+				{
 					Tracer::error(ClassId, "The loop sound effect resource name is empty or unspecified !");
+				}
 			}
 			else
 			{
@@ -373,14 +423,16 @@ namespace Emeraude::Audio
 						continue;
 					}
 
-					const auto gain = FastJSON::getFloat(SFX, JKGain, 0.75F);
+					const auto gain = FastJSON::getNumber< float >(SFX, JKGain, DefaultGain);
 					const auto relative = FastJSON::getBoolean(SFX, JKRelative, true);
-					const auto minPitch = FastJSON::getFloat(SFX, JKMinimumPitch, 1.0F);
-					const auto maxPitch = FastJSON::getFloat(SFX, JKMaximumPitch, 1.0F);
-					const auto velocity = FastJSON::getFloat(SFX, JKRadialVelocity, 0.0F);
+					const auto minPitch = FastJSON::getNumber< float >(SFX, JKMinimumPitch, 1.0F);
+					const auto maxPitch = FastJSON::getNumber< float >(SFX, JKMaximumPitch, 1.0F);
+					const auto velocity = FastJSON::getNumber< float >(SFX, JKRadialVelocity, 0.0F);
 
-					if ( !this->addSound(soundManager.getResource(resourceName, true), gain, relative, minPitch, maxPitch, velocity) )
+					if ( !this->addSound(soundManager.getResource(resourceName), gain, relative, minPitch, maxPitch, velocity) )
+					{
 						break;
+					}
 				}
 			}
 			else
@@ -395,24 +447,20 @@ namespace Emeraude::Audio
 	void
 	Ambience::reset () noexcept
 	{
-		/* NOTE: Avoid to clear channels to reduce allocation/op cost. */
-		//m_channels.clear();
-		m_sounds.clear();
-		std::shared_ptr< Source > m_loopedSource{};
-		m_loopedSoundResource.reset();
+		/* Release channels and filters. */
+		this->releaseSources();
 		m_directFilter.reset();
 
-		m_loopedChannelGain = 0.75F;
-		m_channelCount = 4UL;
-		m_radius = 1024.0F;
-		m_minDelay = 500;
-		m_maxDelay = 3000;
-		m_active = false;
-	}
+		/* Release all sound resources. */
+		m_loopSound.reset();
+		m_soundEffects.clear();
 
-	AmbienceSound &
-	Ambience::getRandomSound () noexcept
-	{
-		return m_sounds[Utility::random(0UL, m_sounds.size() - 1)];
+		/* Reset parameters to default. */
+		m_loopedChannelGain = DefaultGain;
+		m_channelCount = DefaultChannelCount;
+		m_radius = DefaultRadius;
+		m_minDelay = DefaultMinDelay;
+		m_maxDelay = DefaultMaxDelay;
+		m_active = false;
 	}
 }

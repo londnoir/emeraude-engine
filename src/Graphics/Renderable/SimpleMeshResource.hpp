@@ -1,44 +1,49 @@
 /*
- * Emeraude/Graphics/Renderable/SimpleMeshResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/SimpleMeshResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <memory>
 
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
+/* Local inclusions for usages. */
+#include "Resources/Container.hpp"
+
 namespace Emeraude::Graphics::Renderable
 {
 	/**
 	 * @brief Simple mesh renderable with only one layer.
-	 * @extends Emeraude::Graphics::AbstractHelper
+	 * @extends Emeraude::Graphics::Renderable::Interface
 	 */
 	class SimpleMeshResource final : public Interface
 	{
@@ -60,11 +65,15 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit SimpleMeshResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
@@ -74,33 +83,33 @@ namespace Emeraude::Graphics::Renderable
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isReadyForInstantiation() */
-			bool isReadyForInstantiation() const noexcept override;
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
+			[[nodiscard]]
+			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() */
-			size_t layerCount() const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
+			[[nodiscard]]
 			bool isOpaque (size_t layerIndex) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
+			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
+			[[nodiscard]]
 			const Material::Interface * material (size_t layerIndex) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			[[nodiscard]]
+			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
+			[[nodiscard]]
 			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() */
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::flags() */
-			int flags (size_t layerIndex) const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::prepareShaders() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			bool prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept override;
+			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
 
 			/**
 			 * @brief Loads a simple mesh.
@@ -128,9 +137,6 @@ namespace Emeraude::Graphics::Renderable
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::setReadyForInstanciation() */
-			void setReadyForInstanciation (bool state) noexcept override;
-
 			/**
 			 * @brief Attaches the geometry resource.
 			 * @param geometryResource A reference to a geometry resource smart pointer.
@@ -145,13 +151,8 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			bool setMaterial (const std::shared_ptr< Material::Interface > & materialResource) noexcept;
 
-			/* Flag names. */
-			static constexpr auto IsReadyToSetupGPU = 0UL;
-			static constexpr auto IsBroken = 1UL;
-
 			std::shared_ptr< Geometry::Interface > m_geometry{};
 			std::shared_ptr< Material::Interface > m_material{};
-			int m_renderableFlags = 0;
 	};
 }
 

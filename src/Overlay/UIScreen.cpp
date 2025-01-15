@@ -1,0 +1,385 @@
+/*
+ * src/Overlay/UIScreen.cpp
+ * This file is part of Emeraude-Engine
+ *
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude-Engine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#include "UIScreen.hpp"
+
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
+#include <map>
+#include <memory>
+#include <string>
+#include <ranges>
+
+/* Local inclusions. */
+#include "FramebufferProperties.hpp"
+#include "Graphics/TextureResource/Abstract.hpp"
+#include "Libraries/NameableTrait.hpp"
+#include "AbstractSurface.hpp"
+#include "Tracer.hpp"
+
+namespace Emeraude::Overlay
+{
+	using namespace Libraries;
+	using namespace Graphics;
+
+	UIScreen::UIScreen (const std::string & name, const FramebufferProperties & framebufferProperties, Renderer & graphicsRenderer, bool enableKeyboardListener, bool enablePointerListener) noexcept
+		: NameableTrait(name), m_graphicsRenderer(graphicsRenderer), m_framebufferProperties(framebufferProperties)
+	{
+		m_flags[IsListeningKeyboard] = enableKeyboardListener;
+		m_flags[IsListeningPointer] = enablePointerListener;
+	}
+
+	bool
+	UIScreen::updatePhysicalRepresentation (Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept
+	{
+		m_framebufferProperties = framebufferProperties;
+
+		for ( const auto & [name, surface] : m_surfaces )
+		{
+			if ( !surface->updatePhysicalRepresentation(renderer, framebufferProperties) )
+			{
+				TraceError{ClassId} << "The surface '" << name << "' physical update failed !";
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool
+	UIScreen::updateVideoMemory (Renderer & renderer) noexcept
+	{
+		if ( this->empty() )
+		{
+			return true;
+		}
+
+		size_t errors = 0;
+
+		for ( const auto & surface : std::views::values(m_surfaces) )
+		{
+			if ( !surface->updateVideoMemory(renderer) )
+			{
+				errors++;
+			}
+		}
+
+		return errors == 0;
+	}
+
+	bool
+	UIScreen::destroySurface (const std::string & name) noexcept
+	{
+		const auto surfaceIt = m_surfaces.find(name);
+
+		if ( surfaceIt == m_surfaces.cend() )
+		{
+			TraceWarning{ClassId} << "There is no surface named '" << name << "' in the screen to erase !";
+
+			return false;
+		}
+
+		surfaceIt->second->destroyFromHardware();
+
+		m_surfaces.erase(surfaceIt);
+
+		return true;
+	}
+
+	std::shared_ptr< const AbstractSurface >
+	UIScreen::getSurface (const std::string & name) const noexcept
+	{
+		const auto surfaceIt = m_surfaces.find(name);
+
+		if ( surfaceIt == m_surfaces.cend() )
+		{
+			TraceWarning{ClassId} << "There is no surface named " << name << "' in the screen !";
+
+			return nullptr;
+		}
+
+		return surfaceIt->second;
+	}
+
+	std::shared_ptr< AbstractSurface >
+	UIScreen::getSurface (const std::string & name) noexcept
+	{
+		const auto surfaceIt = m_surfaces.find(name);
+
+		if ( surfaceIt == m_surfaces.cend() )
+		{
+			TraceWarning{ClassId} << "There is no surface named " << name << "' in the screen !";
+
+			return nullptr;
+		}
+
+		return surfaceIt->second;
+	}
+
+	bool
+	UIScreen::setInputExclusiveSurface (const std::string & name) noexcept
+	{
+		const auto surface = this->getSurface(name);
+
+		if ( surface == nullptr )
+		{
+			return false;
+		}
+
+		m_inputExclusiveSurface = surface;
+
+		return true;
+	}
+
+	bool
+	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
+	{
+		const auto dispatchEvent = [key, scancode, modifiers, repeat] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
+			{
+				return false;
+			}
+
+			return surface->onKeyPress(key, scancode, modifiers, repeat);
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
+	{
+		const auto dispatchEvent = [key, scancode, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
+			{
+				return false;
+			}
+
+			return surface->onKeyRelease(key, scancode, modifiers);
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onCharacterType (uint32_t unicode) noexcept
+	{
+		const auto dispatchEvent = [unicode] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
+			{
+				return false;
+			}
+
+			return surface->onCharacterType(unicode);
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onPointerMove (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept
+	{
+		const auto dispatchEvent = [framebufferProperties, positionX, positionY] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			/* NOTE: Always check if the pointer is over the surface. */
+			const auto pointerOver = surface->isBelowPoint(framebufferProperties, positionX, positionY);
+
+			if ( !surface->isListeningPointer() )
+			{
+				surface->setPointerOverState(pointerOver);
+
+				return false;
+			}
+
+			if ( pointerOver )
+			{
+				/* NOTE: If pointer wasn't over the surface before, generate an entering event. */
+				if ( !surface->isPointerWasOver() )
+				{
+					surface->setPointerOverState(true);
+
+					surface->onPointerEnter(framebufferProperties, positionX, positionY);
+				}
+
+				return surface->onPointerMove(framebufferProperties, positionX, positionY);
+			}
+
+			/* NOTE: If pointer was over the surface before, generate a leaving event. */
+			if ( surface->isPointerWasOver() )
+			{
+				surface->setPointerOverState(false);
+
+				surface->onPointerLeave(framebufferProperties, positionX, positionY);
+			}
+
+			return false;
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	{
+		const auto dispatchEvent = [framebufferProperties, positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			{
+				surface->setFocusedState(true);
+
+				return surface->onButtonPress(framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			}
+
+			surface->setFocusedState(false);
+
+			return false;
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	{
+		const auto dispatchEvent = [framebufferProperties, positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			{
+				return surface->onButtonRelease(framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			}
+
+			return false;
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+
+	bool
+	UIScreen::onMouseWheel (const FramebufferProperties & framebufferProperties, float positionX, float positionY, float xOffset, float yOffset) noexcept
+	{
+		const auto dispatchEvent = [framebufferProperties, positionX, positionY, xOffset, yOffset] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		{
+			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			{
+				return surface->onMouseWheel(framebufferProperties, positionX, positionY, xOffset, yOffset);
+			}
+
+			return false;
+		};
+
+		if ( m_inputExclusiveSurface != nullptr )
+		{
+			return dispatchEvent(m_inputExclusiveSurface);
+		}
+
+		auto somethingHappens = false;
+
+		for ( const auto & [surfaceName, surface] : m_surfaces )
+		{
+			somethingHappens = dispatchEvent(surface);
+		}
+
+		return somethingHappens;
+	}
+}

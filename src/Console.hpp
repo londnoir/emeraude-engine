@@ -1,45 +1,47 @@
 /*
- * Emeraude/Console.hpp
- * This file is part of Emeraude
+ * src/Console.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "ServiceInterface.hpp"
 #include "Input/KeyboardListenerInterface.hpp"
-#include "Time/TimedEventsInterface.hpp"
+#include "ServiceInterface.hpp"
+#include "Libraries/Time/EventTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Blob.hpp"
+#include "Libraries/BlobTrait.hpp"
 #include "Types.hpp"
 
 /* Forward declarations */
@@ -60,9 +62,7 @@ namespace Emeraude
 		class Manager;
 	}
 
-	class Arguments;
-	class FileSystem;
-	class Settings;
+	class PrimaryServices;
 	class ConsoleControllable;
 	class ConsoleExpression;
 }
@@ -72,10 +72,10 @@ namespace Emeraude
 	/**
 	 * @brief The console service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::Input::KeyboardListenerInterface
-	 * @extends Libraries::Time::TimedEventsInterface
+	 * @extends Emeraude::Input::KeyboardListenerInterface The console needs to check keyboard input.
+	 * @extends Libraries::Time::EventTrait The console can create timer to delay some action.
 	 */
-	class Console final : public ServiceInterface, public Input::KeyboardListenerInterface, public Libraries::Time::TimedEventsInterface
+	class Console final : public ServiceInterface, public Input::KeyboardListenerInterface, private Libraries::Time::EventTrait< uint32_t, std::milli >
 	{
 		public:
 
@@ -87,13 +87,11 @@ namespace Emeraude
 
 			/**
 			 * @brief Constructs the console.
-			 * @param arguments A reference to Arguments.
-			 * @param fileSystem A reference to the file system service.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 * @param inputManager A reference to the input manager.
 			 * @param overlayManager A reference to the overlay manager.
 			 */
-			Console (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, Input::Manager & inputManager, Overlay::Manager & overlayManager) noexcept;
+			Console (PrimaryServices & primaryServices, Input::Manager & inputManager, Overlay::Manager & overlayManager) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -110,12 +108,14 @@ namespace Emeraude
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Console &
 			 */
 			Console & operator= (const Console & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Console &
 			 */
 			Console & operator= (Console && copy) noexcept = delete;
 
@@ -124,7 +124,11 @@ namespace Emeraude
 			 */
 			~Console () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -167,7 +171,7 @@ namespace Emeraude
 			 * @param pointer A reference to the controllable object to remove.
 			 * @return bool
 			 */
-			bool remove (ConsoleControllable & pointer) noexcept;
+			bool remove (const ConsoleControllable & pointer) noexcept;
 
 			/**
 			 * @brief Executes a single command.
@@ -182,17 +186,16 @@ namespace Emeraude
 			 * @param message The message to write to the console.
 			 * @param severity Changes the color of the text by using Tracer severity enum.
 			 */
-			void write (const std::string & message, Severity severity) noexcept;
+			void write (const std::string & message, Severity severity) const noexcept;
 
 			/**
 			 * @brief Writes to the console.
 			 * @param message The message to write to the console using a blob.
 			 * @param severity Changes the color of the text by using Tracer severity enum.
+			 * @return void
 			 */
-			virtual
-			inline
 			void
-			write (const Libraries::Blob & message, Severity severity = Severity::Info) noexcept final
+			write (const Libraries::BlobTrait & message, Severity severity = Severity::Info) noexcept
 			{
 				this->write(message.get(), severity);
 			}
@@ -225,13 +228,13 @@ namespace Emeraude
 			bool onTerminate () noexcept override;
 
 			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyPress() */
-			bool onKeyPress (int key, int scanCode, int modifiers, bool repeat) noexcept override;
+			bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept override;
 
 			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyRelease() */
-			bool onKeyRelease (int key, int scanCode, int modifiers) noexcept override;
+			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept override;
 
 			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onCharacterType() */
-			bool onCharacterType (unsigned int unicode, int modifiers) noexcept override;
+			bool onCharacterType (uint32_t unicode) noexcept override;
 
 			/** @brief Updates the input text after adding/removing char... */
 			void updateInput () const noexcept;
@@ -250,33 +253,29 @@ namespace Emeraude
 			[[nodiscard]]
 			bool executeBuiltIn (const std::string & command) noexcept;
 
-			static constexpr auto ScreenName = "Console";
 			static constexpr auto InputTextName = "Input";
 			static constexpr auto OutputTextName = "Output";
 
 			/* Flag names. */
-			static constexpr auto DirectInputWasEnabled = 0UL;
-			static constexpr auto PointerWasLocked = 1UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto DirectInputWasEnabled{1UL};
+			static constexpr auto PointerWasLocked{2UL};
 
-			static Console * s_instance; // NOLINT NOTE: Singleton behavior
+			static Console * s_instance;
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			const FileSystem & m_fileSystem;
-			Settings & m_coreSettings;
+			PrimaryServices & m_primaryServices;
 			Input::Manager & m_inputManager;
 			Overlay::Manager & m_overlayManager;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			std::map< std::string, ConsoleControllable * > m_consoleObjects{};
-			std::vector< std::string > m_commandsHistory{};
-			size_t m_historyOffset = 0;
-			std::string m_input{};
-			std::shared_ptr< Overlay::Elements::Text > m_inputText{};
-			std::shared_ptr< Overlay::Elements::Text > m_outputText{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
+			std::map< std::string, ConsoleControllable * > m_consoleObjects;
+			std::vector< std::string > m_commandsHistory;
+			size_t m_historyOffset{0};
+			std::string m_input;
+			std::shared_ptr< Overlay::Elements::Text > m_inputText;
+			std::shared_ptr< Overlay::Elements::Text > m_outputText;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
 				false/*DirectInputWasEnabled*/,
 				false/*PointerWasLocked*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

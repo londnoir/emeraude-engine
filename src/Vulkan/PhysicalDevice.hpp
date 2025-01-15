@@ -1,42 +1,44 @@
 /*
- * Emeraude/Vulkan/PhysicalDevice.hpp
- * This file is part of Emeraude
+ * src/Vulkan/PhysicalDevice.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
-/* Local inclusions for usages. */
-#include "Version.hpp"
+/* Third-party inclusions. */
+#include <vulkan/vulkan.h>
 
-/* Third-party libraries. */
-#include "Third-Party-Inclusion/vulkan.hpp"
+/* Local inclusions for usages. */
+#include "Libraries/Version.hpp"
 
 namespace Emeraude::Vulkan
 {
@@ -52,30 +54,41 @@ namespace Emeraude::Vulkan
 
 			/**
 			 * @brief Constructs a physical device.
-			 * @param physicalDevice The handle from vulkan instance.
+			 * @param physicalDevice A reference to the physical device handle.
 			 */
 			explicit PhysicalDevice (const VkPhysicalDevice & physicalDevice) noexcept;
 
 			/**
 			 * @brief Returns the vulkan handle.
-			 * @return const VkPhysicalDevice &
+			 * @return VkPhysicalDevice
 			 */
 			[[nodiscard]]
-			const VkPhysicalDevice & handle () const noexcept;
+			VkPhysicalDevice handle () const noexcept
+			{
+				return m_physicalDevice;
+			}
 
 			/**
 			 * @brief features
 			 * @return const VkPhysicalDeviceFeatures &
 			 */
 			[[nodiscard]]
-			const VkPhysicalDeviceFeatures & features () const noexcept;
+			const VkPhysicalDeviceFeatures &
+			features () const noexcept
+			{
+				return m_features;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device properties.
 			 * @return const VkPhysicalDeviceProperties &
 			 */
 			[[nodiscard]]
-			const VkPhysicalDeviceProperties & properties () const noexcept;
+			const VkPhysicalDeviceProperties &
+			properties () const noexcept
+			{
+				return m_properties;
+			}
 
 			/**
 			 * @brief Returns the device type as a string.
@@ -83,7 +96,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			deviceType () const noexcept
 			{
@@ -113,7 +125,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			deviceName () const noexcept
 			{
@@ -126,7 +137,6 @@ namespace Emeraude::Vulkan
 			 * @return Libraries::Version
 			 */
 			[[nodiscard]]
-			inline
 			Libraries::Version
 			APIDriver () const noexcept
 			{
@@ -139,7 +149,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			APIDriverString () const noexcept
 			{
@@ -152,7 +161,6 @@ namespace Emeraude::Vulkan
 			 * @return Libraries::Version
 			 */
 			[[nodiscard]]
-			inline
 			Libraries::Version
 			DriverVersion () const noexcept
 			{
@@ -165,7 +173,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			DriverVersionString () const noexcept
 			{
@@ -178,11 +185,9 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			vendorId () const noexcept
 			{
-				// NOLINTBEGIN(*-magic-numbers)
 				switch ( m_properties.vendorID )
 				{
 					case 0x1002 :
@@ -206,7 +211,6 @@ namespace Emeraude::Vulkan
 					default :
 						return std::to_string(m_properties.vendorID);
 				}
-				// NOLINTEND(*-magic-numbers)
 			}
 
 			/**
@@ -215,7 +219,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			deviceId () const noexcept
 			{
@@ -228,7 +231,6 @@ namespace Emeraude::Vulkan
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			inline
 			std::string
 			pipelineCacheUUID () const noexcept
 			{
@@ -240,14 +242,22 @@ namespace Emeraude::Vulkan
 			 * @return const VkPhysicalDeviceMemoryProperties &
 			 */
 			[[nodiscard]]
-			const VkPhysicalDeviceMemoryProperties & memoryProperties () const noexcept;
+			const VkPhysicalDeviceMemoryProperties &
+			memoryProperties () const noexcept
+			{
+				return m_memoryProperties;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device queue family properties.
 			 * @return const std::vector< VkQueueFamilyProperties > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkQueueFamilyProperties > & queueFamilyProperties () const noexcept;
+			const std::vector< VkQueueFamilyProperties > &
+			queueFamilyProperties () const noexcept
+			{
+				return m_queueFamilyProperties;
+			}
 
 			/**
 			 * @brief Returns the index of the family queue type from the physical device.
@@ -262,42 +272,66 @@ namespace Emeraude::Vulkan
 			 * @return const std::vector< VkPhysicalDeviceToolProperties > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkPhysicalDeviceToolProperties > & toolProperties () const noexcept;
+			const std::vector< VkPhysicalDeviceToolProperties > &
+			toolProperties () const noexcept
+			{
+				return m_toolProperties;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device display properties.
 			 * @return const std::vector< VkDisplayPropertiesKHR > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkDisplayPropertiesKHR > & displayProperties () const noexcept;
+			const std::vector< VkDisplayPropertiesKHR > &
+			displayProperties () const noexcept
+			{
+				return m_displayProperties;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device display plane properties.
 			 * @return const std::vector< VkDisplayPlanePropertiesKHR > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkDisplayPlanePropertiesKHR > & displayPlaneProperties () const noexcept;
+			const std::vector< VkDisplayPlanePropertiesKHR > &
+			displayPlaneProperties () const noexcept
+			{
+				return m_displayPlaneProperties;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device fragment shading rates.
 			 * @return const std::vector< VkDisplayPlanePropertiesKHR > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkPhysicalDeviceFragmentShadingRateKHR > & fragmentShadingRates () const noexcept;
+			const std::vector< VkPhysicalDeviceFragmentShadingRateKHR > &
+			fragmentShadingRates () const noexcept
+			{
+				return m_fragmentShadingRates;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device time domains.
 			 * @return const std::vector< VkTimeDomainEXT > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkTimeDomainEXT > & timeDomains () const noexcept;
+			const std::vector< VkTimeDomainEXT > &
+			timeDomains () const noexcept
+			{
+				return m_timeDomains;
+			}
 
 			/**
 			 * @brief Returns prefetched physical device framebuffer mixed samples combinations.
 			 * @return const std::vector< VkTimeDomainEXT > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkFramebufferMixedSamplesCombinationNV > & framebufferMixedSamplesCombinations () const noexcept;
+			const std::vector< VkFramebufferMixedSamplesCombinationNV > &
+			framebufferMixedSamplesCombinations () const noexcept
+			{
+				return m_framebufferMixedSamplesCombinations;
+			}
 
 			/**
 			 * @brief Returns the physical device format properties.
@@ -459,7 +493,7 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Converts UUID from vulkan to a printable string.
 			 * @param uuid A point to uuid structure.
-			 * @return string
+			 * @return std::string
 			 */
 			[[nodiscard]]
 			static std::string UUIDToString (const uint8_t uuid[]) noexcept;
@@ -470,12 +504,12 @@ namespace Emeraude::Vulkan
 			VkPhysicalDeviceFeatures m_features{};
 			VkPhysicalDeviceProperties m_properties{};
 			VkPhysicalDeviceMemoryProperties m_memoryProperties{};
-			std::vector< VkQueueFamilyProperties > m_queueFamilyProperties{};
-			std::vector< VkPhysicalDeviceToolProperties > m_toolProperties{};
-			std::vector< VkDisplayPropertiesKHR > m_displayProperties{};
-			std::vector< VkDisplayPlanePropertiesKHR > m_displayPlaneProperties{};
-			std::vector< VkPhysicalDeviceFragmentShadingRateKHR > m_fragmentShadingRates{};
-			std::vector< VkTimeDomainEXT > m_timeDomains{};
-			std::vector< VkFramebufferMixedSamplesCombinationNV > m_framebufferMixedSamplesCombinations{};
+			std::vector< VkQueueFamilyProperties > m_queueFamilyProperties;
+			std::vector< VkPhysicalDeviceToolProperties > m_toolProperties;
+			std::vector< VkDisplayPropertiesKHR > m_displayProperties;
+			std::vector< VkDisplayPlanePropertiesKHR > m_displayPlaneProperties;
+			std::vector< VkPhysicalDeviceFragmentShadingRateKHR > m_fragmentShadingRates;
+			std::vector< VkTimeDomainEXT > m_timeDomains;
+			std::vector< VkFramebufferMixedSamplesCombinationNV > m_framebufferMixedSamplesCombinations;
 	};
 }

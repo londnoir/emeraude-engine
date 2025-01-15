@@ -1,54 +1,62 @@
 /*
- * Emeraude/MasterControl/Console.hpp
- * This file is part of Emeraude
+ * src/MasterControl/Console.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <any>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 /* Local inclusions for inheritances. */
+#include "Libraries/NameableTrait.hpp"
 #include "ConsoleControllable.hpp"
-#include "Observable.hpp"
-#include "Observer.hpp"
+#include "Libraries/ObserverTrait.hpp"
+#include "Libraries/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "AbstractVirtualAudioDevice.hpp"
 #include "AbstractVirtualVideoDevice.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
+#include "Graphics/RenderTarget/ShadowMap/Abstract.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Cubemap.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Texture2D.hpp"
+#include "Graphics/RenderTarget/Texture/Abstract.hpp"
 #include "Graphics/RenderTarget/Texture/Cubemap.hpp"
 #include "Graphics/RenderTarget/Texture/Texture2D.hpp"
+#include "Graphics/RenderTarget/View/Abstract.hpp"
 #include "Graphics/RenderTarget/View/Cubemap.hpp"
 #include "Graphics/RenderTarget/View/Texture2D.hpp"
+#include "Audio/Manager.hpp"
 #include "Types.hpp"
 
 namespace Emeraude
@@ -60,12 +68,12 @@ namespace Emeraude::MasterControl
 {
 	/**
 	 * @brief The master control links every virtual audio/video input/output from the scene.
-	 * @extends Libraries::NamedItem The master control can have a name according to the scene.
+	 * @extends Libraries::NameableTrait The master control can have a name according to the scene.
 	 * @extends Emeraude::ConsoleControllable The master control is usable from the console.
-	 * @extends Libraries::Observer The master control wants to get notifications from devices.
-	 * @extends Libraries::Observer The master control dispatch device configuration changes.
+	 * @extends Libraries::ObserverTrait The master control wants to get notifications from devices.
+	 * @extends Libraries::ObserverTrait The master control dispatch device configuration changes.
 	 */
-	class Console final : public Libraries::NamedItem, public ConsoleControllable, public Libraries::Observer, public Libraries::Observable
+	class Console final : public Libraries::NameableTrait, public ConsoleControllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
 	{
 		public:
 
@@ -76,9 +84,9 @@ namespace Emeraude::MasterControl
 				VideoDeviceRemoved,
 				AudioDeviceAdded,
 				AudioDeviceRemoved,
-				RenderToViewAdded,
-				RenderToTextureAdded,
 				RenderToShadowMapAdded,
+				RenderToTextureAdded,
+				RenderToViewAdded,
 				/* Enumeration boundary. */
 				MaxEnum
 			};
@@ -92,6 +100,7 @@ namespace Emeraude::MasterControl
 
 			/** @brief The reserved name for the default view device. */
 			static const std::string DefaultViewName;
+			static const std::string DefaultSpeakerName;
 
 			/**
 			 * @brief Constructs the master control console.
@@ -99,9 +108,21 @@ namespace Emeraude::MasterControl
 			 */
 			explicit Console (const std::string & name) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/**
 			 * @brief Returns a video device by its name.
@@ -138,14 +159,32 @@ namespace Emeraude::MasterControl
 			 * @return std::shared_ptr< AbstractVirtualVideoDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualVideoDevice > getPrimaryVideoDevice () const noexcept;
+			std::shared_ptr< AbstractVirtualVideoDevice >
+			getPrimaryVideoDevice () const noexcept
+			{
+				if ( m_primaryOutputVideoDeviceId.empty() )
+				{
+					return nullptr;
+				}
+
+				return this->getVideoDevice(m_primaryOutputVideoDeviceId);
+			}
 
 			/**
 			 * @brief Returns the primary audio device.
 			 * @return std::shared_ptr< AbstractVirtualAudioDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualAudioDevice > getPrimaryAudioDevice () const noexcept;
+			std::shared_ptr< AbstractVirtualAudioDevice >
+			getPrimaryAudioDevice () const noexcept
+			{
+				if ( m_primaryOutputAudioDeviceId.empty() )
+				{
+					return nullptr;
+				}
+
+				return this->getAudioDevice(m_primaryOutputAudioDeviceId);
+			}
 
 			/**
 			 * @brief Returns a printable device List.
@@ -157,25 +196,37 @@ namespace Emeraude::MasterControl
 			std::string getDeviceList (DeviceType deviceType = DeviceType::Both, ConnexionType directionType = ConnexionType::Both) const noexcept;
 
 			/**
-			 * @brief Returns available render to views from the scene.
-			 * @return const std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > &
+			 * @brief Returns available render to shadow maps from the scene.
+			 * @return const std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMapSampler::Abstract > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > & renderToViews () const noexcept;
+			const std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > &
+			renderToShadowMaps () const noexcept
+			{
+				return m_renderToShadowMaps;
+			}
 
 			/**
 			 * @brief Returns available render to texture2Ds from the scene.
 			 * @return const std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > & renderToTextures () const noexcept;
+			const std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > &
+			renderToTextures () const noexcept
+			{
+				return m_renderToTextures;
+			}
 
 			/**
-			 * @brief Returns available render to shadow maps from the scene.
-			 * @return const std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > &
+			 * @brief Returns available render to views from the scene.
+			 * @return const std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > & renderToShadowMaps () const noexcept;
+			const std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > &
+			renderToViews () const noexcept
+			{
+				return m_renderToViews;
+			}
 
 			/**
 			 * @brief Adds a virtual video device.
@@ -208,7 +259,51 @@ namespace Emeraude::MasterControl
 			bool removeAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device) noexcept;
 
 			/**
+			 * @brief Creates a render to shadow map (Texture2D) device.
+			 * @param renderer A reference to the graphics renderer.
+			 * @param name A reference to a string to name the virtual video device.
+			 * @param resolution The resolution of the shadow map.
+			 * @return std::shared_ptr< Graphics::RenderTarget::ShadowMapSampler::Texture2D >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Graphics::RenderTarget::ShadowMap::Texture2D > createRenderToShadowMap (Graphics::Renderer & renderer, const std::string & name, uint32_t resolution) noexcept;
+
+			/**
+			 * @brief Creates a render to cubic shadow map (Cubemap) device.
+			 * @param renderer A reference to the graphics renderer.
+			 * @param name A reference to a string to name the virtual video device.
+			 * @param resolution The resolution of the shadow map.
+			 * @return std::shared_ptr< Graphics::RenderTarget::ShadowMapSampler::Cubemap >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Graphics::RenderTarget::ShadowMap::Cubemap > createRenderToCubicShadowMap (Graphics::Renderer & renderer, const std::string & name, uint32_t resolution) noexcept;
+
+			/**
+			 * @brief Creates a render to texture 2D device.
+			 * @param renderer A reference to the graphics renderer.
+			 * @param name A reference to a string to name the virtual video device.
+			 * @param width The width of the surface.
+			 * @param height The height of the surface.
+			 * @param colorCount The number of color channel desired for the texture2Ds. Default 4.
+			 * @return std::shared_ptr< Graphics::RenderTarget::Texture::Texture2D >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Graphics::RenderTarget::Texture::Texture2D > createRenderToTexture2D (Graphics::Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, uint32_t colorCount = 4) noexcept;
+
+			/**
+			 * @brief Creates a render to cubemap device.
+			 * @param renderer A reference to the graphics renderer.
+			 * @param name A reference to a string to name the virtual video device.
+			 * @param size The size of the cubemap.
+			 * @param colorCount The number of color channel desired for the texture2Ds. Default 4.
+			 * @return std::shared_ptr< Graphics::RenderTarget::Texture::Texture::Cubemap >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Graphics::RenderTarget::Texture::Cubemap > createRenderToCubemap (Graphics::Renderer & renderer, const std::string & name, uint32_t size, uint32_t colorCount = 4) noexcept;
+
+			/**
 			 * @brief Creates a render to view (Texture 2D) device.
+			 * @param renderer A reference to the graphics renderer.
 			 * @param name A reference to a string to name the virtual video device.
 			 * @param width The width of the surface.
 			 * @param height The height of the surface.
@@ -217,10 +312,11 @@ namespace Emeraude::MasterControl
 			 * @return std::shared_ptr< Graphics::RenderTarget::View::Texture2D >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::View::Texture2D > createRenderToView (const std::string & name, uint32_t width, uint32_t height, const Graphics::FramebufferPrecisions & precisions = {}, bool primaryDevice = false) noexcept;
+			std::shared_ptr< Graphics::RenderTarget::View::Texture2D > createRenderToView (Graphics::Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, const Graphics::FramebufferPrecisions & precisions = {}, bool primaryDevice = false) noexcept;
 
 			/**
 			 * @brief Creates a render to cubic view (Cubemap) device.
+			 * @param renderer A reference to the graphics renderer.
 			 * @param name A reference to a string to name the virtual video device.
 			 * @param size The size of the cubemap.
 			 * @param precisions A reference to a framebuffer precisions structure.
@@ -228,46 +324,7 @@ namespace Emeraude::MasterControl
 			 * @return std::shared_ptr< Graphics::RenderTarget::View::Cubemap >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::View::Cubemap > createRenderToCubicView (const std::string & name, uint32_t size, const Graphics::FramebufferPrecisions & precisions = {}, bool primaryDevice = false) noexcept;
-
-			/**
-			 * @brief Creates a render to texture 2D device.
-			 * @param name A reference to a string to name the virtual video device.
-			 * @param width The width of the surface.
-			 * @param height The height of the surface.
-			 * @param colorCount The number of color channel desired for the texture2Ds. Default 4.
-			 * @return std::shared_ptr< Graphics::RenderTarget::Texture::Texture2D >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::Texture::Texture2D > createRenderToTexture2D (const std::string & name, uint32_t width, uint32_t height, uint32_t colorCount = 4) noexcept;
-
-			/**
-			 * @brief Creates a render to cubemap device.
-			 * @param name A reference to a string to name the virtual video device.
-			 * @param size The size of the cubemap.
-			 * @param colorCount The number of color channel desired for the texture2Ds. Default 4.
-			 * @return std::shared_ptr< Graphics::RenderTarget::Texture::Texture::Cubemap >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::Texture::Cubemap > createRenderToCubemap (const std::string & name, uint32_t size, uint32_t colorCount = 4) noexcept;
-
-			/**
-			 * @brief Creates a render to shadow map (Texture2D) device.
-			 * @param name A reference to a string to name the virtual video device.
-			 * @param resolution The resolution of the shadow map.
-			 * @return std::shared_ptr< Graphics::RenderTarget::ShadowMap::Texture2D >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::ShadowMap::Texture2D > createRenderToShadowMap (const std::string & name, uint32_t resolution) noexcept;
-
-			/**
-			 * @brief Creates a render to cubic shadow map (Cubemap) device.
-			 * @param name A reference to a string to name the virtual video device.
-			 * @param resolution The resolution of the shadow map.
-			 * @return std::shared_ptr< Graphics::RenderTarget::ShadowMap::Cubemap >
-			 */
-			[[nodiscard]]
-			std::shared_ptr< Graphics::RenderTarget::ShadowMap::Cubemap > createRenderToCubicShadowMap (const std::string & name, uint32_t resolution) noexcept;
+			std::shared_ptr< Graphics::RenderTarget::View::Cubemap > createRenderToCubicView (Graphics::Renderer & renderer, const std::string & name, uint32_t size, const Graphics::FramebufferPrecisions & precisions = {}, bool primaryDevice = false) noexcept;
 
 			/**
 			 * @brief Connects two video devices.
@@ -287,17 +344,19 @@ namespace Emeraude::MasterControl
 
 			/**
 			 * @brief Auto-connects the primary video devices.
-			 * @param coreSettings A reference to the core settings.
+			 * @param graphicsRenderer A reference to the graphics renderer.
+			 * @param settings A reference to the core settings.
 			 * @return bool
 			 */
-			bool autoConnectPrimaryVideoDevices (Settings & coreSettings) noexcept;
+			bool autoConnectPrimaryVideoDevices (Graphics::Renderer & graphicsRenderer, Settings & settings) noexcept;
 
 			/**
 			 * @brief Auto-connects the primary audio devices.
-			 * @param coreSettings A reference to the core settings.
+			 * @param audioManager A reference to the audio manager.
+			 * @param settings A reference to the core settings.
 			 * @return bool
 			 */
-			bool autoConnectPrimaryAudioDevices (Settings & coreSettings) noexcept;
+			bool autoConnectPrimaryAudioDevices (Audio::Manager & audioManager, Settings & settings) noexcept;
 
 			/**
 			 * @brief Returns a printable state of connexions.
@@ -308,25 +367,21 @@ namespace Emeraude::MasterControl
 
 			/**
 			 * @brief Creates the default view.
-			 * @param coreSettings A reference to the core settings.
+			 * @param graphicsRenderer A reference to the graphics renderer.
+			 * @param settings A reference to the core settings.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createDefaultView (Settings & coreSettings) noexcept;
+			bool createDefaultView (Graphics::Renderer & graphicsRenderer, Settings & settings) noexcept;
 
 			/**
-			 * @brief Console command to list devices.
-			 * @param parameters A reference to a parameter list.
-			 * @return int
+			 * @brief Creates the default speaker.
+			 * @param audioManager A reference to the audio manager.
+			 * @param settings A reference to the core settings.
+			 * @return bool
 			 */
-			int CFListDevices (const std::vector< std::string > & parameters) noexcept;
-
-			/**
-			 * @brief Console command to register a route.
-			 * @param parameters A reference to a parameter list.
-			 * @return int
-			 */
-			int CFRegisterRoute (const std::vector< std::string > & parameters) noexcept;
+			[[nodiscard]]
+			bool createDefaultSpeaker (Audio::Manager & audioManager, Settings & settings) noexcept;
 
 			/**
 			 * @brief Clears all device from the console.
@@ -335,9 +390,9 @@ namespace Emeraude::MasterControl
 
 		private:
 
-			/** @copydoc Libraries:Observer::onNotification() */
+			/** @copydoc Libraries:ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Selects automatically a primary input video device.
@@ -353,14 +408,14 @@ namespace Emeraude::MasterControl
 			 */
 			bool autoSelectPrimaryInputAudioDevice () noexcept;
 
-			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualVideoDevice > > m_virtualVideoDevices{};
-			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualAudioDevice > > m_virtualAudioDevices{};
-			std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > m_renderToViews{};
-			std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > m_renderToTextures{};
-			std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > m_renderToShadowMaps{};
-			std::string m_primaryInputVideoDeviceId{}; /* A camera */
-			std::string m_primaryOutputVideoDeviceId{}; /* A view */
-			std::string m_primaryInputAudioDeviceId{}; /* A microphone */
-			std::string m_primaryOutputAudioDeviceId{}; /* A speaker */
+			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualVideoDevice > > m_virtualVideoDevices;
+			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualAudioDevice > > m_virtualAudioDevices;
+			std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > m_renderToShadowMaps;
+			std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > m_renderToTextures;
+			std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > m_renderToViews;
+			std::string m_primaryInputVideoDeviceId; /* A camera */
+			std::string m_primaryOutputVideoDeviceId; /* A view */
+			std::string m_primaryInputAudioDeviceId; /* A microphone */
+			std::string m_primaryOutputAudioDeviceId; /* A speaker */
 	};
 }

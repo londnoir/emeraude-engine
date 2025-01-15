@@ -1,60 +1,79 @@
 /*
- * Emeraude/Window.hpp
- * This file is part of Emeraude
+ * src/Window.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
+#include <vector>
+
+/* Third-party inclusions. */
+#include "GLFW/glfw3.h"
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Math/Vector.hpp"
 #include "Vulkan/Surface.hpp"
-#include "emeraude_config.hpp"
-
-/* Third-Party */
-#include "Third-Party-Inclusion/glfw.hpp"
+#include "SettingKeys.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace Emeraude
 {
-	class Instance;
+	namespace Vulkan
+	{
+		class Instance;
+	}
+
+	class Identification;
+	class PrimaryServices;
 }
+
+#if IS_LINUX
+using GtkWindow = struct _GtkWindow;
+#elif IS_MACOS
+using id = struct objc_object *;
+#elif IS_WINDOWS
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#endif
 
 namespace Emeraude
 {
-	/* Forward declarations. */
-	class Arguments;
-	class Settings;
-
 	/**
 	 * @brief The handle service class is responsible for the physical screen.
 	 * @extends Emeraude::ServiceInterface This is a service.
@@ -69,47 +88,29 @@ namespace Emeraude
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			/* Settings keys */
-			static constexpr auto ShowInformationKey = "Video/Window/ShowInformation";
-			static constexpr auto DefaultShowInformation = BOOLEAN_FOLLOWING_DEBUG;
-			static constexpr auto PreferredMonitorKey = "Video/Window/PreferredMonitor";
-			static constexpr auto DefaultPreferredMonitor = 0;
-			static constexpr auto FullscreenEnabledKey = "Video/Window/FullscreenEnabled";
-			static constexpr auto DefaultFullscreenEnabled = false;
-			static constexpr auto RefreshRateKey = "Video/Window/RefreshRate";
-			static constexpr auto DefaultRefreshRate = -1;
-			static constexpr auto FramelessWindowKey = "Video/Window/FramelessWindow";
-			static constexpr auto DefaultFramelessWindow = false;
-			static constexpr auto VSyncEnabledKey = "Video/Window/VSyncEnabled";
-			static constexpr auto DefaultVSyncEnabled = false;
-			static constexpr auto FullscreenGammaKey = "Video/Window/FullscreenGamma";
-			static constexpr auto DefaultFullscreenGamma = 1.0;
-			static constexpr auto CreateSurfaceWithGLFWKey = "Video/Window/CreateSurfaceWithGLFW";
-			static constexpr auto DefaultCreateSurfaceWithGLFW = true;
-			static constexpr auto AlwaysCenterWindowOnStartupKey = "Video/Window/AlwaysCenterWindowOnStartup";
-			static constexpr auto WindowXPositionKey = "Video/Window/WindowXPosition";
-			static constexpr auto DefaultWindowXPosition = 0;
-			static constexpr auto WindowYPositionKey = "Video/Window/WindowYPosition";
-			static constexpr auto DefaultWindowYPosition = 0;
-			static constexpr auto WindowWidthKey = "Video/Window/WindowWidth";
-			static constexpr auto DefaultWidth = 1920U;
-			static constexpr auto WindowHeightKey = "Video/Window/WindowHeight";
-			static constexpr auto DefaultHeight = 1080U;
-			static constexpr auto FullscreenWidthKey = "Video/Window/FullscreenWidth";
-			static constexpr auto FullscreenHeightKey = "Video/Window/FullscreenHeight";
-
-			/* NOTE: OpenGL specific settings */
-			static constexpr auto VideoEnableSwapControlTearKey = "Video/Framebuffer/EnableSwapControlTear";
-			static constexpr auto VideoDoubleBufferEnabledKey = "Video/Framebuffer/DoubleBufferEnabled";
-			static constexpr auto VideoFramebufferColorBufferBitsKey = "Video/Framebuffer/ColorBufferBits";
-			static constexpr auto DefaultColorBufferBits = 32;
-			static constexpr auto VideoFramebufferDepthBufferBitsKey = "Video/Framebuffer/DepthBufferBits";
-			static constexpr auto DefaultDepthBufferBits = 24;
-			static constexpr auto VideoFramebufferStencilBufferBitsKey = "Video/Framebuffer/StencilBufferBits";
-			static constexpr auto DefaultStencilBufferBits = 0;
-			static constexpr auto VideoFramebufferMultisamplingKey = "Video/Framebuffer/Multisampling";
-			static constexpr auto DefaultSamples = 1;
-			static constexpr auto VideosRGBEnabledKey = "Video/Framebuffer/sRGBEnabled";
+			/**
+			 * @brief Structure to keep a state of the window geometry.
+			 */
+			struct State
+			{
+				/* The position (top left) of the window in the desktop screen. */
+				int32_t windowXPosition{0};
+				int32_t windowYPosition{0};
+				/* The window dimension expressed in the OS/desktop screen. */
+				uint32_t windowWidth{0};
+				uint32_t windowHeight{0};
+				/* The window borders sizes (Depend of the OS/desktop). */
+				int32_t borderLeftSize{0};
+				int32_t borderTopSize{0};
+				int32_t borderRightSize{0};
+				int32_t borderBottomSize{0};
+				/* The content scale factor from the desktop (HDPI screen). */
+				float contentXScale{1.0F};
+				float contentYScale{1.0F};
+				/* The framebuffer of the window expressed in pixels. */
+				uint32_t framebufferWidth{0};
+				uint32_t framebufferHeight{0};
+			};
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
@@ -117,6 +118,7 @@ namespace Emeraude
 				Created,
 				Destroyed,
 				Centered,
+				TitleChanged,
 				OSNotifiesWindowGetFocus,
 				OSNotifiesWindowLostFocus,
 				OSNotifiesWindowMovedTo,
@@ -134,54 +136,154 @@ namespace Emeraude
 			};
 
 			/**
-			 * @brief Automatic
+			 * @brief Constant for automatic size.
 			 */
-			static constexpr auto Automatic = 0;
+			static constexpr auto Automatic{0};
 
 			/**
 			 * @brief Constructs a Window.
-			 * @param arguments A reference to Arguments.
-			 * @param coreSettings A reference to the core settings to read the window configuration.
+			 * @param primaryServices A reference to primary services.
 			 * @param instance A reference to the Vulkan instance.
-			 * @param title A reference to a string for the window title [std::move].
+			 * @param identification A reference to an application identification.
 			 */
-			Window (const Arguments & arguments, Settings & coreSettings, const Vulkan::Instance & instance, std::string title) noexcept;
+			Window (PrimaryServices & primaryServices, const Vulkan::Instance & instance, const Identification & identification) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Window (const Window & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			Window (Window && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Window &
+			 */
+			Window & operator= (const Window & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return Window &
+			 */
+			Window & operator= (Window && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the window.
+			 */
+			~Window () override;
+
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
-
-			/**
-			 * @brief Returns the handle of the GLFW window object.
-			 * @return const GLFWwindow *
-			 */
-			[[nodiscard]]
-			const GLFWwindow * handle () const noexcept;
+			bool
+			usable () const noexcept override
+			{
+				return m_handle != nullptr;
+			}
 
 			/**
 			 * @brief Returns the handle of the GLFW window object.
 			 * @return GLFWwindow *
 			 */
 			[[nodiscard]]
-			GLFWwindow * handle () noexcept;
+			GLFWwindow *
+			handle () const noexcept
+			{
+				return m_handle.get();
+			}
+
+			/**
+			 * @brief Returns the handle of the GLFW window object.
+			 * @return GLFWwindow *
+			 */
+			[[nodiscard]]
+			GLFWwindow *
+			handle () noexcept
+			{
+				return m_handle.get();
+			}
+
+#if IS_LINUX
+			/**
+			 * @brief Returns the application window as a GTK window pointer.
+			 * @note GLFW use X11/Wayland window directly.
+			 * @return GtkWindow *
+			 */
+			[[nodiscard]]
+			GtkWindow * getGtkWindow () const noexcept;
+#elif IS_MACOS
+			/**
+			 * @brief Returns the application window as a Cocoa window id.
+			 * @return id
+			 */
+			[[nodiscard]]
+			id getCocoaWindow () const noexcept;
+
+			/**
+			 * @brief Returns the application window as a Cocoa view id.
+			 * @return id
+			 */
+			[[nodiscard]]
+			id getCocoaView () const noexcept;
+#elif IS_WINDOWS
+			/**
+			 * @brief Returns the application window as a win32 window pointer.
+			 * @return HWND
+			 */
+			[[nodiscard]]
+			HWND getWin32Window () const noexcept;
+#endif
 
 			/**
 			 * @brief Returns the vulkan handle of the surface.
 			 * @return const Vulkan::Surface *
 			 */
 			[[nodiscard]]
-			const Vulkan::Surface * surface () const noexcept;
+			const Vulkan::Surface *
+			surface () const noexcept
+			{
+				return m_surface.get();
+			}
 
 			/**
 			 * @brief Returns the vulkan handle of the surface.
 			 * @return Vulkan::Surface *
 			 */
 			[[nodiscard]]
-			Vulkan::Surface * surface () noexcept;
+			Vulkan::Surface *
+			surface () noexcept
+			{
+				return m_surface.get();
+			}
+
+			/**
+			 * @brief Changes the window title.
+			 * @param title A reference to a string.
+			 * @return void
+			 */
+			void setTitle (const std::string & title) noexcept;
 
 			/**
 			 * @brief Resizes programmatically the window size. This function takes care of the fullscreen/window mode.
@@ -207,7 +309,7 @@ namespace Emeraude
 			void setGamma (float value) noexcept;
 
 			/**
-			 * @todo Finish this method.
+			 * @TODO Finish this method.
 			 * @return void
 			 */
 			void setCustomGamma () noexcept;
@@ -217,29 +319,15 @@ namespace Emeraude
 			 * @param state The state.
 			 * @return void
 			 */
-			void setFullscreenMode (bool state) noexcept;
-
-			/**
-			 * @brief Set vertical synchronization state.
-			 * @param state The state.
-			 * @return void
-			 */
-			void setVSyncState (bool state) noexcept;
-
-			/**
-			 * @brief Returns the vertical synchronization state.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool getVSyncState () const noexcept;
+			void setFullscreenMode (bool state) const noexcept;
 
 			/**
 			 * @brief Returns the centered position for the window.
-			 * @param monitorNumber The number of the monitor for multiple monitors configuration.
+			 * @param monitorNumber The number of the monitor for multiple monitors configuration. Default 0.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
-			std::array< int32_t, 2 > getCenteredPosition (uint32_t monitorNumber = DefaultPreferredMonitor) const noexcept;
+			std::array< int32_t, 2 > getCenteredPosition (uint32_t monitorNumber = DefaultVideoPreferredMonitor) const noexcept;
 
 			/**
 			 * @brief Returns whether the window is visible on the user view.
@@ -348,6 +436,7 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the position, in screen coordinates, of the upper-left corner of the content area of the window.
+			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW.  Use Window::state() instead.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
@@ -355,6 +444,7 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the size, in screen coordinates, of the content area of the window.
+			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW.  Use Window::state() instead.
 			 * @return std::array< uint32_t, 2 >
 			 */
 			[[nodiscard]]
@@ -362,6 +452,7 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the size, in screen coordinates, of each edge of the frame of the window.
+			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW. Use Window::state() instead.
 			 * @note The array will hold left, top, right and bottom.
 			 * @return std::array< uint32_t, 4 >
 			 */
@@ -370,17 +461,31 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the size, in pixels, of the framebuffer of the window.
+			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW. Use Window::state() instead.
+			 * @param applyScale Divide the real framebuffer size by scaling factors. Default false.
 			 * @return std::array< uint32_t, 2 >
 			 */
 			[[nodiscard]]
-			std::array< uint32_t, 2 > getFramebufferSize () const noexcept;
+			std::array< uint32_t, 2 > getFramebufferSize (bool applyScale = false) const noexcept;
 
 			/**
 			 * @brief Returns the content scale for the window.
+			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW.  Use Window::state() instead.
 			 * @return std::array< float, 2 >
 			 */
 			[[nodiscard]]
 			std::array< float, 2 > getContentScale () const noexcept;
+
+			/**
+			 * @brief Returns the actual state of the window.
+			 * @return const State &
+			 */
+			[[nodiscard]]
+			const State &
+			state () const noexcept
+			{
+				return m_state;
+			}
 
 			/**
 			 * @brief Returns the aspect ratio of the window.
@@ -391,30 +496,50 @@ namespace Emeraude
 
 			/**
 			 * @brief Waits for a valid window size.
-			 * @return bool
+			 * @return void
+			 */
+			void waitValidWindowSize () const noexcept;
+
+			/**
+			 * @brief Gets the window state into a string.
+			 * @param directData Call glfw lib to get the data instead of printing the last known state.
+			 * @return std::string
 			 */
 			[[nodiscard]]
-			bool waitValidWindowSize () const noexcept;
+			std::string getWindowStateString (bool directData) const noexcept;
 
 			/**
-			 * @brief Prints the windows geometry for debugging purpose.
-			 * @return void
+			 * @brief Gets the window attrib into a string.
+			 * @return std::string
 			 */
-			void DEV_printWindowGeometry () const noexcept;
+			[[nodiscard]]
+			std::string getWindowAttribString () const noexcept;
 
 			/**
-			 * @brief Prints the windows attributes for debugging purpose.
+			 * @brief Removes the window top bar containing the title and OS-specific buttons.
 			 * @return void
 			 */
-			void DEV_printWindowAttrib () const noexcept;
+			void disableTitleBar () noexcept;
+
+			/**
+			 * @brief Returns the instance of the file system.
+			 * @return Window *
+			 */
+			[[nodiscard]]
+			static
+			Window *
+			instance () noexcept
+			{
+				return s_instance;
+			}
 
 			/**
 			 * @brief Returns the position, in screen coordinates, of the upper-left corner of the content area of the window.
-			 * @param monitor A pointer to the monitor.
+			 * @param monitor A pointer to the monitor. Default primary.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
-			static std::array< int32_t, 2 > getDesktopPosition (GLFWmonitor * monitor) noexcept;
+			static std::array< int32_t, 2 > getDesktopPosition (GLFWmonitor * monitor = nullptr) noexcept;
 
 			/**
 			 * @brief Returns the desktop resolution.
@@ -433,6 +558,24 @@ namespace Emeraude
 			bool onTerminate () noexcept override;
 
 			/**
+			 * @brief Initializes native window info.
+			 * @return bool
+			 */
+			bool initializeNativeWindow () noexcept;
+
+			/**
+			 * @brief Releases the native window info.
+			 * @return void
+			 */
+			void releaseNativeWindow () noexcept;
+
+			/**
+			 * @brief Saves the least minimum info on the window state at creation.
+			 * @return void
+			 */
+			void initializeState () noexcept;
+
+			/**
 			 * @brief Checks monitors information and keep it to a static member from here.
 			 * @return bool
 			 */
@@ -447,7 +590,16 @@ namespace Emeraude
 			 * @param fullscreenMode Request the fullscreen mode.
 			 * @return bool
 			 */
+			[[nodiscard]]
 			bool create (int width, int height, int monitorNumber, bool fullscreenMode) noexcept;
+
+			/**
+			 * @brief Creates the vulkan surface.
+			 * @param useNativeCode Use vulkan native code instead of glfw.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createSurface (bool useNativeCode) noexcept;
 
 			/**
 			 * @brief Returns a list of available monitors on the system.
@@ -473,13 +625,20 @@ namespace Emeraude
 
 			/**
 			 * @brief This callback for GLFW is called when the allocated framebuffer of the window is resized.
-			 * @note The order of call is : framebufferSizeCallback(), windowSizeCallback() then windowRefreshCallback().
+			 * @note The order of call is : framebufferSizeCallback(), windowRefreshCallback(), windowSizeCallback() and finally windowPositionCallback().
 			 * @param window A pointer to the system window handle.
 			 * @param width The width of the framebuffer in pixel.
 			 * @param height The height of the framebuffer in pixel.
 			 * @return void
 			 */
 			static void framebufferSizeCallback (GLFWwindow * window, int width, int height) noexcept;
+
+			/**
+			 * @brief This callback for GLFW is called when the window is modified by the system. ie: a resize.
+			 * @param window A pointer to the system window handle.
+			 * @return void
+			 */
+			static void windowRefreshCallback (GLFWwindow * window) noexcept;
 
 			/**
 			 * @brief This callback for GLFW is called when the allocated framebuffer of the window is resized.
@@ -494,11 +653,13 @@ namespace Emeraude
 			static void windowSizeCallback (GLFWwindow * window, int width, int height) noexcept;
 
 			/**
-			 * @brief This callback for GLFW is called when the window is modified by the system. ie: a resize.
+			 * @brief Notifies a window position change on the user desktop.
 			 * @param window A pointer to the system window handle.
+			 * @param xPosition The new x position of the window.
+			 * @param yPosition The new y position of the window.
 			 * @return void
 			 */
-			static void windowRefreshCallback (GLFWwindow * window) noexcept;
+			static void windowPositionCallback (GLFWwindow * window, int xPosition, int yPosition) noexcept;
 
 			/**
 			 * @brief Notifies a monitor configuration change.
@@ -507,15 +668,6 @@ namespace Emeraude
 			 * @return void
 			 */
 			static void monitorConfigurationChanged (GLFWmonitor * monitor, int event) noexcept;
-
-			/**
-			 * @brief Notifies a window position change on the user desktop.
-			 * @param window A pointer to the system window handle.
-			 * @param xPosition The new x position of the window.
-			 * @param yPosition The new y position of the window.
-			 * @return void
-			 */
-			static void windowPositionCallback (GLFWwindow * window, int xPosition, int yPosition) noexcept;
 
 			/**
 			 * @brief Notifies a use try to close the window from the host system.
@@ -560,27 +712,31 @@ namespace Emeraude
 			 * @brief Returns the centered position for the window.
 			 * @note The window size is forced due to a GLFW bug at startup.
 			 * @param windowSize
-			 * @param monitorNumber The number of the monitor for multiple monitors configuration.
+			 * @param monitorNumber The number of the monitor for multiple monitors configuration. Default 0.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
-			static std::array< int32_t, 2 > getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, uint32_t monitorNumber = DefaultPreferredMonitor) noexcept;
+			static std::array< int32_t, 2 > getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, uint32_t monitorNumber = DefaultVideoPreferredMonitor) noexcept;
 
 			/* Flag names. */
-			static constexpr auto ShowInformation = 0UL;
-			static constexpr auto VerticalSyncEnabled = 1UL;
+			static constexpr auto ShowInformation{0UL};
+			static constexpr auto SaveWindowPropertiesAtExit{1UL};
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
+			/** @brief Singleton pointer. */
+			static Window * s_instance;
+
+			PrimaryServices & m_primaryServices;
 			const Vulkan::Instance & m_instance;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
 			std::string m_title;
-			std::unique_ptr< GLFWwindow, std::function< void (GLFWwindow *) > > m_handle{};
-			std::unique_ptr< Vulkan::Surface > m_surface{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
+			State m_state{};
+			std::unique_ptr< GLFWwindow, std::function< void (GLFWwindow *) > > m_handle;
+#if IS_LINUX
+			GtkWindow * m_gtkWindow{nullptr};
+#endif
+			std::unique_ptr< Vulkan::Surface > m_surface;
+			std::array< bool, 8 > m_flags{
 				false/*ShowInformation*/,
-				false/*VerticalSyncEnabled*/,
+				false/*SaveWindowPropertiesAtExit*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

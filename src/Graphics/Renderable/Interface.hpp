@@ -1,65 +1,59 @@
 /*
- * Emeraude/Graphics/Renderable/Interface.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/Interface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <string>
+/* STL inclusions. */
+#include <cstddef>
 #include <cstdint>
+#include <string>
 
 /* Local inclusions for inheritances. */
-#include "Resources/Container.hpp"
+#include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Math/Cuboid.hpp"
-#include "Math/Sphere.hpp"
+#include "Libraries/Math/Cuboid.hpp"
+#include "Libraries/Math/Sphere.hpp"
 #include "Graphics/Geometry/Interface.hpp"
 #include "Graphics/Material/Interface.hpp"
-
-/* Forward declarations. */
-namespace Emeraude
-{
-	namespace Graphics::RenderableInstance
-	{
-		class VertexBufferFormat;
-	}
-
-	namespace Vulkan
-	{
-		class GraphicsShaderContainer;
-	}
-}
+#include "Graphics/RasterizationOptions.hpp"
 
 namespace Emeraude::Graphics::Renderable
 {
 	/** @brief Renderable interface flag bits. */
-	enum RenderableFlagBits
+	enum RenderableFlagBits : uint32_t
 	{
-		IsReadyForInstanciation = 1,
+		/** @brief This flag is set when the geometry is fully usable by the GPU,
+		 * thus ready to make mesh, sprite, things, ... as instances. */
+		IsReadyForInstantiation = 1 << 0,
+		/** @brief This flag tells that the renderable has a skeletal animation available. */
+		HasSkeletalAnimation = 1 << 1,
+		/** @brief This flag tells the system this renderable uses a single quad which should always face the camera. */
+		IsSprite = 1 << 2
 	};
 
 	/**
@@ -70,6 +64,9 @@ namespace Emeraude::Graphics::Renderable
 	class Interface : public Resources::ResourceTrait
 	{
 		public:
+
+			static const Libraries::Math::Cuboid< float > NullBoundingBox;
+			static const Libraries::Math::Sphere< float > NullBoundingSphere;
 
 			/**
 			 * @brief Copy constructor.
@@ -107,7 +104,34 @@ namespace Emeraude::Graphics::Renderable
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isReadyForInstantiation () const noexcept = 0;
+			bool
+			isReadyForInstantiation () const noexcept
+			{
+				return this->isFlagEnabled(IsReadyForInstantiation);
+			}
+
+			/**
+			 * @brief Returns whether the renderable has a skeletal animation.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			hasSkeletalAnimation () const noexcept
+			{
+				return this->isFlagEnabled(HasSkeletalAnimation);
+			}
+
+			/**
+			 * @brief Returns whether the renderable is a sprite to differentiate it from a regular 3D mesh.
+			 * @note This mainly means the renderable should always face the camera by providing a model matrix without initial rotation.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isSprite () const noexcept
+			{
+				return this->isFlagEnabled(IsSprite);
+			}
 
 			/**
 			 * @brief Returns the number of layout to render the whole object.
@@ -141,6 +165,15 @@ namespace Emeraude::Graphics::Renderable
 			virtual const Material::Interface * material (size_t layerIndex) const noexcept = 0;
 
 			/**
+			 * @brief Returns the rasterization options for the renderable layer.
+			 * @warning Can return nullptr.
+			 * @param layerIndex The layer index.
+			 * @return const RasterizationOptions *
+			 */
+			[[nodiscard]]
+			virtual const RasterizationOptions * layerRasterizationOptions (size_t layerIndex) const noexcept = 0;
+
+			/**
 			 * @brief Returns the bounding box surrounding the renderable.
 			 * @return const Libraries::Math::Cuboid< float > &
 			 */
@@ -154,31 +187,7 @@ namespace Emeraude::Graphics::Renderable
 			[[nodiscard]]
 			virtual const Libraries::Math::Sphere< float > & boundingSphere () const noexcept = 0;
 
-			/**
-			 * @brief Returns renderable level flags.
-			 * @param layerIndex The index of the layer.
-			 * @return int
-			 */
-			[[nodiscard]]
-			virtual int flags (size_t layerIndex) const noexcept = 0;
-
-			/**
-			 * @brief Prepares shaders for a renderable instance layer.
-			 * @param geometry A reference to the geometry of the renderable instance.
-			 * @param material A reference to the material of the renderable instance layer.
-			 * @param renderPassType The render pass type.
-			 * @param enableInstancing Hint for instancing.
-			 * @param shaders A reference to the vector of generated shaders for the renderable instance.
-			 * @param vertexShader A pointer to the vertex shader to generate the vertex buffer format.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			virtual bool prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept = 0;
-
 		protected:
-
-			static const Libraries::Math::Cuboid< float > NullBoundingBox;
-			static const Libraries::Math::Sphere< float > NullBoundingSphere;
 
 			/**
 			 * @brief Constructs a renderable object.
@@ -186,13 +195,24 @@ namespace Emeraude::Graphics::Renderable
 			 * @param resourceFlagBits The resource flag bits.
 			 */
 			explicit Interface (const std::string & name, uint32_t resourceFlagBits) noexcept;
-			
+
 			/**
 			 * @brief Sets the renderable ready to prepare an instance on GPU.
 			 * @param state The state.
 			 * @return void
 			 */
-			virtual void setReadyForInstanciation (bool state) noexcept = 0;
+			void
+			setReadyForInstantiation (bool state) noexcept
+			{
+				if ( state )
+				{
+					this->enableFlag(IsReadyForInstantiation);
+				}
+				else
+				{
+					this->disableFlag(IsReadyForInstantiation);
+				}
+			}
 
 		private:
 

@@ -1,33 +1,33 @@
 /*
- * Emeraude/MasterControl/AbstractVirtualAudioDevice.hpp
- * This file is part of Emeraude
+ * src/MasterControl/AbstractVirtualAudioDevice.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <memory>
 #include <string>
 
@@ -92,7 +92,7 @@ namespace Emeraude::MasterControl
 			/**
 			 * @brief Event fired when a virtual audio device is connected to output.
 			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual audio device.
+			 * @param targetDevice A pointer to the virtual audio device.
 			 */
 			virtual void onTargetConnected (AbstractVirtualAudioDevice * targetDevice) noexcept;
 
@@ -106,7 +106,7 @@ namespace Emeraude::MasterControl
 			/**
 			 * @brief Event fired when a virtual audio device is disconnected to output.
 			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual audio device.
+			 * @param targetDevice A pointer to the virtual audio device.
 			 */
 			virtual void onTargetDisconnected (AbstractVirtualAudioDevice * targetDevice) noexcept;
 

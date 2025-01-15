@@ -1,65 +1,70 @@
 /*
- * Emeraude/Resources/Container.hpp
- * This file is part of Emeraude
+ * src/Resources/Container.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <string>
-#include <unordered_map>
+/* STL inclusions. */
+#include <any>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <string>
+#include <thread>
+#include <tuple>
+#include <unordered_map>
 #include <utility>
 
 /* Local inclusions for inheritances. */
+#include "Libraries/ObserverTrait.hpp"
 #include "ServiceInterface.hpp"
-#include "Observer.hpp"
-#include "Observable.hpp"
 
 /* Local inclusions for usages. */
-#include "FileSystem.hpp"
-#include "NetworkManager.hpp"
-#include "Tracer.hpp"
-#include "Utility.hpp"
-#include "Stores.hpp"
+#include "Libraries/ObservableTrait.hpp"
+#include "Libraries/IO.hpp"
+#include "BaseInformation.hpp"
+#include "DownloadItem.hpp"
+#include "PrimaryServices.hpp"
 #include "LoadingRequest.hpp"
+#include "NetworkManager.hpp"
+#include "Stores.hpp"
+#include "Types.hpp"
 
 namespace Emeraude::Resources
 {
-	constexpr auto Default = "Default";
-
 	/**
-	 * @brief The resource manager template is responsible for loading asynchronously
-	 * resources with dependencies and hold their lifetime.
-	 * @note Resource type is checked by LoadingRequest template.
-	 * @tparam resource_t The real resource of this manager.
+	 * @brief The resource manager template is responsible for loading asynchronously resources with dependencies and hold their lifetime.
+	 * @tparam resource_t The type of resources (The resource type is checked by LoadingRequest template).
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::Observer The manager observer resource loading.
+	 * @extends Libraries::ObserverTrait The manager observer resource loading.
 	 */
 	template< typename resource_t >
-	class Container final : public ServiceInterface, public Libraries::Observer
+	class Container final : public ServiceInterface, public Libraries::ObserverTrait
 	{
 		public:
 
@@ -89,33 +94,38 @@ namespace Emeraude::Resources
 
 			/**
 			 * @brief Constructs a resource manager for a specific resource from the template parameter.
-			 * @param arguments A reference to the arguments of the application.
-			 * @param fileSystem A reference to the service responsible for the file system.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to the primary services.
 			 * @param networkManager A reference to the service responsible for download.
-			 * @param resourcesStores A reference to the service responsible of local resource stores.
+			 * @param resourcesStores A reference to the service responsible for local resource stores.
 			 * @param serviceName The name of the service.
 			 * @param storeName The name of the resource store.
 			 */
-			Container (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, NetworkManager & networkManager, const Stores & resourcesStores, const char * serviceName, const std::string & storeName = "") noexcept
+			Container (PrimaryServices & primaryServices, NetworkManager & networkManager, const Stores & resourcesStores, const char * serviceName, std::string storeName = "") noexcept
 				: ServiceInterface(serviceName),
-				m_arguments(arguments),
-				m_fileSystem(fileSystem),
-				m_coreSettings(coreSettings),
+				m_primaryServices(primaryServices),
 				m_networkManager(networkManager),
 				m_resourcesStores(resourcesStores),
-				m_storeName(storeName)
+				m_storeName(std::move(storeName))
 			{
 				this->observe(&m_networkManager);
 			}
 
-			/** @copydoc Libraries::Observable::classId() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
 			bool
-			is (size_t classUID) const noexcept
+			is (size_t classUID) const noexcept override
 			{
 				if ( ClassUID == 0UL )
 				{
-					Tracer::error(ClassId, "The unique class identifier has not been set !");
+					Tracer::error(resource_t::ClassId, "The unique class identifier has not been set !");
 
 					return false;
 				}
@@ -128,7 +138,7 @@ namespace Emeraude::Resources
 			bool
 			usable () const noexcept override
 			{
-				return true;
+				return m_flags[ServiceInitialized];
 			}
 
 			/**
@@ -146,12 +156,18 @@ namespace Emeraude::Resources
 				{
 					for ( auto it = m_resources.begin(); it != m_resources.end(); )
 					{
-						TraceDebug{ClassId} << it->second->name() << " used " << it->second.use_count() << " times !";
+						const auto links = it->second.use_count();
 
-						if ( it->second.use_count() == 1 )
+						if ( links > 1 )
+						{
+							TraceDebug{resource_t::ClassId} << it->second->name() << " is still used " << links << " times !";
+						}
+
+						if ( links == 1 )
 						{
 							unloadedResources++;
 
+							/* FIXME: Fails with some animated 2d textures. */
 							it = m_resources.erase(it);
 						}
 						else
@@ -160,25 +176,28 @@ namespace Emeraude::Resources
 						}
 					}
 
-					TraceInfo{ClassId} << unloadedResources << " resource(s) unloaded !";
+					TraceInfo{resource_t::ClassId} << unloadedResources << " resource(s) unloaded !";
 				}
 
 				return unloadedResources;
 			}
 
 			/**
-			 * @brief Returns whether a resource is directly usable.
+			 * @brief Returns whether a resource is loaded and ready to use.
+			 * @param resourceName A reference to a string.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			isResourceAvailable (const std::string & resourceName) const noexcept
+			isResourceLoaded (const std::string & resourceName) const noexcept
 			{
 				return m_resources.contains(resourceName);
 			}
 
 			/**
-			 * @brief Returns whether a resource exists in loaded resources or in stores.
+			 * @brief Returns whether a resource exists.
+			 * First the container will check in loaded resources, then in available (unloaded) resources in the store.
+			 * @param resourceName A reference to a string.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -186,46 +205,36 @@ namespace Emeraude::Resources
 			isResourceExists (const std::string & resourceName) const noexcept
 			{
 				/* First check in live resources. */
-				if ( this->isResourceAvailable(resourceName) )
+				if ( this->isResourceLoaded(resourceName) )
+				{
 					return true;
+				}
 
 				/* If there is a local store for this resource, we check inside. */
 				if ( m_storeName.empty() )
+				{
 					return false;
+				}
 
 				return m_resourcesStores.store(m_storeName).contains(resourceName);
 			}
 
 			/**
 			 * @brief Creates a new resource.
-			 * @param baseInformation A resource information.
-			 * @return std::shared_ptr< resource_t >
-			 */
-			/*
-			[[nodiscard]]
-			std::shared_ptr< resource_t >
-			createResource (const BaseInformation & baseInformation) noexcept
-			{
-				return this->pushInLoadingQueue(infos);
-			}*/
-
-			/**
-			 * @brief Creates a new resource.
-			 * @note When creating a new resource, put '+' in front of the resource name to prevent it to be overriden from a store resource.
+			 * @note When creating a new resource, put '+' in front of the resource name to prevent it to be overridden from a store resource.
 			 * @param resourceName A string with the name of the resource.
 			 * @param resourceFlagBits The resource construction flag bits. Default none.
-			 * @param enableManualLoading Enable the manual loading control of AbstractChainableLoading class.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< resource_t >
-			createResource (const std::string & resourceName, uint32_t resourceFlagBits = 0, bool enableManualLoading = false) noexcept
+			createResource (const std::string & resourceName, uint32_t resourceFlagBits = 0) noexcept
 			{
 				using namespace Libraries;
 
 				if ( resourceName == Default )
 				{
-					TraceError{ClassId} << Default << "' as resource name is a reserved key !";
+					TraceError{resource_t::ClassId} << Default << "' as resource name is a reserved key !";
 
 					return nullptr;
 				}
@@ -235,7 +244,7 @@ namespace Emeraude::Resources
 				{
 					if ( m_resourcesStores.store(m_storeName).contains(resourceName) )
 					{
-						TraceWarning{ClassId} <<
+						TraceWarning{resource_t::ClassId} <<
 							resource_t::ClassId << " resource named '" << resourceName << "' already exists in " << m_storeName << " store ! "
 							"Use get() function instead.";
 
@@ -249,9 +258,9 @@ namespace Emeraude::Resources
 
 					if ( loadedIt != m_resources.cend() )
 					{
-						TraceWarning{ClassId} <<
+						TraceWarning{resource_t::ClassId} <<
 							resource_t::ClassId << " resource named '" << resourceName << "' already exists in loaded resources ! "
-							"Use get() function instead.";
+							"Use getResource() function instead.";
 
 						return loadedIt->second;
 					}
@@ -261,23 +270,19 @@ namespace Emeraude::Resources
 
 				if ( !result.second )
 				{
-					TraceFatal{ClassId} <<
+					TraceFatal{resource_t::ClassId} <<
 						"Unable to get " << resource_t::ClassId << " resource named '" << resourceName << "' into the map. "
 						"This should never happens !";
 
 					return nullptr;
 				}
 
-				/* NOTE: This will change the behavior of loading dependencies. */
-				if ( enableManualLoading && !result.first->second->enableManualLoading() )
-					return nullptr;
-
 				return result.first->second;
 			}
 
 			/**
 			 * @brief Adds a resource manually constructed to the store.
-			 * @note When creating a new resource, put '+' in front of the resource name to prevent it to be overriden from a store resource.
+			 * @note When creating a new resource, put '+' in front of the resource name to prevent it to be overridden from a store resource.
 			 * @param resource The manual resource.
 			 * @return bool
 			 */
@@ -288,7 +293,7 @@ namespace Emeraude::Resources
 
 				if ( loadedIt != m_resources.cend() )
 				{
-					TraceError{ClassId} << "A resource name '" << resource->name() << "' is already present in the store !";
+					TraceError{resource_t::ClassId} << "A resource name '" << resource->name() << "' is already present in the store !";
 
 					return false;
 				}
@@ -299,34 +304,73 @@ namespace Emeraude::Resources
 			}
 
 			/**
-			 * @brief Returns the resource by his name. If the resource is unloaded, a thread will take care about it.
-			 * @note Returns the default resource if nothing was found and generates a warning.
+			 * @brief Preloads asynchronously a resource.
 			 * @param resourceName A string with the name of the resource.
-			 * @param directLoad A boolean to block the call of this method until the end of load.
+			 * @param asyncLoad Load the resource asynchronously. Default true.
+			 * @return bool
+			 */
+			bool
+			preloadResource (const std::string & resourceName, bool asyncLoad = true)
+			{
+				if ( this->isResourceLoaded(resourceName) )
+				{
+					return true;
+				}
+
+				if ( m_storeName.empty() )
+				{
+					return false;
+				}
+
+				/* If not already loaded, check in store for loading. */
+				const auto & store = m_resourcesStores.store(m_storeName);
+
+				if ( store.empty() )
+				{
+					return false;
+				}
+
+				const auto & resourceIt = store.find(resourceName);
+
+				if ( resourceIt == store.cend() )
+				{
+					return false;
+				}
+
+				return this->pushInLoadingQueue(resourceIt->second, asyncLoad) != nullptr;
+			}
+
+			/**
+			 * @brief Returns a resource by its name. If the resource is unloaded, a thread will take care about it unless "asyncLoad" argument is set to "false".
+			 * @note The default resource of the store will be returned if nothing was found. A warning trace will be generated.
+			 * @param resourceName A reference to a string for the resource name.
+			 * @param asyncLoad Load the resource asynchronously. Default true.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< resource_t >
-			getResource (const std::string & resourceName, bool directLoad = false) noexcept
+			getResource (const std::string & resourceName, bool asyncLoad = true) noexcept
 			{
-				using namespace Libraries;
-
 				if ( resourceName == Default )
+				{
 					return this->getDefaultResource();
+				}
 
 				/* Checks in loaded resources. */
 				{
 					const auto & loadedIt = m_resources.find(resourceName);
 
 					if ( loadedIt != m_resources.cend() )
+					{
 						return loadedIt->second;
+					}
 				}
 
 				if ( m_storeName.empty() )
 				{
-					TraceWarning{ClassId} <<
+					TraceWarning{resource_t::ClassId} <<
 						"The resource '" << resourceName << "' doesn't exists and doesn't have a local store ! "
-						"Use create() function instead.";
+						"Use Resource::create() function instead.";
 
 					return this->getDefaultResource();
 				}
@@ -336,9 +380,9 @@ namespace Emeraude::Resources
 
 				if ( store.empty() )
 				{
-					TraceWarning{ClassId} <<
+					TraceWarning{resource_t::ClassId} <<
 						"The '" << m_storeName << "' store is empty, unable to get '" << resourceName << "' ! "
-						"Use create() function instead.";
+						"Use Resource::create() function instead.";
 
 					return this->getDefaultResource();
 				}
@@ -348,91 +392,144 @@ namespace Emeraude::Resources
 				if ( resourceIt == store.cend() )
 				{
 					/* The resource is definitively not present. */
-					TraceWarning{ClassId} <<
-						resource_t::ClassId << " resource named '" << resourceName << "' doesn't exist ! "
-						"Use create() function instead.";
+					TraceWarning{resource_t::ClassId} <<
+					    "The resource named '" << resourceName << "' doesn't exist ! "
+				        "Use Resource::create() function instead.";
 
 					return this->getDefaultResource();
 				}
 
 				/* Returns the smart pointer to the future loaded resource. */
-				return this->pushInLoadingQueue(resourceIt->second, directLoad);
+				return this->pushInLoadingQueue(resourceIt->second, asyncLoad);
 			}
 
 			/**
-			 * @brief Preloads a resource for further use.
-			 * @param resourceName A string with the name of the resource.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			preloadResource (const std::string & resourceName)
-			{
-				if ( this->isResourceAvailable(resourceName) )
-					return true;
-
-				if ( m_storeName.empty() )
-					return false;
-
-				/* If not already loaded, check in store for loading. */
-				const auto & store = m_resourcesStores.store(m_storeName);
-
-				if ( store.empty() )
-					return false;
-
-				const auto & resourceIt = store.find(resourceName);
-
-				if ( resourceIt == store.cend() )
-					return false;
-
-				return this->pushInLoadingQueue(resourceIt->second, false) != nullptr;
-			}
-
-			/**
-			 * @brief This a shortcut that check before if a resource is available, then returns it or create a new one.
-			 * @note When creating a new resource, put '+' in front of the resource name to prevent it to be overriden from a store resource.
+			 * @brief Returns an existing resource or a new empty one.
 			 * @param resourceName A string with the name of the resource.
 			 * @param resourceFlagBits The resource construction flag bits. Default none.
-			 * @param enableManualLoading Enable the manual loading control of AbstractChainableLoading class. Default false.
-			 * @param directLoad A boolean to block the call of this method until the end of load. Default false.
+			 * @param asyncLoad Load the resource asynchronously. Default true.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< resource_t >
-			getOrCreateResource (const std::string & resourceName, uint32_t resourceFlagBits = 0, bool enableManualLoading = false, bool directLoad = false) noexcept
+			getOrNewResource (const std::string & resourceName, uint32_t resourceFlagBits = 0, bool asyncLoad = true) noexcept
 			{
-				if ( resourceName == Default )
-					return this->getDefaultResource();
+				const auto alreadyLoadedResource = this->checkLoadedResource(resourceName, asyncLoad);
 
-				/* Checks in loaded resources. */
+				return alreadyLoadedResource != nullptr ? alreadyLoadedResource : this->createResource(resourceName, resourceFlagBits);
+			}
+
+			/**
+			 * @brief Returns an existing resource or use a method to create a new one.
+			 * @param resourceName A string with the name of the resource.
+			 * @param createFunction A reference to a function to create the existent resource.
+			 * @param resourceFlagBits The resource construction flag bits. Default none.
+			 * @return std::shared_ptr< resource_t >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< resource_t >
+			getOrCreateResource (const std::string & resourceName, const std::function< bool (resource_t & resource) > & createFunction, uint32_t resourceFlagBits = 0) noexcept
+			{
+				const auto alreadyLoadedResource = this->checkLoadedResource(resourceName, false);
+
+				if ( alreadyLoadedResource != nullptr )
 				{
-					auto loadedIt = m_resources.find(resourceName);
-
-					if ( loadedIt != m_resources.cend() )
-						return loadedIt->second;
+					return alreadyLoadedResource;
 				}
 
-				/* If not already loaded, check in store for loading. */
-				if ( !m_storeName.empty() )
-				{
-					const auto & store = m_resourcesStores.store(m_storeName);
+				/* Creates a new resource. */
+				const auto newResource = this->createResource(resourceName, resourceFlagBits);
 
-					if ( !store.empty() )
+				/* Already defines that the resource is in manual loading mode. */
+				if ( !newResource->enableManualLoading() )
+				{
+					return nullptr;
+				}
+
+				if ( !createFunction(*newResource) )
+				{
+					TraceError{resource_t::ClassId} << "The manual loading function has return an error !";
+
+					return nullptr;
+				}
+
+				switch ( newResource->status() )
+				{
+					case Status::Unloaded :
+					case Status::Enqueuing :
+					case Status::ManualEnqueuing :
+						TraceError{resource_t::ClassId} <<
+							"The manual resource '" << resourceName << " is still in creation mode !"
+							"A manual loading should ends with a call to ResourceTrait::setManualLoadSuccess() or ResourceTrait::load().";
+
+						return nullptr;
+
+					case Status::Failed :
+						return nullptr;
+
+					default :
+						return newResource;
+				}
+			}
+
+			/**
+			 * @brief Returns an existing resource or use a method to create a new one asynchronously.
+			 * @param resourceName A string with the name of the resource.
+			 * @param createFunction A reference to a function to create the existent resource.
+			 * @param resourceFlagBits The resource construction flag bits. Default none.
+			 * @return std::shared_ptr< resource_t >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< resource_t >
+			getOrCreateResourceAsync (const std::string & resourceName, const std::function< bool (resource_t & resource) > & createFunction, uint32_t resourceFlagBits = 0) noexcept
+			{
+				const auto alreadyLoadedResource = this->checkLoadedResource(resourceName, true);
+
+				if ( alreadyLoadedResource != nullptr )
+				{
+					return alreadyLoadedResource;
+				}
+
+				/* Creates a new resource. */
+				const auto newResource = this->createResource(resourceName, resourceFlagBits);
+
+				/* Already defines that the resource is in manual loading mode. */
+				if ( !newResource->enableManualLoading() )
+				{
+					return nullptr;
+				}
+
+				std::thread generation{[] (const std::function< bool (resource_t & resource) > & createResource, const std::shared_ptr< resource_t > & resource) {
+					if ( createResource(*resource) )
 					{
-						auto resourceIt = store.find(resourceName);
+						switch ( resource->status() )
+						{
+							case Status::Unloaded :
+							case Status::Enqueuing :
+							case Status::ManualEnqueuing :
+								TraceError{resource_t::ClassId} <<
+									"The manual resource '" << resource->name() << " is still in creation mode !"
+									"A manual loading should ends with a call to ResourceTrait::setManualLoadSuccess() or ResourceTrait::load().";
+								break;
 
-						if ( resourceIt != store.cend() )
-							return this->pushInLoadingQueue(resourceIt->second, directLoad);
+							default :
+								break;
+						}
 					}
-				}
+					else
+					{
+						TraceError{resource_t::ClassId} << "The manual loading function has return an error !";
+					}
+				}, createFunction, newResource};
 
-				/* Creates a new one. */
-				return this->createResource(resourceName, resourceFlagBits, enableManualLoading);
+				generation.detach();
+
+				return newResource;
 			}
 
 			/**
 			 * @brief Returns the default resource.
-			 * @note Should always exists.
+			 * @note Should always exist.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
@@ -444,15 +541,17 @@ namespace Emeraude::Resources
 					const auto & loadedIt = m_resources.find(Default);
 
 					if ( loadedIt != m_resources.cend() )
+					{
 						return loadedIt->second;
+					}
 				}
 
 				/* Creates and load the resource. */
-				auto defaultResource = new resource_t(Default);
+				auto defaultResource = std::make_shared< resource_t >(Default);
 
 				if ( !defaultResource->load() )
 				{
-					TraceFatal{ClassId} << "The default resource '" << resource_t::ClassId << "' can't be loaded !";
+					TraceFatal{resource_t::ClassId} << "The default resource '" << resource_t::ClassId << "' can't be loaded !";
 
 					return nullptr;
 				}
@@ -465,25 +564,28 @@ namespace Emeraude::Resources
 				);
 
 				if ( !result.second )
+				{
 					return nullptr;
+				}
 
-				return result.first->second;
+				return defaultResource;
 			}
 
 			/**
 			 * @brief Returns a random resource from this manager.
-			 * @param directLoading Set the to direct load the resource. Default false.
+			 * @param asyncLoad Load the resource asynchronously. Default true.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
-			inline
 			std::shared_ptr< resource_t >
-			getRandomResource (bool directLoading = false) noexcept
+			getRandomResource (bool asyncLoad = true) noexcept
 			{
 				if ( m_storeName.empty() )
+				{
 					return this->getDefaultResource();
-				else
-					return this->getResource(m_resourcesStores.randomName(m_storeName), directLoading);
+				}
+
+				return this->getResource(m_resourcesStores.randomName(m_storeName), asyncLoad);
 			}
 
 		private:
@@ -496,17 +598,19 @@ namespace Emeraude::Resources
 				{
 					if ( m_storeName.empty() )
 					{
-						TraceInfo{ClassId} << "The resource type '" << resource_t::ClassId << "' has no local store.";
+						TraceInfo{resource_t::ClassId} << "The resource type '" << resource_t::ClassId << "' has no local store.";
 					}
 					else
 					{
 						const auto & store = m_resourcesStores.store(m_storeName);
 
-						TraceInfo{ClassId} <<
+						TraceInfo{resource_t::ClassId} <<
 							"The resource type '" << resource_t::ClassId << "' has " << store.size() <<
 							" entries in the local store '" << m_storeName << "' available.";
 					}
 				}
+
+				m_flags[ServiceInitialized] = true;
 
 				return true;
 			}
@@ -515,11 +619,13 @@ namespace Emeraude::Resources
 			bool
 			onTerminate () noexcept override
 			{
+				m_flags[ServiceInitialized] = false;
+
 				if ( Stores::s_operationVerboseEnabled )
 				{
 					if ( m_storeName.empty() )
 					{
-						TraceInfo{ClassId} <<
+						TraceInfo{resource_t::ClassId} <<
 							"The resource type '" << resource_t::ClassId << "' has no local store."
 							"Nothing to unload.";
 					}
@@ -527,7 +633,7 @@ namespace Emeraude::Resources
 					{
 						const auto & store = m_resourcesStores.store(m_storeName);
 
-						TraceInfo{ClassId} <<
+						TraceInfo{resource_t::ClassId} <<
 							"The resource type '" << resource_t::ClassId << "' has " << store.size() <<
 							" entries in the local store '" << m_storeName << "' to check for unload.";
 					}
@@ -539,9 +645,9 @@ namespace Emeraude::Resources
 				return true;
 			}
 
-			/** @copydoc Libraries::Observer::onNotification() */
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			bool
-			onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept override
+			onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override
 			{
 				using namespace Libraries;
 
@@ -564,21 +670,21 @@ namespace Emeraude::Resources
 
 								case DownloadItem::Status::Done :
 								{
-									Tracer::success(ClassId, "Resource downloaded.");
+									Tracer::success(resource_t::ClassId, "Resource downloaded.");
 
-									requestIt->second.setDownloadProcessed(m_fileSystem, true);
+									requestIt->second.setDownloadProcessed(m_primaryServices.fileSystem(), true);
 
 									/* Creates a loading thread. */
-									std::thread newTask(&Container< resource_t >::loadingTask, this, requestIt->second);
+									std::thread newTask(&Container::loadingTask, this, requestIt->second);
 
 									newTask.detach();
 								}
 									break;
 
 								case DownloadItem::Status::Error :
-									Tracer::error(ClassId, "Resource failed to download.");
+									Tracer::error(resource_t::ClassId, "Resource failed to download.");
 
-									requestIt->second.setDownloadProcessed(m_fileSystem, true);
+									requestIt->second.setDownloadProcessed(m_primaryServices.fileSystem(), true);
 									break;
 							}
 
@@ -592,20 +698,62 @@ namespace Emeraude::Resources
 
 				/* We don't know who is sending this message,
 				 * so we stop the listening. */
-				Tracer::warning(ClassId, "Unknown notification, stop listening to this sender.");
+				Tracer::warning(resource_t::ClassId, "Unknown notification, stop listening to this sender.");
 
 				return false;
 			}
 
 			/**
-			 * @brief Adds a resource to the loading queue.
-			 * @param baseInformation A reference to the base information of the resource to be loaded.
-			 * @param directLoad Enable the direct loading of the resource without passing by a thread. This is a blocking operation.
+			 * @brief Checks for a previously loaded resource and return it.
+			 * @param resourceName A reference to a string.
+			 * @param asyncLoad Load the resource asynchronously.
 			 * @return std::shared_ptr< resource_t >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< resource_t >
-			pushInLoadingQueue (const BaseInformation & baseInformation, bool directLoad) noexcept
+			checkLoadedResource (const std::string & resourceName, bool asyncLoad) noexcept
+			{
+				if ( resourceName == Default )
+				{
+					return this->getDefaultResource();
+				}
+
+				/* Checks in loaded resources. */
+				const auto & loadedIt = m_resources.find(resourceName);
+
+				if ( loadedIt != m_resources.cend() )
+				{
+					return loadedIt->second;
+				}
+
+				/* If not already loaded, check in store for loading. */
+				if ( !m_storeName.empty() )
+				{
+					const auto & store = m_resourcesStores.store(m_storeName);
+
+					if ( !store.empty() )
+					{
+						const auto resourceIt = store.find(resourceName);
+
+						if ( resourceIt != store.cend() )
+						{
+							return this->pushInLoadingQueue(resourceIt->second, !asyncLoad);
+						}
+					}
+				}
+
+				return nullptr;
+			}
+
+			/**
+			 * @brief Adds a resource to the loading queue.
+			 * @param baseInformation A reference to the base information of the resource to be loaded.
+			 * @param asyncLoad Load the resource asynchronously.
+			 * @return std::shared_ptr< resource_t >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< resource_t >
+			pushInLoadingQueue (const BaseInformation & baseInformation, bool asyncLoad) noexcept
 			{
 				using namespace Libraries;
 
@@ -617,12 +765,12 @@ namespace Emeraude::Resources
 				if ( resourceIt != m_resources.cend() )
 				{
 					if ( Stores::s_operationVerboseEnabled )
-						TraceInfo{ClassId} << "Resource (" << resource_t::ClassId << ") '" << name << "' is already in the loading queue.";
+					{
+						TraceInfo{resource_t::ClassId} << "Resource (" << resource_t::ClassId << ") '" << name << "' is already in the loading queue.";
+					}
 
 					return resourceIt->second;
 				}
-
-				TraceDebug{ClassId} << "Add resource (" << resource_t::ClassId << ") '" << name << "' to the loading queue.";
 
 				/* Creates a new resource in the loading queue. */
 				auto result = m_resources.emplace(
@@ -633,7 +781,7 @@ namespace Emeraude::Resources
 
 				if ( !result.second )
 				{
-					TraceError{ClassId} << "Unable to create the resource (" << resource_t::ClassId << ") '" << name << "' !";
+					TraceError{resource_t::ClassId} << "Unable to create the resource (" << resource_t::ClassId << ") '" << name << "' !";
 
 					return nullptr;
 				}
@@ -643,31 +791,26 @@ namespace Emeraude::Resources
 
 				LoadingRequest< resource_t > request{baseInformation, newResource};
 
-				if ( directLoad )
-				{
-					newResource->setDirectLoadingHint();
-
-					/* Call directly the loading function on the manager thread. */
-					this->loadingTask(request);
-				}
-				else
+				if ( asyncLoad )
 				{
 					/* NOTE: Check if we need to download the resource first. */
 					if ( baseInformation.sourceType() == SourceType::ExternalData )
 					{
 						if ( !request.isDownloadable() )
+						{
 							return nullptr;
+						}
 
 						/* NOTE: Check the cache system before downloading. */
-						auto cacheFile = request.cacheFilepath(m_fileSystem);
+						const auto cacheFile = request.cacheFilepath(m_primaryServices.fileSystem());
 
-						if ( cacheFile.exists() )
+						if ( IO::fileExists(cacheFile) )
 						{
-							request.setDownloadProcessed(m_fileSystem, true);
+							request.setDownloadProcessed(m_primaryServices.fileSystem(), true);
 						}
 						else
 						{
-							auto ticket = m_networkManager.download(request.url(), cacheFile, false);
+							const auto ticket = m_networkManager.download(request.url(), cacheFile, false);
 
 							request.setDownloadTicket(ticket);
 
@@ -676,11 +819,18 @@ namespace Emeraude::Resources
 					}
 					else
 					{
-						/* Creates a loading thread. */
-						std::thread newTask(&Container< resource_t >::loadingTask, this, request);
+						/* Create a thread for the resource loading. */
+						std::thread newTask(&Container::loadingTask, this, request);
 
 						newTask.detach();
 					}
+				}
+				else
+				{
+					newResource->setDirectLoadingHint();
+
+					/* Call directly the loading function on the manager thread. */
+					this->loadingTask(request);
 				}
 
 				return newResource;
@@ -709,52 +859,71 @@ namespace Emeraude::Resources
 					/* This is a local file, so we load it by using a filepath. */
 					case SourceType::LocalData :
 						if ( Stores::s_operationVerboseEnabled )
-							TraceInfo{ClassId} << "Loading the resource (" << resource_t::ClassId << ") '" << infos.name() << "'... [CONTAINER]";
+						{
+							TraceInfo{resource_t::ClassId} << "Loading the resource (" << resource_t::ClassId << ") '" << infos.name() << "'... [CONTAINER]";
+						}
 
-						success = request.resource()->load(Path::File{infos.data().asString()});
+						success = request.resource()->load(std::filesystem::path{infos.data().asString()});
 						break;
 
 					/* This is direct data with a JsonCPP way of representing the data. */
 					case SourceType::DirectData :
 						if ( Stores::s_operationVerboseEnabled )
-							TraceInfo{ClassId} << "Loading the resource (" << resource_t::ClassId << ") '" << infos.name() << "'... [CONTAINER]";
+						{
+							TraceInfo{resource_t::ClassId} << "Loading the resource (" << resource_t::ClassId << ") '" << infos.name() << "'... [CONTAINER]";
+						}
 
 						success = request.resource()->load(infos.data());
 						break;
 
 					/* This should never happen ! ExternalData must be processed before. */
 					case SourceType::ExternalData :
-						TraceError{ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' should be downloaded first. Unable to load it ! [CONTAINER]";
+						TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' should be downloaded first. Unable to load it ! [CONTAINER]";
 						break;
 
 					/* This should never happen ! Undefined is a bug. */
 					case SourceType::Undefined :
-						TraceError{ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' informations are invalid. Unable to load it ! [CONTAINER]";
+					default:
+						TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' information are invalid. Unable to load it ! [CONTAINER]";
 						break;
 				}
 
 				if ( success )
 				{
-					TraceSuccess{ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' is loaded. [CONTAINER]";
+					if ( Stores::s_operationVerboseEnabled )
+					{
+						TraceSuccess{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' is loaded. [CONTAINER]";
+					}
 
 					this->notify(ResourceLoaded, request.resource().get());
 				}
 				else
 				{
-					TraceError{ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' failed to load ! [CONTAINER]";
+					TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' failed to load ! [CONTAINER]";
 				}
 
 				/* Notify the end of loading process. */
 				this->notify(LoadingProcessFinished);
 			}
 
-			const Arguments & m_arguments;
-			const FileSystem & m_fileSystem;
-			Settings & m_coreSettings;
+			/* Flag names. */
+			static constexpr auto ServiceInitialized{0UL};
+
+			PrimaryServices & m_primaryServices;
 			NetworkManager & m_networkManager;
 			const Stores & m_resourcesStores;
-			std::string m_storeName{};
-			std::unordered_map< std::string, std::shared_ptr< resource_t > > m_resources{};
-			std::unordered_map< int, LoadingRequest< resource_t > > m_externalResources{};
+			std::string m_storeName;
+			std::unordered_map< std::string, std::shared_ptr< resource_t > > m_resources;
+			std::unordered_map< int, LoadingRequest< resource_t > > m_externalResources;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

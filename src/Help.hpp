@@ -1,39 +1,41 @@
 /*
- * Emeraude/Help.hpp
- * This file is part of Emeraude
+ * src/Help.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <array>
 #include <ostream>
 #include <string>
+#include <sstream>
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "ServiceInterface.hpp"
+#include "Libraries/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "ArgumentDoc.hpp"
@@ -42,39 +44,31 @@
 namespace Emeraude
 {
 	/**
-	 * @brief The help service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @brief This class holds help for an application.
 	 */
-	class Help final : public ServiceInterface
+	class Help final : public Libraries::NameableTrait
 	{
 		public:
 
 			/** @brief Class identifier. */
-			static constexpr auto ClassId{"HelpService"};
-
-			/** @brief Observable class unique identifier. */
-			static const size_t ClassUID;
+			static constexpr auto ClassId{"Help"};
 
 			/**
 			 * @brief Constructs the Help service.
-			 * @param serviceInstanceName The name of the service to differentiate the help.
+			 * @param name A reference to a string.
 			 */
-			explicit Help (const char * serviceInstanceName = ClassId) noexcept;
-
-			/** @copydoc Libraries::Observable::is() */
-			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
-
-			/** @copydoc Emeraude::ServiceInterface::usable() */
-			[[nodiscard]]
-			bool usable () const noexcept override;
+			explicit Help (const std::string & name) noexcept;
 
 			/**
 			 * @brief Adds a new argument to the help.
 			 * @param argumentDoc A reference to a ArgumentDoc instance.
 			 * @return void
 			 */
-			void registerArgument (const ArgumentDoc & argumentDoc) noexcept;
+			void
+			registerArgument (const ArgumentDoc & argumentDoc) noexcept
+			{
+				m_argumentDocs.emplace_back(argumentDoc);
+			}
 
 			/**
 			 * @brief Adds a new argument to the help.
@@ -84,14 +78,22 @@ namespace Emeraude
 			 * @param options A reference to a string vector as options for the argument. Default none.
 			 * @return void
 			 */
-			void registerArgument (const std::string & description, const std::string & longName, char shortName = 0, const std::vector< std::string > & options = {}) noexcept;
+			void
+			registerArgument (const std::string & description, const std::string & longName, char shortName = 0, const std::vector< std::string > & options = {}) noexcept
+			{
+				m_argumentDocs.emplace_back(description, longName, shortName, options);
+			}
 
 			/**
 			 * @brief Adds a new shortcut to the help.
 			 * @param shortcutDoc A reference to a ShortcutDoc instance.
 			 * @return void
 			 */
-			void registerShortcut (const ShortcutDoc & shortcutDoc) noexcept;
+			void
+			registerShortcut (const ShortcutDoc & shortcutDoc) noexcept
+			{
+				m_shortcutDocs.emplace_back(shortcutDoc);
+			}
 
 			/**
 			 * @brief Adds a new shortcut to the help.
@@ -100,21 +102,33 @@ namespace Emeraude
 			 * @param modifiers The additional modifiers. Default none.
 			 * @return void
 			 */
-			void registerShortcut (const std::string & description, Emeraude::Input::Key key, int modifiers = 0) noexcept;
+			void
+			registerShortcut (const std::string & description, Emeraude::Input::Key key, int modifiers = 0) noexcept
+			{
+				m_shortcutDocs.emplace_back(description, key, modifiers);
+			}
 
 			/**
 			 * @brief Returns the argument documentation list.
 			 * @return const std::vector< ArgumentDoc > &
 			 */
 			[[nodiscard]]
-			const std::vector< ArgumentDoc > & argumentDocs () const noexcept;
+			const std::vector< ArgumentDoc > &
+			argumentDocs () const noexcept
+			{
+				return m_argumentDocs;
+			}
 
 			/**
 			 * @brief Returns the shortcut documentation list.
 			 * @return const std::vector< ShortcutDoc > &
 			 */
 			[[nodiscard]]
-			const std::vector< ShortcutDoc > & shortcutDocs () const noexcept;
+			const std::vector< ShortcutDoc > &
+			shortcutDocs () const noexcept
+			{
+				return m_shortcutDocs;
+			}
 
 			/**
 			 * @brief Returns the argument documentation as a string.
@@ -130,15 +144,19 @@ namespace Emeraude
 			[[nodiscard]]
 			std::string shortcutDocsString () const noexcept;
 
+			/**
+			 * @brief Returns the complete help in a string.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			std::string getHelp () const noexcept;
+
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
-			bool onInitialize () noexcept override;
+			/* Flag names */
+			static constexpr auto ServiceInitialized{0UL};
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
-			bool onTerminate () noexcept override;
-
-			std::vector< ArgumentDoc > m_argumentDocs{};
-			std::vector< ShortcutDoc > m_shortcutDocs{};
+			std::vector< ArgumentDoc > m_argumentDocs;
+			std::vector< ShortcutDoc > m_shortcutDocs;
 	};
 }

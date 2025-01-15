@@ -1,44 +1,44 @@
 /*
- * Emeraude/Graphics/Geometry/IndexedVertexResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/IndexedVertexResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standards libraries. */
-#include <memory>
-#include <mutex>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
 #include "Resources/Container.hpp"
-#include "VertexFactory/Shape.hpp"
 
 namespace Emeraude::Graphics::Geometry
 {
@@ -63,9 +63,9 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Constructs a vertex indexed geometry resource.
 			 * @param name A reference to a string for the resource name.
-			 * @param resourceFlagBits The resource flag bits. Default none.
+			 * @param geometryFlagBits The geometry resource flag bits, See Emeraude::Graphics::Geometry::GeometryFlagBits. Default none.
 			 */
-			explicit IndexedVertexResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
+			explicit IndexedVertexResource (const std::string & name, uint32_t geometryFlagBits = 0) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -96,49 +96,124 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			~IndexedVertexResource () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::isCreated() */
 			[[nodiscard]]
-			bool isCreated () const noexcept override;
+			bool
+			isCreated () const noexcept override
+			{
+				if ( m_vertexBufferObject == nullptr || !m_vertexBufferObject->isCreated() )
+				{
+					return false;
+				}
+
+				if ( m_indexBufferObject == nullptr || !m_indexBufferObject->isCreated() )
+				{
+					return false;
+				}
+
+				return true;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::topology() */
 			[[nodiscard]]
-			Topology topology () const noexcept override;
+			Topology
+			topology () const noexcept override
+			{
+				return Topology::TriangleList;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
-			size_t subGeometryCount () const noexcept override;
+			size_t
+			subGeometryCount () const noexcept override
+			{
+				/* If sub-geometry mechanism is not used, we return 1. */
+				if ( m_subGeometries.empty() )
+				{
+					return 1;
+				}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryOffset() */
-			[[nodiscard]]
-			size_t subGeometryOffset (size_t subGeometryIndex) const noexcept override;
+				return m_subGeometries.size();
+			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryLength() */
+			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
-			size_t subGeometryLength (size_t subGeometryIndex) const noexcept override;
+			std::array< uint32_t, 2 >
+			subGeometryRange (size_t subGeometryIndex) const noexcept override
+			{
+				/* If sub-geometry mechanism is not used, we return 0 as offset. */
+				if ( m_subGeometries.empty() )
+				{
+					return {0, static_cast< uint32_t >(m_indexBufferObject->indexCount())};
+				}
+
+				if ( subGeometryIndex >= m_subGeometries.size() )
+				{
+					return m_subGeometries[0].range();
+				}
+
+				return m_subGeometries[subGeometryIndex].range();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libraries::Math::Cuboid< float > &
+			boundingBox () const noexcept override
+			{
+				return m_localData.boundingBox();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libraries::Math::Sphere< float > &
+			boundingSphere () const noexcept override
+			{
+				return m_localData.boundingSphere();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::vertexBufferObject() */
 			[[nodiscard]]
-			const Vulkan::VertexBufferObject * vertexBufferObject () const noexcept override;
+			const Vulkan::VertexBufferObject *
+			vertexBufferObject () const noexcept override
+			{
+				return m_vertexBufferObject.get();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::indexBufferObject() */
 			[[nodiscard]]
-			const Vulkan::IndexBufferObject * indexBufferObject () const noexcept override;
+			const Vulkan::IndexBufferObject *
+			indexBufferObject () const noexcept override
+			{
+				return m_indexBufferObject.get();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::useIndexBuffer() */
 			[[nodiscard]]
-			bool useIndexBuffer () const noexcept override;
+			bool
+			useIndexBuffer () const noexcept override
+			{
+#ifdef DEBUG
+				return m_indexBufferObject != nullptr;
+#else
+				return true;
+#endif
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::create() */
 			bool create () noexcept override;
@@ -149,15 +224,19 @@ namespace Emeraude::Graphics::Geometry
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::destroy() */
 			void destroy (bool clearLocalData) noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
@@ -174,14 +253,23 @@ namespace Emeraude::Graphics::Geometry
 			 * @brief Gives access to the local geometry data.
 			 * @return Libraries::VertexFactory::Shape< float > &
 			 */
-			Libraries::VertexFactory::Shape< float > & localData () noexcept;
+			[[nodiscard]]
+			Libraries::VertexFactory::Shape< float > &
+			localData () noexcept
+			{
+				return m_localData;
+			}
 
 			/**
 			 * @brief Gives access to the local geometry data.
 			 * @return const Libraries::VertexFactory::Shape< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::VertexFactory::Shape< float > & localData () const noexcept;
+			const Libraries::VertexFactory::Shape< float > &
+			localData () const noexcept
+			{
+				return m_localData;
+			}
 
 			/**
 			 * @brief Returns an indexed vertex resource by its name.
@@ -202,21 +290,20 @@ namespace Emeraude::Graphics::Geometry
 		private:
 
 			/**
-			 * @brief Creates an hardware buffer on the device.
+			 * @brief Creates a hardware buffer on the device.
 			 * @param vertexAttributes A reference to a vertex attribute vector.
 			 * @param vertexCount The number of vertices.
 			 * @param vertexElementCount The number of elements composing a vertex.
-			 * @param indices A reference to a index vector.
+			 * @param indices A reference to an index vector.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, size_t vertexCount, size_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept;
 
-			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject{};
-			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject{};
-			Libraries::VertexFactory::Shape< float > m_localData{};
-			std::vector< SubGeometry > m_subGeometries{};
-			mutable std::mutex m_GPUAccessMutex{};
+			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject;
+			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
+			Libraries::VertexFactory::Shape< float > m_localData;
+			std::vector< SubGeometry > m_subGeometries;
 	};
 }
 

@@ -1,27 +1,27 @@
 /*
- * Emeraude/Vulkan/Sampler.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Sampler.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -29,32 +29,40 @@
 
 /* Local inclusions. */
 #include "Device.hpp"
-#include "Tracer.hpp"
 #include "Utility.hpp"
+#include "Settings.hpp"
+#include "SettingKeys.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	Sampler::Sampler (const std::shared_ptr< Device > & device, VkSamplerCreateFlags createFlags) noexcept
+	Sampler::Sampler (const std::shared_ptr< Device > & device, Settings & settings, VkSamplerCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device)
 	{
+	    const auto magFilter = settings.get< std::string >(GraphicsTextureMagFilteringKey, DefaultGraphicsTextureFiltering);
+	    const auto minFilter = settings.get< std::string >(GraphicsTextureMinFilteringKey, DefaultGraphicsTextureFiltering);
+	    const auto mipmapMode = settings.get< std::string >(GraphicsTextureMipFilteringKey, DefaultGraphicsTextureFiltering);
+        const auto mipLevels = settings.get< float >(GraphicsTextureMipMappingLevelsKey, DefaultGraphicsTextureMipMappingLevels);
+        const auto anisotropyLevels = settings.get< float >(GraphicsTextureAnisotropyLevelsKey, DefaultGraphicsTextureAnisotropy);
+
 		m_createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
 		m_createInfo.flags = createFlags;
-		m_createInfo.magFilter = VK_FILTER_NEAREST;
-		m_createInfo.minFilter = VK_FILTER_NEAREST;
-		m_createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		m_createInfo.magFilter = magFilter == "linear" ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+		m_createInfo.minFilter = minFilter == "linear" ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+		m_createInfo.mipmapMode = mipmapMode == "linear" ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
 		m_createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		m_createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		m_createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		m_createInfo.mipLodBias = 0.0F;
-		m_createInfo.anisotropyEnable = VK_FALSE;
-		m_createInfo.maxAnisotropy = 0.0F;
+		m_createInfo.anisotropyEnable = anisotropyLevels > 1.0F ? VK_TRUE : VK_FALSE;
+		m_createInfo.maxAnisotropy = anisotropyLevels;
 		m_createInfo.compareEnable = VK_FALSE;
 		m_createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 		m_createInfo.minLod = 0.0F;
-		m_createInfo.maxLod = 0.0F;
+		m_createInfo.maxLod = mipLevels > 0.0F ? mipLevels : VK_LOD_CLAMP_NONE;
 		m_createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 		m_createInfo.unnormalizedCoordinates = VK_FALSE;
 	}
@@ -84,14 +92,12 @@ namespace Emeraude::Vulkan
 
 		if ( result != VK_SUCCESS )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to create a sampler : " << vkResultToCString(result) << " !");
+			Tracer::error(ClassId, BlobTrait() << "Unable to create a sampler : " << vkResultToCString(result) << " !");
 
 			return false;
 		}
 
 		this->setCreated();
-
-		Tracer::success(ClassId, Blob() << "The sampler " << m_handle << " (" << this->identifier() << ") is successfully created !");
 
 		return true;
 	}
@@ -112,25 +118,11 @@ namespace Emeraude::Vulkan
 
 			vkDestroySampler(this->device()->handle(), m_handle, nullptr);
 
-			TraceSuccess{ClassId} << "The sampler " << m_handle << " (" << this->identifier() << ") is gracefully destroyed !";
-
 			m_handle = VK_NULL_HANDLE;
 		}
 
 		this->setDestroyed();
 
 		return true;
-	}
-
-	VkSampler
-	Sampler::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	VkSamplerCreateInfo
-	Sampler::createInfo () const noexcept
-	{
-		return m_createInfo;
 	}
 }

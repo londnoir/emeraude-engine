@@ -1,35 +1,35 @@
 /*
- * Emeraude/Graphics/Renderable/WaterLevelResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/WaterLevelResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "WaterLevelResource.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
 #include "Resources/Manager.hpp"
+#include "Graphics/Material/BasicResource.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -37,31 +37,30 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderabl
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::WaterLevelResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::WaterLevelResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Renderable
 {
 	using namespace Libraries;
 	using namespace Libraries::Math;
 
-	const size_t WaterLevelResource::ClassUID{Observable::getClassUID()};
+	const size_t WaterLevelResource::ClassUID{getClassUID(ClassId)};
 
 	WaterLevelResource::WaterLevelResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: AbstractSeaLevel(name, resourceFlagBits)
+		: SeaLevelInterface(name, resourceFlagBits)
 	{
 
+	}
+
+	size_t
+	WaterLevelResource::classUID () const noexcept
+	{
+		return ClassUID;
 	}
 
 	bool
 	WaterLevelResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -72,7 +71,7 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	bool
-	WaterLevelResource::isOpaque (size_t) const noexcept
+	WaterLevelResource::isOpaque (size_t /*layerIndex*/) const noexcept
 	{
 		if ( m_material == nullptr )
 			return true;
@@ -87,16 +86,24 @@ namespace Emeraude::Graphics::Renderable
 	}
 
 	const Material::Interface *
-	WaterLevelResource::material (size_t) const noexcept
+	WaterLevelResource::material (size_t /*layerIndex*/) const noexcept
 	{
 		return m_material.get();
+	}
+
+	const RasterizationOptions *
+	WaterLevelResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
+	{
+		return nullptr;
 	}
 
 	const Cuboid< float > &
 	WaterLevelResource::boundingBox () const noexcept
 	{
 		if ( m_geometry == nullptr )
-			return Interface::NullBoundingBox;
+		{
+			return NullBoundingBox;
+		}
 
 		return m_geometry->boundingBox();
 	}
@@ -105,7 +112,9 @@ namespace Emeraude::Graphics::Renderable
 	WaterLevelResource::boundingSphere () const noexcept
 	{
 		if ( m_geometry == nullptr )
-			return Interface::NullBoundingSphere;
+		{
+			return NullBoundingSphere;
+		}
 
 		return m_geometry->boundingSphere();
 	}
@@ -120,9 +129,11 @@ namespace Emeraude::Graphics::Renderable
 	WaterLevelResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
-		auto geometryResource = std::make_shared< Geometry::VertexGridResource >("DefaultWaterLevelGeometry");
+		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >("DefaultWaterLevelGeometry");
 
 		if ( !geometryResource->load(DefaultSize, DefaultDivision) )
 		{
@@ -132,10 +143,14 @@ namespace Emeraude::Graphics::Renderable
 		}
 
 		if ( !this->setGeometry(geometryResource) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		if ( !this->setMaterial(Material::BasicResource::getDefault()) )
+		{
 			return this->setLoadSuccess(false);
+		}
 
 		return this->setLoadSuccess(true);
 	}
@@ -144,7 +159,9 @@ namespace Emeraude::Graphics::Renderable
 	WaterLevelResource::load (const Json::Value & /*data*/) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		/* TODO... */
 
@@ -155,7 +172,9 @@ namespace Emeraude::Graphics::Renderable
 	WaterLevelResource::load (const std::shared_ptr< Geometry::VertexGridResource > & geometryResource, const std::shared_ptr< Material::Interface > & materialResource) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		/* 1. Check the grid geometry. */
 		if ( !this->setGeometry(geometryResource) )
@@ -188,7 +207,7 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		/* Change the geometry. */
 		m_geometry = geometryResource;
@@ -209,7 +228,7 @@ namespace Emeraude::Graphics::Renderable
 			return false;
 		}
 
-		this->setReadyForInstanciation(false);
+		this->setReadyForInstantiation(false);
 
 		/* Change the material. */
 		m_material = materialResource;
@@ -218,18 +237,10 @@ namespace Emeraude::Graphics::Renderable
 		return this->addDependency(m_material.get());
 	}
 
-	bool
-	WaterLevelResource::prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept
-	{
-		TraceWarning{ClassId} << "Not done yet !";
-
-		return false;
-	}
-
 	std::shared_ptr< WaterLevelResource >
 	WaterLevelResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->waterLevels().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->waterLevels().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< WaterLevelResource >

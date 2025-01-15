@@ -1,27 +1,27 @@
 /*
- * Emeraude/Vulkan/QueueFamily.cpp
- * This file is part of Emeraude
+ * src/Vulkan/QueueFamily.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -29,6 +29,7 @@
 
 /* Local inclusions. */
 #include "Device.hpp"
+#include "Queue.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
@@ -37,24 +38,6 @@ namespace Emeraude::Vulkan
 		: m_queueFamilyIndex(index), m_maxQueueCount(maxQueueCount)
 	{
 
-	}
-
-	uint32_t
-	QueueFamily::index () const noexcept
-	{
-		return m_queueFamilyIndex;
-	}
-
-	size_t
-	QueueFamily::maxQueueCount () const noexcept
-	{
-		return m_maxQueueCount;
-	}
-
-	bool
-	QueueFamily::hasSingleQueue () const noexcept
-	{
-		return false;
 	}
 
 	bool
@@ -117,21 +100,8 @@ namespace Emeraude::Vulkan
 
 			m_queues[queueIndex] = std::make_unique< Queue >(queueHandle, m_queueFamilyIndex);
 			m_queues[queueIndex]->setIdentifier((std::stringstream{} << "Device-" << m_queueFamilyIndex << '.' << queueIndex << "-Queue").str());
-
-			if ( !m_queues[queueIndex]->createTransferFence(device) )
-			{
-				TraceError{ClassId} << "Unable to create the transfer fence for the queue #" << queueIndex << " (family #" << m_queueFamilyIndex << ") @" << queueHandle << " !";
-
-				return false;
-			}
 		}
 
 		return true;
-	}
-
-	Queue *
-	QueueFamily::queue (QueueJob job, QueuePriority priority) noexcept
-	{
-		return m_queues[0].get();
 	}
 }

@@ -1,42 +1,40 @@
 /*
- * Emeraude/Graphics/ViewMatrices2DUBO.cpp
- * This file is part of Emeraude
+ * src/Graphics/ViewMatrices2DUBO.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ViewMatrices2DUBO.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cmath>
 #include <cstring>
+#include <ostream>
 
-/* Local inclusions */
-#include "Tracer.hpp"
+/* Local inclusions. */
 #include "Graphics/Renderer.hpp"
-#include "Graphics/RenderTarget/Abstract.hpp"
-#include "Vulkan/TransferManager.hpp"
-#include "Vulkan/UniformBufferObject.hpp"
-#include "Vulkan/DescriptorSet.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Graphics
 {
@@ -44,107 +42,33 @@ namespace Emeraude::Graphics
 	using namespace Libraries::Math;
 	using namespace Vulkan;
 
-	ViewMatrices2DUBO::ViewMatrices2DUBO (bool enableCloseView, bool enableInfinityView) noexcept
-		: ViewMatricesInterface(enableCloseView, enableInfinityView)
-	{
-
-	}
-
-	const Matrix< 4, float > &
-	ViewMatrices2DUBO::projectionMatrix () const noexcept
-	{
-		return m_projection;
-	}
-
-	const Matrix< 4, float > &
-	ViewMatrices2DUBO::viewMatrix (size_t /*index*/) const noexcept
-	{
-		return m_view;
-	}
-
-	const Matrix< 4, float > &
-	ViewMatrices2DUBO::infinityViewMatrix (size_t /*index*/) const noexcept
-	{
-		return m_infinityView;
-	}
-
-	const Matrix< 4, float > &
-	ViewMatrices2DUBO::viewProjectionMatrix (size_t /*index*/) const noexcept
-	{
-		return m_viewProjection;
-	}
-
-	const Matrix< 4, float > &
-	ViewMatrices2DUBO::infinityViewProjectionMatrix (size_t /*index*/) const noexcept
-	{
-		return m_infinityViewProjection;
-	}
-
-	const Vector< 3, float > &
-	ViewMatrices2DUBO::position () const noexcept
-	{
-		return m_position;
-	}
-
-	const Vector< 3, float > &
-	ViewMatrices2DUBO::velocity () const noexcept
-	{
-		return m_velocity;
-	}
-
-	const Vector< 4, float > &
-	ViewMatrices2DUBO::viewProperties () const noexcept
-	{
-		return m_viewProperties;
-	}
-
-	const Frustum &
-	ViewMatrices2DUBO::frustum (size_t /*index*/) const noexcept
-	{
-		return m_frustum;
-	}
-
-	float
-	ViewMatrices2DUBO::getAspectRatio () const noexcept
-	{
-		if ( m_viewProperties[Y] <= 0.0F )
-		{
-			Tracer::error(ClassId, "View properties for width and height are invalid ! Unable to compute the aspect ratio.");
-
-			return 1.0F;
-		}
-
-		return m_viewProperties[X] / m_viewProperties[Y];
-	}
-
-	float
-	ViewMatrices2DUBO::fieldOfView () const noexcept
-	{
-		const auto Rad2Deg = 180.0F / Pi< float >;
-
-		return std::atan(1.0F / m_projection[M4x4Col1Row1]) * 2.0F * Rad2Deg; // NOLINT(*-magic-numbers)
-	}
-
 	void
 	ViewMatrices2DUBO::updatePerspectiveViewProperties (float width, float height, float distance, float fov) noexcept
 	{
-		TraceInfo{ClassId} <<
-			"Updating perspective view matrices with " << width << "X" << height << ", "
-			"distance: " << distance << " and FOV: " << fov << " ...";
+		if ( width * height <= 0.0 )
+		{
+			TraceError{ClassId} << "The view size is invalid ! Width: " << width << ", height: " << height << ", distance: " << distance << ", FOV: " << fov;
 
-		m_viewProperties[X] = width;
-		m_viewProperties[Y] = height;
-		m_viewProperties[W] = distance;
+			return;
+		}
 
-		/* Formula : nearPlane = nearestObject / sqrt(1 + tan(fov/2)² · (getAspectRatio² + 1))) */
-		const auto aspectRatio = this->getAspectRatio();
-		const auto powA = std::pow(std::tan(Radian(fov) * 0.5F), 2.0F);
-		const auto powB = std::pow(aspectRatio, 2.0F) + 1.0F;
+		const auto aspectRatio = width / height;
 
-		m_viewProperties[Z] = 0.1F / std::sqrt(1.0F + powA * powB); // NOLINT(*-magic-numbers)
+		m_bufferData[ViewWidthOffset] = width;
+		m_bufferData[ViewHeightOffset] = height;
+		m_bufferData[ViewDistanceOffset] = distance;
 
-		/* Configures the 3D projection matrix. */
-		m_projection = Matrix< 4, float >::perspectiveProjection(fov, aspectRatio, m_viewProperties[Z], m_viewProperties[W]);
+		/* Formula : nearPlane = nearestObject / sqrt(1 + tan(fov/2)² · (aspectRatio² + 1)) */
+		{
+			const auto powA = std::pow(std::tan(Radian(fov) * 0.5F), 2.0F);
+			const auto powB = std::pow(aspectRatio, 2.0F) + 1.0F;
+
+			m_bufferData[ViewNearOffset] = 0.1F / std::sqrt(1.0F + powA * powB);
+		}
+
+		m_projection = Matrix< 4, float >::perspectiveProjection(fov, aspectRatio, m_bufferData[ViewNearOffset], m_bufferData[ViewDistanceOffset]);
+
+		std::memcpy(&m_bufferData[ProjectionMatrixOffset], m_projection.data(), Matrix4Alignment * sizeof(float));
 
 		this->updateVideoMemory();
 	}
@@ -152,272 +76,162 @@ namespace Emeraude::Graphics
 	void
 	ViewMatrices2DUBO::updateOrthographicViewProperties (float width, float height, float distance, float near) noexcept
 	{
-		TraceInfo{ClassId} <<
-			"Updating orthographic view matrices with " << width << "X" << height << ", "
-			"distance: " << distance << " and near: " << near << " ...";
+		if ( width * height <= 0.0 )
+		{
+			TraceError{ClassId} << "The view size is invalid ! Width: " << width << ", height: " << height << ", distance: " << distance << ", near: " << near;
 
-		m_viewProperties[X] = width;
-		m_viewProperties[Y] = height;
-		m_viewProperties[Z] = near;
-		m_viewProperties[W] = distance;
+			return;
+		}
 
-		const auto side = m_viewProperties[W] * this->getAspectRatio();
+		const auto side = m_bufferData[ViewDistanceOffset] * this->getAspectRatio();
 
-		m_projection = Matrix< 4, float >::orthographicProjection(-side, side, -m_viewProperties[W], m_viewProperties[W], m_viewProperties[Z], m_viewProperties[W]);
+		m_bufferData[ViewWidthOffset] = width;
+		m_bufferData[ViewHeightOffset] = height;
+		m_bufferData[ViewNearOffset] = near;
+		m_bufferData[ViewDistanceOffset] = distance;
+
+		m_projection = Matrix< 4, float >::orthographicProjection(
+			-side, side,
+			-m_bufferData[ViewDistanceOffset], m_bufferData[ViewDistanceOffset],
+			m_bufferData[ViewNearOffset], m_bufferData[ViewDistanceOffset]
+		);
+
+		std::memcpy(&m_bufferData[ProjectionMatrixOffset], m_projection.data(), Matrix4Alignment * sizeof(float));
 
 		this->updateVideoMemory();
 	}
 
 	void
-	ViewMatrices2DUBO::updateViewCoordinates (const Coordinates< float > & coordinates, const Vector< 3, float > & velocity) noexcept
+	ViewMatrices2DUBO::updateViewCoordinates (const CartesianFrame< float > & coordinates, const Vector< 3, float > & velocity) noexcept
 	{
-		/* Sets the camera world position and velocity. */
+		m_view = coordinates.getViewMatrix();
+		m_infinityView = coordinates.getInfinityViewMatrix();
 		m_position = coordinates.position();
-		m_velocity = velocity;
+		m_frustum.update(m_projection * m_view);
 
-		/* Use the camera position as the point of view. */
-		if ( this->closeViewEnabled() )
-		{
-			m_view = coordinates.viewMatrix();
-			m_viewProjection = m_projection * m_view;
+		/* FIXME: These data is not constantly updated on GPU. */
+		m_bufferData[WorldPositionOffset + 0] = m_position.x();
+		m_bufferData[WorldPositionOffset + 1] = m_position.y();
+		m_bufferData[WorldPositionOffset + 2] = m_position.z();
 
-			/* Updates the view frustum (Only in close view). */
-			m_frustum.update(m_viewProjection);
-		}
+		m_bufferData[VelocityVectorOffset + 0] = velocity.x();
+		m_bufferData[VelocityVectorOffset + 1] = velocity.y();
+		m_bufferData[VelocityVectorOffset + 2] = velocity.z();
+	}
 
-		/* Same but update matrices for far objects. */
-		if ( this->infinityViewEnabled() )
-		{
-			m_infinityView = coordinates.viewMatrix(true);
-			m_infinityViewProjection = m_projection * m_infinityView;
-		}
+	void
+	ViewMatrices2DUBO::updateAmbientLightProperties (const PixelFactory::Color< float > & color, float intensity) noexcept
+	{
+		m_bufferData[AmbientLightColorOffset+0] = color.red();
+		m_bufferData[AmbientLightColorOffset+1] = color.green();
+		m_bufferData[AmbientLightColorOffset+2] = color.blue();
+
+		m_bufferData[AmbientLightIntensityOffset] = intensity;
 
 		this->updateVideoMemory();
 	}
 
 	bool
-	ViewMatrices2DUBO::create (const RenderTarget::Abstract & renderTarget) noexcept
+	ViewMatrices2DUBO::create (Renderer & renderer, const std::string & instanceID) noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_memoryAccess};
+		auto descriptorSetLayout = this->getDescriptorSetLayout();
 
-		auto * renderer = Graphics::Renderer::instance();
-
-		auto * transferManager = TransferManager::instance(TransferType::Graphics);
-
-		auto descriptorSetLayout = renderer->getViewDescriptorSetLayout(renderTarget);
-
-		/* Prepare the close view UBO and descriptor set. */
-		if ( this->closeViewEnabled() )
+		if ( descriptorSetLayout == nullptr )
 		{
-			m_uniformBufferObject = std::make_unique< UniformBufferObject >(transferManager->device(), ViewUBOSize);
-			m_uniformBufferObject->setIdentifier("ViewMatrices2D-" + renderTarget.id() + "-UniformBufferObject");
-
-			if ( !m_uniformBufferObject->createOnHardware() )
-			{
-				Tracer::error(ClassId, "Unable to get an uniform buffer object for close view !");
-
-				m_uniformBufferObject.reset();
-
-				return false;
-			}
-
-			m_descriptorSet = std::make_unique< DescriptorSet >(renderer->descriptorPool(), descriptorSetLayout);
-			m_descriptorSet->setIdentifier("ViewMatrices2D-" + renderTarget.id() + "-DescriptorSet");
-
-			if ( !m_descriptorSet->create() )
-			{
-				m_descriptorSet.reset();
-
-				Tracer::error(ClassId, "Unable to create the close view descriptor set !");
-
-				return false;
-			}
-
-			if ( !m_descriptorSet->writeUniformBufferObject(*m_uniformBufferObject, 0) )
-			{
-				Tracer::error(ClassId, "Unable to setup the close view descriptor set !");
-
-				return false;
-			}
+			return false;
 		}
 
-		/* Prepare the infinite view UBO and descriptor set. */
-		if ( this->infinityViewEnabled() )
+		m_uniformBufferObject = std::make_unique< UniformBufferObject >(renderer.device(), ViewUBOSize);
+		m_uniformBufferObject->setIdentifier(ClassId, instanceID, "UniformBufferObject");
+
+		if ( !m_uniformBufferObject->createOnHardware() )
 		{
-			m_infinityUniformBufferObject = std::make_unique< UniformBufferObject >(transferManager->device(), ViewUBOSize);
-			m_infinityUniformBufferObject->setIdentifier("ViewMatrices2D-" + renderTarget.id() + "Infinity-UniformBufferObject");
+			Tracer::error(ClassId, "Unable to get an uniform buffer object for close view !");
 
-			if ( !m_infinityUniformBufferObject->createOnHardware() )
-			{
-				Tracer::error(ClassId, "Unable to get an uniform buffer object for infinite view !");
+			m_uniformBufferObject.reset();
 
-				m_infinityUniformBufferObject.reset();
-
-				return false;
-			}
-
-			m_infinityDescriptorSet = std::make_unique< DescriptorSet >(renderer->descriptorPool(), descriptorSetLayout);
-			m_infinityDescriptorSet->setIdentifier("ViewMatrices2D-" + renderTarget.id() + "Infinity-DescriptorSet");
-
-			if ( !m_infinityDescriptorSet->create() )
-			{
-				m_infinityDescriptorSet.reset();
-
-				Tracer::error(ClassId, "Unable to create the infinity view descriptor set !");
-
-				return false;
-			}
-
-			if ( !m_infinityDescriptorSet->writeUniformBufferObject(*m_infinityUniformBufferObject, 0) )
-			{
-				Tracer::error(ClassId, "Unable to setup the infinity view descriptor set !");
-
-				return false;
-			}
+			return false;
 		}
 
-		return true;
+		m_descriptorSet = std::make_unique< DescriptorSet >(renderer.descriptorPool(), descriptorSetLayout);
+		m_descriptorSet->setIdentifier(ClassId, instanceID, "DescriptorSet");
+
+		if ( !m_descriptorSet->create() )
+		{
+			m_descriptorSet.reset();
+
+			Tracer::error(ClassId, "Unable to create the close view descriptor set !");
+
+			return false;
+		}
+
+		if ( !m_descriptorSet->writeUniformBufferObject(0, *m_uniformBufferObject) )
+		{
+			Tracer::error(ClassId, "Unable to setup the close view descriptor set !");
+
+			return false;
+		}
+
+		/* Initial video memory update. */
+		return this->updateVideoMemory();
 	}
 
 	bool
-	ViewMatrices2DUBO::updateVideoMemory (UpdateSet set) const noexcept
+	ViewMatrices2DUBO::updateVideoMemory () const noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_memoryAccess};
-
-		if ( this->closeViewEnabled() && (set == UpdateSet::Both || set == UpdateSet::Regular) )
-		{
 #ifdef DEBUG
-			if ( m_uniformBufferObject == nullptr )
-			{
-				Tracer::error(ClassId, "The view uniform buffer object is not initialized !");
+		if ( m_uniformBufferObject == nullptr )
+		{
+			Tracer::error(ClassId, "The view uniform buffer object is not initialized !");
 
-				return false;
-			}
+			return false;
+		}
 #endif
 
-			auto * pointer = m_uniformBufferObject->mapMemory< float >();
+		/* NOTE: Lock between updateVideoMemory() and destroy(). */
+		const std::lock_guard< std::mutex > lockGuard{m_GPUBufferAccessLock};
 
-			if ( pointer == nullptr )
-			{ 
-				return false; 
-			}
+		auto * pointer = m_uniformBufferObject->mapMemory< float >();
 
-			size_t offset = 0;
-
-			// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-			std::memcpy(&pointer[offset], m_view.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_projection.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_viewProjection.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_position.data(), VectorAlignment * sizeof(float));
-			offset += VectorAlignment;
-
-			std::memcpy(&pointer[offset], m_velocity.data(), VectorAlignment * sizeof(float));
-			offset += VectorAlignment;
-
-			std::memcpy(&pointer[offset], m_viewProperties.data(), VectorAlignment * sizeof(float));
-			//offset += VectorAlignment;
-
-			// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-			m_uniformBufferObject->unmapMemory();
-		}
-
-		if ( this->infinityViewEnabled() && (set == UpdateSet::Both || set == UpdateSet::Infinity) )
+		if ( pointer == nullptr )
 		{
-#ifdef DEBUG
-			if ( m_infinityUniformBufferObject == nullptr )
-			{
-				Tracer::error(ClassId, "The infinity view uniform buffer object is not initialized !");
-
-				return false;
-			}
-#endif
-
-			auto * pointer = m_infinityUniformBufferObject->mapMemory< float >();
-
-			if ( pointer == nullptr )
-			{
-				return false;
-			}
-
-			size_t offset = 0;
-
-			// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-			std::memcpy(&pointer[offset], m_infinityView.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_projection.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_infinityViewProjection.data(), MatrixAlignment * sizeof(float));
-			offset += MatrixAlignment;
-
-			std::memcpy(&pointer[offset], m_position.data(), VectorAlignment * sizeof(float));
-			offset += VectorAlignment;
-
-			std::memcpy(&pointer[offset], m_velocity.data(), VectorAlignment * sizeof(float));
-			offset += VectorAlignment;
-
-			std::memcpy(&pointer[offset], m_viewProperties.data(), VectorAlignment * sizeof(float));
-			//offset += VectorAlignment;
-
-			// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-			m_infinityUniformBufferObject->unmapMemory();
+			return false;
 		}
+
+		std::memcpy(pointer, m_bufferData.data(), m_bufferData.size() * sizeof(float));
+
+		m_uniformBufferObject->unmapMemory();
 
 		return true;
 	}
 
-	void
-	ViewMatrices2DUBO::destroy () noexcept
+	std::ostream &
+	operator<< (std::ostream & out, const ViewMatrices2DUBO & obj)
 	{
-		const std::lock_guard< std::mutex > lock{m_memoryAccess};
+		out <<
+			"2D View matrices data : " "\n"
+			"World position " << obj.m_position << "\n"
+			"Projection " << obj.m_projection <<
+			"View " << obj.m_view <<
+			"Infinity view " << obj.m_infinityView <<
+			obj.m_frustum <<
+			"Buffer data for GPU : " "\n";
 
-		m_descriptorSet.reset();
-		m_infinityDescriptorSet.reset();
-
-		if ( m_uniformBufferObject != nullptr )
+		for ( size_t index = 0; index < obj.m_bufferData.size(); index += 4 )
 		{
-			m_uniformBufferObject->destroyFromHardware();
-			m_uniformBufferObject.reset();
+			out << '[' << obj.m_bufferData[index+0] << ", " << obj.m_bufferData[index+1] << ", " << obj.m_bufferData[index+2] << ", " << obj.m_bufferData[index+3] << "]" "\n";
 		}
 
-		if ( m_infinityUniformBufferObject != nullptr )
-		{
-			m_infinityUniformBufferObject->destroyFromHardware();
-			m_infinityUniformBufferObject.reset();
-		}
+		return out;
 	}
 
-	const Vulkan::UniformBufferObject *
-	ViewMatrices2DUBO::viewUBO (size_t /*index*/) const noexcept
+	std::string
+	to_string (const ViewMatrices2DUBO & obj) noexcept
 	{
-		return m_uniformBufferObject.get();
-	}
+		std::stringstream output;
 
-	const Vulkan::UniformBufferObject *
-	ViewMatrices2DUBO::viewInfinityUBO (size_t /*index*/) const noexcept
-	{
-		return m_infinityUniformBufferObject.get();
-	}
+		output << obj;
 
-	const Vulkan::DescriptorSet *
-	ViewMatrices2DUBO::descriptorSet (bool infinity) const noexcept
-	{
-		if ( infinity )
-		{
-			return m_infinityDescriptorSet.get();
-		}
-
-		return m_descriptorSet.get();
+		return output.str();
 	}
 }

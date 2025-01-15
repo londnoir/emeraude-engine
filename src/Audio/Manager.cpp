@@ -1,42 +1,41 @@
 /*
- * Emeraude/Audio/Manager.cpp
- * This file is part of Emeraude
+ * src/Audio/Manager.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Manager.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <cstring>
 #include <iostream>
 
-/* Local inclusions */
-#include "Arguments.hpp"
-#include "Math/Base.hpp"
-#include "Settings.hpp"
+/* Local inclusions. */
+#include "Libraries/Math/Base.hpp"
+#include "Resources/Manager.hpp"
+#include "PrimaryServices.hpp"
 #include "Source.hpp"
-#include "Tracer.hpp"
 #include "Utility.hpp"
 
 namespace Emeraude::Audio
@@ -44,15 +43,17 @@ namespace Emeraude::Audio
 	using namespace Libraries;
 	using namespace Libraries::Math;
 
-	const size_t Manager::ClassUID{Observable::getClassUID()};
-	Manager * Manager::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t Manager::ClassUID{getClassUID(ClassId)};
+	Manager * Manager::s_instance{nullptr};
 
-	Manager::Manager (const Arguments & arguments, Settings & coreSettings) noexcept
-		: ServiceInterface(ClassId), ConsoleControllable(ClassId), m_arguments(arguments), m_coreSettings(coreSettings)
+	Manager::Manager (PrimaryServices & primaryServices, Resources::Manager & resourceManager) noexcept
+		: ServiceInterface(ClassId), ConsoleControllable(ClassId),
+		m_primaryServices(primaryServices), 
+		m_resourceManager(resourceManager)
 	{
 		if ( s_instance != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
@@ -71,123 +72,83 @@ namespace Emeraude::Audio
 		return s_instance;
 	}
 
+	size_t
+	Manager::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	Manager::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
 	bool
-	Manager::onInitialize () noexcept // NOLINT(readability-function-cognitive-complexity)
+	Manager::onInitialize () noexcept
 	{
-		m_flags[UsingALUT] = m_coreSettings.getAs< bool >(OpenALUseALUTKey, DefaultOpenALUseALUT);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
 
-		m_flags[Usable] = !m_arguments.get("--disable-audio").isPresent() && m_coreSettings.getAs< bool >(EnabledKey, DefaultEnabled);
-
-		if ( !Manager::isAudioAvailable() )
+		if ( m_primaryServices.arguments().get("--disable-audio").isPresent() || !m_primaryServices.settings().get< bool >(AudioEnableKey, DefaultAudioEnable) )
 		{
 			Tracer::warning(ClassId, "Audio manager disabled at startup.");
+
+			m_flags[ServiceInitialized] = true;
+			m_flags[AudioDisabledAtStartup] = true;
 
 			return true;
 		}
 
 		/* Sets the frequency playback. */
-		m_playbackFrequency = WaveFactory::toFrequency(m_coreSettings.getAs< unsigned int >(PlaybackFrequencyKey, DefaultPlaybackFrequency));
+		m_playbackFrequency = WaveFactory::toFrequency(m_primaryServices.settings().get< int32_t >(AudioPlaybackFrequencyKey, DefaultAudioPlaybackFrequency));
 
 		/* Sets the music chunk size in bytes. */
-		m_musicChunkSize = m_coreSettings.getAs< unsigned long int >(MusicChunkSizeKey, DefaultMusicChunkSize);
+		m_musicChunkSize = m_primaryServices.settings().get< uint32_t >(AudioMusicChunkSizeKey, DefaultAudioMusicChunkSize);
 
-		/* OpenAL Utility Toolkit. */
-		if ( m_flags[UsingALUT] )
+		this->queryDevices();
+
+		/* Take the default device. */
+		m_device = alcOpenDevice(nullptr);
+
+		if ( alcGetErrors(m_device, "alcOpenDevice()", __FILE__, __LINE__) || m_device == nullptr )
 		{
-			Tracer::info(ClassId, "Initializing OpenAL device and context with ALUT ...");
+			Tracer::error(ClassId, "Unable to get the default audio device !");
 
-			auto argc = m_arguments.getArgc();
-
-			if ( alutInit(&argc, m_arguments.getArgvCopy()) == AL_TRUE )
-			{
-				m_context = alcGetCurrentContext();
-
-				if ( alcGetErrors(m_device, "alcGetCurrentContext()", __FILE__, __LINE__) || m_context == nullptr )
-				{
-					Tracer::error(ClassId, "Unable to get the audio context !");
-
-					return false;
-				}
-
-				m_device = alcGetContextsDevice(m_context);
-
-				if ( alcGetErrors(m_device, "alcGetContextsDevice()", __FILE__, __LINE__) || m_device == nullptr )
-				{
-					Tracer::error(ClassId, "Unable to get the audio device from current context !");
-
-					return false;
-				}
-
-			}
-			else
-			{
-				Tracer::error(ClassId, "Unable to initialize audio API !");
-
-				return false;
-			}
+			return false;
 		}
-		else
+
+		std::array attrList{
+			ALC_FREQUENCY, static_cast< int >(m_playbackFrequency),
+			ALC_REFRESH, m_primaryServices.settings().get< int32_t >(OpenALRefreshRateKey, DefaultOpenALRefreshRate),
+			ALC_SYNC, m_primaryServices.settings().get< int32_t >(OpenALSyncStateKey, DefaultOpenALSyncState),
+			ALC_MONO_SOURCES, m_primaryServices.settings().get< int32_t >(OpenALMaxMonoSourceCountKey, DefaultOpenALMaxMonoSourceCount),
+			ALC_STEREO_SOURCES, m_primaryServices.settings().get< int32_t >(OpenALMaxStereoSourceCountKey, DefaultOpenALMaxStereoSourceCount),
+			0
+		};
+
+		/* Context creation and set it as default. */
+		m_context = alcCreateContext(m_device, attrList.data());
+
+		if ( alcGetErrors(m_device, "alcCreateContext()", __FILE__, __LINE__) || m_context == nullptr )
 		{
-			Tracer::info(ClassId, "Initializing OpenAL device and context manually ...");
+			Tracer::error(ClassId, "Unable to load an audio context !");
 
-			this->queryDevices();
+			return false;
+		}
 
-			/* Take the default device. */
-			m_device = alcOpenDevice(nullptr);
+		if ( alcMakeContextCurrent(m_context) == AL_FALSE || alcGetErrors(m_device, "alcMakeContextCurrent()", __FILE__, __LINE__) )
+		{
+			Tracer::error(ClassId, "Unable set the current audio context !");
 
-			if ( alcGetErrors(m_device, "alcOpenDevice()", __FILE__, __LINE__) || m_device == nullptr )
-			{
-				Tracer::error(ClassId, "Unable to get the default audio device !");
-
-				return false;
-			}
-
-			std::array attrList{
-				ALC_FREQUENCY, static_cast< int >(m_playbackFrequency),
-				ALC_REFRESH, m_coreSettings.getAs< int >(OpenALRefreshRateKey, DefaultOpenALRefreshRate),
-				ALC_SYNC, m_coreSettings.getAs< int >(OpenALSyncStateKey, DefaultOpenALSyncState),
-				ALC_MONO_SOURCES, m_coreSettings.getAs< int >(OpenALMaxMonoSourceCountKey, DefaultOpenALMaxMonoSourceCount),
-				ALC_STEREO_SOURCES, m_coreSettings.getAs< int >(OpenALMaxStereoSourceCountKey, DefaultOpenALMaxStereoSourceCount),
-				0
-			};
-
-			/* Context creation and set it as default. */
-			m_context = alcCreateContext(m_device, attrList.data());
-
-			if ( alcGetErrors(m_device, "alcCreateContext()", __FILE__, __LINE__) || m_context == nullptr )
-			{
-				Tracer::error(ClassId, "Unable to load an audio context !");
-
-				return false;
-			}
-
-			if ( alcMakeContextCurrent(m_context) == AL_FALSE || alcGetErrors(m_device, "alcMakeContextCurrent()", __FILE__, __LINE__) )
-			{
-				Tracer::error(ClassId, "Unable set the current audio context !");
-
-				return false;
-			}
+			return false;
 		}
 
 		/* OpenAL EFX extensions. */
-		if ( m_coreSettings.getAs< bool >(OpenALUseEFXExtensionsKey, DefaultOpenALUseEFXExtensions) )
+		if ( m_primaryServices.settings().get< bool >(OpenALUseEFXExtensionsKey, DefaultOpenALUseEFXExtensions) )
 		{
 			m_EFX = std::make_shared< EFX >(m_device);
 
-			if ( m_EFX->isAvailable() )
+			if ( EFX::isAvailable() )
 			{
 				Tracer::success(ClassId, "OpenAL EFX extension available.");
 			}
@@ -202,10 +163,14 @@ namespace Emeraude::Audio
 			return false;
 		}
 
+		m_flags[ServiceInitialized] = true;
+		m_flags[Enabled] = true;
+
 		/* NOTE: Be sure of playback frequency allowed by ths OpenAL context. */
 		m_playbackFrequency = WaveFactory::toFrequency(m_contextAttributes[ALC_FREQUENCY]);
 
-		Manager::setMasterVolume(m_coreSettings.getAs< float >(MasterVolumeKey, DefaultMasterVolume));
+		this->setMetersPerUnit(1.0F);
+		this->setMasterVolume(m_primaryServices.settings().get< float >(AudioMasterVolumeKey, DefaultAudioMasterVolume));
 
 		/* Create all sources available minus the default one. */
 		for ( int index = 0; index < m_contextAttributes[ALC_MONO_SOURCES]; index++ )
@@ -214,7 +179,7 @@ namespace Emeraude::Audio
 
 			if ( !source->isCreated() )
 			{
-				Tracer::warning(ClassId, Blob() << "Unable to create the source #" << index << " !");
+				TraceWarning{ClassId} << "Unable to create the source #" << index << " !";
 
 				break;
 			}
@@ -224,7 +189,10 @@ namespace Emeraude::Audio
 
 		if ( m_sources.empty() )
 		{
-			Tracer::warning(ClassId, "No audio source available at all !");
+			Tracer::error(ClassId, "No audio source available at all ! Disable audio layer ...");
+
+			m_flags[AudioDisabledAtStartup] = true;
+			m_flags[Enabled] = false;
 
 			return false;
 		}
@@ -242,13 +210,22 @@ namespace Emeraude::Audio
 			Tracer::warning(ClassId, "There was unread problem with AL during initialization !");
 		}
 
+		if ( m_flags[ShowInformation] )
+		{
+			Tracer::info(ClassId, this->getAPIInformation());
+		}
+
 		return true;
 	}
 
 	bool
 	Manager::onTerminate () noexcept
 	{
-		if ( !this->usable() )
+		m_flags[ServiceInitialized] = false;
+		m_flags[Enabled] = false;
+
+		/* NOTE: Audio sub-system wasn't inited. */
+		if ( m_flags[AudioDisabledAtStartup] )
 		{
 			return true;
 		}
@@ -262,24 +239,6 @@ namespace Emeraude::Audio
 		if ( alcGetErrors(m_device, "AudioRelease", __FILE__, __LINE__) )
 		{
 			Tracer::warning(ClassId, "There was unread problem with ALC during execution !");
-		}
-
-		/* OpenAL Utility Toolkit. */
-		if ( m_flags[UsingALUT] )
-		{
-			Tracer::info(ClassId, "Cleaning OpenAL device and context with ALUT ...");
-
-			if ( alutExit() == AL_FALSE )
-			{
-				Tracer::error(ClassId, alutGetErrorString(alutGetError()));
-
-				return false;
-			}
-
-			m_context = nullptr;
-			m_device = nullptr;
-
-			return true;
 		}
 
 		alcMakeContextCurrent(nullptr);
@@ -302,30 +261,22 @@ namespace Emeraude::Audio
 	}
 
 	void
-	Manager::setState (bool state) noexcept
+	Manager::enableAudio (bool state) noexcept
 	{
-		m_flags[MainState] = state;
+		if ( m_flags[AudioDisabledAtStartup] )
+		{
+			Tracer::info(ClassId, "The audio sub-system has been disabled at startup !");
+
+			return;
+		}
+
+		m_flags[Enabled] = state;
 	}
 
 	bool
-	Manager::usable () const noexcept
+	Manager::isAudioEnabled () const noexcept
 	{
-		if ( !m_flags[Usable] )
-		{
-			return false;
-		}
-
-		if ( m_device == nullptr )
-		{
-			return false;
-		}
-
-		if ( m_context == nullptr )
-		{
-			return false;
-		}
-
-		return true;
+		return m_flags[Enabled];
 	}
 
 	std::shared_ptr< EFX >
@@ -341,26 +292,30 @@ namespace Emeraude::Audio
 	}
 
 	void
-	Manager::play (const PlayableInterface * sample, Source::PlayMode mode, float gain) const noexcept
+	Manager::play (const std::shared_ptr< PlayableInterface > & playable, Source::PlayMode mode, float gain) const noexcept
 	{
-		if ( m_defaultSource == nullptr )
+		m_defaultSource->setGain(gain);
+		m_defaultSource->play(playable, mode);
+	}
+
+	void
+	Manager::play (const std::string & resourceName, Source::PlayMode mode, float gain) const noexcept
+	{
+		if ( !this->isAudioEnabled() )
 		{
 			return;
 		}
 
-		m_defaultSource->setGain(gain);
-		m_defaultSource->play(sample, mode);
-	}
+		auto soundResource = m_resourceManager.sounds().getResource(resourceName);
 
-	bool
-	Manager::isAudioAvailable () noexcept
-	{
-		if ( s_instance == nullptr )
+		if ( !soundResource->isLoaded() )
 		{
-			return false;
+			TraceInfo{ClassId} << "The sound '" << soundResource->name() << "' is not yet loaded !";
+
+			return;
 		}
 
-		return s_instance->m_flags[Usable];
+		this->play(soundResource, mode, gain);
 	}
 
 	WaveFactory::Frequency
@@ -378,7 +333,7 @@ namespace Emeraude::Audio
 	void
 	Manager::setMetersPerUnit (float meters) noexcept
 	{
-		if ( !m_flags[Usable] || !EFX::isAvailable() )
+		if ( m_flags[AudioDisabledAtStartup] || !EFX::isAvailable() )
 		{
 			return;
 		}
@@ -398,7 +353,7 @@ namespace Emeraude::Audio
 	{
 		ALfloat meters = AL_DEFAULT_METERS_PER_UNIT;
 
-		if ( m_flags[Usable] && EFX::isAvailable() )
+		if ( !m_flags[AudioDisabledAtStartup] && EFX::isAvailable() )
 		{
 			alGetListenerf(AL_METERS_PER_UNIT, &meters);
 		}
@@ -412,15 +367,22 @@ namespace Emeraude::Audio
 		ALCint major = 0;
 		ALCint minor = 0;
 
-		if ( m_contextAttributes.empty() )
+		if ( !m_flags[AudioDisabledAtStartup] )
 		{
-			alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
-			alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
+			if ( m_contextAttributes.empty() )
+			{
+				alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
+				alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
+			}
+			else
+			{
+				major = m_contextAttributes.at(ALC_MAJOR_VERSION);
+				minor = m_contextAttributes.at(ALC_MINOR_VERSION);
+			}
 		}
 		else
 		{
-			major = m_contextAttributes.at(ALC_MAJOR_VERSION);
-			minor = m_contextAttributes.at(ALC_MINOR_VERSION);
+			Tracer::info(ClassId, "The audio sub-system has been disabled at startup !");
 		}
 
 		return (std::stringstream{} << major << '.' << minor).str();
@@ -432,15 +394,22 @@ namespace Emeraude::Audio
 		ALCint major = 0;
 		ALCint minor = 0;
 
-		/*if ( m_contextAttributes.empty() )
+		if ( !m_flags[AudioDisabledAtStartup] )
 		{
-			alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
-			alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
+			/*if ( m_contextAttributes.empty() )
+			{
+				alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
+				alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
+			}
+			else*/
+			{
+				major = m_contextAttributes.at(ALC_EFX_MAJOR_VERSION);
+				minor = m_contextAttributes.at(ALC_EFX_MINOR_VERSION);
+			}
 		}
-		else*/
+		else
 		{
-			major = m_contextAttributes.at(ALC_EFX_MAJOR_VERSION);
-			minor = m_contextAttributes.at(ALC_EFX_MINOR_VERSION);
+			Tracer::info(ClassId, "The audio sub-system has been disabled at startup !");
 		}
 
 		return (std::stringstream{} << major << '.' << minor).str();
@@ -480,7 +449,7 @@ namespace Emeraude::Audio
 	void
 	Manager::setMasterVolume (float gain) noexcept
 	{
-		if ( !m_flags[Usable] )
+		if ( m_flags[AudioDisabledAtStartup] )
 		{
 			return;
 		}
@@ -493,7 +462,7 @@ namespace Emeraude::Audio
 	{
 		ALfloat gain = 0.0F;
 
-		if ( m_flags[Usable] )
+		if ( !m_flags[AudioDisabledAtStartup] )
 		{
 			alGetListenerf(AL_GAIN, &gain);
 		}
@@ -502,13 +471,60 @@ namespace Emeraude::Audio
 	}
 
 	void
-	Manager::setDistanceModel (DistanceModel model) noexcept
+	Manager::setSoundEnvironmentProperties (const SoundEnvironmentProperties & properties) noexcept
 	{
-		if ( !m_flags[Usable] )
+		if ( m_flags[AudioDisabledAtStartup] )
 		{
 			return;
 		}
 
+		this->setDopplerFactor(properties.dopplerFactor());
+		this->setSpeedOfSound(properties.speedOfSound());
+		this->setDistanceModel(properties.distanceModel());
+	}
+
+	SoundEnvironmentProperties
+	Manager::getSoundEnvironmentProperties () const noexcept
+	{
+		SoundEnvironmentProperties properties;
+		properties.setDopplerFactor(this->dopplerFactor());
+		properties.setSpeedOfSound(this->speedOfSound());
+		properties.setDistanceModel(this->distanceModel());
+
+		return properties;
+	}
+
+	void
+	Manager::setDopplerFactor (float dopplerFactor) noexcept
+	{
+		/* Scale for source and listener velocities (default:1.0, range:0.0-INF+). */
+		alDopplerFactor(dopplerFactor);
+	}
+
+	float
+	Manager::dopplerFactor () const noexcept
+	{
+		return alGetFloat(AL_DOPPLER_FACTOR);
+	}
+
+	void
+	Manager::setSpeedOfSound (float speed) noexcept
+	{
+		/* The speed at which sound waves are assumed to travel,
+		 * when calculating the doppler effect.
+		 * (default:343.3, range:0.0001-INF+) */
+		alSpeedOfSound(speed);
+	}
+
+	float
+	Manager::speedOfSound () const noexcept
+	{
+		return alGetFloat(AL_SPEED_OF_SOUND);
+	}
+
+	void
+	Manager::setDistanceModel (DistanceModel model) noexcept
+	{
 		switch ( model )
 		{
 			case DistanceModel::ExponentClamped :
@@ -537,140 +553,65 @@ namespace Emeraude::Audio
 		}
 	}
 
-	Manager::DistanceModel
+	DistanceModel
 	Manager::distanceModel () const noexcept
 	{
-		if ( m_flags[Usable] )
+		switch ( alGetInteger(AL_DISTANCE_MODEL) )
 		{
-			switch ( alGetInteger(AL_DISTANCE_MODEL) )
-			{
-				case AL_INVERSE_DISTANCE :
-					return DistanceModel::Inverse;
+			case AL_INVERSE_DISTANCE :
+				return DistanceModel::Inverse;
 
-				case AL_INVERSE_DISTANCE_CLAMPED :
-					return DistanceModel::InverseClamped;
+			case AL_INVERSE_DISTANCE_CLAMPED :
+				return DistanceModel::InverseClamped;
 
-				case AL_LINEAR_DISTANCE :
-					return DistanceModel::Linear;
+			case AL_LINEAR_DISTANCE :
+				return DistanceModel::Linear;
 
-				case AL_LINEAR_DISTANCE_CLAMPED :
-					return DistanceModel::LinearClamped;
+			case AL_LINEAR_DISTANCE_CLAMPED :
+				return DistanceModel::LinearClamped;
 
-				case AL_EXPONENT_DISTANCE :
-					return DistanceModel::Exponent;
+			case AL_EXPONENT_DISTANCE :
+				return DistanceModel::Exponent;
 
-				case AL_EXPONENT_DISTANCE_CLAMPED :
-					return DistanceModel::ExponentClamped;
-			}
+			case AL_EXPONENT_DISTANCE_CLAMPED :
+				return DistanceModel::ExponentClamped;
+
+			default:
+				return DistanceModel::Inverse;
 		}
-
-		return DistanceModel::Inverse;
 	}
 
-	void
-	Manager::setDopplerFactor (float dopplerFactor) noexcept
-	{
-		if ( !m_flags[Usable] )
-		{
-			return;
-		}
-
-		if ( dopplerFactor < 0.0F )
-		{
-			Tracer::warning(ClassId, "Doppler factor must be zero or positive !");
-
-			return;
-		}
-
-		/* Scale for source and listener velocities.
-		 * (default:1.0, range:0.0-INF+) */
-		alDopplerFactor(dopplerFactor);
-	}
-
-	float
-	Manager::dopplerFactor () const noexcept
-	{
-		if ( !m_flags[Usable] )
-		{
-			return 1.0F;
-		}
-
-		return alGetFloat(AL_DOPPLER_FACTOR);
-	}
-
-	void
-	Manager::setSpeedOfSound (float speed) noexcept
-	{
-		if ( !m_flags[Usable] )
-		{
-			return;
-		}
-
-		if ( speed <= 0.0F )
-		{
-			Tracer::warning(ClassId, "Speed of sound must more than zero !");
-
-			return;
-		}
-
-		/* The speed at which sound waves are assumed to travel,
-		 * when calculating the doppler effect.
-		 * (default:343.3, range:0.0001-INF+) */
-		alSpeedOfSound(speed);
-	}
-
-	float
-	Manager::speedOfSound () noexcept
-	{
-		if ( !m_flags[Usable] )
-		{
-			return 343.3F; // NOLINT(*-magic-numbers)
-		}
-
-		return alGetFloat(AL_SPEED_OF_SOUND);
-	}
-
-	// NOLINTBEGIN(*-magic-numbers)
 	void
 	Manager::setListenerProperties (const std::array< ALfloat, 12 > & properties) noexcept
 	{
-		if ( m_flags[Usable] )
+		if ( !m_flags[AudioDisabledAtStartup] )
 		{
 			alListenerfv(AL_POSITION, properties.data());
 			alListenerfv(AL_ORIENTATION, properties.data() + 3);
 			alListenerfv(AL_VELOCITY, properties.data() + 9);
 		}
 	}
-	// NOLINTEND(*-magic-numbers)
 
-	// NOLINTBEGIN(*-magic-numbers)
 	void
-	Manager::listenerProperties (std::array< ALfloat, 12 > & properties) const noexcept // NOLINT(*-magic-numbers)
+	Manager::listenerProperties (std::array< ALfloat, 12 > & properties) const noexcept
 	{
-		if ( m_flags[Usable] )
+		if ( !m_flags[AudioDisabledAtStartup] )
 		{
 			alGetListenerfv(AL_POSITION, properties.data());
 			alGetListenerfv(AL_ORIENTATION, properties.data() + 3);
 			alGetListenerfv(AL_VELOCITY, properties.data() + 9);
 		}
 	}
-	// NOLINTEND(*-magic-numbers)
-
-	bool
-	Manager::state () const noexcept
-	{
-		return m_flags[MainState];
-	}
 
 	std::string
-	Manager::getAPIInformation () noexcept
+	Manager::getAPIInformation () const noexcept
 	{
-		if ( !m_flags[Usable] )
+		if ( m_flags[AudioDisabledAtStartup] )
 		{
 			return "API not loaded !";
 		}
 
-		std::stringstream output{};
+		std::stringstream output;
 
 		/* OpenAL basic information. */
 		output <<
@@ -742,7 +683,7 @@ namespace Emeraude::Audio
 			{
 				devices.emplace_back(list);
 
-				list += std::strlen(list) + 1; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+				list += std::strlen(list) + 1;
 			}
 		}
 
@@ -760,20 +701,23 @@ namespace Emeraude::Audio
 			{
 				m_availableAudioDevices.emplace_back(devices);
 
-				devices += std::strlen(devices) + 1; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+				devices += std::strlen(devices) + 1;
 			}
 
-			std::cout << "[OpenAL] Devices :" "\n";
-
-			for ( const auto & deviceName : m_availableAudioDevices )
+			if ( m_flags[ShowInformation] )
 			{
-				std::cout << " - " << deviceName << '\n';
-			}
+				std::cout << "[OpenAL] Devices :" "\n";
 
-			std::cout << "[OpenAL] Default device : " << alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER) << '\n';
+				for ( const auto & deviceName : m_availableAudioDevices )
+				{
+					std::cout << " - " << deviceName << '\n';
+				}
+
+				std::cout << "[OpenAL] Default device : " << alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER) << '\n';
+			}
 		}
 
-		if ( alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT") == ALC_TRUE )
+		if ( m_flags[ShowInformation] && alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT") == ALC_TRUE )
 		{
 			devices = alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
 
@@ -785,7 +729,7 @@ namespace Emeraude::Audio
 				{
 					std::cout << " - " << devices << '\n';
 
-					devices += std::strlen(devices) + 1; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+					devices += std::strlen(devices) + 1;
 				}
 
 				std::cout << "[OpenAL] Default all devices : " << alcGetString(nullptr, ALC_DEFAULT_ALL_DEVICES_SPECIFIER) << '\n';
@@ -842,8 +786,7 @@ namespace Emeraude::Audio
 		}
 
 		/* Forgotten device attributes... */
-		// NOLINTBEGIN(*-magic-numbers)
-		const std::array< ALint, 9 > keys{
+		constexpr std::array< ALint, 9 > keys{
 			ALC_FORMAT_CHANNELS_SOFT, // Not handled on Linux platform
 			ALC_FORMAT_TYPE_SOFT, // Not handled on Linux platform
 			ALC_NUM_HRTF_SPECIFIERS_SOFT,
@@ -854,7 +797,6 @@ namespace Emeraude::Audio
 			0x199B,//ALC_MAX_AMBISONIC_ORDER_SOFT, Not handled and tokenized on Linux platform
 			0x19AC//ALC_OUTPUT_MODE_SOFT, Not handled and tokenized on Linux platform
 		};
-		// NOLINTEND(*-magic-numbers)
 
 		for ( auto key : keys )
 		{
@@ -864,7 +806,7 @@ namespace Emeraude::Audio
 
 			if ( alcGetErrors(m_device, "alcGetIntegerv", __FILE__, __LINE__) )
 			{
-				Tracer::warning(ClassId, Blob() << "Unable to fetch device attribute 0x" << std::hex << key << " !");
+				TraceWarning{ClassId} << "Unable to fetch device attribute 0x" << std::hex << key << " !";
 
 				continue;
 			}

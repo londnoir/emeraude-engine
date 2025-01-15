@@ -1,51 +1,54 @@
 /*
- * Emeraude/Vulkan/Buffer.hpp
- * This file is part of Emeraude
+ * src/Vulkan/Buffer.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
-#include "DeviceMemory.hpp"
+
+/* Forward declarations. */
+namespace Emeraude::Vulkan
+{
+	class DeviceMemory;
+}
 
 namespace Emeraude::Vulkan
 {
 	/**
 	 * @brief Defines the base class of all buffers in Vulkan API.
-	 * @extends std::enable_shared_from_this Adds to ability to self replicate the smart pointer.
 	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject to allocate memory on device.
 	 */
 	class Buffer : public AbstractDeviceDependentObject
 	{
 		public:
-
-			using AbstractDeviceDependentObject::recreate;
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"VulkanBuffer"};
@@ -103,32 +106,52 @@ namespace Emeraude::Vulkan
 			bool destroyFromHardware () noexcept final;
 
 			/**
-			 * @brief Recreates the buffer.
+			 * @brief Recreates a new buffer on the device.
 			 * @param size The new size of the buffer in bytes.
 			 * @return bool
 			 */
-			virtual bool recreate (VkDeviceSize size) noexcept final;
+			bool
+			recreateOnHardware (VkDeviceSize size) noexcept
+			{
+				m_createInfo.size = size;
+
+				this->destroyFromHardware();
+
+				return this->createOnHardware();
+			}
 
 			/**
 			 * @brief Returns the buffer vulkan handle.
-			 * @param VkBuffer
+			 * @return VkBuffer
 			 */
 			[[nodiscard]]
-			virtual VkBuffer handle () const noexcept final;
+			VkBuffer
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the buffer create info.
-			 * @param VkBufferCreateInfo
+			 * @return const VkBufferCreateInfo &
 			 */
 			[[nodiscard]]
-			virtual VkBufferCreateInfo createInfo () const noexcept final;
+			const VkBufferCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the buffer creation flags.
 			 * @return VkBufferCreateFlags
 			 */
 			[[nodiscard]]
-			virtual VkBufferCreateFlags createFlags () const noexcept final;
+			VkBufferCreateFlags
+			createFlags () const noexcept
+			{
+				return m_createInfo.flags;
+			}
 
 			/**
 			 * @brief Returns the buffer size in bytes.
@@ -136,28 +159,42 @@ namespace Emeraude::Vulkan
 			 * @return VkDeviceSize
 			 */
 			[[nodiscard]]
-			virtual VkDeviceSize bytes () const noexcept final;
+			VkDeviceSize
+			bytes () const noexcept
+			{
+				return m_createInfo.size;
+			}
 
 			/**
 			 * @brief Returns the buffer usage flags.
 			 * @return VkBufferUsageFlags
 			 */
 			[[nodiscard]]
-			virtual VkBufferUsageFlags usageFlags () const noexcept final;
+			VkBufferUsageFlags
+			usageFlags () const noexcept
+			{
+				return m_createInfo.usage;
+			}
 
 			/**
 			 * @brief Returns the buffer usage memory property flags.
 			 * @return VkMemoryPropertyFlags
 			 */
 			[[nodiscard]]
-			virtual VkMemoryPropertyFlags memoryPropertyFlags () const noexcept final;
+			VkMemoryPropertyFlags
+			memoryPropertyFlags () const noexcept
+			{
+				return m_memoryPropertyFlag;
+			}
 
 			/**
 			 * @brief Returns the descriptor buffer info.
+			 * @param offset Where to start in the buffer.
+			 * @param range The data length after offset.
 			 * @return VkDescriptorBufferInfo
 			 */
 			[[nodiscard]]
-			virtual VkDescriptorBufferInfo getDescriptorInfo () const noexcept final;
+			VkDescriptorBufferInfo getDescriptorInfo (uint32_t offset, uint32_t range) const noexcept;
 
 		protected:
 
@@ -166,13 +203,17 @@ namespace Emeraude::Vulkan
 			 * @return const DeviceMemory *
 			 */
 			[[nodiscard]]
-			virtual const DeviceMemory * deviceMemory () const noexcept final;
+			const DeviceMemory *
+			deviceMemory () const noexcept
+			{
+				return m_deviceMemory.get();
+			}
 
 		private:
 
 			VkBuffer m_handle{VK_NULL_HANDLE};
 			VkBufferCreateInfo m_createInfo{};
 			VkMemoryPropertyFlags m_memoryPropertyFlag;
-			std::unique_ptr< DeviceMemory > m_deviceMemory{};
+			std::unique_ptr< DeviceMemory > m_deviceMemory;
 	};
 }

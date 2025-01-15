@@ -1,59 +1,68 @@
 /*
- * Emeraude/Input/PointerController.cpp
- * This file is part of Emeraude
+ * src/Input/PointerController.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "PointerController.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
 #include <algorithm>
 #include <sstream>
 
+/* Third-party libraries */
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
+
+/* Local inclusions. */
+#include "Window.hpp"
+
 namespace Emeraude::Input
 {
-	// NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-
-	std::array< bool, 8 > PointerController::s_deviceState{false, false, false, false, false, false, false, false}; // NOLINT NOTE: Special state copy.
-	std::array< double, 2 > PointerController::s_pointerPosition{0.0, 0.0}; // NOLINT NOTE: Special state copy.
-
-	bool
-	PointerController::isConnected () const noexcept
-	{
-		return true;
-	}
+	std::array< char, 8 > PointerController::s_deviceState{};
 
 	bool
 	PointerController::isButtonPressed (MouseButton button) const noexcept
 	{
+		if ( m_disabled )
+		{
+			return false;
+		}
+
 		return s_deviceState[static_cast< size_t >(button)];
 	}
 
 	bool
 	PointerController::isAnyButtonPressed () const noexcept
 	{
-		return std::any_of(s_deviceState.cbegin(), s_deviceState.cend(), [] (auto state) {
+		if ( m_disabled )
+		{
+			return false;
+		}
+
+		return std::ranges::any_of(s_deviceState, [] (auto state) {
 			return state;
 		});
 	}
@@ -61,48 +70,48 @@ namespace Emeraude::Input
 	bool
 	PointerController::isButtonReleased (MouseButton button) const noexcept
 	{
+		if ( m_disabled )
+		{
+			return true;
+		}
+
 		return !s_deviceState[static_cast< size_t >(button)];
-	}
-
-	double
-	PointerController::xPosition () const noexcept
-	{
-		return s_pointerPosition[0];
-	}
-
-	double
-	PointerController::yPosition () const noexcept
-	{
-		return s_pointerPosition[1];
 	}
 
 	std::string
 	PointerController::getRawState () const noexcept
 	{
-		std::stringstream output{};
+		std::stringstream output;
 
 		output << "Pointer mapping." "\n";
 
-		for ( auto key = GLFW_MOUSE_BUTTON_1; key < GLFW_MOUSE_BUTTON_LAST + 1; key++ )
+		for ( int32_t button = GLFW_MOUSE_BUTTON_1; button < GLFW_MOUSE_BUTTON_LAST + 1; button++ )
 		{
-			output << "Button #" << key << " : " << ( s_deviceState[static_cast< size_t >(key)] ? "Pressed" : "Released" ) << '\n';
+			if ( s_deviceState.at(static_cast< size_t >(button)) )
+			{
+				output << "Button #" << button << " : Pressed" "\n";
+			}
+			else
+			{
+				output << "Button #" << button << " : Released" "\n";
+			}
 		}
-
-		output << "Pointer position X: " << s_pointerPosition[0] << ", Y: " << s_pointerPosition[1] << "." "\n";
 
 		return output.str();
 	}
 
 	void
-	PointerController::readDeviceState (GLFWwindow * window) noexcept
+	PointerController::readDeviceState (const Window & window) noexcept
 	{
-		for ( auto key = GLFW_MOUSE_BUTTON_1; key < GLFW_MOUSE_BUTTON_LAST + 1; key++ )
+#ifdef GLFW_EM_CUSTOM_VERSION
+		glfwGetMouseButtonState(window.handle(), s_deviceState.data());
+#else
+		for ( int32_t button = GLFW_MOUSE_BUTTON_1; button < GLFW_MOUSE_BUTTON_LAST + 1; button++ )
 		{
-			s_deviceState[static_cast< size_t >(key)] = (glfwGetMouseButton(window, key) == GLFW_PRESS);
+			s_deviceState.at(static_cast< size_t >(button)) = glfwGetMouseButton(window.handle(), button) == GLFW_PRESS;
 		}
+#endif
 
-		glfwGetCursorPos(window, &s_pointerPosition[0], &s_pointerPosition[1]);
+		/* NOTE: glfwGetCursorPos() was removed from because of high CPU usage. */
 	}
-
-	// NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 }

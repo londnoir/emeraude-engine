@@ -1,37 +1,48 @@
 /*
- * Emeraude/Scenes/Toolkit.cpp
- * This file is part of Emeraude
+ * src/Scenes/Toolkit.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Toolkit.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "Resources/Manager.hpp"
-#include "Graphics/Geometry/ResourceGenerator.hpp"
-#include "Animations/ConstantValue.hpp"
+/* STL inclusions. */
+#include <array>
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
+
+/* Local inclusions. */
+#include "Libraries/Math/Base.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libraries/Math/Vector.hpp"
+#include "Libraries/BlobTrait.hpp"
+#include "Libraries/Utility.hpp"
+#include "Node.hpp"
+#include "Scenes/Scene.hpp"
+#include "StaticEntity.hpp"
 
 namespace Emeraude::Scenes
 {
@@ -41,385 +52,160 @@ namespace Emeraude::Scenes
 	using namespace Libraries::VertexFactory;
 	using namespace Graphics;
 
+	size_t Toolkit::s_autoEntityCount{0};
+
 	Toolkit::Toolkit (const std::shared_ptr< Scene > & scene) noexcept
 		: m_scene(scene)
 	{
 
 	}
 
-	void
-	Toolkit::enableDebug (bool state) noexcept
-	{
-		m_flags[Debug] = state;
-	}
-
-	bool
-	Toolkit::isDebugEnabled () const noexcept
-	{
-		return m_flags[Debug];
-	}
-
-	void
-	Toolkit::setScene (const std::shared_ptr< Scene > & scene) noexcept
-	{
-		m_scene = scene;
-	}
-
-	std::shared_ptr< Scene >
-	Toolkit::scene () const noexcept
-	{
-		return m_scene;
-	}
-
-	void
-	Toolkit::setParentNode (const std::shared_ptr< Node > & parentNode) noexcept
-	{
-		m_parentNode = parentNode;
-	}
-
-	void
-	Toolkit::setReusableNode (const std::shared_ptr< Node > & node) noexcept
-	{
-		m_reusableNode = node;
-	}
-
-	void
-	Toolkit::setCursor (const Vector< 3, float > & position) noexcept
-	{
-		m_cursor.clear();
-		m_cursor.setPosition(position);
-	}
-
-	void
-	Toolkit::setCursor (const Coordinates< float > & coordinates) noexcept
-	{
-		m_cursor = coordinates;
-	}
-
-	void
-	Toolkit::setNextNodeMovingAbility (bool state) noexcept
-	{
-		m_flags[NextNodeMovable] = state;
-	}
-
-	const Coordinates< float > &
-	Toolkit::cursor () const noexcept
-	{
-		return m_cursor;
-	}
-
 	std::shared_ptr< Node >
-	Toolkit::generateNode (const std::string & name, bool movable, bool setAsReusable) noexcept
+	Toolkit::generateNode (const std::string & entityName, bool movable, GenPolicy genPolicy) noexcept
 	{
-		if ( m_reusableNode != nullptr )
-		{
-			TraceInfo{ClassId} << "Reusing a previous scene node (" << m_reusableNode->name() << ") ...";
-
-			return m_reusableNode;
-		}
+		const auto name = String::incrementalLabel(entityName.empty() ? "AutoNode" : entityName, s_autoEntityCount);
 
 		if ( m_scene == nullptr )
 		{
-			Tracer::error(ClassId, "There is no scene ! Unable to create a scene node.");
+			TraceError{ClassId} << "There is no linked scene to create a scene node '" << name << "' !";
 
-			return {};
+			return nullptr;
 		}
 
-		auto parentNode = m_parentNode != nullptr ? m_parentNode : m_scene->root();
+		std::shared_ptr< Node > parent{};
 
-		auto node = parentNode->createSubNode(name + "Node", m_cursor);
-		node->setMovingAbility(movable);
+		switch ( m_nodeGenerationPolicy )
+		{
+			/* NOTE: A reusable scene node has been set. Returning it ... */
+			case GenPolicy::Reusable :
+				if ( m_previousNode == nullptr )
+				{
+					break;
+				}
 
-		if ( setAsReusable )
-			this->setReusableNode(node);
+				return m_previousNode;
 
-		return node;
+			/* NOTE: A parent scene node has been set. Returning it ... */
+			case GenPolicy::Parent :
+				if ( m_previousNode == nullptr )
+				{
+					break;
+				}
+
+				parent = m_previousNode->createChild(name, m_scene->lifetimeMS(), m_cursorFrame);
+				break;
+
+			default:
+				parent = m_scene->root();
+				break;
+		}
+
+		auto childNode = parent->createChild(name, m_scene->lifetimeMS(), m_cursorFrame);
+
+		if ( childNode == nullptr )
+		{
+			TraceError{ClassId} << "Unable to create a scene node '" << name << "' !";
+
+			return nullptr;
+		}
+
+		childNode->setMovingAbility(movable);
+
+		/* Change the new policy if requested. */
+		switch ( genPolicy )
+		{
+			case GenPolicy::Reusable :
+				this->setReusableNode(childNode);
+				break;
+
+			case GenPolicy::Parent :
+				this->setParentNode(childNode);
+				break;
+
+			default:
+				break;
+		}
+
+		return childNode;
 	}
 
 	std::shared_ptr< Node >
-	Toolkit::generateNodeLookAt (const std::string & name, const Vector< 3, float > & lookAt, bool movable) noexcept
+	Toolkit::generateNode (const Vector< 3, float > & pointTo, const std::string & entityName, bool movable, GenPolicy genPolicy) noexcept
 	{
-		auto node = this->generateNode(name, movable);
+		auto node = this->generateNode(entityName, movable, genPolicy);
 
 		if ( node == nullptr )
-			return node;
+		{
+			return nullptr;
+		}
 
-		node->lookAt(lookAt);
+		node->lookAt(pointTo, true);
 
 		return node;
 	}
 
-	std::shared_ptr< Node >
-	Toolkit::generateNodePointTo (const std::string & name, const Vector< 3, float > & pointTo, bool movable) noexcept
+	std::shared_ptr< StaticEntity >
+	Toolkit::generateStaticEntity (const std::string & entityName, GenPolicy genPolicy) noexcept
 	{
-		auto node = this->generateNode(name, movable);
+		const auto name = String::incrementalLabel(entityName.empty() ? "AutoNode" : entityName, s_autoEntityCount);
 
-		if ( node == nullptr )
-			return node;
-
-		node->pointTo(pointTo);
-
-		return node;
-	}
-
-	Toolkit::BuiltNode< Camera >
-	Toolkit::generateCamera (const std::string & name, const Vector< 3, float > & lookAt, float fov) noexcept
-	{
-		auto node = this->generateNodeLookAt(name, lookAt, m_flags[NextNodeMovable]);
-
-		auto component = node->newCamera(name, m_flags[Debug]);
-		component->setPerspectiveProjection(fov);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< Camera >
-	Toolkit::generateOrthographicCamera (const std::string & name, const Vector< 3, float > & lookAt, float size) noexcept
-	{
-		auto node = this->generateNodeLookAt(name, lookAt, m_flags[NextNodeMovable]);
-
-		auto component = node->newCamera(name, m_flags[Debug]);
-		component->setOrthographicProjection(size);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< Camera >
-	Toolkit::generateCubemapCamera (const std::string & name, bool movable) noexcept
-	{
-		auto node = this->generateNode(name, movable);
-
-		auto component = node->newCamera(name, m_flags[Debug]);
-		component->setPerspectiveProjection(90.0F);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< DirectionalLight >
-	Toolkit::generateDirectionalLight (const std::string & name, const Vector< 3, float > & lookAt, const Color< float > & color) noexcept
-	{
-		auto node = this->generateNodeLookAt(name, lookAt, m_flags[NextNodeMovable]);
-
-		auto component = node->newDirectionalLight(name);
-		component->setColor(color);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< PointLight >
-	Toolkit::generatePointLight (const std::string & name, const Color< float > & color, float radius) noexcept
-	{
-		auto node = this->generateNode(name, m_flags[NextNodeMovable]);
-
-		auto component = node->newPointLight(name);
-		component->setColor(color);
-		component->setRadius(radius);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< SpotLight >
-	Toolkit::generateSpotLight (const std::string & name, const Vector< 3, float > & lookAt, float outerAngle, float innerAngle, const Color< float > & color, float radius) noexcept
-	{
-		auto node = this->generateNodeLookAt(name, lookAt, m_flags[NextNodeMovable]);
-
-		auto component = node->newSpotLight(name);
-		component->setColor(color);
-		component->setConeAngles(Radian(innerAngle), Radian(outerAngle));
-		component->setRadius(radius);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< SpotLight >
-	Toolkit::generateSpinningSpotLight (const std::string & name, float outerAngle, float innerAngle, const Color< float > & color, float radius) noexcept
-	{
-		auto node = this->generateNode(name, m_flags[NextNodeMovable]);
-
-		auto component = node->newSpotLight(name);
-		component->setColor(color);
-		component->setConeAngles(Radian(innerAngle), Radian(outerAngle));
-		component->setRadius(radius);
-
-		node->addAnimation(Node::WorldYRotation, std::make_shared< Animations::ConstantValue >(Variant{Radian(5.0F)}));
-
-		return {node, component};
-	}
-
-	std::shared_ptr< TextureResource::Abstract >
-	Toolkit::getDynamicEnvironmentMap (const std::string & name, uint32_t resolution) noexcept
-	{
-		/* Create a render to texture. */
-		auto environmentMap = m_scene->masterControlConsole().createRenderToCubemap(name + "EnvironmentMap", resolution);
-
-		if ( environmentMap == nullptr )
-			return {};
-
-		auto node = this->generateNode(name, m_flags[NextNodeMovable]);
-
-		/* Create a camera. */
-		auto camera = node->newCamera(name, m_flags[Debug]);
-		camera->setFieldOfView(90.0F);
-		camera->connect(environmentMap);
-
-		return environmentMap;
-	}
-
-	void
-	Toolkit::generateRandomNodes (size_t depth, const Scene & scene, const std::shared_ptr< Node > & parent, const std::string & name) noexcept
-	{
-		const auto newDepth = depth + 1UL;
-
-		const auto limit =  Utility::random(0UL, 48UL / newDepth);
-
-		for ( size_t index = 0; index < limit; ++index )
+		if ( m_scene == nullptr )
 		{
-			this->setParentNode(parent);
-			this->setCursor(scene.getRandomPosition());
+			TraceError{ClassId} << "There is no linked scene to create a static entity '" << name << "' !";
 
-			auto node = this->generateNode(String::numericLabel(name, index), false, false);
-
-			if ( depth < 2 )
-			{
-				this->generateRandomNodes(newDepth, scene, node);
-			}
-		}
-	}
-
-	Toolkit::BuiltNode< VisualComponent >
-	Toolkit::generateMeshInstance (const std::string & baseName, const std::shared_ptr< Graphics::Geometry::IndexedVertexResource > & geometryResource, std::shared_ptr< Graphics::Material::Interface > materialResource) noexcept
-	{
-		/* Generate the material resource. */
-		if ( materialResource == nullptr )
-			materialResource = Resources::Manager::instance()->standardMaterials().getRandomResource();
-
-		/* Check resources */
-		if ( geometryResource == nullptr || materialResource == nullptr )
-			return {};
-
-		/* Create the mesh resource. */
-		auto meshResource = Renderable::MeshResource::getOrCreate(geometryResource, materialResource);
-
-		if ( meshResource == nullptr )
-			return {};
-
-		/* Create the node. */
-		auto node = this->generateNode(String::incrementalLabel(baseName, m_generatedObjectCount), m_flags[NextNodeMovable]);
-
-		/* Create the mesh instance. */
-		auto component = node->newMeshInstance(meshResource, baseName);
-
-		return {node, component};
-	}
-
-	Toolkit::BuiltNode< VisualComponent >
-	Toolkit::generateShapeInstance (const std::string & baseName, const Shape< float > & shape, const std::shared_ptr< Material::Interface > & materialResource) noexcept
-	{
-		/* Create the geometry resource from the shape. */
-		Geometry::ResourceGenerator generator{Geometry::EnableTangentSpace | Geometry::EnablePrimaryTextureCoordinates};
-
-		auto geometryResource = generator.shape(shape, baseName);
-
-		return this->generateMeshInstance(baseName, geometryResource, materialResource);
-	}
-
-	Toolkit::BuiltNode< VisualComponent >
-	Toolkit::generateCuboidInstance (const std::string & baseName, const Vector< 3, float > & size, const std::shared_ptr< Material::Interface > & materialResource) noexcept
-	{
-		/* Generate the geometry resource. */
-		Geometry::ResourceGenerator generator{Geometry::EnableTangentSpace | Geometry::EnablePrimaryTextureCoordinates};
-		generator.parameters().setGeometryFlags(true);
-
-		auto builtNode = this->generateMeshInstance(baseName, generator.cuboid(size, baseName), materialResource);
-		builtNode.second->physicalObjectProperties().setProperties(
-			(size[X] * size[Y] * size[Z]) * materialResource->physicalSurfaceProperties().density() * Physics::SI::Kilogram< float >,
-			(size[X] * size[Y]),
-			Physics::DragCoefficient::Cube< float >,
-			0.5F,
-			0.5F
-		);
-
-		return builtNode;
-	}
-
-	Toolkit::BuiltNode< VisualComponent >
-	Toolkit::generateSphereInstance (const std::string & baseName, float radius, const std::shared_ptr< Material::Interface > & materialResource, bool useGeodesic) noexcept
-	{
-		//Geometry::ResourceGenerator generator{Geometry::EnableTangentSpace | Geometry::EnablePrimaryTextureCoordinates};
-		Geometry::ResourceGenerator generator{Geometry::EnableNormal | Geometry::EnableVertexColor};
-
-		auto geometryResource = useGeodesic ?
-			generator.geodesicSphere(radius, 2, baseName) :
-			generator.sphere(radius, 16, 16, baseName);
-
-		auto builtNode = this->generateMeshInstance(baseName, geometryResource, materialResource);
-		builtNode.second->physicalObjectProperties().setProperties(
-			sphereVolume(radius) * materialResource->physicalSurfaceProperties().density() * Physics::SI::Kilogram< float >,
-			circleArea(radius),
-			Physics::DragCoefficient::Sphere< float >,
-			0.5F,
-			0.5F
-		);
-
-		return builtNode;
-	}
-
-	Toolkit::BuiltNode< VisualComponent >
-	Toolkit::generateOutputScreen (const std::string & name, Camera & camera, float screenSize) noexcept
-	{
-		/* 1. Building geometry */
-		Geometry::ResourceGenerator generator{Geometry::EnableTangentSpace | Geometry::EnablePrimaryTextureCoordinates};
-
-		auto geometryResource = generator.cuboid(screenSize, screenSize, 2.0F, name);
-
-		/* 2. Check material */
-		auto texture = m_scene->masterControlConsole().createRenderToTexture2D(name + "Stream", 1024, 1024);
-
-		if ( texture == nullptr )
-		{
-			TraceWarning{ClassId} << "Can't get texture '" << name << "Stream' !";
-
-			return {};
+			return nullptr;
 		}
 
-		camera.connect(texture);
-
-		auto resources = Resources::Manager::instance();
-
-		auto materialResource = resources->standardMaterials().createResource(name + "Material", 0, true);
-		materialResource->setAmbientComponent(texture);
-		materialResource->setDiffuseComponent(texture);
-		materialResource->setSpecularComponent({1.0F, 1.0F, 1.0F, 1.0F}, 120.0F);
-		materialResource->setAutoIlluminationComponent(1.0F, 1.0F);
-		if ( !materialResource->setManualLoadSuccess(true) )
-			return {};
-
-		/* 3. Building mesh */
-		auto meshResource = resources->meshes().createResource(name + "Mesh");
-
-		if ( !meshResource->load(geometryResource, materialResource) )
+		if ( m_staticEntityGenerationPolicy == GenPolicy::Reusable && m_previousStaticEntity != nullptr )
 		{
-			TraceWarning{ClassId} << "Can't get mesh '" << name << "Mesh' !";
-
-			return {};
+			return m_previousStaticEntity;
 		}
 
-		/* Creates the scene node. */
-		auto node = this->generateNode(String::incrementalLabel(name, m_generatedObjectCount), m_flags[NextNodeMovable]);
+		auto staticEntity = m_scene->createStaticEntity(name, m_cursorFrame);
 
-		return {node, node->newMeshInstance(meshResource, name)};
+		if ( staticEntity == nullptr )
+		{
+			TraceError{ClassId} << "Unable to create a static entity '" << name << "' !";
+
+			return nullptr;
+		}
+
+		/* Change the new policy if requested. */
+		if ( genPolicy == GenPolicy::Reusable )
+		{
+			this->setReusableStaticEntity(staticEntity);
+		}
+
+		return staticEntity;
 	}
 
-	std::vector< Coordinates< float > >
-	Toolkit::generateRandomCoordinates (size_t limit, float min, float max) noexcept
+	std::shared_ptr< StaticEntity >
+	Toolkit::generateStaticEntity (const Vector< 3, float > & pointTo, const std::string & entityName, GenPolicy genPolicy) noexcept
 	{
-		std::vector< Coordinates< float > > coordinates{};
+		auto staticEntity = this->generateStaticEntity(entityName, genPolicy);
 
-		coordinates.reserve(limit);
-
-		for ( size_t index = 0; index < limit; index++ )
+		if ( staticEntity == nullptr )
 		{
-			coordinates.emplace_back(Vector< 3, float >::random(min, max));
+			return nullptr;
+		}
+
+		staticEntity->lookAt(pointTo, true);
+
+		return staticEntity;
+	}
+
+	std::vector< CartesianFrame< float > >
+	Toolkit::generateRandomCoordinates (size_t count, float min, float max) noexcept
+	{
+		std::vector< CartesianFrame< float > > coordinates{count};
+
+		for ( auto & coordinate : coordinates )
+		{
+			coordinate.setPosition(
+				Utility::random(min, max),
+				Utility::random(min, max),
+				Utility::random(min, max)
+			);
 		}
 
 		return coordinates;

@@ -1,33 +1,33 @@
 /*
- * Emeraude/Audio/Effects/Distortion.cpp
- * This file is part of Emeraude
+ * src/Audio/Effects/Distortion.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Distortion.hpp"
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Tracer.hpp"
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
@@ -69,7 +69,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_DISTORTION_MIN_EDGE || value > AL_DISTORTION_MAX_EDGE )
 		{
-			Tracer::warning(ClassId, Blob() << "ShapeEdge must be between " << AL_DISTORTION_MIN_EDGE << " and " << AL_DISTORTION_MAX_EDGE << ".");
+			Tracer::warning(ClassId, BlobTrait() << "ShapeEdge must be between " << AL_DISTORTION_MIN_EDGE << " and " << AL_DISTORTION_MAX_EDGE << ".");
 
 			return;
 		}
@@ -85,7 +85,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_DISTORTION_MIN_GAIN || value > AL_DISTORTION_MAX_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Gain must be between " << AL_DISTORTION_MIN_GAIN << " and " << AL_DISTORTION_MAX_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Gain must be between " << AL_DISTORTION_MIN_GAIN << " and " << AL_DISTORTION_MAX_GAIN << ".");
 
 			return;
 		}
@@ -101,7 +101,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_DISTORTION_MIN_LOWPASS_CUTOFF || value > AL_DISTORTION_MAX_LOWPASS_CUTOFF )
 		{
-			Tracer::warning(ClassId, Blob() << "Low-pass cut-off must be between " << AL_DISTORTION_MIN_LOWPASS_CUTOFF << " and " << AL_DISTORTION_MAX_LOWPASS_CUTOFF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Low-pass cut-off must be between " << AL_DISTORTION_MIN_LOWPASS_CUTOFF << " and " << AL_DISTORTION_MAX_LOWPASS_CUTOFF << ".");
 
 			return;
 		}
@@ -117,7 +117,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_DISTORTION_MIN_EQCENTER || value > AL_DISTORTION_MAX_EQCENTER )
 		{
-			Tracer::warning(ClassId, Blob() << "EQ center must be between " << AL_DISTORTION_MIN_EQCENTER << " and " << AL_DISTORTION_MAX_EQCENTER << ".");
+			Tracer::warning(ClassId, BlobTrait() << "EQ center must be between " << AL_DISTORTION_MIN_EQCENTER << " and " << AL_DISTORTION_MAX_EQCENTER << ".");
 
 			return;
 		}
@@ -133,7 +133,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_DISTORTION_MIN_EQBANDWIDTH || value > AL_DISTORTION_MAX_EQBANDWIDTH )
 		{
-			Tracer::warning(ClassId, Blob() << "EQ bandwidth must be between " << AL_DISTORTION_MIN_EQBANDWIDTH << " and " << AL_DISTORTION_MAX_EQBANDWIDTH << ".");
+			Tracer::warning(ClassId, BlobTrait() << "EQ bandwidth must be between " << AL_DISTORTION_MIN_EQBANDWIDTH << " and " << AL_DISTORTION_MAX_EQBANDWIDTH << ".");
 
 			return;
 		}

@@ -1,72 +1,337 @@
 /*
- * Emeraude/Saphir/AbstractShader.cpp
- * This file is part of Emeraude
+ * src/Saphir/AbstractShader.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "AbstractShader.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <algorithm>
 #include <functional>
 
-/* Local inclusions */
+/* Local inclusions. */
+#include "Libraries/IO.hpp"
+#include "Generator/Abstract.hpp"
+#include "Keys.hpp"
 #include "Tracer.hpp"
-#include "Utility.hpp"
 
 namespace Emeraude::Saphir
 {
 	using namespace Libraries;
+	using namespace Declaration;
 	
-	constexpr auto TracerTag{"Shader"};
+	static constexpr auto TracerTag{"Shader"};
 
-	AbstractShader::AbstractShader (const std::string & name) noexcept
-		: NamedItem(name)
+	AbstractShader::AbstractShader (const std::string & name, std::string GLSLVersion, std::string GLSLProfile) noexcept
+		: NameableTrait(name), m_GLSLVersion(std::move(GLSLVersion)), m_GLSLProfile(std::move(GLSLProfile))
 	{
 
 	}
 
 	void
-	AbstractShader::setSourceCode (const std::string & sourceCode) noexcept
+	AbstractShader::setExtensionBehavior (const char * extension, const char * behavior) noexcept
 	{
-		m_sourceCode = sourceCode;
+		std::stringstream headers;
+		headers << Keys::GLSL::Define::Extension << ' ' << extension << " : " << behavior;
 
-		this->generateHash();
+		m_headers.emplace_back(headers.str());
 	}
 
 	bool
-	AbstractShader::loadSourceCode (const Path::File & filepath) noexcept
+	AbstractShader::declare (const SpecializationConstant & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The specialization constant is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_specializationConstants, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A specialization constant declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_specializationConstants.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const Function & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The function is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_functions, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A function declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_functions.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const Structure & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The structure is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_structures, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A structure declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_structures.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const UniformBlock & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The uniform block is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_uniformBlocks, [declaration] (const auto & existing) {return existing.instanceName() == declaration.instanceName();}) )
+		{
+			TraceWarning{TracerTag} << "An uniform block declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_uniformBlocks.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const ShaderStorageBlock & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The shader storage block is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_shaderStorageBlocks, [declaration] (const auto & existing) {return existing.instanceName() == declaration.instanceName();}) )
+		{
+			TraceWarning{TracerTag} << "A shader storage block declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_shaderStorageBlocks.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const Sampler & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The sampler declaration is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_samplers, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A sampler declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_samplers.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const TexelBuffer & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The texel buffer is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_texelBuffers, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A texel buffer declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_texelBuffers.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::declare (const PushConstantBlock & declaration) noexcept
+	{
+		if ( !declaration.isValid() )
+		{
+			Tracer::error(TracerTag, "The push constant is invalid for code generation !");
+
+			return false;
+		}
+
+		if ( std::ranges::any_of(m_pushConstantBlocks, [declaration] (const auto & existing) {return existing.name() == declaration.name();}) )
+		{
+			TraceWarning{TracerTag} << "A push constant declaration named '" << declaration.name() << "' already exists !";
+
+			return true;
+		}
+
+		m_pushConstantBlocks.emplace_back(declaration);
+
+		return true;
+	}
+
+	bool
+	AbstractShader::generateSourceCode (Generator::Abstract & generator) noexcept
+	{
+		std::stringstream code{};
+		std::string topInstructions{};
+		std::string outputInstructions{};
+
+		this->generateHeaders(code);
+
+		if ( !this->onSourceCodeGeneration(generator, code, topInstructions, outputInstructions) )
+		{
+			return false;
+		}
+
+		/* Common shader code declarations. */
+		AbstractShader::generateDeclarations(code, this->specializationConstantDeclarations(), "Specialization constants");
+		AbstractShader::generateDeclarations(code, this->functionDeclarations(), "Functions");
+		AbstractShader::generateDeclarations(code, this->structureDeclarations(), "Structures");
+		AbstractShader::generateDeclarations(code, this->uniformBlockDeclarations(), "Uniform blocks (OpenGL/Vulkan UBO)");
+		AbstractShader::generateDeclarations(code, this->shaderStorageBlockDeclarations(), "Shader storage blocks (OpenGL/Vulkan SSBO)");
+		AbstractShader::generateDeclarations(code, this->samplerDeclarations(), "Samplers");
+		AbstractShader::generateDeclarations(code, this->texelBufferDeclarations(), "Texel buffers");
+		AbstractShader::generateDeclarations(code, this->pushConstantBlockDeclarations(), "Push constant block (Vulkan)");
+
+		/* NOTE: Generate the main() function code. */
+		code <<
+			 "void main ()" "\n"
+			 "{" "\n" <<
+			 this->getCode(topInstructions, outputInstructions) <<
+			 "}" "\n";
+
+		m_sourceCode = code.str();
+
+		this->generateHash();
+
+		return true;
+	}
+
+	std::string
+	AbstractShader::getDeclarationStats () const noexcept
+	{
+		std::stringstream output;
+
+		output <<
+			"Common shader declarations : " "\n"
+			" - Specialization constant : " << m_specializationConstants.size() << "\n"
+			" - Function : " << m_functions.size() << "\n"
+			" - Structure : " << m_structures.size() << "\n"
+			" - Uniform block : " << m_uniformBlocks.size() << "\n"
+			" - Shader storage block : " << m_shaderStorageBlocks.size() << "\n"
+			" - Sampler : " << m_samplers.size() << "\n"
+			" - Texel : " << m_texelBuffers.size() << "\n"
+			" - Push constant block (<= 1) : " << m_pushConstantBlocks.size() << "\n";
+
+		this->onGetDeclarationStats(output);
+
+		return output.str();
+	}
+
+	void
+	AbstractShader::generateHeaders (std::stringstream & code) const noexcept
+	{
+		/* NOTE: This must be the first line of the source code.
+		 * This is the version and the profile of the current shader. */
+		code << Keys::GLSL::Define::Version << ' ' << m_GLSLVersion << ' ' << m_GLSLProfile << '\n';
+
+		/* Adds defines and other pre-processor instructions. */
+		if ( !m_headers.empty() )
+		{
+			for ( const auto & line : m_headers )
+			{
+				code << line << '\n';
+			}
+		}
+
+		code << '\n';
+
+//#if IS_EMBEDDED_PLATFORM
+//		code << Keys::GLSL::Precision << ' ' << Keys::GLSL::Medium << ' ' << Keys::GLSL::Float << ';' << "\n\n";
+//#endif
+
+		code << "/* " << to_string(this->type()) << " : " << this->name() << " */" "\n\n";
+	}
+
+	bool
+	AbstractShader::loadSourceCode (const std::filesystem::path & filepath) noexcept
 	{
 		const auto * extension = getShaderFileExtension(this->type());
 
-		if ( !filepath.hasExtension(extension) )
+		if ( IO::getFileExtension(filepath) != extension )
 		{
 			TraceError{TracerTag} << "The shader source file extension must be '" << extension << "' !";
 
 			return false;
 		}
 
-		if ( !Utility::fileGetContents(filepath, m_sourceCode) )
+		if ( !IO::fileGetContents(filepath, m_sourceCode) )
 		{
 			TraceError{TracerTag} << "Unable to read the shader source code from file '" << filepath << "' !";
 
@@ -79,9 +344,9 @@ namespace Emeraude::Saphir
 	}
 
 	bool
-	AbstractShader::writeSourceCode (const Path::File & filepath) const noexcept
+	AbstractShader::writeSourceCode (const std::filesystem::path & filepath) const noexcept
 	{
-		if ( !Utility::filePutContents(filepath, m_sourceCode) )
+		if ( !IO::filePutContents(filepath, m_sourceCode) )
 		{
 			TraceError{TracerTag} << "Unable to write the shader source code to file '" << filepath << "' !";
 
@@ -89,112 +354,6 @@ namespace Emeraude::Saphir
 		}
 
 		return true;
-	}
-
-	const std::string &
-	AbstractShader::sourceCode () const noexcept
-	{
-		return m_sourceCode;
-	}
-
-	size_t
-	AbstractShader::hash () const noexcept
-	{
-		return m_sourceCodeHash;
-	}
-
-	bool
-	AbstractShader::isGenerated () const noexcept
-	{
-		return !m_sourceCode.empty();
-	}
-
-	void
-	AbstractShader::setBinaryCode (const ShaderBinary & binary) noexcept
-	{
-		m_binaryCode = binary;
-	}
-
-	bool
-	AbstractShader::loadBinaryCode (const Path::File & filepath) noexcept
-	{
-		if ( !Utility::fileGetContents(filepath, m_binaryCode) )
-		{
-			TraceError{TracerTag} << "Unable to read the shader binary code from file '" << filepath << "' !";
-
-			return false;
-		}
-
-		/* FIXME: Check binary shader type */
-
-		return true;
-	}
-
-	bool
-	AbstractShader::writeBinaryCode (const Path::File & filepath) const noexcept
-	{
-		if ( !Utility::filePutContents(filepath, m_binaryCode) )
-		{
-			TraceError{TracerTag} << "Unable to write the shader binary code to file '" << filepath << "' !";
-
-			return false;
-		}
-
-		return true;
-	}
-
-	bool
-	AbstractShader::isCompiled () const noexcept
-	{
-		return !m_binaryCode.empty();
-	}
-
-	const ShaderBinary &
-	AbstractShader::binary () const noexcept
-	{
-		return m_binaryCode;
-	}
-
-	void
-	AbstractShader::clearBinary () noexcept
-	{
-		m_binaryCode.clear();
-	}
-
-	const std::set< std::string > &
-	AbstractShader::uniforms () const noexcept
-	{
-		return m_uniforms;
-	}
-
-	const std::set< std::string > &
-	AbstractShader::uniformBlocks () const noexcept
-	{
-		return m_uniformBlocks;
-	}
-
-	const std::set< std::string > &
-	AbstractShader::shaderStorageBlocks () const noexcept
-	{
-		return m_shaderStorageBlocks;
-	}
-
-	void
-	AbstractShader::declareUniform (const std::string & name) noexcept
-	{
-		m_uniforms.emplace(name);
-	}
-
-	void
-	AbstractShader::declareUniformBlock (const std::string & name) noexcept
-	{
-		m_uniformBlocks.emplace(name);
-	}
-
-	void
-	AbstractShader::declareShaderStorageBlock (const std::string & name) noexcept
-	{
-		m_shaderStorageBlocks.emplace(name);
 	}
 
 	void

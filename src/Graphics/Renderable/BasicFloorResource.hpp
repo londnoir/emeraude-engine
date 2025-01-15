@@ -1,47 +1,52 @@
 /*
- * Emeraude/Graphics/Renderable/BasicFloorResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/BasicFloorResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "AbstractSceneArea.hpp"
+#include "SceneAreaInterface.hpp"
+
+/* Local inclusions for usages. */
+#include "Resources/Container.hpp"
+#include "Graphics/Geometry/VertexGridResource.hpp"
 
 namespace Emeraude::Graphics::Renderable
 {
 	/**
 	 * @brief The basic floor resource class.
-	 * @extends Emeraude::Graphics::AbstractSceneArea The is a specialized scene area.
+	 * @extends Emeraude::Graphics::Renderable::SceneAreaInterface The is a scene area.
 	 */
-	class BasicFloorResource final : public AbstractSceneArea
+	class BasicFloorResource final : public SceneAreaInterface
 	{
 		friend class Resources::Container< BasicFloorResource >;
 
@@ -53,20 +58,20 @@ namespace Emeraude::Graphics::Renderable
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static constexpr auto CellSize = 100.0F;
-			static constexpr auto DefaultSize = 1024.0F;
-			static constexpr auto DefaultDivision = 16;
+			static constexpr auto DefaultSize{1024.0F};
+			static constexpr auto DefaultDivision{16};
+			static constexpr uint32_t DefaultGeometryFlags{Geometry::EnableTangentSpace | Geometry::EnableVertexColor | Geometry::EnablePrimaryTextureCoordinates | Geometry::EnablePrimitiveRestart};
 
 			/* JSON key. */
-			static constexpr auto SizeKey = "Size";
-			static constexpr auto DivisionKey = "Division";
-			static constexpr auto HeightMapKey = "HeightMap";
-				static constexpr auto ImageNameKey = "ImageName";
-				static constexpr auto ScaleKey = "Scale";
-				static constexpr auto InverseKey = "Inverse";
-			static constexpr auto MaterialTypeKey = "MaterialType";
-			static constexpr auto MaterialNameKey = "MaterialName";
-			static constexpr auto UVMultiplierKey = "UVMultiplier";
+			static constexpr auto SizeKey{"Size"};
+			static constexpr auto DivisionKey{"Division"};
+			static constexpr auto HeightMapKey{"HeightMap"};
+				static constexpr auto ImageNameKey{"ImageName"};
+				static constexpr auto ScaleKey{"Scale"};
+				static constexpr auto InverseKey{"Inverse"};
+			static constexpr auto MaterialTypeKey{"MaterialType"};
+			static constexpr auto MaterialNameKey{"MaterialName"};
+			static constexpr auto UVMultiplierKey{"UVMultiplier"};
 
 			/**
 			 * @brief Constructs a basic floor resource.
@@ -75,65 +80,66 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit BasicFloorResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Libraries::Path::File &) */
-			bool load (const Libraries::Path::File & filepath) noexcept override;
+			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			bool load (const std::filesystem::path & filepath) noexcept override;
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
 			bool isOpaque (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
 			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			[[nodiscard]]
+			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
 			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
 			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::prepareShaders() */
-			[[nodiscard]]
-			bool prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Renderable::AbstractSceneArea::getLevelAt(const Libraries::Math::Vector< 3, float > &) */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(const Libraries::Math::Vector< 3, float > &) const */
 			[[nodiscard]]
 			float getLevelAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::AbstractSceneArea::getLevelAt(float, float, float) */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(float, float, float) const */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getLevelAt (float x, float z, float delta = 0) const noexcept override;
+			Libraries::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::AbstractSceneArea::getNormalAt() */
+			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getNormalAt() const */
 			[[nodiscard]]
 			Libraries::Math::Vector< 3, float > getNormalAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Renderable::AbstractSceneArea::isOnGround() */
-			bool isOnGround (Scenes::Node & node) const noexcept override;
 
 			/**
 			 * @brief Loads a basic floor by providing a vertex grid geometry for the ground and a material to paint it.
@@ -185,14 +191,14 @@ namespace Emeraude::Graphics::Renderable
 			 * @param displacementMap A pixmap to use as a displacement map.
 			 * @param displacementFactor Factor of displacement.
 			 * @param materialResource A reference to a material smart pointer.
-			 * @param UVMultiplier Texture coordinates multiplier.
+			 * @param UVMultiplier Texture coordinates multiplier. Default 1.0.
 			 * @return bool
 			 */
-			template< typename pixmapData_t, std::enable_if_t< std::is_arithmetic_v< pixmapData_t > > = false >
+			template< typename pixmapData_t >
 			bool
-			load (float size, size_t division, const Libraries::PixelFactory::Pixmap< pixmapData_t > & displacementMap, float displacementFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept
+			load (float size, size_t division, const Libraries::PixelFactory::Pixmap< pixmapData_t > & displacementMap, float displacementFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept requires (std::is_arithmetic_v< pixmapData_t >)
 			{
-				auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometryDisplaced");
+				const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometryDisplaced");
 
 				if ( !geometryResource->load(size, division, UVMultiplier) )
 				{
@@ -238,8 +244,8 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			bool setMaterial (const std::shared_ptr< Material::Interface > & materialResource) noexcept;
 
-			std::shared_ptr< Geometry::VertexGridResource > m_geometry{};
-			std::shared_ptr< Material::Interface > m_material{};
+			std::shared_ptr< Geometry::VertexGridResource > m_geometry;
+			std::shared_ptr< Material::Interface > m_material;
 	};
 }
 

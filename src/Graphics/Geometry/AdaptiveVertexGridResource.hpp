@@ -1,46 +1,46 @@
 /*
- * Emeraude/Graphics/Geometry/AdaptiveVertexGridResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/AdaptiveVertexGridResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standards libraries. */
-#include <memory>
-#include <mutex>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Graphics/ImageResource.hpp"
-#include "Math/Coordinates.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
 #include "Resources/Container.hpp"
-#include "VertexFactory/Grid.hpp"
+#include "Graphics/ImageResource.hpp"
 
 namespace Emeraude::Graphics::Geometry
 {
@@ -65,9 +65,9 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Constructs an adaptive grid geometry resource.
 			 * @param name A reference to a string for the resource name.
-			 * @param resourceFlagBits The resource flag bits. Default EnablePrimitiveRestart.
+			 * @param geometryFlagBits The geometry resource flag bits, See Emeraude::Graphics::Geometry::GeometryFlagBits. Default EnablePrimitiveRestart.
 			 */
-			explicit AdaptiveVertexGridResource (const std::string & name, uint32_t resourceFlagBits = EnablePrimitiveRestart) noexcept;
+			explicit AdaptiveVertexGridResource (const std::string & name, uint32_t geometryFlagBits = EnablePrimitiveRestart) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -98,49 +98,107 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			~AdaptiveVertexGridResource () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::isCreated() */
 			[[nodiscard]]
-			bool isCreated () const noexcept override;
+			bool
+			isCreated () const noexcept override
+			{
+				if ( m_vertexBufferObject == nullptr || !m_vertexBufferObject->isCreated() )
+				{
+					return false;
+				}
+
+				if ( m_indexBufferObject == nullptr || !m_indexBufferObject->isCreated() )
+				{
+					return false;
+				}
+
+				return true;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::topology() */
 			[[nodiscard]]
-			Topology topology () const noexcept override;
+			Topology
+			topology () const noexcept override
+			{
+				return Topology::TriangleStrip;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
-			size_t subGeometryCount () const noexcept override;
+			size_t
+			subGeometryCount () const noexcept override
+			{
+				return 1;
+			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryOffset() */
+			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
-			size_t subGeometryOffset (size_t subGeometryIndex = 0) const noexcept override;
-
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryLength() */
-			[[nodiscard]]
-			size_t subGeometryLength (size_t subGeometryIndex = 0) const noexcept override;
+			std::array< uint32_t, 2 >
+			subGeometryRange (size_t /*subGeometryIndex*/ = 0) const noexcept override
+			{
+				return {0, static_cast< uint32_t >(m_indexBufferObject->indexCount())};
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libraries::Math::Cuboid< float > &
+			boundingBox () const noexcept override
+			{
+				return m_boundingBox;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libraries::Math::Sphere< float > &
+			boundingSphere () const noexcept override
+			{
+				return m_boundingSphere;
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::vertexBufferObject() */
 			[[nodiscard]]
-			const Vulkan::VertexBufferObject * vertexBufferObject () const noexcept override;
+			const Vulkan::VertexBufferObject *
+			vertexBufferObject () const noexcept override
+			{
+				return m_vertexBufferObject.get();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::indexBufferObject() */
 			[[nodiscard]]
-			const Vulkan::IndexBufferObject * indexBufferObject () const noexcept override;
+			const Vulkan::IndexBufferObject *
+			indexBufferObject () const noexcept override
+			{
+				return m_indexBufferObject.get();
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::useIndexBuffer() */
 			[[nodiscard]]
-			bool useIndexBuffer () const noexcept override;
+			bool
+			useIndexBuffer () const noexcept override
+			{
+#ifdef DEBUG
+				return m_indexBufferObject != nullptr;
+#else
+				return true;
+#endif
+			}
 
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::create() */
 			bool create () noexcept override;
@@ -151,9 +209,13 @@ namespace Emeraude::Graphics::Geometry
 			/** @copydoc Emeraude::Graphics::Geometry::Interface::destroy() */
 			void destroy (bool clearLocalData) noexcept override;
 
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
@@ -182,14 +244,18 @@ namespace Emeraude::Graphics::Geometry
 			 * @brief This will modify the render from the position of the camera using LOD with the existing data.
 			 * @param view
 			 */
-			void updateVisibility (const Libraries::Math::Coordinates< float > & view) noexcept;
+			void updateVisibility (const Libraries::Math::CartesianFrame< float > & view) noexcept;
 
 			/**
-			 * @brief Gets the minimal distance to fire an update.
+			 * @brief Gets the minimal distance to fire an processLogics.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float getMinimalUpdateDistance () const noexcept;
+			float
+			getMinimalUpdateDistance () const noexcept
+			{
+				return m_minimalUpdateDistance;
+			}
 
 			/**
 			 * @brief Enables the use of vertex color.
@@ -202,7 +268,11 @@ namespace Emeraude::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isVertexColorEnabled () const noexcept;
+			bool
+			isVertexColorEnabled () const noexcept
+			{
+				return m_vertexColorMap != nullptr;
+			}
 
 			/**
 			 * @brief Returns an adaptive vertex grid resource by its name.
@@ -237,13 +307,23 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			bool generateIndicesBuffer () noexcept;
 
-			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject{};
-			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject{};
-			std::vector< float > m_localData{};
-			std::vector< unsigned int > m_indices{};
-			Libraries::Math::Cuboid< float > m_boundingBox{};
-			Libraries::Math::Sphere< float > m_boundingSphere{};
-			float m_minimalUpdateDistance{1024.0F}; // NOLINT(*-magic-numbers)
+			/**
+			 * @brief Adds vertex to vertex attributes buffer.
+			 * @param grid A reference to a grid.
+			 * @param index The index of the current point in the grid
+			 * @return void
+			 */
+			void addGridPointToVertexAttributes (const Libraries::VertexFactory::Grid< float > & grid, size_t index) noexcept;
+
+			static constexpr auto DefaultMinimalUpdateDistance{1024.0F};
+
+			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject;
+			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
+			std::vector< float > m_localData;
+			std::vector< unsigned int > m_indices;
+			Libraries::Math::Cuboid< float > m_boundingBox;
+			Libraries::Math::Sphere< float > m_boundingSphere;
+			float m_minimalUpdateDistance{DefaultMinimalUpdateDistance};
 			/* Contains the number of quads in on dimension. Grids are always square. */
 			size_t m_squareQuadCount{0};
 			size_t m_quadCount{0};
@@ -251,7 +331,6 @@ namespace Emeraude::Graphics::Geometry
 			size_t m_squarePointCount{0};
 			size_t m_pointCount{0};
 			std::shared_ptr< ImageResource > m_vertexColorMap{};
-			mutable std::mutex m_GPUAccessMutex{};
 	};
 }
 

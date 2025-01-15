@@ -1,33 +1,34 @@
 /*
- * Emeraude/Vulkan/DescriptorPool.hpp
- * This file is part of Emeraude
+ * src/Vulkan/DescriptorPool.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -35,8 +36,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
 
-/* Local inclusions for usages. */
-#include "DescriptorSetLayout.hpp"
+/* Forward declarations. */
+namespace Emeraude::Vulkan
+{
+	class DescriptorSetLayout;
+}
 
 namespace Emeraude::Vulkan
 {
@@ -82,12 +86,14 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return DescriptorPool &
 			 */
 			DescriptorPool & operator= (const DescriptorPool & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return DescriptorPool &
 			 */
 			DescriptorPool & operator= (DescriptorPool && copy) noexcept = delete;
 
@@ -107,28 +113,44 @@ namespace Emeraude::Vulkan
 			 * @return VkDescriptorPool
 			 */
 			[[nodiscard]]
-			VkDescriptorPool handle () const noexcept;
+			VkDescriptorPool
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the descriptor pool create info.
-			 * @return VkDescriptorPoolCreateInfo
+			 * @return const VkDescriptorPoolCreateInfo &
 			 */
 			[[nodiscard]]
-			VkDescriptorPoolCreateInfo createInfo () const noexcept;
+			const VkDescriptorPoolCreateInfo &
+			createInfo () const noexcept
+			{
+				return m_createInfo;
+			}
 
 			/**
 			 * @brief Returns the list of descriptor pool sizes.
 			 * @return const std::vector< VkDescriptorPoolSize > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkDescriptorPoolSize > & descriptorPoolSizes () const noexcept;
+			const std::vector< VkDescriptorPoolSize > &
+			descriptorPoolSizes () const noexcept
+			{
+				return m_descriptorPoolSizes;
+			}
 
 			/**
 			 * @brief Returns the max sets.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t maxSets () const noexcept;
+			uint32_t
+			maxSets () const noexcept
+			{
+				return m_createInfo.maxSets;
+			}
 
 			/**
 			 * @brief Allocates one descriptor set.
@@ -150,6 +172,6 @@ namespace Emeraude::Vulkan
 			VkDescriptorPool m_handle{VK_NULL_HANDLE};
 			VkDescriptorPoolCreateInfo m_createInfo{};
 			std::vector< VkDescriptorPoolSize > m_descriptorPoolSizes;
-			mutable std::mutex m_allocationMutex{};
+			mutable std::mutex m_allocationMutex;
 	};
 }

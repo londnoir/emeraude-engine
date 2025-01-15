@@ -1,56 +1,85 @@
 /*
- * Emeraude/Graphics/TextureResource/Abstract.hpp
- * This file is part of Emeraude
+ * src/Graphics/TextureResource/Abstract.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <string>
+
+/* Third-party inclusions. */
+#include <vulkan/vulkan.h>
 
 /* Local inclusions for inheritances. */
 #include "Resources/ResourceTrait.hpp"
-#include "PixelFactory/Pixmap.hpp"
 
-/* Third-party inclusions. */
-#include "Third-Party-Inclusion/vulkan.hpp"
+/* Local inclusions for usages. */
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace Emeraude
 {
-	class Framebuffer;
-	class RenderPass;
-	class Image;
-	class ImageView;
-	class Sampler;
+	namespace Vulkan
+	{
+		class Framebuffer;
+		class RenderPass;
+		class Image;
+		class ImageView;
+		class Sampler;
+	}
+
+	namespace Graphics
+	{
+		class Renderer;
+	}
 }
 
 namespace Emeraude::Graphics::TextureResource
 {
 	/**
-	 * @brief This is the base class for every vulkan image resource.
+	 * @brief Higher level texture type enumeration.
+	 * @todo Adds every type of texture (Multisampling, shadows, non-float, ...)
+	 */
+	enum class Type: uint8_t
+	{
+		Texture1D = 0,
+		Texture2D = 1,
+		Texture3D = 2,
+		TextureCube = 3,
+		Texture1DArray = 4,
+		Texture2DArray = 5,
+		TextureCubeArray = 6
+	};
+
+	/**
+	 * @brief This is the base class for every vulkan texture resource.
 	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class Abstract : public Resources::ResourceTrait
@@ -77,21 +106,24 @@ namespace Emeraude::Graphics::TextureResource
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Abstract &
 			 */
 			Abstract & operator= (const Abstract & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Abstract &
 			 */
 			Abstract & operator= (Abstract && copy) noexcept = delete;
 
 			/**
 			 * @brief Returns the descriptor image info.
+			 * @todo Remove this !
 			 * @return VkDescriptorBufferInfo
 			 */
 			[[nodiscard]]
-			virtual VkDescriptorImageInfo getDescriptorInfo () const noexcept final;
+			VkDescriptorImageInfo getDescriptorInfo () const noexcept;
 
 			/**
 			 * @brief Returns whether the image is ready.
@@ -102,14 +134,24 @@ namespace Emeraude::Graphics::TextureResource
 
 			/**
 			 * @brief Creates the image buffer from local data to video memory.
+			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
-			virtual bool createOnHardware () noexcept = 0;
+			virtual bool createOnHardware (Renderer & renderer) noexcept = 0;
 
 			/**
 			 * @brief Destroys the image from video memory.
+			 * @return bool
 			 */
 			virtual bool destroyFromHardware () noexcept = 0;
+
+			/**
+			 * @brief Returns the final texture type.
+			 * @note This is useful for shader generation to get the right sampler/texture type conversion.
+			 * @return Type
+			 */
+			[[nodiscard]]
+			virtual Type type () const noexcept = 0;
 
 			/**
 			 * @brief Returns whether the texture is grayscale or not.
@@ -143,38 +185,53 @@ namespace Emeraude::Graphics::TextureResource
 
 			/**
 			 * @brief Returns the number frame.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			virtual size_t frameCount () const noexcept = 0;
+			virtual uint32_t frameCount () const noexcept = 0;
 
 			/**
-			 * @brief Returns the duration.
+			 * @brief Returns the duration in milliseconds.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			virtual uint32_t duration () const noexcept = 0;
+
+			/**
+			 * @brief Returns the index of the frame at specific time.
+			 * @param sceneTime The current scene time in milliseconds.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			virtual size_t duration () const noexcept = 0;
+			virtual size_t frameIndexAt (uint32_t sceneTime) const noexcept = 0;
 
 			/**
 			 * @brief Returns the image of the texture.
-			 * @return const std::shared_ptr< Vulkan::Image > &
+			 * @return std::shared_ptr< Vulkan::Image >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::Image > & image () const noexcept = 0;
+			virtual std::shared_ptr< Vulkan::Image > image () const noexcept = 0;
 
 			/**
 			 * @brief Returns the image view of the texture.
-			 * @return const std::shared_ptr< Vulkan::ImageView > &
+			 * @return std::shared_ptr< Vulkan::ImageView >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::ImageView > & imageView () const noexcept = 0;
+			virtual std::shared_ptr< Vulkan::ImageView > imageView () const noexcept = 0;
 
 			/**
 			 * @brief Returns the sampler used by of the texture.
-			 * @return const std::shared_ptr< Vulkan::Sampler > &
+			 * @return std::shared_ptr< Vulkan::Sampler >
 			 */
 			[[nodiscard]]
-			virtual const std::shared_ptr< Vulkan::Sampler > & sampler () const noexcept = 0;
+			virtual std::shared_ptr< Vulkan::Sampler > sampler () const noexcept = 0;
+
+			/**
+			 * @brief Returns whether the texture needs 3D texture coordinates to be fully functional.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			virtual bool request3DTextureCoordinates () const noexcept = 0;
 
 			/**
 			 * @brief Validates a pixmap for Vulkan requirements.

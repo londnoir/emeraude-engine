@@ -1,93 +1,100 @@
 /*
- * Emeraude/NetworkManager.cpp
- * This file is part of Emeraude
+ * src/NetworkManager.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "NetworkManager.hpp"
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <algorithm>
+#include <cstddef>
+#include <utility>
+#include <tuple>
+#include <numeric>
+#include <ranges>
 
 /* Local inclusions. */
-#include "Arguments.hpp"
-#include "FastJSON.hpp"
-#include "FileSystem.hpp"
-#include "Network/Network.hpp"
-#include "Settings.hpp"
-#include "Tracer.hpp"
+#include "Libraries/FastJSON.hpp"
+#include "Libraries/Network/Network.hpp"
+#include "Libraries/Network/URL.hpp"
+#include "Libraries/Network/URI.hpp"
+#include "Libraries/ParallelizableTrait.hpp"
+#include "Libraries/IO.hpp"
+#include "PrimaryServices.hpp"
 
 namespace Emeraude
 {
 	using namespace Libraries;
 
-	const size_t NetworkManager::ClassUID{Observable::getClassUID()};
+	const size_t NetworkManager::ClassUID{getClassUID(ClassId)};
 
-	NetworkManager::NetworkManager (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings) noexcept
-		: ServiceInterface(ClassId), ParallelizableProcess(4),
-		  m_arguments(arguments), m_fileSystem(fileSystem), m_coreSettings(coreSettings)
+	NetworkManager::NetworkManager (PrimaryServices & primaryServices) noexcept
+		: ServiceInterface(ClassId), ParallelizableTrait(4),
+		  m_primaryServices(primaryServices)
 	{
 
+	}
+
+	size_t
+	NetworkManager::classUID () const noexcept
+	{
+		return ClassUID;
 	}
 
 	bool
 	NetworkManager::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
 	bool
 	NetworkManager::usable () const noexcept
 	{
-		return Network::hasInternetConnexion();
+		return m_flags[ServiceInitialized];
 	}
 
 	bool
 	NetworkManager::onInitialize () noexcept
 	{
-		m_downloadCacheDirectory = m_fileSystem.cacheDirectory(DownloadCacheDirectory);
+		m_downloadCacheDirectory = m_primaryServices.fileSystem().cacheDirectory(DownloadCacheDirectory);
 
-		if ( m_downloadCacheDirectory.checkUsage() )
+		if ( IO::isDirectoryUsable(m_downloadCacheDirectory) )
 		{
 			m_flags[DownloadEnabled] = true;
 
 			return this->checkDownloadCacheDBFile();
 		}
-		else
+
+		TraceWarning{ClassId} << "Unable to get the cache directory '" << m_downloadCacheDirectory << "' for download !";
+
+		if ( !Network::hasInternetConnexion() )
 		{
-			TraceWarning{ClassId} << "Unable to get the cache directory '" << m_downloadCacheDirectory << "' for download !";
+			TraceWarning{ClassId} << "There is no internet connexion yet.";
 		}
 
-		if ( Network::hasInternetConnexion() )
-			TraceWarning{ClassId} << "There is no internet connexion.";
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -100,16 +107,22 @@ namespace Emeraude
 		return this->updateDownloadCacheDBFile();
 	}
 
-	Path::File
+	std::filesystem::path
 	NetworkManager::getDownloadCacheDBFilepath () const noexcept
 	{
-		return {m_fileSystem.cacheDirectory(), DownloadCacheDBFilename};
+		return m_primaryServices.fileSystem().cacheDirectory(DownloadCacheDBFilename);
 	}
 
-	Path::File
+	std::filesystem::path
 	NetworkManager::getDownloadedCacheFilepath (size_t cacheId) const noexcept
 	{
-		return {m_downloadCacheDirectory, (std::stringstream{} << "dlcached_" << cacheId).str()};
+		std::stringstream filename;
+		filename << "dlcached_" << cacheId;
+
+		auto filepath = m_downloadCacheDirectory;
+		filepath.append(filename.str());
+
+		return filepath;
 	}
 
 	bool
@@ -124,17 +137,15 @@ namespace Emeraude
 		{
 			auto & fileDataBase = root[FileDataBaseKey];
 
-			for ( const auto & pair : m_downloadCache )
+			for ( const auto & [url, downloadedItem] : m_downloadCache )
 			{
-				const auto & downloadedItem = pair.second;
-
 				TraceInfo{ClassId} << "Cached downloaded file ID #" << downloadedItem.cacheId() << " '" << downloadedItem.originalFilename() << "' (" << downloadedItem.filesize() << " bytes) registered.";
 
 				Json::Value DBEntry = Json::objectValue;
-				DBEntry[FileURLKey] = Json::Value{pair.first.c_str()};
-				DBEntry[CacheIdKey] = Json::Value{downloadedItem.cacheId()};
+				DBEntry[FileURLKey] = Json::Value{url.c_str()};
+				DBEntry[CacheIdKey] = Json::Value{static_cast< Json::UInt64 >(downloadedItem.cacheId())};
 				DBEntry[FilenameKey] = Json::Value{downloadedItem.originalFilename().c_str()};
-				DBEntry[FilesizeKey] = Json::Value{downloadedItem.filesize()};
+				DBEntry[FilesizeKey] = Json::Value{static_cast< Json::UInt64 >(downloadedItem.filesize())};
 
 				fileDataBase.append(DBEntry);
 			}
@@ -153,7 +164,7 @@ namespace Emeraude
 			return false;
 		}
 
-		return Utility::filePutContents(filepath, jsonString);
+		return IO::filePutContents(filepath, jsonString);
 	}
 
 	bool
@@ -161,9 +172,11 @@ namespace Emeraude
 	{
 		const auto filepath = this->getDownloadCacheDBFilepath();
 
-		/* Simply create an empty file, if it doesn't exists. */
-		if ( !filepath.exists() )
+		/* Simply create an empty file, if it doesn't exist. */
+		if ( !IO::fileExists(filepath) )
+		{
 			return this->updateDownloadCacheDBFile();
+		}
 
 		/* Read the JSON content. */
 		const auto root = FastJSON::getRootFromFile(filepath);
@@ -183,7 +196,7 @@ namespace Emeraude
 			return false;
 		}
 
-		const auto files = root[FileDataBaseKey];
+		const auto & files = root[FileDataBaseKey];
 
 		if ( !files.isArray() )
 		{
@@ -205,10 +218,10 @@ namespace Emeraude
 			}
 
 			/* Check file item JSON keys value. */
-			const auto _fileURL = file[FileURLKey];
-			const auto _cacheId = file[CacheIdKey];
-			const auto _filename = file[FilenameKey];
-			const auto _filesize = file[FilesizeKey];
+			const auto & _fileURL = file[FileURLKey];
+			const auto & _cacheId = file[CacheIdKey];
+			const auto & _filename = file[FilenameKey];
+			const auto & _filesize = file[FilesizeKey];
 
 			if ( !_fileURL.isString() || !_cacheId.isIntegral() || !_filename.isString() || !_filesize.isIntegral() )
 			{
@@ -223,9 +236,9 @@ namespace Emeraude
 			const auto filesize = static_cast< size_t >(_filesize.asLargestUInt());
 
 			/* NOTE: Check the existence of the file in the directory cache. */
-			auto cacheFilepath = this->getDownloadedCacheFilepath(cacheId);
+			const auto cacheFilepath = this->getDownloadedCacheFilepath(cacheId);
 
-			if ( !cacheFilepath.exists() )
+			if ( !IO::fileExists(cacheFilepath) )
 			{
 				TraceWarning{ClassId} << "The cached downloaded file ID #" << cacheId << " '" << cacheFilepath << "' no more exists !";
 
@@ -241,7 +254,9 @@ namespace Emeraude
 			);
 
 			if ( cacheId > highestCacheItemId )
+			{
 				highestCacheItemId = cacheId;
+			}
 		}
 
 		m_nextCacheItemId = highestCacheItemId + 1;
@@ -252,15 +267,16 @@ namespace Emeraude
 	bool
 	NetworkManager::clearDownloadCache () noexcept
 	{
-		for ( const auto & pair : m_downloadCache )
+		for ( const auto & downloadedItem : std::ranges::views::values(m_downloadCache) )
 		{
-			const auto & downloadedItem = pair.second;
 			const auto cacheFilepath = this->getDownloadedCacheFilepath(downloadedItem.cacheId());
 
-			if ( !cacheFilepath.exists() )
+			if ( !IO::fileExists(cacheFilepath) )
+			{
 				continue;
+			}
 
-			if ( !cacheFilepath.erase() )
+			if ( !IO::eraseFile(cacheFilepath) )
 			{
 				TraceError{ClassId} << "Unable to remove file ID #" << downloadedItem.cacheId() << " '" << cacheFilepath << "' no more exists !";
 
@@ -284,10 +300,8 @@ namespace Emeraude
 	}
 
 	int
-	NetworkManager::download (const Network::URL & url, const Path::File & output, bool replaceExistingFile) noexcept
+	NetworkManager::download (const Network::URL & url, const std::filesystem::path & output, bool replaceExistingFile) noexcept
 	{
-
-
 		/* 1. Check if the download request is not already in queue. */
 		int ticket = 0;
 
@@ -338,8 +352,8 @@ namespace Emeraude
 	size_t
 	NetworkManager::fileCount (DownloadItem::Status filter) const noexcept
 	{
-		return std::count_if(m_downloadItems.cbegin(), m_downloadItems.cend(), [filter] (const auto & request){
-			return ( request.status() == filter );
+		return std::ranges::count_if(m_downloadItems, [filter] (const auto & request){
+			return request.status() == filter;
 		});
 	}
 
@@ -371,7 +385,9 @@ namespace Emeraude
 	NetworkManager::downloadStatus (int ticket) const noexcept
 	{
 		if ( ticket >= static_cast< int >(m_downloadItems.size()) )
+		{
 			return DownloadItem::Status::Error;
+		}
 
 		return m_downloadItems[ticket].status();
 	}

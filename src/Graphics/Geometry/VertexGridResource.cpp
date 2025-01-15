@@ -1,37 +1,45 @@
 /*
- * Emeraude/Graphics/Geometry/VertexGridResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/Geometry/VertexGridResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "VertexGridResource.hpp"
 
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
+
 /* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Resources/Manager.hpp"
-#include "Tracer.hpp"
-#include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/TransferManager.hpp"
+#include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -39,7 +47,7 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::Geometry:
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::VertexGridResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::VertexGridResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics::Geometry
 {
@@ -49,10 +57,10 @@ namespace Emeraude::Graphics::Geometry
 	using namespace Libraries::PixelFactory;
 	using namespace Vulkan;
 
-	const size_t VertexGridResource::ClassUID{Observable::getClassUID()};
+	const size_t VertexGridResource::ClassUID{getClassUID(ClassId)};
 
-	VertexGridResource::VertexGridResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: Interface(name, resourceFlagBits)
+	VertexGridResource::VertexGridResource (const std::string & name, uint32_t geometryFlagBits) noexcept
+		: Interface(name, geometryFlagBits)
 	{
 
 	}
@@ -63,94 +71,11 @@ namespace Emeraude::Graphics::Geometry
 	}
 
 	bool
-	VertexGridResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	VertexGridResource::isCreated () const noexcept
-	{
-		if ( m_vertexBufferObject == nullptr || !m_vertexBufferObject->isCreated() )
-			return false;
-
-		if ( m_indexBufferObject == nullptr || !m_indexBufferObject->isCreated() )
-			return false;
-
-		return true;
-	}
-
-	Topology
-	VertexGridResource::topology () const noexcept
-	{
-		return Topology::TriangleStrip;
-	}
-
-	size_t
-	VertexGridResource::subGeometryCount () const noexcept
-	{
-		return 1;
-	}
-
-	size_t
-	VertexGridResource::subGeometryOffset (size_t) const noexcept
-	{
-		return 0;
-	}
-
-	size_t
-	VertexGridResource::subGeometryLength (size_t) const noexcept
-	{
-		return m_indexBufferObject->indexCount();
-	}
-
-	const Math::Cuboid< float > &
-	VertexGridResource::boundingBox () const noexcept
-	{
-		return m_localData.boundingBox();
-	}
-
-	const Math::Sphere< float > &
-	VertexGridResource::boundingSphere () const noexcept
-	{
-		return m_localData.boundingSphere();
-	}
-
-	const Vulkan::VertexBufferObject *
-	VertexGridResource::vertexBufferObject () const noexcept
-	{
-		return m_vertexBufferObject.get();
-	}
-
-	const Vulkan::IndexBufferObject *
-	VertexGridResource::indexBufferObject () const noexcept
-	{
-		return m_indexBufferObject.get();
-	}
-
-	bool
-	VertexGridResource::useIndexBuffer () const noexcept
-	{
-#ifdef DEBUG
-		return m_indexBufferObject != nullptr;
-#else
-		return true;
-#endif
-	}
-
-	bool
 	VertexGridResource::create () noexcept
 	{
 		if ( this->isCreated() )
 		{
-			Tracer::warning(ClassId, "The buffers are already in video memory ! Use update() instead.");
+			Tracer::warning(ClassId, "The buffers are already in video memory ! Use processLogics() instead.");
 
 			return true;
 		}
@@ -168,7 +93,7 @@ namespace Emeraude::Graphics::Geometry
 		/* NOTE: Example for a 4 divisions square. */
 
 		/* Create the vertex buffer and the index buffer local data. */
-		const auto vertexElementCount = Geometry::getElementCountFromFlags(this->flagBits());
+		const auto vertexElementCount = getElementCountFromFlags(this->flagBits());
 		const auto rowCount = m_localData.squaredQuadCount(); /* 4 */
 		/* This holds the number of indices requested to draw a
 		 * full row of quads including the primitive restart. */
@@ -229,19 +154,21 @@ namespace Emeraude::Graphics::Geometry
 			indices.emplace_back(std::numeric_limits< uint32_t >::max());
 		}
 
-		/* Create hardware buffers from local data. */
-		if ( !this->createVideoMemoryBuffers(vertexAttributes, m_localData.pointCount(), vertexElementCount, indices) )
-			return false;
+		if ( vertexAttributes.empty() || indices.empty() || vertexElementCount == 0 )
+		{
+			Tracer::error(ClassId, "Buffers creation fails !");
 
-		return true;
+			return false;
+		}
+
+		/* Create hardware buffers from local data. */
+		return this->createVideoMemoryBuffers(vertexAttributes, m_localData.pointCount(), vertexElementCount, indices);
 	}
 
 	bool
 	VertexGridResource::createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, size_t vertexCount, size_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_GPUAccessMutex};
-
-		auto * transferManager = Vulkan::TransferManager::instance(TransferType::Graphics);
+		auto * transferManager = TransferManager::instance(GPUWorkType::Graphics);
 
 		m_vertexBufferObject = std::make_unique< VertexBufferObject >(transferManager->device(), vertexCount, vertexElementCount);
 		m_vertexBufferObject->setIdentifier(this->name() + "-VBO-VertexBufferObject");
@@ -280,11 +207,9 @@ namespace Emeraude::Graphics::Geometry
 			return false;
 		}
 
-		// TODO
+		Tracer::warning(ClassId, "Updating geometry in video memory is not handled yet !");
 
-		Tracer::error(ClassId, "Updating geometry in video memory is not handled yet !");
-
-		return false;
+		return true;
 	}
 
 	void
@@ -309,33 +234,29 @@ namespace Emeraude::Graphics::Geometry
 		}
 	}
 
-	const char *
-	VertexGridResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	VertexGridResource::load () noexcept
 	{
-		return this->load(1024.0F, 32, 32.0F);
+		return this->load(DefaultSize, DefaultDivision, DefaultUVMultiplier);
 	}
 
 	bool
 	VertexGridResource::load (const Json::Value & data) noexcept
 	{
 		return this->load(
-			FastJSON::getFloat(data, JKSize, 1024.0F),
-			FastJSON::getUnsignedInteger(data, JKDivision, 32),
-			FastJSON::getFloat(data, JKUVMultiplier, 32.0F)
+			FastJSON::getNumber< float >(data, JKSize, DefaultSize),
+			FastJSON::getNumber< size_t >(data, JKDivision, DefaultDivision),
+			FastJSON::getNumber< float >(data, JKUVMultiplier, DefaultUVMultiplier)
 		);
 	}
 
 	bool
-	VertexGridResource::load (float size, size_t division, float UVMultiplier) noexcept
+	VertexGridResource::load (float size, size_t division, float UVMultiplier, const VertexColorGenMode & vertexColorGenMode, const Color< float > & globalVertexColor) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( size < 0.0F )
 		{
@@ -359,15 +280,19 @@ namespace Emeraude::Graphics::Geometry
 		}
 
 		m_localData.setUVMultiplier(UVMultiplier);
+		m_vertexColorGenMode = vertexColorGenMode;
+		m_globalVertexColor = globalVertexColor;
 
 		return this->setLoadSuccess(true);
 	}
 
 	bool
-	VertexGridResource::load (const Grid< float > & grid) noexcept
+	VertexGridResource::load (const Grid< float > & grid, const VertexColorGenMode & vertexColorGenMode, const Color< float > & globalVertexColor) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		if ( !grid.isValid() )
 		{
@@ -377,26 +302,148 @@ namespace Emeraude::Graphics::Geometry
 		}
 
 		m_localData = grid;
+		m_vertexColorGenMode = vertexColorGenMode;
+		m_globalVertexColor = globalVertexColor;
 
 		return this->setLoadSuccess(true);
 	}
 
-	Grid< float > &
-	VertexGridResource::localData () noexcept
+	uint32_t
+	VertexGridResource::addVertexToBuffer (size_t index, std::vector< float > & buffer, uint32_t vertexElementCount) const noexcept
 	{
-		return m_localData;
-	}
+		const auto position = m_localData.position(index);
 
-	const Grid< float > &
-	VertexGridResource::localData () const noexcept
-	{
-		return m_localData;
+		/* Vertex position */
+		buffer.emplace_back(position[X]);
+		buffer.emplace_back(position[Y]);
+		buffer.emplace_back(position[Z]);
+
+		if ( this->isFlagEnabled(EnableTangentSpace) )
+		{
+			const auto normal = m_localData.normal(index, position);
+			const auto tangent = m_localData.tangent(index, position, m_localData.textureCoordinates3D(index));
+			const auto binormal = Vector< 3, float >::crossProduct(normal, tangent);
+
+			/* Tangent */
+			buffer.emplace_back(tangent[X]);
+			buffer.emplace_back(tangent[Y]);
+			buffer.emplace_back(tangent[Z]);
+
+			/* Binormal */
+			buffer.emplace_back(binormal[X]);
+			buffer.emplace_back(binormal[Y]);
+			buffer.emplace_back(binormal[Z]);
+
+			/* Normal */
+			buffer.emplace_back(normal[X]);
+			buffer.emplace_back(normal[Y]);
+			buffer.emplace_back(normal[Z]);
+		}
+		else if ( this->isFlagEnabled(EnableNormal) )
+		{
+			const auto normal = m_localData.normal(index, position);
+
+			/* Normal */
+			buffer.emplace_back(normal[X]);
+			buffer.emplace_back(normal[Y]);
+			buffer.emplace_back(normal[Z]);
+		}
+
+		if ( this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
+		{
+			if ( this->isFlagEnabled(Enable3DPrimaryTextureCoordinates) )
+			{
+				const auto UVWCoords = m_localData.textureCoordinates3D(index);
+
+				/* 3D texture coordinates */
+				buffer.emplace_back(UVWCoords[X]);
+				buffer.emplace_back(UVWCoords[Y]);
+				buffer.emplace_back(UVWCoords[Z]);
+			}
+			else
+			{
+				const auto UVCoords = m_localData.textureCoordinates2D(index);
+
+				/* 2D texture coordinates */
+				buffer.emplace_back(UVCoords[X]);
+				buffer.emplace_back(UVCoords[Y]);
+			}
+		}
+
+		/* FIXME: For now the secondary texture are the same as primary. */
+		if ( this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
+		{
+			if ( this->isFlagEnabled(Enable3DSecondaryTextureCoordinates) )
+			{
+				const auto UVWCoords = m_localData.textureCoordinates3D(index);
+
+				/* 3D texture coordinates */
+				buffer.emplace_back(UVWCoords[X]);
+				buffer.emplace_back(UVWCoords[Y]);
+				buffer.emplace_back(UVWCoords[Z]);
+			}
+			else
+			{
+				const auto UVCoords = m_localData.textureCoordinates2D(index);
+
+				/* 2D texture coordinates */
+				buffer.emplace_back(UVCoords[X]);
+				buffer.emplace_back(UVCoords[Y]);
+			}
+		}
+
+		/* Vertex color. */
+		if ( this->isFlagEnabled(EnableVertexColor) )
+		{
+			switch ( m_vertexColorGenMode )
+			{
+				case VertexColorGenMode::UseGlobal :
+					buffer.emplace_back(m_globalVertexColor.red());
+					buffer.emplace_back(m_globalVertexColor.green());
+					buffer.emplace_back(m_globalVertexColor.blue());
+					buffer.emplace_back(1.0);
+					break;
+
+				case VertexColorGenMode::UseRandom :
+				{
+					const auto randomColor = Color< float >::random();
+
+					buffer.emplace_back(randomColor.red());
+					buffer.emplace_back(randomColor.green());
+					buffer.emplace_back(randomColor.blue());
+					buffer.emplace_back(1.0);
+				}
+					break;
+
+				case VertexColorGenMode::GenerateFromCoords :
+				{
+					const auto UVCoords = m_localData.textureCoordinates2D(index);
+					const auto level = 1.0F - ((position[Y] - m_localData.boundingBox().minimum(Y)) / m_localData.boundingBox().height());
+
+					buffer.emplace_back(UVCoords[X] / m_localData.UMultiplier());
+					buffer.emplace_back(UVCoords[Y] / m_localData.VMultiplier());
+					buffer.emplace_back(level);
+				}
+					break;
+			}
+		}
+
+		/* Vertex weight. */
+		if ( this->isFlagEnabled(EnableWeight) )
+		{
+			buffer.emplace_back(1.0);
+			buffer.emplace_back(1.0);
+			buffer.emplace_back(1.0);
+			buffer.emplace_back(1.0);
+		}
+
+		return static_cast< uint32_t >(buffer.size() / vertexElementCount) - 1;
 	}
 
 	std::shared_ptr< VertexGridResource >
 	VertexGridResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->vertexGridGeometries().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->vertexGridGeometries().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< VertexGridResource >

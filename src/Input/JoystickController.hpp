@@ -1,50 +1,55 @@
 /*
- * Emeraude/Input/JoystickController.hpp
- * This file is part of Emeraude
+ * src/Input/JoystickController.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <array>
+#include <string>
 
 /* Local inclusions for inheritances. */
 #include "ControllerInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "JoystickTypes.hpp"
+#include "Types.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
+{
+	class Window;
+}
 
 namespace Emeraude::Input
 {
-	static constexpr auto JoystickMaxAxis  = 6;
-	static constexpr auto JoystickMaxButtons = 16;
-	static constexpr auto JoystickMaxHats = 4;
-
+	/** @brief Structure to copy the joystick state.  */
 	struct JoystickState
 	{
-		std::array< float, 6 > axes{0.0F}; // NOLINT(*-magic-numbers)
+		std::array< float, 6 > axes{0.0F};
 		std::array< bool, JoystickMaxButtons > buttons{false};
 		std::array< JoystickHatDirection, JoystickMaxHats >hats{Center};
 	};
@@ -57,39 +62,47 @@ namespace Emeraude::Input
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"JoystickController"};
+
 			/**
 			 * @brief Constructs a joystick controller.
-			 * @param deviceID The joystick identifier.
 			 */
-			explicit JoystickController (int deviceID = -1) noexcept;
+			JoystickController () noexcept = default;
+
+			/** @copydoc Emeraude::Input::ControllerInterface::disable() */
+			void disable (bool state) noexcept override;
+
+			/** @copydoc Emeraude::Input::ControllerInterface::disabled() */
+			[[nodiscard]]
+			bool disabled () const noexcept override;
 
 			/** @copydoc Emeraude::Input::ControllerInterface::isConnected() */
 			[[nodiscard]]
 			bool isConnected () const noexcept override;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::showRawState() */
+			/** @copydoc Emeraude::Input::ControllerInterface::getRawState() */
 			[[nodiscard]]
 			std::string getRawState () const noexcept override;
 
 			/**
 			 * @brief Returns the device id.
-			 * @return int
+			 * @return int32_t
 			 */
 			[[nodiscard]]
-			int deviceID () const noexcept;
+			int32_t deviceID () const noexcept;
 
 			/**
-			 * @brief Attaches the to device identifier.
+			 * @brief Attaches the device identifier.
 			 * @param deviceID The joystick identifier.
 			 * @return void
 			 */
-			void attachDeviceID (int deviceID) noexcept;
+			void attachDeviceID (int32_t deviceID) noexcept;
 
 			/**
 			 * @brief Detaches the device.
 			 * @return void
 			 */
-			inline
 			void
 			detachDevice () noexcept
 			{
@@ -136,7 +149,7 @@ namespace Emeraude::Input
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isButtonPressed (int buttonNum) const noexcept;
+			bool isButtonPressed (int32_t buttonNum) const noexcept;
 
 			/**
 			 * @brief isButtonReleased
@@ -144,7 +157,7 @@ namespace Emeraude::Input
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isButtonReleased (int buttonNum) const noexcept;
+			bool isButtonReleased (int32_t buttonNum) const noexcept;
 
 			/**
 			 * @brief hatValue
@@ -152,26 +165,37 @@ namespace Emeraude::Input
 			 * @return JoystickHatDirection
 			 */
 			[[nodiscard]]
-			JoystickHatDirection hatValue (int hatNum) const noexcept;
+			JoystickHatDirection hatValue (int32_t hatNum) const noexcept;
 
 			/**
 			 * @brief This function is called by the input manager to update device state.
 			 * @note This must be called by the main thread.
+			 * @param deviceID The joystick ID.
+			 * @return void
 			 */
-			static void readDeviceState (GLFWwindow * window, int deviceID) noexcept;
+			static void readDeviceState (int32_t deviceID) noexcept;
 
 			/**
-			 * @brief clearDeviceState
-			 * @param deviceID
+			 * @brief Clears the device state.
+			 * @param deviceID The joystick ID.
+			 * @return void.
 			 */
-			static void clearDeviceState (int deviceID) noexcept;
+			static void clearDeviceState (int32_t deviceID) noexcept;
 
 		private:
 
-			static std::array< JoystickState, 16 > s_devicesState; // NOLINT NOTE: Special state copy.
+			/**
+			 * @brief Returns whether the device is usable.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool usable () const noexcept;
 
-			int m_deviceID{-1};
-			float m_threshold{0.15F}; // NOLINT(*-magic-numbers)
-			float m_multiplier{4.0F}; // NOLINT(*-magic-numbers)
+			static std::array< JoystickState, DeviceCount > s_devicesState;
+
+			int32_t m_deviceID{-1};
+			float m_threshold{0.15F};
+			float m_multiplier{4.0F};
+			bool m_disabled{false};
 	};
 }

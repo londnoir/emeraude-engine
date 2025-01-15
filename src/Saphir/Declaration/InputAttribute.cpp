@@ -1,33 +1,33 @@
 /*
- * Emeraude/Saphir/Declaration/InputAttribute.cpp
- * This file is part of Emeraude
+ * src/Saphir/Declaration/InputAttribute.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "InputAttribute.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <sstream>
 
 namespace Emeraude::Saphir::Declaration
@@ -66,6 +66,10 @@ namespace Emeraude::Saphir::Declaration
 			case VertexAttributeType::NormalModelMatrixR2 :
 				return GLSL::Matrix3;
 
+			case VertexAttributeType::ModelPosition :
+			case VertexAttributeType::ModelScaling :
+				return GLSL::FloatVector3;
+
 			default:
 				return nullptr;
 		}
@@ -77,42 +81,48 @@ namespace Emeraude::Saphir::Declaration
 		switch ( vertexAttribute )
 		{
 			case VertexAttributeType::Position :
-				return Attributes::Position;
+				return Attribute::Position;
 
 			case VertexAttributeType::Binormal :
-				return Attributes::Binormal;
+				return Attribute::Binormal;
 
 			case VertexAttributeType::Tangent :
-				return Attributes::Tangent;
+				return Attribute::Tangent;
 
 			case VertexAttributeType::Normal :
-				return Attributes::Normal;
+				return Attribute::Normal;
 
 			case VertexAttributeType::VertexColor :
-				return Attributes::Color;
+				return Attribute::Color;
 
 			case VertexAttributeType::Primary2DTextureCoordinates :
-				return Attributes::Primary2DTextureCoordinates;
+				return Attribute::Primary2DTextureCoordinates;
 
 			case VertexAttributeType::Primary3DTextureCoordinates :
-				return Attributes::Primary3DTextureCoordinates;
+				return Attribute::Primary3DTextureCoordinates;
 
 			case VertexAttributeType::Secondary2DTextureCoordinates :
-				return Attributes::Secondary2DTextureCoordinates;
+				return Attribute::Secondary2DTextureCoordinates;
 
 			case VertexAttributeType::Secondary3DTextureCoordinates :
-				return Attributes::Secondary3DTextureCoordinates;
+				return Attribute::Secondary3DTextureCoordinates;
 
 			case VertexAttributeType::ModelMatrixR0 :
 			case VertexAttributeType::ModelMatrixR1 :
 			case VertexAttributeType::ModelMatrixR2 :
 			case VertexAttributeType::ModelMatrixR3 :
-				return Attributes::ModelMatrix;
+				return Attribute::ModelMatrix;
 
 			case VertexAttributeType::NormalModelMatrixR0 :
 			case VertexAttributeType::NormalModelMatrixR1 :
 			case VertexAttributeType::NormalModelMatrixR2 :
-				return Attributes::NormalModelMatrix;
+				return Attribute::NormalModelMatrix;
+
+			case VertexAttributeType::ModelPosition :
+				return Attribute::ModelPosition;
+
+			case VertexAttributeType::ModelScaling :
+				return Attribute::ModelScaling;
 
 			default:
 				return nullptr;
@@ -209,6 +219,12 @@ namespace Emeraude::Saphir::Declaration
 			return true;
 
 		if ( to_string(VertexAttributeType::NormalModelMatrixR0) == m_name )
+			return true;
+
+		if ( to_string(VertexAttributeType::ModelPosition) == m_name )
+			return true;
+
+		if ( to_string(VertexAttributeType::ModelScaling) == m_name )
 			return true;
 
 		return false;

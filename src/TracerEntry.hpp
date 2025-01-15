@@ -1,45 +1,37 @@
 /*
- * Emeraude/TracerEntry.hpp
- * This file is part of Emeraude
+ * src/TracerEntry.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <chrono>
 #include <string>
 #include <thread>
-#if defined(__clang__) && __clang_major__ < 16
-#include <experimental/source_location>
-
-namespace std_glue = std::experimental;
-#else
-#include <source_location>
-
-namespace std_glue = std;
-#endif
+#include "Libraries/std_source_location.hpp"
 
 /* Local inclusions for usages. */
 #include "Types.hpp"
@@ -47,7 +39,7 @@ namespace std_glue = std;
 namespace Emeraude
 {
 	/**
-	 * @brief The TracerEntry class
+	 * @brief A single entry for the tracer.
 	 */
 	class TracerEntry final
 	{
@@ -61,49 +53,73 @@ namespace Emeraude
 			 * @param location The location of the message in the code source.
 			 * @param threadId The thread ID.
 			 */
-			TracerEntry (Severity severity, const char * tag, std::string message, const std_glue::source_location & location, const std::thread::id & threadId) noexcept;
+			TracerEntry (Severity severity, const char * tag, std::string message, const std::source_location & location, const std::thread::id & threadId) noexcept;
 
 			/**
 			 * @brief Returns the time of the message.
 			 * @return const time_point< steady_clock > &
 			 */
 			[[nodiscard]]
-			const std::chrono::time_point< std::chrono::steady_clock > & time () const noexcept;
+			const std::chrono::time_point< std::chrono::steady_clock > &
+			time () const noexcept
+			{
+				return m_time;
+			}
 
 			/**
 			 * @brief Returns the severity of the message.
 			 * @return Severity
 			 */
 			[[nodiscard]]
-			Severity severity () const noexcept;
+			Severity
+			severity () const noexcept
+			{
+				return m_severity;
+			}
 
 			/**
 			 * @brief Returns the tag of the entry.
-			 * @param const char *
+			 * @return const char *
 			 */
 			[[nodiscard]]
-			const char * tag () const noexcept;
+			const char *
+			tag () const noexcept
+			{
+				return m_tag;
+			}
 
 			/**
 			 * @brief Returns the message.
-			 * @param std::string
+			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			const std::string & message () const noexcept;
+			const std::string &
+			message () const noexcept
+			{
+				return m_message;
+			}
 
 			/**
 			 * @brief Returns the location where the entry comes from.
-			 * @param const std_glue::source_location &
+			 * @return const std::source_location &
 			 */
 			[[nodiscard]]
-			const std_glue::source_location & location () const noexcept;
+			const std::source_location &
+			location () const noexcept
+			{
+				return m_location;
+			}
 
 			/**
 			 * @brief Returns the thread ID where the entry was generated.
-			 * @param thread::id
+			 * @return const std::thread::id &
 			 */
 			[[nodiscard]]
-			const std::thread::id & threadId () const noexcept;
+			const std::thread::id &
+			threadId () const noexcept
+			{
+				return m_threadId;
+			}
 
 		private:
 
@@ -111,7 +127,7 @@ namespace Emeraude
 			Severity m_severity{Severity::Info};
 			const char * m_tag{nullptr};
 			std::string m_message;
-			std_glue::source_location m_location;
+			std::source_location m_location;
 			std::thread::id m_threadId;
 	};
 }

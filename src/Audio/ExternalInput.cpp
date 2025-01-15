@@ -1,51 +1,50 @@
 /*
- * Emeraude/Audio/ExternalInput.cpp
- * This file is part of Emeraude
+ * src/Audio/ExternalInput.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ExternalInput.hpp"
 
-/* C/C++ standard libraries. */
-#include <iostream>
+/* STL inclusions. */
 #include <cstring>
+#include <iostream>
 
-/* Local inclusions */
-#include "WaveFactory/Wave.hpp"
-#include "Tracer.hpp"
-#include "Arguments.hpp"
-#include "Settings.hpp"
+/* Local inclusions. */
+#include "Libraries/WaveFactory/Wave.hpp"
+#include "Constants.hpp"
+#include "PrimaryServices.hpp"
 #include "Manager.hpp"
 
 namespace Emeraude::Audio
 {
 	using namespace Libraries;
 
-	const size_t ExternalInput::ClassUID{Observable::getClassUID()};
+	const size_t ExternalInput::ClassUID{getClassUID(ClassId)};
 
-	ExternalInput::ExternalInput (const Arguments & arguments, Settings & coreSettings) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_coreSettings(coreSettings)
+	ExternalInput::ExternalInput (PrimaryServices & primaryServices) noexcept
+		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
 	{
 
 	}
@@ -53,19 +52,20 @@ namespace Emeraude::Audio
 	ExternalInput::~ExternalInput ()
 	{
 		if ( m_process.joinable() )
+		{
 			m_process.join();
+		}
+	}
+
+	size_t
+	ExternalInput::classUID () const noexcept
+	{
+		return ClassUID;
 	}
 
 	bool
 	ExternalInput::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -78,7 +78,9 @@ namespace Emeraude::Audio
 	bool
 	ExternalInput::onInitialize () noexcept
 	{
-		if ( !Audio::Manager::isAudioAvailable() )
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+
+		if ( !Manager::instance()->usable() )
 		{
 			Tracer::warning(ClassId, "Audio external input disabled at startup.");
 
@@ -86,15 +88,17 @@ namespace Emeraude::Audio
 		}
 
 		if ( alcIsExtensionPresent(nullptr, "ALC_EXT_CAPTURE") == AL_FALSE )
+		{
 			return false;
+		}
 
 		/* Checks configuration file */
-		const auto frequency = WaveFactory::toFrequency(m_coreSettings.getAs< unsigned int >(RecorderFrequencyKey, DefaultRecorderFrequency));
-		const auto bufferSize = m_coreSettings.getAs< unsigned int >(RecorderBufferSizeKey, DefaultRecorderBufferSize);
+		const auto frequency = WaveFactory::toFrequency(m_primaryServices.settings().get< int32_t >(RecorderFrequencyKey, DefaultRecorderFrequency));
+		const auto bufferSize = m_primaryServices.settings().get< int32_t >(RecorderBufferSizeKey, DefaultRecorderBufferSize);
 
 		if ( frequency == WaveFactory::Frequency::Invalid )
 		{
-			Tracer::warning(ClassId, Blob() << "Invalid recorder frequency in configuration file ! Leaving to default (" << DefaultRecorderFrequency << " Hz).");
+			Tracer::warning(ClassId, BlobTrait() << "Invalid recorder frequency in configuration file ! Leaving to default (" << DefaultRecorderFrequency << " Hz).");
 		}
 		else
 		{
@@ -108,7 +112,7 @@ namespace Emeraude::Audio
 			return false;
 		}
 
-		m_device = alcCaptureOpenDevice(nullptr, static_cast< ALuint >(m_frequency), AL_FORMAT_MONO16, bufferSize * 1024);
+		m_device = alcCaptureOpenDevice(nullptr, static_cast< ALuint >(m_frequency), AL_FORMAT_MONO16, bufferSize * ComputerNumber1024< int >);
 
 		if ( m_device == nullptr )
 		{
@@ -136,7 +140,7 @@ namespace Emeraude::Audio
 	bool
 	ExternalInput::isRecording () const noexcept
 	{
-		return m_isRecording;
+		return m_flags[IsRecording];
 	}
 
 	void
@@ -149,14 +153,16 @@ namespace Emeraude::Audio
 			return;
 		}
 
-		if ( m_isRecording )
+		if ( m_flags[IsRecording] )
+		{
 			return;
+		}
 
 		m_samples.clear();
 
 		alcCaptureStart(m_device);
 
-		m_isRecording = true;
+		m_flags[IsRecording] = true;
 
 		m_process = std::thread(&ExternalInput::process, this);
 	}
@@ -171,18 +177,20 @@ namespace Emeraude::Audio
 			return;
 		}
 
-		if ( !m_isRecording )
+		if ( !m_flags[IsRecording] )
+		{
 			return;
+		}
 
 		alcCaptureStop(m_device);
 
-		m_isRecording = false;
+		m_flags[IsRecording] = false;
 	}
 
 	bool
-	ExternalInput::saveRecord (const Libraries::Path::File & filepath) noexcept
+	ExternalInput::saveRecord (const std::filesystem::path & filepath) const noexcept
 	{
-		if ( m_isRecording )
+		if ( m_flags[IsRecording] )
 		{
 			Tracer::warning(ClassId, "The recorder is still running !");
 
@@ -196,7 +204,7 @@ namespace Emeraude::Audio
 			return false;
 		}
 
-		WaveFactory::Wave< short int > file;
+		WaveFactory::Wave< int16_t > file;
 
 		if ( !file.initialize(m_samples, WaveFactory::Channels::Mono, m_frequency) )
 		{
@@ -218,7 +226,7 @@ namespace Emeraude::Audio
 	void
 	ExternalInput::process () noexcept
 	{
-		while ( m_isRecording )
+		while ( m_flags[IsRecording] )
 		{
 			ALCint sampleCount = 0;
 
@@ -239,25 +247,32 @@ namespace Emeraude::Audio
 	ExternalInput::queryDevices () noexcept
 	{
 		if ( alcIsExtensionPresent(nullptr, "ALC_EXT_CAPTURE") == ALC_FALSE )
+		{
 			return false;
+		}
 
-		auto devices = alcGetString(nullptr, ALC_CAPTURE_DEVICE_SPECIFIER);
+		const auto * devices = alcGetString(nullptr, ALC_CAPTURE_DEVICE_SPECIFIER);
 
-		if ( devices )
+		if ( devices != nullptr )
 		{
 			while ( std::strlen(devices) > 0 )
 			{
-				m_availableCaptureDevices.push_back(devices);
+				m_availableCaptureDevices.emplace_back(devices);
 
 				devices += std::strlen(devices) + 1;
 			}
 
-			std::cout << "[OpenAL] Capture devices :\n";
+			if ( m_flags[ShowInformation] )
+			{
+				std::cout << "[OpenAL] Capture devices :" "\n";
 
-			for ( auto & deviceName : m_availableCaptureDevices )
-				std::cout << " - " << deviceName << '\n';
+				for ( auto & deviceName : m_availableCaptureDevices )
+				{
+					std::cout << " - " << deviceName << '\n';
+				}
 
-			std::cout << "[OpenAL] Default capture device : " << alcGetString(nullptr, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER) << '\n' << std::endl;
+				std::cout << "[OpenAL] Default capture device : " << alcGetString(nullptr, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER) << "\n\n";
+			}
 		}
 
 		return !m_availableCaptureDevices.empty();

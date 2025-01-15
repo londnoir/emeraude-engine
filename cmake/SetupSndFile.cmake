@@ -1,14 +1,37 @@
-# SndFile library
+if ( MSVC )
 
-if ( ENABLE_SNDFILE )
-	find_package(SndFile REQUIRED)
+	message("Enabling SNDFile library from local binary ...")
 
-	message("SndFile ${SNDFILE_VERSION} library found !")
-	message(" - Headers : ${SNDFILE_INCLUDE_DIRS}")
-	message(" - Binary : ${SNDFILE_LIBRARIES}")
+	set(SNDFILE_VERSION "1.2.2bin")
+	set(SNDFILE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsndfile-1.2.2-win64/include)
+	set(SNDFILE_LIBRARY_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsndfile-1.2.2-win64/lib)
+	set(SNDFILE_LIBRARIES sndfile.lib)
 
-	target_include_directories(${PROJECT_NAME} PUBLIC ${SNDFILE_INCLUDE_DIRS})
-	target_link_libraries(${PROJECT_NAME} PUBLIC ${SNDFILE_LIBRARIES})
+	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+	file(
+		COPY_FILE
+		${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsndfile-1.2.2-win64/bin/sndfile.dll
+		${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/sndfile.dll
+		ONLY_IF_DIFFERENT
+	)
 
-	set(SNDFILE_ENABLED On) # Complete the "libraries_config.hpp" file
+else ()
+
+	message("Enabling SNDFile library from system ...")
+
+	find_package(PkgConfig REQUIRED)
+
+	pkg_check_modules(SNDFILE REQUIRED sndfile)
+
 endif ()
+
+message("SndFile ${SNDFILE_VERSION} library enabled !")
+message(" - Headers : ${SNDFILE_INCLUDE_DIRS}")
+message(" - Libraries : ${SNDFILE_LIBRARY_DIRS}")
+message(" - Binary : ${SNDFILE_LIBRARIES}")
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${SNDFILE_INCLUDE_DIRS})
+target_link_directories(${PROJECT_NAME} PUBLIC ${SNDFILE_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${SNDFILE_LIBRARIES})
+
+set(SNDFILE_ENABLED On) # Complete the "libraries_config.hpp" file

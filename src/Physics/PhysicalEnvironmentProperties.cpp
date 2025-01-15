@@ -1,27 +1,27 @@
 /*
- * Emeraude/Physics/PhysicalEnvironmentProperties.cpp
- * This file is part of Emeraude
+ * src/Physics/PhysicalEnvironmentProperties.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -30,32 +30,31 @@
 namespace Emeraude::Physics
 {
 	PhysicalEnvironmentProperties::PhysicalEnvironmentProperties (float surfaceGravity, float atmosphericDensity, float planetRadius) noexcept
-		: m_surfaceGravity(surfaceGravity), m_atmosphericDensity(atmosphericDensity), m_planetRadius(planetRadius)
+		: m_surfaceGravity(surfaceGravity),
+		m_steppedSurfaceGravity(surfaceGravity * EngineUpdateCycleDurationS< float >),
+		m_atmosphericDensity(atmosphericDensity),
+		m_planetRadius(planetRadius)
 	{
 
 	}
 
-	float
-	PhysicalEnvironmentProperties::gravity (float /*height*/) const noexcept
+	std::ostream &
+	operator<< (std::ostream & out, const PhysicalEnvironmentProperties & obj)
 	{
-		// FIXME: TODO ...
-
-		// gh = g (1 + h/R)–2
-		// R is your distance from the center of the Earth
-		return m_surfaceGravity;
+		return out <<
+			"Physical environment properties :" "\n"
+			"Surface gravity : " << obj.m_surfaceGravity << " m/s² (" << obj.m_steppedSurfaceGravity << " m/s² per update)" "\n"
+			"Atmospheric density : " << obj.m_atmosphericDensity << " kg/m³" "\n"
+			"Planet radius : " << obj.m_planetRadius << " m" "\n";
 	}
 
-	float
-	PhysicalEnvironmentProperties::atmosphericDensity (float /*height*/, float /*temperature*/) const noexcept
+	std::string
+	to_string (const PhysicalEnvironmentProperties & obj) noexcept
 	{
-		// FIXME: TODO ...
+		std::stringstream output;
 
-		return m_atmosphericDensity;
-	}
+		output << obj;
 
-	float
-	PhysicalEnvironmentProperties::planetRadius () const noexcept
-	{
-		return m_planetRadius;
+		return output.str();
 	}
 }

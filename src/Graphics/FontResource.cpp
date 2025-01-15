@@ -1,39 +1,58 @@
 /*
- * Emeraude/Graphics/FontResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/FontResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <string>
+
+/* Third-party inclusions. */
+#ifdef FREETYPE_ENABLED
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#endif
+
+/* Local inclusions. */
+#include "Libraries/PixelFactory/Area.hpp"
+#include "Libraries/PixelFactory/FileIO.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libraries/PixelFactory/Types.hpp"
 #include "FontResource.hpp"
-
-/* Local inclusions */
-#include "PixelFactory/FileIO.hpp"
+#include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
+#include "Resources/ResourceTrait.hpp"
 #include "Tracer.hpp"
-
-/* Third-party libraries */
-#include "Third-Party-Inclusion/freetype.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -41,14 +60,14 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::FontResou
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::FontResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::FontResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics
 {
 	using namespace Libraries;
 	using namespace Libraries::PixelFactory;
 
-	const size_t FontResource::ClassUID{Observable::getClassUID()};
+	const size_t FontResource::ClassUID{getClassUID(ClassId)};
 
 	FontResource::FontResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -56,16 +75,15 @@ namespace Emeraude::Graphics
 
 	}
 
+	size_t
+	FontResource::classUID () const noexcept
+	{
+		return ClassUID;
+	}
+
 	bool
 	FontResource::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
@@ -79,51 +97,67 @@ namespace Emeraude::Graphics
 	FontResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
-		Pixmap font;
+		Pixmap font{};
 
-		const auto defaultSize = 32UL;
-
-		if ( !font.initialize(defaultSize, defaultSize, ChannelMode::RGBA) )
+		if ( !font.initialize(DefaultSize, DefaultSize, ChannelMode::RGBA) )
+		{
 			return false;
+		}
 
 		font.noise();
 
-		return this->setLoadSuccess(this->parseBitmap(font, defaultSize));
+		return this->setLoadSuccess(this->parseBitmap(font, DefaultSize));
 	}
 
 	bool
-	FontResource::load (const Path::File & filepath) noexcept
+	FontResource::load (const std::filesystem::path & filepath) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
-		const auto defaultSize = 32UL;
+		const auto extension = IO::getFileExtension(filepath, true);
 
-		if ( filepath.hasExtension("ttf") || filepath.hasExtension("TTF") )
-			return this->setLoadSuccess(this->parseFontFile(filepath, defaultSize));
+		if ( extension == "ttf" )
+		{
+			return this->setLoadSuccess(this->parseFontFile(filepath, DefaultSize));
+		}
 
-		if ( filepath.hasExtension(".bmp") || filepath.hasExtension(".BMP") )
-			return this->setLoadSuccess(this->parseBitmap(filepath, defaultSize));
+		if ( extension == "bmp" )
+		{
+			return this->setLoadSuccess(this->parseBitmap(filepath, DefaultSize));
+		}
 
-		if ( filepath.hasExtension(".tga") || filepath.hasExtension(".TGA") )
-			return this->setLoadSuccess(this->parseBitmap(filepath, defaultSize));
+		if ( extension == "tga" )
+		{
+			return this->setLoadSuccess(this->parseBitmap(filepath, DefaultSize));
+		}
 
-		if ( filepath.hasExtension(".png") || filepath.hasExtension(".PNG") )
-			return this->setLoadSuccess(this->parseBitmap(filepath, defaultSize));
+		if ( extension == "png" )
+		{
+			return this->setLoadSuccess(this->parseBitmap(filepath, DefaultSize));
+		}
 
-		if ( filepath.hasExtension(".jpg") || filepath.hasExtension(".JPG") || filepath.hasExtension(".jpeg") || filepath.hasExtension(".JPEG") )
-			return this->setLoadSuccess(this->parseBitmap(filepath, defaultSize));
+		if ( extension == "jpg"  || extension == "jpeg" )
+		{
+			return this->setLoadSuccess(this->parseBitmap(filepath, DefaultSize));
+		}
 
 		return this->setLoadSuccess(false);
 	}
 
 	bool
-	FontResource::load (const Json::Value &) noexcept
+	FontResource::load (const Json::Value & /*data*/) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		Tracer::warning(ClassId, "FIXME: This function is not available yet !");
 
@@ -134,7 +168,7 @@ namespace Emeraude::Graphics
 	Pixmap< uint8_t > &
 	FontResource::glyph (uint8_t ASCIICode) const noexcept
 	{
-		return m_glyphs[ASCIICode];
+		return m_glyphs.at(ASCIICode);
 	}
 
 	size_t
@@ -156,32 +190,40 @@ namespace Emeraude::Graphics
 
 		for ( const auto & glyphPixmap : m_glyphs  )
 		{
-			const Path::File filepath{(std::stringstream{} << debugPath << glyphPixmap << '-' << code << ".png").str()};
+			std::stringstream filename;
+			filename << glyphPixmap << '-' << code << ".png";
+
+			std::filesystem::path filepath{debugPath};
+			filepath.append(filename.str());
 
 			if ( !FileIO::write(glyphPixmap, filepath) )
+			{
 				return;
+			}
 
 			code++;
 		}
 	}
 
 	Area< size_t >
-	FontResource::getUsableWidth (const Pixmap< uint8_t > & glyph) const noexcept
+	FontResource::getUsableWidth (const Pixmap< uint8_t > & glyph) noexcept
 	{
-		Area clip;
+		Area clip{};
 
 		clip.setHeight(glyph.height());
 
 		/* Gets the first column of pixels where a color changes. */
-		for ( size_t x = 0; x < glyph.width(); x++ )
+		for ( size_t coordX = 0; coordX < glyph.width(); coordX++ )
 		{
 			auto goOn = true;
 
-			for ( size_t y = 0; y < glyph.height(); y++ )
+			for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
 			{
-				if ( glyph.pixelPointer(x, y)[0] > 0 )
+				const auto * pixels = glyph.pixelPointer(coordX, coordY);
+
+				if ( pixels[0] > 0 )
 				{
-					clip.setOffsetX(x);
+					clip.setOffsetX(coordX);
 					//clip.setWidth(glyph.width() - x);
 
 					goOn = false;
@@ -191,19 +233,23 @@ namespace Emeraude::Graphics
 			}
 
 			if ( !goOn )
+			{
 				break;
+			}
 		}
 
 		/* Gets the last column of pixels where a color is present. */
-		for ( auto x = glyph.width() - 1; x > 0UL; x-- )
+		for ( size_t coordX = glyph.width() - 1; coordX > 0UL; coordX-- )
 		{
 			auto goOn = true;
 
-			for ( size_t y = 0; y < glyph.height(); y++ )
+			for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
 			{
-				if ( glyph.pixelPointer(x, y)[0] > 0 )
+				const auto * pixels = glyph.pixelPointer(coordX, coordY);
+
+				if ( pixels[0] > 0 )
 				{
-					clip.setWidth(x - clip.offsetX() + 1);
+					clip.setWidth(coordX - clip.offsetX() + 1);
 
 					goOn = false;
 
@@ -212,17 +258,21 @@ namespace Emeraude::Graphics
 			}
 
 			if ( !goOn )
+			{
 				break;
+			}
 		}
 
 		if ( !clip.isValid() )
+		{
 			return {clip.width(), clip.height()};
+		}
 
 		return clip;
 	}
 
 	bool
-	FontResource::parseBitmap (const Path::File & filepath, size_t desiredHeight) noexcept
+	FontResource::parseBitmap (const std::filesystem::path & filepath, size_t desiredHeight) noexcept
 	{
 		using namespace PixelFactory;
 
@@ -239,7 +289,7 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	FontResource::parseBitmap (const Pixmap< uint8_t > & map, size_t) noexcept
+	FontResource::parseBitmap (const Pixmap< uint8_t > & map, size_t /*desiredHeight*/) noexcept
 	{
 		using namespace PixelFactory;
 
@@ -247,21 +297,21 @@ namespace Emeraude::Graphics
 
 		if ( map.bytes() == 0 )
 		{
-			Tracer::error(ClassId, Blob() << "The Pixmap is empty !");
+			Tracer::error(ClassId, BlobTrait() << "The Pixmap is empty !");
 
 			return false;
 		}
 
-		if ( map.width() % 16 || map.height() % 16 )
+		if ( map.width() % BitmapSection != 0 || map.height() % BitmapSection != 0 )
 		{
-			Tracer::error(ClassId, Blob() << "Invalid glyphs map dimensions !");
+			Tracer::error(ClassId, BlobTrait() << "Invalid glyphs map dimensions !");
 
 			return false;
 		}
 
 		/* The available size in the chars map */
-		const auto width = map.width() / 16UL;
-		const auto height = map.height() / 16UL;
+		const auto width = map.width() / BitmapSection;
+		const auto height = map.height() / BitmapSection;
 
 		Area clipping{width, height};
 
@@ -269,12 +319,12 @@ namespace Emeraude::Graphics
 
 		for ( auto glyphIt = m_glyphs.begin(); glyphIt != m_glyphs.end(); ++glyphIt )
 		{
-			auto ASCIICode = std::distance(m_glyphs.begin(), glyphIt);
+			const auto ASCIICode = std::distance(m_glyphs.begin(), glyphIt);
 
-			auto x = ASCIICode % 16;
+			const auto coordX = ASCIICode % BitmapSection;
 
-			clipping.setOffsetX(static_cast< size_t >(x) * width);
-			clipping.setOffsetY(static_cast< size_t >(15 - ((ASCIICode - x) / 16)) * height);
+			clipping.setOffsetX(coordX * width);
+			clipping.setOffsetY((BitmapSection - 1 - (ASCIICode - coordX) / BitmapSection) * height);
 
 			if ( fixedFont )
 			{
@@ -295,7 +345,7 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	FontResource::parseFontFile (const Path::File & filepath, size_t desiredHeight) noexcept
+	FontResource::parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept
 	{
 		using namespace PixelFactory;
 
@@ -306,15 +356,15 @@ namespace Emeraude::Graphics
 		/* Try to init FreeType 2. */
 		if ( FT_Init_FreeType(&library) > 0 )
 		{
-			Tracer::error(ClassId, Blob() << "FreeType 2 initialization failed !");
+			Tracer::error(ClassId, BlobTrait() << "FreeType 2 initialization failed !");
 
 			return false;
 		}
 
 		/* Load the font face. Face index 0 (always available). */
-		if ( FT_New_Face(library, to_string(filepath).c_str(), 0, &face) > 0 )
+		if ( FT_New_Face(library, filepath.string().c_str(), 0, &face) > 0 )
 		{
-			Tracer::error(ClassId, Blob() << "Can't load '" << filepath << "' font file !");
+			Tracer::error(ClassId, BlobTrait() << "Can't load '" << filepath << "' font file !");
 
 			return false;
 		}
@@ -322,7 +372,7 @@ namespace Emeraude::Graphics
 		/* Prepare output sizes. */
 		if ( FT_Set_Pixel_Sizes(face, 0, static_cast< FT_UInt >(desiredHeight)) > 0 )
 		{
-			Tracer::error(ClassId, Blob() << "The size " << desiredHeight << " with this font is not available !");
+			Tracer::error(ClassId, BlobTrait() << "The size " << desiredHeight << " with this font is not available !");
 
 			return false;
 		}
@@ -338,7 +388,7 @@ namespace Emeraude::Graphics
 			 * NOTE : Only one glyph can be loaded at a time. FT_LOAD_RENDER */
 			if ( FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) > 0 )
 			{
-				Tracer::error(ClassId, Blob() << "Glyph " << glyphIndex << " failed to load !");
+				Tracer::error(ClassId, BlobTrait() << "Glyph " << glyphIndex << " failed to load !");
 
 				break;
 			}
@@ -349,25 +399,23 @@ namespace Emeraude::Graphics
 
 			Pixmap rawGlyph;
 
-			if ( rawGlyph.initialize(width, height, ChannelMode::Grayscale) )
-			{
-				/* Copy the buffer. */
-				rawGlyph.fill(face->glyph->bitmap.buffer, width * height * sizeof(uint8_t));
-
-				if ( glyphIt->initialize(width, desiredHeight, ChannelMode::Grayscale) )
-				{
-					const size_t y = desiredHeight - static_cast< size_t >(face->glyph->bitmap_top) - (desiredHeight / 4);
-
-					Processor proc{*glyphIt};
-					proc.blit(rawGlyph, {0UL, y, width, height});
-					proc.mirror(MirrorMode::X);
-				}
-			}
-			else
+			if ( !rawGlyph.initialize(width, height, ChannelMode::Grayscale) )
 			{
 				Tracer::error(ClassId, "Unable to prepare a temporary Pixmap !");
 
 				continue;
+			}
+
+			/* Copy the buffer. */
+			rawGlyph.fill(face->glyph->bitmap.buffer, width * height * sizeof(uint8_t));
+
+			if ( glyphIt->initialize(width, desiredHeight, ChannelMode::Grayscale) )
+			{
+				const auto coordY = desiredHeight - static_cast< size_t >(face->glyph->bitmap_top) - desiredHeight / 4;
+
+				Processor proc{*glyphIt};
+				proc.blit(rawGlyph, {0UL, coordY, width, height});
+				proc.mirror(MirrorMode::X);
 			}
 		}
 
@@ -395,7 +443,7 @@ namespace Emeraude::Graphics
 	std::shared_ptr< FontResource >
 	FontResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->fonts().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->fonts().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< FontResource >

@@ -1,34 +1,33 @@
 /*
- * Emeraude/Audio/TrackMixer.cpp
- * This file is part of Emeraude
+ * src/Audio/TrackMixer.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "TrackMixer.hpp"
 
-/* Local inclusions */
-#include "Arguments.hpp"
+/* Local inclusions. */
 #include "Manager.hpp"
 #include "Resources/Manager.hpp"
 #include "Settings.hpp"
@@ -38,40 +37,22 @@ namespace Emeraude::Audio
 {
 	using namespace Libraries;
 
-	const size_t TrackMixer::ClassUID{Observable::getClassUID()};
+	const size_t TrackMixer::ClassUID{getClassUID(ClassId)};
 
-	TrackMixer::TrackMixer (const Arguments & arguments, Settings & coreSettings, Resources::Manager & resourceManager, Manager & audioManager) noexcept
+	TrackMixer::TrackMixer (PrimaryServices & primaryServices, Resources::Manager & resourceManager, Manager & audioManager) noexcept
 		: ServiceInterface(ClassId), ConsoleControllable(ClassId),
-		  m_arguments(arguments), m_coreSettings(coreSettings), m_resourceManager(resourceManager), m_audioManager(audioManager)
+		  m_primaryServices(primaryServices),
+		  m_resourceManager(resourceManager),
+		  m_audioManager(audioManager)
 	{
 
-	}
-
-	bool
-	TrackMixer::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
 	}
 
 	bool
 	TrackMixer::onInitialize () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
-		{
-			Tracer::warning(ClassId, "Audio external input disabled at startup.");
-
-			return true;
-		}
-
 		/* Sets master volume. */
-		const auto gain = m_coreSettings.getAs< float >(Manager::MusicVolumeKey, Manager::DefaultMusicVolume);
+		const auto gain = m_primaryServices.settings().get< float >(AudioMusicVolumeKey, DefaultAudioMusicVolume);
 
 		this->setVolume(gain);
 
@@ -95,14 +76,132 @@ namespace Emeraude::Audio
 		}
 
 		/* Console commands bindings. */
-		this->bindCommand("play", std::bind(&TrackMixer::CFPlay, this, std::placeholders::_1), "Play or resume a music. There is no need of parameter to resume.");
-		this->bindCommand("pause", std::bind(&TrackMixer::CFPause, this, std::placeholders::_1), "Pause music playback.");
-		this->bindCommand("stop", std::bind(&TrackMixer::CFStop, this, std::placeholders::_1), "Stop music.");
+		this->bindCommand("play", [this] (const std::vector< std::string > & parameters) {
+			if ( !this->usable() )
+			{
+				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
+
+				return 0;
+			}
+
+			/* Checks if we need to resume. */
+			if ( parameters.empty() )
+			{
+				switch ( m_playingTrack )
+				{
+					case PlayingTrack::None :
+						this->writeToConsole("There is no soundtrack !", Severity::Error);
+						break;
+
+					case PlayingTrack::TrackA :
+						if ( m_trackA->isPaused() )
+						{
+							m_trackA->resume();
+
+							this->writeToConsole("Resuming track A.", Severity::Info);
+
+							return 0;
+						}
+						break;
+
+					case PlayingTrack::TrackB :
+						if ( m_trackB->isPaused() )
+						{
+							m_trackB->resume();
+
+							this->writeToConsole("Resuming track B.", Severity::Info);
+
+							return 0;
+						}
+						break;
+				}
+
+				return 1;
+			}
+
+			/* Search the song. */
+			auto soundtrack = m_resourceManager.musics().getResource(parameters[0]);
+
+			if ( soundtrack == nullptr )
+			{
+				this->writeToConsole(BlobTrait() << "Soundtrack '" << parameters[0] << "' doesn't exist !", Severity::Error);
+
+				return 2;
+			}
+
+			this->setSoundTrack(soundtrack);
+
+			this->writeToConsole(BlobTrait() << "Playing '" << parameters[0] << "' ...", Severity::Info);
+
+			return 0;
+		}, "Play or resume a music. There is no need of parameter to resume.");
+
+		this->bindCommand("pause", [this] (const std::vector< std::string > & /*parameters*/) {
+			if ( !this->usable() )
+			{
+				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
+
+				return 1;
+			}
+
+			switch ( m_playingTrack )
+			{
+				case PlayingTrack::None :
+					this->writeToConsole("There is no track playing !", Severity::Info);
+					break;
+
+				case PlayingTrack::TrackA :
+					m_trackA->pause();
+
+					this->writeToConsole("Track A paused.", Severity::Info);
+					break;
+
+				case PlayingTrack::TrackB :
+					m_trackB->pause();
+
+					this->writeToConsole("Track B paused.", Severity::Info);
+					break;
+			}
+
+			return 0;
+		}, "Pause music playback.");
+
+		this->bindCommand("stop", [this] (const std::vector< std::string > & /*parameters*/) {
+			if ( !this->usable() )
+			{
+				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
+
+				return 1;
+			}
+
+			switch ( m_playingTrack )
+			{
+				case PlayingTrack::None:
+					this->writeToConsole("There is no track playing !", Severity::Info);
+					break;
+
+				case PlayingTrack::TrackA :
+					m_trackA->stop();
+					m_playingTrack = PlayingTrack::None;
+
+					this->writeToConsole("Track A stopped.", Severity::Info);
+					break;
+
+				case PlayingTrack::TrackB :
+					m_trackB->stop();
+					m_playingTrack = PlayingTrack::None;
+
+					this->writeToConsole("Track B stopped.", Severity::Info);
+					break;
+			}
+
+			return 0;
+		}, "Stop music.");
 
 		/* FIXME: Why commented ? */
 		//this->registerToConsole();
 
-		m_flags[Usable] = true;
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -112,17 +211,13 @@ namespace Emeraude::Audio
 	{
 		if ( this->usable() )
 		{
+			m_flags[ServiceInitialized] = false;
+
 			m_trackA->stop();
 			m_trackB->stop();
 		}
 
 		return true;
-	}
-
-	bool
-	TrackMixer::usable () const noexcept
-	{
-		return m_flags[Usable];
 	}
 
 	void
@@ -153,19 +248,8 @@ namespace Emeraude::Audio
 	{
 		if ( track->isLoaded() )
 		{
-			TraceSuccess{ClassId} << "The track '" << track->name() << "' is ready to play !";
-
-			if ( m_loadingTrack != nullptr )
-			{
-				this->forget(m_loadingTrack.get());
-
-				m_loadingTrack.reset();
-			}
-
 			return true;
 		}
-
-		Tracer::info(ClassId, "Wait until the track is completely loaded in memory for playing !");
 
 		m_loadingTrack = track;
 
@@ -196,6 +280,8 @@ namespace Emeraude::Audio
 		/* Check if we need to wait the track to be loaded in memory. */
 		if ( !this->checkTrackLoading(track) )
 		{
+			Tracer::info(ClassId, "Waits for the track to be fully loaded into memory for playback ...");
+
 			return true;
 		}
 
@@ -209,7 +295,7 @@ namespace Emeraude::Audio
 				case PlayingTrack::TrackA :
 					m_flags[IsTrackingFading] = true;
 
-					m_trackB->play(track.get(), Source::PlayMode::Loop);
+					m_trackB->play(track, Source::PlayMode::Loop);
 
 					m_playingTrack = PlayingTrack::TrackB;
 					break;
@@ -218,7 +304,7 @@ namespace Emeraude::Audio
 				case PlayingTrack::TrackB :
 					m_flags[IsTrackingFading] = true;
 
-					m_trackA->play(track.get(), Source::PlayMode::Loop);
+					m_trackA->play(track, Source::PlayMode::Loop);
 
 					m_playingTrack = PlayingTrack::TrackA;
 					break;
@@ -240,14 +326,14 @@ namespace Emeraude::Audio
 					m_flags[IsTrackingFading] = false;
 
 					m_trackA->setGain(m_gain);
-					m_trackA->play(track.get(), Source::PlayMode::Loop);
+					m_trackA->play(track, Source::PlayMode::Loop);
 					break;
 
 				case PlayingTrack::TrackB :
 					m_flags[IsTrackingFading] = false;
 
 					m_trackB->setGain(m_gain);
-					m_trackB->play(track.get(), Source::PlayMode::Loop);
+					m_trackB->play(track, Source::PlayMode::Loop);
 					break;
 			}
 		}
@@ -357,142 +443,8 @@ namespace Emeraude::Audio
 		}
 	}
 
-	int
-	TrackMixer::CFPlay (const std::vector< std::string > & parameters) noexcept
-	{
-		if ( !this->usable() )
-		{
-			this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-			return 0;
-		}
-
-		/* Checks if we need to resume. */
-		if ( parameters.empty() )
-		{
-			switch ( m_playingTrack )
-			{
-				case PlayingTrack::None :
-					this->writeToConsole("There is no soundtrack !", Severity::Error);
-					break;
-
-				case PlayingTrack::TrackA :
-					if ( m_trackA->isPaused() )
-					{
-						m_trackA->resume();
-
-						this->writeToConsole("Resuming track A.", Severity::Info);
-
-						return 0;
-					}
-					break;
-
-				case PlayingTrack::TrackB :
-					if ( m_trackB->isPaused() )
-					{
-						m_trackB->resume();
-
-						this->writeToConsole("Resuming track B.", Severity::Info);
-
-						return 0;
-					}
-					break;
-			}
-
-			return 1;
-		}
-
-		/* Search the song. */
-		auto soundtrack = m_resourceManager.musics().getResource(parameters[0]);
-
-		if ( soundtrack == nullptr )
-		{
-			this->writeToConsole(Blob() << "Soundtrack '" << parameters[0] << "' doesn't exist !", Severity::Error);
-
-			return 2;
-		}
-
-		this->setSoundTrack(soundtrack);
-
-		this->writeToConsole(Blob() << "Playing '" << parameters[0] << "' ...", Severity::Info);
-
-		return 0;
-	}
-
-	int
-	TrackMixer::CFPause (const std::vector< std::string > & /*parameters*/) noexcept
-	{
-		if ( !this->usable() )
-		{
-			this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-			return 1;
-		}
-
-		switch ( m_playingTrack )
-		{
-			case PlayingTrack::None :
-				this->writeToConsole("There is no track playing !", Severity::Info);
-				break;
-
-			case PlayingTrack::TrackA :
-				m_trackA->pause();
-
-				this->writeToConsole("Track A paused.", Severity::Info);
-				break;
-
-			case PlayingTrack::TrackB :
-				m_trackB->pause();
-
-				this->writeToConsole("Track B paused.", Severity::Info);
-				break;
-		}
-
-		return 0;
-	}
-
-	int
-	TrackMixer::CFStop (const std::vector< std::string > & /*parameters*/) noexcept
-	{
-		if ( !this->usable() )
-		{
-			this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-			return 1;
-		}
-
-		switch ( m_playingTrack )
-		{
-			case PlayingTrack::None:
-				this->writeToConsole("There is no track playing !", Severity::Info);
-				break;
-
-			case PlayingTrack::TrackA :
-				m_trackA->stop();
-				m_playingTrack = PlayingTrack::None;
-
-				this->writeToConsole("Track A stopped.", Severity::Info);
-				break;
-
-			case PlayingTrack::TrackB :
-				m_trackB->stop();
-				m_playingTrack = PlayingTrack::None;
-
-				this->writeToConsole("Track B stopped.", Severity::Info);
-				break;
-		}
-
-		return 0;
-	}
-
-	float
-	TrackMixer::volume () const noexcept
-	{
-		return m_gain;
-	}
-
 	bool
-	TrackMixer::onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & /*data*/) noexcept
+	TrackMixer::onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
 		if ( observable->is(MusicResource::ClassUID) )
 		{
@@ -502,7 +454,13 @@ namespace Emeraude::Audio
 				{
 					/* The track loaded successfully, we can now play it. */
 					case Resources::ResourceTrait::LoadFinished :
-						this->setSoundTrack(m_loadingTrack, m_flags[IsFadingWasDemanded]);
+					{
+						auto loadedTrack = m_loadingTrack;
+
+						m_loadingTrack.reset();
+
+						this->setSoundTrack(loadedTrack, m_flags[IsFadingWasDemanded]);
+					}
 						break;
 
 					case Resources::ResourceTrait::LoadFailed :
@@ -510,7 +468,9 @@ namespace Emeraude::Audio
 						break;
 
 					default:
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 						TraceDebug{ClassId} << "Event #" << notificationCode << " from a music resource ignored.";
+#endif
 						break;
 				}
 			}
@@ -526,7 +486,7 @@ namespace Emeraude::Audio
 #ifdef DEBUG
 		/* NOTE: Don't know what is it, goodbye ! */
 		TraceInfo{ClassId} <<
-			"Received an unhandled event from observable @" << observable << " (code:" << notificationCode << ") ! "
+			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
 #endif
 
@@ -569,7 +529,7 @@ namespace Emeraude::Audio
 
 		if ( m_flags[IsTrackingFading] )
 		{
-			constexpr auto stepValue = 0.01F;// NOLINT(*-magic-numbers)
+			constexpr auto stepValue = 0.01F;
 
 			switch ( m_playingTrack )
 			{

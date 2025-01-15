@@ -1,48 +1,54 @@
 /*
- * Emeraude/FileSystem.hpp
- * This file is part of Emeraude
+ * src/FileSystem.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <sstream>
-#include <string>
+/* STL inclusions. */
+#include <cstddef>
+#include <array>
 #include <vector>
+#include <string>
+#include <filesystem>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Path/Directory.hpp"
+#include "PlatformSpecific/UserInfo.hpp"
+
+/* Forward declarations. */
+namespace Emeraude
+{
+	class Identification;
+	class Arguments;
+}
 
 namespace Emeraude
 {
-	/* Forward declarations. */
-	class Arguments;
-
 	/**
 	 * @brief The file system service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
@@ -59,10 +65,11 @@ namespace Emeraude
 
 			/**
 			 * @brief Constructs the file system.
-			 * @param arguments An access to the command arguments.
-			 * @param applicationName A string for the application name [std::move].
+			 * @param arguments A reference to arguments.
+			 * @param userInfo A reference to the user info.
+			 * @param identification A reference to the application identification.
 			 */
-			FileSystem (const Arguments & arguments, std::string applicationName) noexcept;
+			FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -79,12 +86,14 @@ namespace Emeraude
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return FileSystem &
 			 */
 			FileSystem & operator= (const FileSystem & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return FileSystem &
 			 */
 			FileSystem & operator= (FileSystem && copy) noexcept = delete;
 
@@ -93,86 +102,190 @@ namespace Emeraude
 			 */
 			~FileSystem () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
-
-			/**
-			 * @brief Returns the home directory of the current user.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			const Libraries::Path::Directory & userDirectory () const noexcept;
-
-			/**
-			 * @brief Returns the user data directory for the application of the current user.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			Libraries::Path::Directory userDataDirectory (const std::string & append = {}) const noexcept;
-
-			/**
-			 * @brief Returns the parent directory of the binary.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			const Libraries::Path::Directory & binaryDirectory () const noexcept;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Returns the application binary file name.
-			 * @return string
+			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			const std::string & binaryName () const noexcept;
+			const std::string &
+            binaryName () const noexcept
+            {
+                return m_binaryName;
+            }
 
 			/**
-			 * @brief Returns a list of available config directories for this application.
-			 * @return vector< Directory >
+			 * @brief Returns the parent directory of the binary.
+			 * @return const std::filesystem::path &
 			 */
 			[[nodiscard]]
-			const std::vector< Libraries::Path::Directory > & configDirectoriesList () const noexcept;
+			const std::filesystem::path &
+            binaryDirectory () const noexcept
+            {
+                return m_binaryDirectory;
+            }
+
+			/**
+			 * @brief Returns the parent directory of the binary with an append to the path.
+			 * @param append A reference to a string.
+			 * @return std::filesystem::path
+			 */
+			[[nodiscard]]
+			std::filesystem::path
+			binaryDirectory (const std::string & append) const noexcept
+			{
+				auto path = m_binaryDirectory;
+				path.append(append);
+
+				return path;
+			}
+
+			/**
+			 * @brief Returns the home directory of the current user.
+			 * @return const std::filesystem::path &
+			 */
+			[[nodiscard]]
+			const std::filesystem::path &
+            userDirectory () const noexcept
+            {
+                return m_userDirectory;
+            }
+
+			/**
+			 * @brief Returns the home directory of the current user with an append to the path.
+			 * @param append A reference to a string.
+			 * @return std::filesystem::path
+			 */
+			[[nodiscard]]
+			std::filesystem::path
+			userDirectory (const std::string & append) const noexcept
+			{
+				auto path = m_userDirectory;
+				path.append(append);
+
+				return path;
+			}
+
+			/**
+			 * @brief Returns the user data directory for the application of the current user.
+			 * @return const std::filesystem::path &
+			 */
+			[[nodiscard]]
+			const std::filesystem::path &
+            userDataDirectory () const noexcept
+            {
+                return m_userDataDirectory;
+            }
+
+			/**
+			 * @brief Returns the user data directory for the application of the current user with an append to the path.
+			 * @param append A reference to a string.
+			 * @return std::filesystem::path
+			 */
+			[[nodiscard]]
+			std::filesystem::path
+			userDataDirectory (const std::string & append) const noexcept
+			{
+				auto path = m_userDataDirectory;
+				path.append(append);
+
+				return path;
+			}
+
+			/**
+			 * @brief Returns the config directory of this application.
+			 * @return const std::filesystem::path &
+			 */
+			[[nodiscard]]
+			const std::filesystem::path &
+            configDirectory () const noexcept
+            {
+                return m_configDirectory;
+            }
+
+			/**
+			 * @brief Returns the config directory of this application with an append to the path.
+			 * @param append A reference to a string.
+			 * @return std::filesystem::path
+			 */
+			[[nodiscard]]
+			std::filesystem::path
+			configDirectory (const std::string & append) const noexcept
+			{
+				auto path = m_configDirectory;
+				path.append(append);
+
+				return path;
+			}
+
+			/**
+			 * @brief Returns the cache directory of this application.
+			 * @return const std::filesystem::path &
+			 */
+			[[nodiscard]]
+			const std::filesystem::path &
+            cacheDirectory () const noexcept
+            {
+                return m_cacheDirectory;
+            }
+
+			/**
+			 * @brief Returns the cache directory of this application with an append to the path.
+			 * @param append A reference to a string.
+			 * @return std::filesystem::path
+			 */
+			[[nodiscard]]
+			std::filesystem::path
+			cacheDirectory (const std::string & append) const noexcept
+			{
+				auto path = m_cacheDirectory;
+				path.append(append);
+
+				return path;
+			}
 
 			/**
 			 * @brief Returns a list of available data directories for this application.
-			 * @return vector< Directory >
+			 * @return const std::vector< std::filesystem::path > &
 			 */
 			[[nodiscard]]
-			const std::vector< Libraries::Path::Directory > & dataDirectoriesList () const noexcept;
+			const std::vector< std::filesystem::path > &
+			dataDirectories () const noexcept
+            {
+                return m_dataDirectories;
+            }
 
 			/**
-			 * @brief Returns a list of available cache directories for this application.
-			 * @return vector< Directory >
+			 * @brief Returns a possible filepath from data directories.
+			 * @param path A reference to a string for the directory inside a data directory.
+			 * @param filename A reference to a string for the filename.
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			const std::vector< Libraries::Path::Directory > & cacheDirectoriesList () const noexcept;
-
-			/**
-			 * @brief Returns the first config directory of this application.
-			 * @param append A directory to append at the end of the directory. Default none.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			Libraries::Path::Directory configDirectory (const std::string & append = {}) const noexcept;
-
-			/**
-			 * @brief Returns the first data directory of this application.
-			 * @param append A directory to append at the end of the directory. Default none.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			Libraries::Path::Directory dataDirectory (const std::string & append = {}) const noexcept;
-
-			/**
-			 * @brief Returns the first cache directory of this application.
-			 * @param append A directory to append at the end of the directory. Default none.
-			 * @return Directory
-			 */
-			[[nodiscard]]
-			Libraries::Path::Directory cacheDirectory (const std::string & append = {}) const noexcept;
+			std::filesystem::path getFilepathFromDataDirectories (const std::string & path, const std::string & filename) const noexcept;
 
 			/**
 			 * @brief Returns the instance of the file system.
@@ -180,20 +293,24 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			static
-			FileSystem * instance () noexcept;
+			FileSystem *
+			instance () noexcept
+			{
+				return s_instance;
+			}
 
 			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
-			 * @return ostream &
+			 * @return std::ostream &
 			 */
 			friend std::ostream & operator<< (std::ostream & out, const FileSystem & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
-			 * @return string
+			 * @return std::string
 			 */
 			friend std::string to_string (const FileSystem & obj) noexcept;
 
@@ -206,55 +323,100 @@ namespace Emeraude
 			bool onTerminate () noexcept override;
 
 			/**
-			 * @brief Checks the user directory.
+			 * @brief Checks the binary path.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkUserDirectory () noexcept;
+			bool checkBinaryPath () noexcept;
 
 			/**
-			 * @brief Tries to find valid config directories.
+			 * @brief Checks the binary name.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkConfigDirectories () noexcept;
+			bool checkBinaryName () noexcept;
 
 			/**
-			 * @brief Tries to find valid data directories.
+			 * @brief Searches or creates a user data directory for the application (writable, per user).
+			 * @note This is where data created by the user will be stored, like saved games or screenshots.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool checkUserDataDirectory () noexcept;
+
+			/**
+			 * @brief Searches or creates a config directory for the application (writable, per user, per machine).
+			 * @note This is where configuration files will be stored according to the machine.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool checkConfigDirectory () noexcept;
+
+			/**
+			 * @brief Searches or creates a cache directory for the application (writable, per user, per machine).
+			 * @note This is where all volatile (non-important) data will be stored according to the machine.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool checkCacheDirectory () noexcept;
+
+			/**
+			 * @brief Searches for application data directories (read-only, per app).
+			 * @note This is where the application data will be looking for.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool checkDataDirectories () noexcept;
 
 			/**
-			 * @brief Tries to find valid cache directories.
+			 * @brief Verifies the requirements for a searched directory.
+			 * @param directory A reference to a directory.
+			 * @param createDirectory If no directory was found, create it.
+			 * @param writableRequested Is directory need to be writable.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkCacheDirectories () noexcept;
+			static bool checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) noexcept;
 
 			/**
-			 * @brief Tests and registers selected directories.
-			 * @param directoryStrings Directories to test.
-			 * @param createLastDirectory If no directory was found, we try create the last one from the list.
+			 * @brief Registers a directory when tested.
+			 * @param directoryPath A reference to a filesystem path.
+			 * @param createDirectory If no directory was found, create it.
 			 * @param writableRequested Is directory need to be writable.
-			 * @param directories Where to save directory.
+			 * @param finalDirectoryPath A reference to a filesystem path.
 			 * @return bool
 			 */
-			static bool registerDirectories (const std::vector< std::string > & directoryStrings, bool createLastDirectory, bool writableRequested, std::vector< Libraries::Path::Directory > & directories) noexcept;
+			[[nodiscard]]
+			static bool registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) noexcept;
 
-			static FileSystem * s_instance; // NOLINT NOTE: Singleton behavior
+			/* Flag names. */
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto StandAlone{1UL};
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
+			/** @brief Singleton pointer. */
+			static FileSystem * s_instance;
+
 			const Arguments & m_arguments;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
+			const PlatformSpecific::UserInfo & m_userInfo;
+			std::string m_organizationName;
 			std::string m_applicationName;
-			Libraries::Path::Directory m_userDirectory{};
-			Libraries::Path::Directory m_binaryDirectory{};
-			std::string m_binaryName{};
-			std::vector< Libraries::Path::Directory > m_configDirectories{};
-			std::vector< Libraries::Path::Directory > m_dataDirectories{};
-			std::vector< Libraries::Path::Directory > m_cacheDirectories{};
-			bool m_usable{false};
+			std::string m_applicationReverseId;
+			std::string m_binaryName;
+			std::filesystem::path m_binaryDirectory;
+			std::filesystem::path m_userDirectory;
+			std::filesystem::path m_userDataDirectory;
+			std::filesystem::path m_configDirectory;
+			std::filesystem::path m_cacheDirectory;
+			std::vector< std::filesystem::path > m_dataDirectories;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
+				false/*StandAlone*/,
+				false,
+				false,
+				false,
+				false,
+				false,
+				false
+			};
 	};
 }

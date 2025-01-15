@@ -1,4 +1,4 @@
-# POSIX Thread library (Official CMAKE module)
+message("Enabling Threads library from system ...")
 
 find_package(Threads REQUIRED)
 
@@ -17,5 +17,5 @@ if ( Threads_FOUND )
 		message("Using HP pthread !")
 	endif ()
 
-	target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+	target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads)
 endif ()

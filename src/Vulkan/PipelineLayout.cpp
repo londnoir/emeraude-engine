@@ -1,43 +1,47 @@
 /*
- * Emeraude/Vulkan/PipelineLayout.cpp
- * This file is part of Emeraude
+ * src/Vulkan/PipelineLayout.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "PipelineLayout.hpp"
 
-/* Local inclusions */
+/* STL inclusions. */
+#include <algorithm>
+
+/* Local inclusions. */
 #include "Device.hpp"
-#include "Tracer.hpp"
+#include "DescriptorSetLayout.hpp"
 #include "Utility.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	PipelineLayout::PipelineLayout (const std::shared_ptr< Device > & device, const std::vector< std::shared_ptr< DescriptorSetLayout > > & descriptorSetLayouts, const std::vector< VkPushConstantRange > & pushConstantRanges, VkPipelineLayoutCreateFlags flags) noexcept
-		: AbstractDeviceDependentObject(device), m_descriptorSetLayouts(descriptorSetLayouts), m_pushConstantRanges(pushConstantRanges)
+	PipelineLayout::PipelineLayout (const std::shared_ptr< Device > & device, std::string UUID, const std::vector< std::shared_ptr< DescriptorSetLayout > > & descriptorSetLayouts, const std::vector< VkPushConstantRange > & pushConstantRanges, VkPipelineLayoutCreateFlags flags) noexcept
+		: AbstractDeviceDependentObject(device), m_UUID(std::move(UUID)), m_descriptorSetLayouts(descriptorSetLayouts), m_pushConstantRanges(pushConstantRanges)
 	{
 		m_createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
@@ -48,8 +52,8 @@ namespace Emeraude::Vulkan
 		m_createInfo.pPushConstantRanges = nullptr;
 	}
 
-	PipelineLayout::PipelineLayout (const std::shared_ptr< Device > & device, const VkPipelineLayoutCreateInfo & createInfo, const std::vector< std::shared_ptr< DescriptorSetLayout > > & descriptorSetLayouts, const std::vector< VkPushConstantRange > & pushConstantRanges) noexcept
-		: AbstractDeviceDependentObject(device), m_createInfo(createInfo), m_descriptorSetLayouts(descriptorSetLayouts), m_pushConstantRanges(pushConstantRanges)
+	PipelineLayout::PipelineLayout (const std::shared_ptr< Device > & device, std::string UUID, const VkPipelineLayoutCreateInfo & createInfo, const std::vector< std::shared_ptr< DescriptorSetLayout > > & descriptorSetLayouts, const std::vector< VkPushConstantRange > & pushConstantRanges) noexcept
+		: AbstractDeviceDependentObject(device), m_createInfo(createInfo), m_UUID(std::move(UUID)), m_descriptorSetLayouts(descriptorSetLayouts), m_pushConstantRanges(pushConstantRanges)
 	{
 
 	}
@@ -79,13 +83,13 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		/* NOTE: Vector comparison */
+		/* NOTE: Vector comparison. */
 		if ( m_descriptorSetLayouts != operand.m_descriptorSetLayouts )
 		{
 			return false;
 		}
 
-		/* NOTE: Vector comparison */
+		/* NOTE: Vector comparison. */
 		for ( size_t i = 0; i < m_pushConstantRanges.size(); i++ )
 		{
 			if ( m_pushConstantRanges[i].stageFlags != operand.m_pushConstantRanges[i].stageFlags )
@@ -107,12 +111,6 @@ namespace Emeraude::Vulkan
 		return false;
 	}
 
-	bool
-	PipelineLayout::operator!= (const PipelineLayout & operand) const noexcept
-	{
-		return !this->operator==(operand);
-	}
-
 	PipelineLayout::~PipelineLayout ()
 	{
 		this->destroyFromHardware();
@@ -132,13 +130,14 @@ namespace Emeraude::Vulkan
 		std::vector< VkDescriptorSetLayout > setLayouts{};
 		setLayouts.reserve(m_descriptorSetLayouts.size());
 
-		std::transform(m_descriptorSetLayouts.begin(), m_descriptorSetLayouts.end(), std::back_inserter(setLayouts), [] (const auto & item) -> VkDescriptorSetLayout {
+		std::ranges::transform(m_descriptorSetLayouts, std::back_inserter(setLayouts), [] (const auto & item) -> VkDescriptorSetLayout {
 			return item->handle();
 		});
 
-		m_createInfo.setLayoutCount = setLayouts.size();
-		m_createInfo.pSetLayouts = setLayouts.data();
-		m_createInfo.pushConstantRangeCount = m_pushConstantRanges.size();
+		/* [VULKAN-PUSH-CONSTANT:3] Declare push constants requested for the pipeline. */
+		m_createInfo.setLayoutCount = static_cast< uint32_t >(setLayouts.size());
+		m_createInfo.pSetLayouts = setLayouts.data(); // FIXME: Local variable may escape the function
+		m_createInfo.pushConstantRangeCount = static_cast< uint32_t >(m_pushConstantRanges.size());
 		m_createInfo.pPushConstantRanges = m_pushConstantRanges.data();
 
 		const auto result = vkCreatePipelineLayout(
@@ -156,8 +155,6 @@ namespace Emeraude::Vulkan
 		}
 
 		this->setCreated();
-
-		TraceSuccess{ClassId} << "The pipeline layout " << m_handle << " (" << this->identifier() << ") is successfully created !";
 
 		return true;
 	}
@@ -182,38 +179,12 @@ namespace Emeraude::Vulkan
 				VK_NULL_HANDLE
 			);
 
-			TraceSuccess{ClassId} << "The pipeline layout " << m_handle << " (" << this->identifier() << ") is gracefully destroyed !";
-
 			m_handle = VK_NULL_HANDLE;
 		}
 
 		this->setDestroyed();
 
 		return true;
-	}
-
-	VkPipelineLayout
-	PipelineLayout::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	VkPipelineLayoutCreateInfo
-	PipelineLayout::createInfo () const noexcept
-	{
-		return m_createInfo;
-	}
-
-	const std::vector< std::shared_ptr< DescriptorSetLayout > > &
-	PipelineLayout::descriptorSetLayouts () const noexcept
-	{
-		return m_descriptorSetLayouts;
-	}
-
-	const std::vector< VkPushConstantRange > &
-	PipelineLayout::pushConstantRanges () const noexcept
-	{
-		return m_pushConstantRanges;
 	}
 
 	size_t
@@ -258,6 +229,10 @@ namespace Emeraude::Vulkan
 	std::string
 	to_string (const PipelineLayout & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

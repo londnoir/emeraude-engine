@@ -1,129 +1,91 @@
 /*
- * Emeraude/Vulkan/Instance.cpp
- * This file is part of Emeraude
+ * src/Vulkan/Instance.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Instance.hpp"
 
-/* C/C++ standard libraries */
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
+#include <cstring>
 #include <algorithm>
-#include <map>
 #include <sstream>
 
-/* Local inclusions */
-#include "Core.hpp" // FIXME: Remove this (Access to engine info)
-#include "Arguments.hpp"
-#include "Settings.hpp"
-#include "Window.hpp"
+/* Third-party inclusions. */
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
+
+/* Local inclusions. */
+#include "PhysicalDevice.hpp"
+#include "Device.hpp"
+#include "DeviceRequirements.hpp"
 #include "Utility.hpp"
+#include "PrimaryServices.hpp"
+#include "Window.hpp"
+#include "Core.hpp" // FIXME: Remove this (Access to engine info)
+#include "SettingKeys.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	const size_t Instance::ClassUID{Observable::getClassUID()};
+	const size_t Instance::ClassUID{getClassUID(ClassId)};
 
-	Instance::Instance (const Arguments & arguments, Settings & coreSettings) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_coreSettings(coreSettings)
+	Instance::Instance (PrimaryServices & primaryServices) noexcept
+		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
 	{
 
-	}
-
-	bool
-	Instance::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	Instance::usable () const noexcept
-	{
-		return m_instance != nullptr;
-	}
-
-	VkInstance
-	Instance::handle () const noexcept
-	{
-		return m_instance;
-	}
-
-	const std::vector< std::shared_ptr< PhysicalDevice > > &
-	Instance::physicalDevices () const noexcept
-	{
-		return m_physicalDevices;
-	}
-
-	const std::vector< std::shared_ptr< Device > > &
-	Instance::devices () const noexcept
-	{
-		return m_devices;
-	}
-
-	bool
-	Instance::isDebugModeEnabled () const noexcept
-	{
-		return m_flags[DebugMode];
-	}
-
-	void
-	Instance::enableDebugMode (bool state) noexcept
-	{
-		m_flags[DebugMode] = state;
 	}
 
 	void
 	Instance::readSettings () noexcept
 	{
 		/* Instance verbose mode */
-		m_flags[DebugMode] = m_coreSettings.getAs< bool >(EnableInstanceDebugKey, BOOLEAN_FOLLOWING_DEBUG);
-
-		/* Enable the vulkan validation layer system. */
-		m_flags[ValidationLayersEnabled] = m_coreSettings.getAs< bool >(ValidationLayersEnabledKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[DebugMode] =
+			m_primaryServices.arguments().get("--debug-vulkan").isPresent() ||
+			m_primaryServices.settings().get< bool >(VkInstanceEnableDebugKey, BOOLEAN_FOLLOWING_DEBUG);
 
 		/* NOTE: Only if the validation layer is enabled. */
-		if ( m_flags[ValidationLayersEnabled] )
+		if ( this->isDebugModeEnabled() )
 		{
 			/* Enable the vulkan debug messenger. */
-			m_flags[UseDebugMessenger] = m_coreSettings.getAs< bool >(UseDebugMessengerKey, true);
+			m_flags[UseDebugMessenger] = m_primaryServices.settings().get< bool >(VkInstanceUseDebugMessengerKey, true);
 
-			if ( m_flags[UseDebugMessenger] )
+			if ( this->isUsingDebugMessenger() )
+			{
 				m_debugCreateInfo = DebugMessenger::getCreateInfo();
+			}
 		}
 	}
 
 	bool
 	Instance::onInitialize () noexcept
 	{
-		const auto core = Core::instance();
+		const auto * core = Core::instance();
 
 		this->readSettings();
 
@@ -133,22 +95,24 @@ namespace Emeraude::Vulkan
 
 		/* Vulkan instance creation */
 		{
+			const auto & identification = core->identification();
+
 			m_applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			m_applicationInfo.pNext = nullptr;
-			m_applicationInfo.pApplicationName = core->applicationFullIdentification().c_str();
-			m_applicationInfo.applicationVersion = VK_MAKE_VERSION(core->applicationVersion().major(), core->applicationVersion().minor(), core->applicationVersion().revision());
-			m_applicationInfo.pEngineName = Core::LibraryName;
-			m_applicationInfo.engineVersion = VK_MAKE_VERSION(Core::LibraryVersion.major(), Core::LibraryVersion.minor(), Core::LibraryVersion.revision());
-			m_applicationInfo.apiVersion = VK_API_VERSION_1_3;
+			m_applicationInfo.pApplicationName = identification.applicationId().c_str();
+			m_applicationInfo.applicationVersion = VK_MAKE_VERSION(identification.applicationVersion().major(), identification.applicationVersion().minor(), identification.applicationVersion().revision());
+			m_applicationInfo.pEngineName = Identification::LibraryName;
+			m_applicationInfo.engineVersion = VK_MAKE_VERSION(Identification::LibraryVersion.major(), Identification::LibraryVersion.minor(), Identification::LibraryVersion.revision());
+            m_applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
 			m_createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-			m_createInfo.pNext = m_flags[UseDebugMessenger] ? &m_debugCreateInfo : nullptr;
+			m_createInfo.pNext = this->isUsingDebugMessenger() ? &m_debugCreateInfo : nullptr;
 			m_createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 			m_createInfo.pApplicationInfo = &m_applicationInfo;
 			m_createInfo.enabledLayerCount = static_cast< uint32_t >(m_requiredValidationLayers.size());
 			m_createInfo.ppEnabledLayerNames = m_requiredValidationLayers.data();
-			m_createInfo.enabledExtensionCount = static_cast< uint32_t >(m_requiredExtensions.size());
-			m_createInfo.ppEnabledExtensionNames = m_requiredExtensions.data();
+			m_createInfo.enabledExtensionCount = static_cast< uint32_t >(m_requiredInstanceExtensions.size());
+			m_createInfo.ppEnabledExtensionNames = m_requiredInstanceExtensions.data();
 
 			/* At this point, we create the vulkan instance.
 			 * Beyond this point Vulkan is in the pipe and usable. */
@@ -156,38 +120,71 @@ namespace Emeraude::Vulkan
 
 			if ( result != VK_SUCCESS )
 			{
-				TraceFatal{ClassId} << "Unable to create a Vulkan instance : " << vkResultToCString(result) << " !";
+				switch ( result )
+				{
+					case VK_ERROR_OUT_OF_HOST_MEMORY :
+						Tracer::fatal(ClassId, "The host system is out of memory !");
+						break;
+
+					case VK_ERROR_OUT_OF_DEVICE_MEMORY :
+						Tracer::fatal(ClassId, "The device is out of memory !");
+						break;
+
+					case VK_ERROR_INITIALIZATION_FAILED :
+						Tracer::fatal(ClassId, "The Vulkan instance failed to initialize ! (No specific info)");
+						break;
+
+					case VK_ERROR_LAYER_NOT_PRESENT :
+						TraceFatal{ClassId} << "Unable to create a Vulkan instance : " << vkResultToCString(result) << " !";
+						break;
+
+					case VK_ERROR_EXTENSION_NOT_PRESENT :
+					{
+						TraceFatal trace{ClassId};
+
+						trace <<
+							"Unable to create a Vulkan instance : " << vkResultToCString(result) << " !"
+							"Required extensions :" "\n";
+
+						for ( const auto & extension : m_requiredInstanceExtensions )
+						{
+							trace << "\t" << extension << "\n";
+						}
+
+						trace << getItemListAsString("Instance", Instance::getExtensions(nullptr));
+					}
+						break;
+
+					case VK_ERROR_INCOMPATIBLE_DRIVER :
+						Tracer::fatal(ClassId, "Incompatible driver !");
+						break;
+
+					default:
+						break;
+				}
 
 				return false;
 			}
 		}
 
 		/* NOTE: When debugging, we want to re-route the validation layer messages to the engine tracer. */
-		if ( m_flags[UseDebugMessenger] )
+		if ( this->isUsingDebugMessenger() )
 		{
 			m_debugMessenger = std::make_unique< DebugMessenger >(*this);
-			m_debugMessenger->setIdentifier("VulkanInstance-Main-DebugMessenger");
+			m_debugMessenger->setIdentifier(ClassId, "Main", "DebugMessenger");
 
 			if ( !m_debugMessenger->isCreated() )
+			{
 				Tracer::warning(ClassId, "Unable to activate the validation layers debug messenger !");
+			}
 		}
 
 		/* Probe all usable physical devices. */
+		if ( !this->preparePhysicalDevices() )
 		{
-			const auto & physicalDeviceList = this->getPhysicalDevices();
+			TraceFatal{ClassId} << "No physical device available !";
 
-			if ( physicalDeviceList.empty() )
-			{
-				TraceFatal{ClassId} << "No physical device available !";
-
-				return false;
-			}
-
-			m_physicalDevices.reserve(physicalDeviceList.size());
-
-			std::transform(physicalDeviceList.cbegin(), physicalDeviceList.cend(), std::back_inserter(m_physicalDevices), [] (const auto & physicalDevice) {
-				return std::make_shared< PhysicalDevice >(physicalDevice);
-			});
+			return false;
 		}
 
 		return true;
@@ -201,10 +198,10 @@ namespace Emeraude::Vulkan
 		{
 			device->destroy();
 
-			size_t useCount = device.use_count();
-
-			if ( useCount > 1 )
-				TraceError{ClassId} << "The Vulkan device '" << device->identifier() << "' smart pointer still have " << useCount << " uses !";
+			if ( device.use_count() > 1 )
+			{
+				TraceError{ClassId} << "The Vulkan device '" << device->identifier() << "' smart pointer still have " << device.use_count() << " uses !";
+			}
 		}
 
 		m_devices.clear();
@@ -220,15 +217,15 @@ namespace Emeraude::Vulkan
 
 		m_requestedValidationLayers.clear();
 		m_requiredValidationLayers.clear();
-		m_requiredExtensions.clear();
+		m_requiredInstanceExtensions.clear();
 
 		return true;
 	}
 
-	std::vector< VkPhysicalDevice >
-	Instance::getPhysicalDevices () const noexcept
+	bool
+	Instance::preparePhysicalDevices () noexcept
 	{
-		std::vector< VkPhysicalDevice > output{};
+		std::vector< VkPhysicalDevice > physicalDevices{};
 
 		uint32_t count = 0;
 
@@ -238,65 +235,92 @@ namespace Emeraude::Vulkan
 		{
 			if ( count > 0 )
 			{
-				output.resize(count);
+				physicalDevices.resize(count);
 
-				result = vkEnumeratePhysicalDevices(m_instance, &count, output.data());
+				result = vkEnumeratePhysicalDevices(m_instance, &count, physicalDevices.data());
 
 				if ( result != VK_SUCCESS )
+				{
 					TraceError{ClassId} << "Unable to get physical devices : " << vkResultToCString(result) << " !";
+
+					return false;
+				}
 			}
 		}
 		else
 		{
 			TraceError{ClassId} << "Unable to get physical device count : " << vkResultToCString(result) << " !";
+
+			return false;
 		}
 
-		return output;
+		m_physicalDevices.reserve(physicalDevices.size());
+
+		std::transform(physicalDevices.cbegin(), physicalDevices.cend(), std::back_inserter(m_physicalDevices), [] (const auto & physicalDevice) {
+			return std::make_shared< PhysicalDevice >(physicalDevice);
+		});
+
+		return !m_physicalDevices.empty();
 	}
 
 	void
 	Instance::setRequiredValidationLayers () noexcept
 	{
-		if ( !m_flags[ValidationLayersEnabled] )
+		if ( !this->isDebugModeEnabled() )
+		{
 			return;
+		}
 
 		const auto availableValidationLayers = Instance::getValidationLayers();
 
+		/* NOTE: Save a copy of validation layers in settings for easy edition. */
+		if ( m_primaryServices.settings().isArrayEmpty(VkInstanceAvailableValidationLayersKey) )
+		{
+			for ( const auto & availableValidationLayer : availableValidationLayers )
+			{
+				m_primaryServices.settings().setInArray(VkInstanceAvailableValidationLayersKey, availableValidationLayer.layerName);
+			}
+		}
+
 		/* NOTE: Show available validation layers on the current system. */
-		if ( m_coreSettings.getAs< bool >(ShowAvailableValidationLayersKey, BOOLEAN_FOLLOWING_DEBUG) )
-			printItemList(availableValidationLayers);
+		if ( m_primaryServices.settings().get< bool >(VkInstanceShowAvailableValidationLayersKey, BOOLEAN_FOLLOWING_DEBUG) )
+		{
+			TraceInfo{ClassId} << getItemListAsString(availableValidationLayers);
+		}
 
 		/* Read the settings to get a dynamic list of validation layers. */
-		if ( m_coreSettings.isArrayEmpty(ValidationLayersRequestedKey) )
+		if ( m_primaryServices.settings().isArrayEmpty(VkInstanceRequestedValidationLayersKey) )
 		{
 			TraceInfo{ClassId} <<
 				"No validation layer requested in core settings ! Setting all validation layers available..." "\n"
-				"NOTE: You can change the validation layers selected in core settings at the key : '" << ValidationLayersRequestedKey << "'.";
+				"NOTE: You can change the validation layers selected in core settings at the key : '" << VkInstanceRequestedValidationLayersKey << "'.";
 
 			for ( const auto & availableValidationLayer : availableValidationLayers )
 			{
-				m_coreSettings.setInArray(ValidationLayersRequestedKey, availableValidationLayer.layerName);
+				m_primaryServices.settings().setInArray(VkInstanceRequestedValidationLayersKey, availableValidationLayer.layerName);
 				m_requestedValidationLayers.emplace_back(availableValidationLayer.layerName);
 			}
 		}
 		else
 		{
-			m_requestedValidationLayers = m_coreSettings.asStringList(ValidationLayersRequestedKey);
+			m_requestedValidationLayers = m_primaryServices.settings().getArrayAs< std::string >(VkInstanceRequestedValidationLayersKey);
 
-			if ( m_flags[DebugMode] )
+			if ( this->isDebugModeEnabled() )
 			{
 				TraceInfo trace{ClassId};
 
 				trace << "Requested validation layers from settings :" "\n";
 
 				for ( const auto & requestedValidationLayer : m_requestedValidationLayers )
+				{
 					trace << "\t" << requestedValidationLayer << "\n";
+				}
 			}
 		}
 
 		m_requiredValidationLayers = Instance::getSupportedValidationLayers(m_requestedValidationLayers, availableValidationLayers);
 
-		if ( m_flags[DebugMode] )
+		if ( this->isDebugModeEnabled() )
 		{
 			if ( m_requiredValidationLayers.empty() )
 			{
@@ -306,10 +330,12 @@ namespace Emeraude::Vulkan
 			{
 				TraceInfo trace{ClassId};
 
-				trace << "Final validation layers selection :" "\n";
+				trace << "Final validation layers selected :" "\n";
 
 				for ( const auto & requiredValidationLayer : m_requiredValidationLayers )
+				{
 					trace << "\t" << requiredValidationLayer << "\n";
+				}
 			}
 		}
 	}
@@ -318,45 +344,36 @@ namespace Emeraude::Vulkan
 	Instance::setRequiredExtensions () noexcept
 	{
 		/* NOTE: Show available extensions on the current system. */
-		if ( m_coreSettings.getAs< bool >(ShowAvailableInstanceExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
-			printItemList("Instance", Instance::getExtensions(nullptr));
+		if ( m_primaryServices.settings().get< bool >(VkInstanceShowAvailableExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
+		{
+			TraceInfo{ClassId} << getItemListAsString("Instance", Instance::getExtensions(nullptr));
+		}
 
 		uint32_t glfwExtensionCount = 0;
 
-		const auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		const auto * glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
 		for ( uint32_t index = 0; index < glfwExtensionCount; index++ )
-			m_requiredExtensions.emplace_back(glfwExtensions[index]);
+		{
+			m_requiredInstanceExtensions.emplace_back(glfwExtensions[index]);
+		}
 
 		/* If debug mode enabled, push back debug utilities. */
-		if ( m_flags[ValidationLayersEnabled] )
+		if ( this->isDebugModeEnabled() && this->isUsingDebugMessenger() )
 		{
-			if ( m_flags[UseDebugMessenger] )
-			{
-				m_requiredExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			}
-			else
-			{
-				/* These are supersede by the debug utils extension.
-				 * NOTE: This causes crashes when enabled with debug utils. */
-				m_requiredExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-				m_requiredExtensions.emplace_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-			}
+			/* NOTE: VK_EXT_debug_report (vk 1.0) has been deprecated in favor of VK_EXT_debug_utils (vk 1.2 ?). */
+			//m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 
 		/* NOTE: This extension allows applications to control whether devices
 		 * that expose the VK_KHR_portability_subset extension are included in
 		 * the results of physical device enumeration. */
-		m_requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		m_requiredInstanceExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
-		/* NOTE: Video decoding extensions. (To test one day ...) */
-		//m_requiredExtensions.emplace_back(VK_KHR_VIDEO_QUEUE_EXTENSION_NAME);
-		//m_requiredExtensions.emplace_back(VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME);
-		//m_requiredExtensions.emplace_back(VK_KHR_VIDEO_DECODE_H265_EXTENSION_NAME);
-
-		if ( m_flags[DebugMode] )
+		if ( this->isDebugModeEnabled() )
 		{
-			if ( m_requiredExtensions.empty() )
+			if ( m_requiredInstanceExtensions.empty() )
 			{
 				Tracer::info(ClassId, "No extension required !");
 			}
@@ -366,8 +383,10 @@ namespace Emeraude::Vulkan
 
 				trace << "Required extensions :" "\n";
 
-				for ( const auto & requiredExtension : m_requiredExtensions )
+				for ( const auto & requiredExtension : m_requiredInstanceExtensions )
+				{
 					trace << "\t" << requiredExtension << "\n";
+				}
 			}
 		}
 	}
@@ -390,7 +409,9 @@ namespace Emeraude::Vulkan
 				result = vkEnumerateInstanceLayerProperties(&count, validationLayers.data());
 
 				if ( result != VK_SUCCESS )
+				{
 					TraceError{ClassId} << "Unable to get instance validation layers : " << vkResultToCString(result) << " !";
+				}
 			}
 		}
 		else
@@ -419,7 +440,9 @@ namespace Emeraude::Vulkan
 				result = vkEnumerateInstanceExtensionProperties(pLayerName, &count, extensions.data());
 
 				if ( result != VK_SUCCESS )
+				{
 					TraceError{ClassId} << "Unable to get instance extensions : " << vkResultToCString(result) << " !";
+				}
 			}
 		}
 		else
@@ -431,7 +454,7 @@ namespace Emeraude::Vulkan
 	}
 
 	VkFormat
-	Instance::findColorFormat (const std::shared_ptr< Vulkan::Device > & device, uint32_t redBits, uint32_t greenBits, uint32_t blueBits, uint32_t alphaBits) noexcept
+	Instance::findColorFormat (const std::shared_ptr< Device > & device, uint32_t /*redBits*/, uint32_t /*greenBits*/, uint32_t /*blueBits*/, uint32_t /*alphaBits*/) noexcept
 	{
 		return device->findSupportedFormat(
 			{
@@ -443,7 +466,7 @@ namespace Emeraude::Vulkan
 	}
 
 	VkFormat
-	Instance::findDepthStencilFormat (const std::shared_ptr< Vulkan::Device > & device, uint32_t depthBits, uint32_t stencilBits) noexcept
+	Instance::findDepthStencilFormat (const std::shared_ptr< Device > & device, uint32_t depthBits, uint32_t stencilBits) noexcept
 	{
 		std::vector< VkFormat > formats{};
 
@@ -451,31 +474,42 @@ namespace Emeraude::Vulkan
 		{
 			case 32U :
 				if ( stencilBits == 0 )
+				{
 					formats.emplace_back(VK_FORMAT_D32_SFLOAT);
+				}
 				else
+				{
 					formats.emplace_back(VK_FORMAT_D32_SFLOAT_S8_UINT);
-
+				}
 				[[fallthrough]];
 
 			case 24U :
 				if ( stencilBits == 0 )
+				{
 					formats.emplace_back(VK_FORMAT_X8_D24_UNORM_PACK32);
+				}
 				else
+				{
 					formats.emplace_back(VK_FORMAT_D24_UNORM_S8_UINT);
-
+				}
 				[[fallthrough]];
 
 			case 16U :
 				if ( stencilBits == 0 )
+				{
 					formats.emplace_back(VK_FORMAT_D16_UNORM);
+				}
 				else
+				{
 					formats.emplace_back(VK_FORMAT_D16_UNORM_S8_UINT);
-
+				}
 				[[fallthrough]];
 
 			case 0U :
 				if ( stencilBits > 0 )
+				{
 					formats.emplace_back(VK_FORMAT_S8_UINT);
+				}
 				break;
 
 			default:
@@ -522,15 +556,10 @@ namespace Emeraude::Vulkan
 		}
 	}
 
-	std::shared_ptr< Device >
-	Instance::getGraphicsDevice (Window & window) noexcept
+	std::map< size_t, std::shared_ptr< PhysicalDevice > >
+	Instance::getScoredGraphicsDevices (Window * window) const noexcept
 	{
-		std::vector< const char * > requiredExtensions{
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME/*,
-			VK_KHR_SHARED_PRESENTABLE_IMAGE_EXTENSION_NAME*/
-		};
-
-		std::map< size_t, std::shared_ptr< PhysicalDevice > > scoredDevices{};
+		std::map< size_t, std::shared_ptr< PhysicalDevice > > graphicsDevices{};
 
 		for ( const auto & physicalDevice : m_physicalDevices )
 		{
@@ -538,31 +567,47 @@ namespace Emeraude::Vulkan
 
 			TraceInfo{ClassId} << physicalDevice->getPhysicalDeviceInformation();
 
-			if ( window.usable() )
+			if ( window != nullptr && window->usable() )
 			{
-				window.surface()->update(physicalDevice);
+				window->surface()->update(physicalDevice);
 
 				if ( !this->checkDeviceCompatibility(physicalDevice, RunningMode::Performance, window, score) )
+				{
 					continue;
+				}
 			}
 			else
 			{
 				if ( !this->checkDeviceCompatibility(physicalDevice, RunningMode::Performance, VK_QUEUE_GRAPHICS_BIT, score) )
+				{
 					continue;
+				}
 			}
 
 			if ( !this->checkDevicesFeaturesForGraphics(physicalDevice, score) )
+			{
 				continue;
+			}
 
-			if ( !this->checkDeviceForRequiredExtensions(physicalDevice, requiredExtensions, score) )
+			if ( !this->checkDeviceForRequiredExtensions(physicalDevice, m_requiredGraphicsDeviceExtensions, score) )
+			{
 				continue;
+			}
 
 			score += physicalDevice->getTotalQueueCount() * 100;
 
 			TraceInfo(ClassId) << "Physical device '" << physicalDevice->properties().deviceName << "' reached a score of " << score << " !";
 
-			scoredDevices.emplace(score, physicalDevice);
+			graphicsDevices.emplace(score, physicalDevice);
 		}
+
+		return graphicsDevices;
+	}
+
+	std::shared_ptr< Device >
+	Instance::getGraphicsDevice (Window * window) noexcept
+	{
+		const auto scoredDevices = this->getScoredGraphicsDevices(window);
 
 		/* NOTE: Returns the device with the highest score. */
 		if ( scoredDevices.empty() )
@@ -572,7 +617,30 @@ namespace Emeraude::Vulkan
 			return {};
 		}
 
-		const auto & selectedPhysicalDevice = scoredDevices.rbegin()->second;
+		std::shared_ptr< PhysicalDevice > selectedPhysicalDevice;
+
+		const auto forceGPUName = m_primaryServices.settings().get< std::string >(VkDeviceForceGPUKey);
+
+		if ( !forceGPUName.empty() )
+		{
+			TraceInfo{ClassId} << "Trying to force the GPU named '" << forceGPUName << "' ...";
+
+			for ( const auto & [score, device] : scoredDevices )
+			{
+				if ( device->deviceName() == forceGPUName )
+				{
+					selectedPhysicalDevice = device;
+
+					break;
+				}
+			}
+		}
+
+		/* NOTE: If no GPU was forced, or not found, which the best one. */
+		if ( selectedPhysicalDevice == nullptr )
+		{
+			selectedPhysicalDevice = scoredDevices.rbegin()->second;
+		}
 
 		/* NOTE: Logical device creation for graphics rendering and presentation. */
 		TraceSuccess{ClassId} <<
@@ -582,17 +650,27 @@ namespace Emeraude::Vulkan
 		auto device = std::make_shared< Device >(selectedPhysicalDevice);
 		device->setIdentifier((std::stringstream{} << "VulkanInstance-" << selectedPhysicalDevice->properties().deviceName << "(Graphics)-Device").str());
 
-		/* Be sure the selected device is the one that update the surface. */
-		window.surface()->update(device);
-
 		DeviceRequirements requirements{DeviceJobHint::Graphics};
 		requirements.features().fillModeNonSolid = VK_TRUE; // Required for wireframe mode !
+#if !IS_MACOS
+		requirements.features().geometryShader = VK_TRUE; // Required for TBN space display
+#endif
+		requirements.features().samplerAnisotropy = VK_TRUE;
 		requirements.requireGraphicsQueues({1.0F}, {0.5F});
 		requirements.requireTransferQueues({1.0F});
-		requirements.requirePresentationQueues({1.0F}, window.surface()->handle(), false);
 
-		if ( !device->create(requirements, requiredExtensions) )
+		if ( window != nullptr && window->usable() )
+		{
+			/* NOTE: Be sure the selected device is the one that processLogics the surface. */
+			window->surface()->update(device);
+
+			requirements.requirePresentationQueues({1.0F}, window->surface()->handle(), false);
+		}
+
+		if ( !device->create(requirements, m_requiredGraphicsDeviceExtensions) )
+		{
 			return {};
+		}
 
 		m_devices.emplace_back(device);
 
@@ -611,13 +689,19 @@ namespace Emeraude::Vulkan
 			size_t score = 0;
 
 			if ( !this->checkDeviceCompatibility(physicalDevice, RunningMode::Performance, VK_QUEUE_COMPUTE_BIT, score) )
+			{
 				continue;
+			}
 
 			if ( !this->checkDevicesFeaturesForCompute(physicalDevice, score) )
+			{
 				continue;
+			}
 
 			if ( !this->checkDeviceForRequiredExtensions(physicalDevice, requiredExtensions, score) )
+			{
 				continue;
+			}
 
 			TraceInfo{ClassId} << "Physical device '" << physicalDevice->properties().deviceName << "' reached score of " << score;
 
@@ -647,7 +731,9 @@ namespace Emeraude::Vulkan
 		requirements.requireTransferQueues({1.0F});
 
 		if ( !logicalDevice->create(requirements, requiredExtensions) )
+		{
 			return {};
+		}
 
 		m_devices.emplace_back(logicalDevice);
 
@@ -678,7 +764,9 @@ namespace Emeraude::Vulkan
 				}
 
 				if ( !layerFound )
+				{
 					TraceWarning{ClassId} << "The requested '" << requestedValidationLayer << "' validation layer is unavailable !";
+				}
 			}
 		}
 		else
@@ -761,8 +849,10 @@ namespace Emeraude::Vulkan
 	{
 		for ( const auto & queueFamilyProperty : physicalDevice->queueFamilyProperties() )
 		{
-			if ( !(queueFamilyProperty.queueFlags & type) )
+			if ( (queueFamilyProperty.queueFlags & type) == 0 )
+			{
 				continue;
+			}
 
 			this->modulateDeviceScoring(physicalDevice->properties(), runningMode, score);
 
@@ -773,20 +863,24 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
-	Instance::checkDeviceCompatibility (const std::shared_ptr< PhysicalDevice > & physicalDevice, RunningMode runningMode, const Window & window, size_t & score) const noexcept
+	Instance::checkDeviceCompatibility (const std::shared_ptr< PhysicalDevice > & physicalDevice, RunningMode runningMode, const Window * window, size_t & score) const noexcept
 	{
 		for ( const auto & queueFamilyProperty : physicalDevice->queueFamilyProperties() )
 		{
 			/* Must be a graphics family queue. */
-			if ( !(queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) )
+			if ( (queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 )
+			{
 				continue;
+			}
 
 			/* Must support the presentation, have valid presents modes and surface formats. */
-			if ( !window.surface()->presentationSupported() || window.surface()->presentModes().empty() || window.surface()->formats().empty() )
+			if ( !window->surface()->presentationSupported() || window->surface()->presentModes().empty() || window->surface()->formats().empty() )
+			{
 				continue;
+			}
 
-			score += window.surface()->formats().size();
-			score += window.surface()->presentModes().size();
+			score += window->surface()->formats().size();
+			score += window->surface()->presentModes().size();
 
 			this->modulateDeviceScoring(physicalDevice->properties(), runningMode, score);
 
@@ -802,385 +896,385 @@ namespace Emeraude::Vulkan
 		const auto & properties = physicalDevice->properties();
 		const auto & features = physicalDevice->features();
 
-		if ( !features.robustBufferAccess )
+		if ( features.robustBufferAccess == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'robustBufferAccess' feature !";
 
 			//return false;
 		}
 
-		if ( !features.fullDrawIndexUint32 )
+		if ( features.fullDrawIndexUint32 == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'fullDrawIndexUint32' feature !";
 
 			//return false;
 		}
 
-		if ( !features.imageCubeArray )
+		if ( features.imageCubeArray == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'imageCubeArray' feature !";
 
 			//return false;
 		}
 
-		if ( !features.independentBlend )
+		if ( features.independentBlend == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'independentBlend' feature !";
 
 			//return false;
 		}
 
-		if ( !features.geometryShader )
+		if ( features.geometryShader == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'geometryShader' feature !";
 
 			//return false;
 		}
 
-		if ( !features.tessellationShader )
+		if ( features.tessellationShader == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'tessellationShader' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sampleRateShading )
+		if ( features.sampleRateShading == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sampleRateShading' feature !";
 
 			//return false;
 		}
 
-		if ( !features.dualSrcBlend )
+		if ( features.dualSrcBlend == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'dualSrcBlend' feature !";
 
 			//return false;
 		}
 
-		if ( !features.logicOp )
+		if ( features.logicOp == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'logicOp' feature !";
 
 			//return false;
 		}
 
-		if ( !features.multiDrawIndirect )
+		if ( features.multiDrawIndirect == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'multiDrawIndirect' feature !";
 
 			//return false;
 		}
 
-		if ( !features.drawIndirectFirstInstance )
+		if ( features.drawIndirectFirstInstance == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'drawIndirectFirstInstance' feature !";
 
 			//return false;
 		}
 
-		if ( !features.depthClamp )
+		if ( features.depthClamp == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'depthClamp' feature !";
 
 			//return false;
 		}
 
-		if ( !features.depthBiasClamp )
+		if ( features.depthBiasClamp == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'depthBiasClamp' feature !";
 
 			//return false;
 		}
 
-		if ( !features.fillModeNonSolid )
+		if ( features.fillModeNonSolid == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'fillModeNonSolid' feature !";
 
 			//return false;
 		}
 
-		if ( !features.depthBounds )
+		if ( features.depthBounds == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'depthBounds' feature !";
 
 			//return false;
 		}
 
-		if ( !features.wideLines )
+		if ( features.wideLines == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'wideLines' feature !";
 
 			//return false;
 		}
 
-		if ( !features.largePoints )
+		if ( features.largePoints == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'largePoints' feature !";
 
 			//return false;
 		}
 
-		if ( !features.alphaToOne )
+		if ( features.alphaToOne == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'alphaToOne' feature !";
 
 			//return false;
 		}
 
-		if ( !features.multiViewport )
+		if ( features.multiViewport == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'multiViewport' feature !";
 
 			//return false;
 		}
 
-		if ( !features.samplerAnisotropy )
+		if ( features.samplerAnisotropy == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'samplerAnisotropy' feature !";
 
 			//return false;
 		}
 
-		if ( !features.textureCompressionETC2 )
+		if ( features.textureCompressionETC2 == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'textureCompressionETC2' feature !";
 
 			//return false;
 		}
 
-		if ( !features.textureCompressionASTC_LDR )
+		if ( features.textureCompressionASTC_LDR == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'textureCompressionASTC_LDR' feature !";
 
 			//return false;
 		}
 
-		if ( !features.textureCompressionBC )
+		if ( features.textureCompressionBC == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'textureCompressionBC' feature !";
 
 			//return false;
 		}
 
-		if ( !features.occlusionQueryPrecise )
+		if ( features.occlusionQueryPrecise == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'occlusionQueryPrecise' feature !";
 
 			//return false;
 		}
 
-		if ( !features.pipelineStatisticsQuery )
+		if ( features.pipelineStatisticsQuery == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'pipelineStatisticsQuery' feature !";
 
 			//return false;
 		}
 
-		if ( !features.vertexPipelineStoresAndAtomics )
+		if ( features.vertexPipelineStoresAndAtomics == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'vertexPipelineStoresAndAtomics' feature !";
 
 			//return false;
 		}
 
-		if ( !features.fragmentStoresAndAtomics )
+		if ( features.fragmentStoresAndAtomics == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'fragmentStoresAndAtomics' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderTessellationAndGeometryPointSize )
+		if ( features.shaderTessellationAndGeometryPointSize == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderTessellationAndGeometryPointSize' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderImageGatherExtended )
+		if ( features.shaderImageGatherExtended == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderImageGatherExtended' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageImageExtendedFormats )
+		if ( features.shaderStorageImageExtendedFormats == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageImageExtendedFormats' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageImageMultisample )
+		if ( features.shaderStorageImageMultisample == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageImageMultisample' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageImageReadWithoutFormat )
+		if ( features.shaderStorageImageReadWithoutFormat == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageImageReadWithoutFormat' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageImageWriteWithoutFormat )
+		if ( features.shaderStorageImageWriteWithoutFormat == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageImageWriteWithoutFormat' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderUniformBufferArrayDynamicIndexing )
+		if ( features.shaderUniformBufferArrayDynamicIndexing == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderUniformBufferArrayDynamicIndexing' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderSampledImageArrayDynamicIndexing )
+		if ( features.shaderSampledImageArrayDynamicIndexing == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderSampledImageArrayDynamicIndexing' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageBufferArrayDynamicIndexing )
+		if ( features.shaderStorageBufferArrayDynamicIndexing == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageBufferArrayDynamicIndexing' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderStorageImageArrayDynamicIndexing )
+		if ( features.shaderStorageImageArrayDynamicIndexing == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderStorageImageArrayDynamicIndexing' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderClipDistance )
+		if ( features.shaderClipDistance == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderClipDistance' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderCullDistance )
+		if ( features.shaderCullDistance == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderCullDistance' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderFloat64 )
+		if ( features.shaderFloat64 == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderFloat64' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderInt64 )
+		if ( features.shaderInt64 == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderInt64' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderInt16 )
+		if ( features.shaderInt16 == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderInt16' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderResourceResidency )
+		if ( features.shaderResourceResidency == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderResourceResidency' feature !";
 
 			//return false;
 		}
 
-		if ( !features.shaderResourceMinLod )
+		if ( features.shaderResourceMinLod == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'shaderResourceMinLod' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseBinding )
+		if ( features.sparseBinding == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseBinding' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidencyBuffer )
+		if ( features.sparseResidencyBuffer == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidencyBuffer' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidencyImage2D )
+		if ( features.sparseResidencyImage2D == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidencyImage2D' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidencyImage3D )
+		if ( features.sparseResidencyImage3D == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidencyImage3D' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidency2Samples )
+		if ( features.sparseResidency2Samples == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidency2Samples' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidency4Samples )
+		if ( features.sparseResidency4Samples == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidency4Samples' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidency8Samples )
+		if ( features.sparseResidency8Samples == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidency8Samples' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidency16Samples )
+		if ( features.sparseResidency16Samples == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidency16Samples' feature !";
 
 			//return false;
 		}
 
-		if ( !features.sparseResidencyAliased )
+		if ( features.sparseResidencyAliased == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sparseResidencyAliased' feature !";
 
 			//return false;
 		}
 
-		if ( !features.variableMultisampleRate )
+		if ( features.variableMultisampleRate == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'variableMultisampleRate' feature !";
 
 			//return false;
 		}
 
-		if ( !features.inheritedQueries )
+		if ( features.inheritedQueries == 0 )
 		{
 			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'inheritedQueries' feature !";
 
@@ -1191,7 +1285,7 @@ namespace Emeraude::Vulkan
 	}
 
 	bool
-	Instance::checkDevicesFeaturesForCompute (const std::shared_ptr< PhysicalDevice > & physicalDevice, size_t & score) const noexcept
+	Instance::checkDevicesFeaturesForCompute (const std::shared_ptr< PhysicalDevice > & /*physicalDevice*/, size_t & /*score*/) const noexcept
 	{
 		//const auto & properties = physicalDevice->properties();
 		//const auto & features = physicalDevice->features();
@@ -1209,21 +1303,25 @@ namespace Emeraude::Vulkan
 
 		/* NOTE: If no requirements, we can stop here. */
 		if ( requiredExtensions.empty() )
+		{
 			return true;
+		}
 
 		if ( extensions.empty() )
-			return false;
-
-		for ( const auto & requiredExtenion : requiredExtensions )
 		{
-			auto found = std::any_of(extensions.cbegin(), extensions.cend(), [requiredExtenion] (const auto & extension) {
-				return std::strcmp(requiredExtenion, extension.extensionName) == 0;
+			return false;
+		}
+
+		for ( const auto & requiredExtension : requiredExtensions )
+		{
+			auto found = std::ranges::any_of(extensions, [requiredExtension] (const auto & extension) {
+				return std::strcmp(requiredExtension, extension.extensionName) == 0;
 			});
 
 			/* NOTE: Missing required extension. */
 			if ( !found )
 			{
-				TraceError{ClassId} << "The physical device '" << properties.deviceName << "' is missing the required '" << requiredExtenion << "' extension !";
+				TraceError{ClassId} << "The physical device '" << properties.deviceName << "' is missing the required '" << requiredExtension << "' extension !";
 
 				return false;
 			}

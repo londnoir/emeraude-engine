@@ -1,38 +1,41 @@
 /*
- * Emeraude/Audio/Utility.cpp
- * This file is part of Emeraude
+ * src/Audio/Utility.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Utility.hpp"
 
-/* C++ standard libraries */
+/* STL inclusions */
 #include <iostream>
 #include <sstream>
+#include <string>
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/openal.hpp"
+/* Third-party inclusions. */
+#include "AL/al.h"
+#include "AL/alc.h"
+#include "AL/alext.h"
 
 namespace Emeraude::Audio
 {
@@ -42,7 +45,7 @@ namespace Emeraude::Audio
 		auto hasError = false;
 
 		/* Load the first error, if exists... */
-		ALenum error;
+		ALenum error = 0;
 
 		while ( (error = alGetError()) != AL_NO_ERROR )
 		{
@@ -75,7 +78,7 @@ namespace Emeraude::Audio
 					break;
 			}
 
-			std::cerr << alGetString(error) << std::endl;
+			std::cerr << alGetString(error) << '\n';
 
 			hasError = true;
 		}
@@ -89,7 +92,9 @@ namespace Emeraude::Audio
 		auto error = alGetError();
 
 		while ( error != AL_NO_ERROR )
+		{
 			error = alGetError();
+		}
 	}
 
 	bool
@@ -98,11 +103,11 @@ namespace Emeraude::Audio
 		auto hasError = false;
 
 		/* Load the first error, if exists... */
-		ALenum error;
+		ALenum error = 0;
 
 		while ( (error = alcGetError(device)) != ALC_NO_ERROR )
 		{
-			std::cerr << "[OpenAL ALC API][" << lastFunctionCalled << ":" << filename << '@' << line << "] : ";
+			std::cerr << "[OpenAL ALC API][" << lastFunctionCalled << ":" << filename << ':' << line << "] : ";
 
 			switch ( error )
 			{
@@ -131,7 +136,7 @@ namespace Emeraude::Audio
 					break;
 			}
 
-			std::cerr << alGetString(error) << std::endl;
+			std::cerr << alGetString(error) << '\n';
 
 			hasError = true;
 		}
@@ -145,123 +150,125 @@ namespace Emeraude::Audio
 		auto error = alcGetError(device);
 
 		while ( error != ALC_NO_ERROR )
+		{
 			error = alcGetError(device);
+		}
 	}
 
 	std::string
 	alcKeyToLabel (ALCint key) noexcept
 	{
-		std::stringstream ss;
+		std::stringstream output;
 
 		switch ( key )
 		{
 			case ALC_MAJOR_VERSION :
-				ss << "ALC Major version";
+				output << "ALC Major version";
 				break;
 
 			case ALC_MINOR_VERSION :
-				ss << "ALC Minor version";
+				output << "ALC Minor version";
 				break;
 
 			case ALC_EFX_MAJOR_VERSION :
-				ss << "EFX Major version";
+				output << "EFX Major version";
 				break;
 
 			case ALC_EFX_MINOR_VERSION :
-				ss << "EFX Minor version";
+				output << "EFX Minor version";
 				break;
 
 			/** Context attribute: <int> Hz. */
 			case ALC_FREQUENCY :
-				ss << "Playback frequency (Hz)";
+				output << "Playback frequency (Hz)";
 				break;
 
 			/** Context attribute: <int> Hz. */
 			case ALC_REFRESH :
-				ss << "API refresh rate (Hz)";
+				output << "API refresh rate (Hz)";
 				break;
 
 			/** Context attribute: AL_TRUE or AL_FALSE. */
 			case ALC_SYNC :
-				ss << "API sync state (ON|OFF)";
+				output << "API sync state (ON|OFF)";
 				break;
 
 			/** Context attribute: <int> requested Mono (3D) Sources. */
 			case ALC_MONO_SOURCES :
-				ss << "Mono source count";
+				output << "Mono source count";
 				break;
 
 			/** Context attribute: <int> requested Stereo Sources. */
 			case ALC_STEREO_SOURCES :
-				ss << "Stereo source count";
+				output << "Stereo source count";
 				break;
 
 			case ALC_MAX_AUXILIARY_SENDS :
-				ss << "Max auxiliary sends";
+				output << "Max auxiliary sends";
 				break;
 
 			case ALC_CAPTURE_SAMPLES :
-				ss << "Capture samples (Hz)";
+				output << "Capture samples (Hz)";
 				break;
 
 			case ALC_FORMAT_CHANNELS_SOFT :
-				ss << "Format channels";
+				output << "Format channels";
 				break;
 
 			case ALC_FORMAT_TYPE_SOFT :
-				ss << "Format type";
+				output << "Format type";
 				break;
 
 			case 0x1997 : //ALC_AMBISONIC_LAYOUT_SOFT :
-				ss << "Ambisonic layout";
+				output << "Ambisonic layout";
 				break;
 
 			case 0x1998 : //ALC_AMBISONIC_SCALING_SOFT :
-				ss << "Ambisonic scaling";
+				output << "Ambisonic scaling";
 				break;
 
 			case 0x1999 : //ALC_AMBISONIC_ORDER_SOFT :
-				ss << "Ambisonic order";
+				output << "Ambisonic order";
 				break;
 
 			case 0x199B : //ALC_MAX_AMBISONIC_ORDER_SOFT :
-				ss << "Max ambisonic order";
+				output << "Max ambisonic order";
 				break;
 
 			case ALC_HRTF_SOFT :
-				ss << "HRTF (ON|OFF)";
+				output << "HRTF (ON|OFF)";
 				break;
 
 			case ALC_HRTF_STATUS_SOFT :
-				ss << "HRTF status";
+				output << "HRTF status";
 				break;
 
 			case ALC_NUM_HRTF_SPECIFIERS_SOFT :
-				ss << "Num HRTF specifiers";
+				output << "Num HRTF specifiers";
 				break;
 
 			case ALC_OUTPUT_LIMITER_SOFT :
-				ss << "Output limiter (ON|OFF)";
+				output << "Output limiter (ON|OFF)";
 				break;
 
 			case 0x19AC : //ALC_OUTPUT_MODE_SOFT :
-				ss << "Output mode";
+				output << "Output mode";
 				break;
 
 			case ALC_CONNECTED :
-				ss << "Connected (ON|OFF)";
+				output << "Connected (ON|OFF)";
 				break;
 
 			case ALC_ATTRIBUTES_SIZE:
 			case ALC_ALL_ATTRIBUTES:
-				ss << "Not a relevant ALC property";
+				output << "Not a relevant ALC property";
 				break;
 
 			default :
-				ss << "Unknown ALC key (" << key << ')';
+				output << "Unknown ALC key (" << key << ')';
 				break;
 		}
 
-		return ss.str();
+		return output.str();
 	}
 }

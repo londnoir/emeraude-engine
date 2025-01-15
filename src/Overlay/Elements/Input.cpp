@@ -1,59 +1,61 @@
 /*
- * Emeraude/Overlay/Elements/Input.cpp
- * This file is part of Emeraude
+ * src/Overlay/Elements/Input.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Input.hpp"
 
+/* STL inclusions. */
+#include <cstdint>
+#include <string>
+
 /* Local inclusions. */
-#include "Graphics/Geometry/IndexedVertexResource.hpp"
-#include "Input/KeyboardListenerInterface.hpp"
-#include "PixelFactory/Processor.hpp"
+#include "Overlay/ComposedSurface.hpp"
+#include "Libraries/Math/Rectangle.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/PixelFactory/Processor.hpp"
+#include "Input/Types.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
 	using namespace Libraries;
+	using namespace Libraries::Math;
 	using namespace Libraries::PixelFactory;
 
-	Input::Input () noexcept
-		: m_textWriter(&this->pixmap())
+	Input::Input (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);
 
-		this->setCapturePointerEventsState(true);
-		this->setCaptureKeyboardEventsState(true);
+		this->enablePointerListening(true);
+		this->enableKeyboardListening(true);
 	}
 
-	void
-	Input::onKeyPress (int, int, int, bool) noexcept
-	{
-
-	}
-
-	void
-	Input::onKeyRelease (int key, int, int) noexcept
+	bool
+	Input::onKeyRelease (int key, int /*scancode*/, int /*modifiers*/) noexcept
 	{
 		switch ( key )
 		{
@@ -62,28 +64,38 @@ namespace Emeraude::Overlay::Elements
 			case Emeraude::Input::KeyPadEnter :
 			case Emeraude::Input::KeyEscape :
 				this->setFocusedState(false);
-				break;
+
+				return true;
 
 			case Emeraude::Input::KeyBackspace :
-				if ( m_text.size() )
+				if ( !m_text.empty() )
 				{
 					m_text.pop_back();
 
 					this->drawFinished();
 				}
-				break;
+
+				return true;
+
+			default:
+				return false;
 		}
 	}
 
-	void
-	Input::onCharacterType (unsigned int unicode, int) noexcept
+	bool
+	Input::onCharacterType (uint32_t unicode) noexcept
 	{
-		if ( unicode < 127 )
+		if ( unicode >= 127 )
 		{
-			m_text += static_cast< char >(unicode);
-
-			this->drawFinished();
+			/* Out of range. */
+			return false;
 		}
+
+		m_text += static_cast< char >(unicode);
+
+		this->drawFinished();
+
+		return true;
 	}
 
 	Graphics::TextWriter &

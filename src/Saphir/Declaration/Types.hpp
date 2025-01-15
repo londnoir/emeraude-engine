@@ -1,33 +1,33 @@
 /*
- * Emeraude/Saphir/Declaration/Types.hpp
- * This file is part of Emeraude
+ * src/Saphir/Declaration/Types.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <cstddef>
 
 /* Local inclusions for usages. */
@@ -35,6 +35,24 @@
 
 namespace Emeraude::Saphir::Declaration
 {
+	/** @brief GLSL input primitive type enumerations. */
+	enum class InputPrimitiveType
+	{
+		Points,
+		Lines,
+		LineAdjacency,
+		Triangles,
+		TrianglesAdjacency
+	};
+
+	/** @brief GLSL output primitive type enumerations. */
+	enum class OutputPrimitiveType
+	{
+		Points,
+		LineStrip,
+		TriangleStrip
+	};
+
 	/**
 	 * @brief The GLSL variable type enumerations.
 	 * @note The enumeration is used to compute size in bytes for declarations.
@@ -222,6 +240,17 @@ namespace Emeraude::Saphir::Declaration
 
 	/**
 	 * @brief The GLSL memory layout enumeration.
+	 * @note
+	 * - packed: This layout type means that the implementation determines everything about how the fields are laid out in the block. The OpenGL API must be used to query the layout for the members of a particular block. Each member of a block will have a particular byte offset, which you can use to determine how to upload its data. Also, members of a block can be optimized out if they are found by the implementation to not affect the result of the shader. Therefore, the active components of a block may not be all of the components it was defined with.
+	 * - shared: This layout type works like packed, with two exceptions. First, it guarantees that all of the variables defined in the block are considered active; this means nothing is optimized out. Second, it guarantees that the members of the block will have the same layout as a block definition in another program, so long as:
+	 * 		The blocks in different programs use the exact same block definition (ignoring differences in variable names and the block name itself). Be careful about specifying the default matrix storage order, as this can implicitly change the definition of blocks following them.
+	 * 		All members of the block use explicit sizes for arrays.
+	 * 		Because of these guarantees, buffer-backed blocks declared shared can be used with any program that defines a block with the same elements in the same order. This even works across different types of buffer-backed blocks. You can use a buffer as a uniform buffer at one point, then use it as a shader storage buffer in another. OpenGL guarantees that all of the offsets and alignments will match between two shared blocks that define the same members in the same order. In short, it allows the user to share buffers between multiple programs.
+	 * - std140: This layout alleviates the need to query the offsets for definitions. The rules of std140 layout explicitly state the layout arrangement of any interface block declared with this layout. This also means that such an interface block can be shared across programs, much like shared. The only downside to this layout type is that the rules for packing elements into arrays/structs can introduce a lot of unnecessary padding.
+	 * 		The rules for std140 layout are covered quite well in the OpenGL specification (OpenGL 4.5, Section 7.6.2.2, page 137). Among the most important is the fact that arrays of types are not necessarily tightly packed. An array of floats in such a block will not be the equivalent to an array of floats in C/C++. The array stride (the bytes between array elements) is always rounded up to the size of a vec4 (ie: 16-bytes). So arrays will only match their C/C++ definitions if the type is a multiple of 16 bytes
+	 * 		Warning: Implementations sometimes get the std140 layout wrong for vec3 components. You are advised to manually pad your structures/arrays out and avoid using vec3 at all.
+	 *  - std430: This layout works like std140, except with a few optimizations in the alignment and strides for arrays and structs of scalars and vector elements (except for vec3 elements, which remain unchanged from std140). Specifically, they are no longer rounded up to a multiple of 16 bytes. So an array of `float`s will match with a C++ array of `float`s.
+	 * 		Note that this layout can only be used with shader storage blocks, not uniform blocks.
 	 */
 	enum class MemoryLayout
 	{

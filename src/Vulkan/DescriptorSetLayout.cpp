@@ -1,43 +1,47 @@
 /*
- * Emeraude/Vulkan/DescriptorSetLayout.cpp
- * This file is part of Emeraude
+ * src/Vulkan/DescriptorSetLayout.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "DescriptorSetLayout.hpp"
 
+/* STL inclusions. */
+#include <algorithm>
+#include <utility>
+
 /* Local inclusions. */
 #include "Device.hpp"
-#include "Tracer.hpp"
 #include "Utility.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Vulkan
 {
 	using namespace Libraries;
 
-	DescriptorSetLayout::DescriptorSetLayout (const std::shared_ptr< Device > & device, VkDescriptorSetLayoutCreateFlags flags) noexcept
-		: AbstractDeviceDependentObject(device)
+	DescriptorSetLayout::DescriptorSetLayout (const std::shared_ptr< Device > & device, std::string UUID, VkDescriptorSetLayoutCreateFlags flags) noexcept
+		: AbstractDeviceDependentObject(device), m_UUID(std::move(UUID))
 	{
 		m_createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
@@ -46,8 +50,8 @@ namespace Emeraude::Vulkan
 		m_createInfo.pBindings = nullptr;
 	}
 
-	DescriptorSetLayout::DescriptorSetLayout (const std::shared_ptr< Device > & device, const VkDescriptorSetLayoutCreateInfo & createInfo) noexcept
-		: AbstractDeviceDependentObject(device), m_createInfo(createInfo)
+	DescriptorSetLayout::DescriptorSetLayout (const std::shared_ptr< Device > & device, std::string UUID, const VkDescriptorSetLayoutCreateInfo & createInfo) noexcept
+		: AbstractDeviceDependentObject(device), m_createInfo(createInfo), m_UUID(std::move(UUID))
 	{
 
 	}
@@ -88,8 +92,6 @@ namespace Emeraude::Vulkan
 
 		this->setCreated();
 
-		TraceSuccess{ClassId} << "The descriptor set layout " << m_handle << " (" << this->identifier() << ") is successfully created !";
-
 		return true;
 	}
 
@@ -108,8 +110,6 @@ namespace Emeraude::Vulkan
 			this->device()->waitIdle();
 
 			vkDestroyDescriptorSetLayout(this->device()->handle(), m_handle, nullptr);
-
-			TraceSuccess{ClassId} << "The descriptor set layout " << m_handle << " (" << this->identifier() << ") is gracefully destroyed !";
 
 			m_handle = VK_NULL_HANDLE;
 		}
@@ -138,7 +138,7 @@ namespace Emeraude::Vulkan
 			return false;
 		}
 
-		auto bindingExists = std::any_of(m_setLayoutBindings.cbegin(), m_setLayoutBindings.cend(), [setLayoutBinding] (const auto & current) {
+		auto bindingExists = std::ranges::any_of(m_setLayoutBindings, [setLayoutBinding] (const auto & current) {
 			return current.binding == setLayoutBinding.binding;
 		});
 
@@ -152,192 +152,6 @@ namespace Emeraude::Vulkan
 		m_setLayoutBindings.emplace_back(setLayoutBinding);
 
 		return true;
-	}
-
-	bool
-	DescriptorSetLayout::declareSampler (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount, const VkSampler * pImmutableSamplers) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_SAMPLER,
-			descriptorCount,
-			stageFlags,
-			pImmutableSamplers
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareCombinedImageSampler (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount, const VkSampler * pImmutableSamplers) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			descriptorCount,
-			stageFlags,
-			pImmutableSamplers
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareSampledImage (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareStorageImage (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareUniformTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareStorageTexelBuffer (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareUniformBuffer (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareStorageBuffer (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareUniformBufferDynamic (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareStorageTexelDynamic (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareInputAttachment (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareInlineUniformBlockEXT (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareAccelerationStructureKHR (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	bool
-	DescriptorSetLayout::declareAccelerationStructureNV (uint32_t binding, VkShaderStageFlags stageFlags, uint32_t descriptorCount) noexcept
-	{
-		return this->declare(VkDescriptorSetLayoutBinding{
-			binding,
-			VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV,
-			descriptorCount,
-			stageFlags,
-			nullptr
-		});
-	}
-
-	VkDescriptorSetLayout
-	DescriptorSetLayout::handle () const noexcept
-	{
-		return m_handle;
-	}
-
-	VkDescriptorSetLayoutCreateInfo
-	DescriptorSetLayout::createInfo () const noexcept
-	{
-		return m_createInfo;
-	}
-
-	size_t
-	DescriptorSetLayout::hash () const noexcept
-	{
-		return DescriptorSetLayout::getHash(m_setLayoutBindings, m_createInfo.flags);
 	}
 
 	size_t
@@ -379,6 +193,10 @@ namespace Emeraude::Vulkan
 	std::string
 	to_string (const DescriptorSetLayout & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

@@ -1,32 +1,32 @@
 /*
- * Emeraude/Graphics/PostProcessor.hpp
- * This file is part of Emeraude
+ * src/Graphics/PostProcessor.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
-#include "PixelFactory/Area.hpp"
+#include "Libraries/PixelFactory/Area.hpp"
 /* Local inclusions for usages. */
 /* VULKAN_DEV */
 //#include "Framebuffer.hpp"
@@ -51,8 +51,7 @@ namespace Emeraude::Graphics
 			static constexpr auto Fragment = "em_Fragment";
 
 			/**
-			 * Construct a offscreen framebuffer for post-rendering effects.
-			 *
+			 * @brief Construct a offscreen framebuffer for post-rendering effects.
 			 * @param width The framebuffer width.
 			 * @param height The framebuffer height.
 			 * @param colorBufferBits The desired color precision.
@@ -63,91 +62,102 @@ namespace Emeraude::Graphics
 			PostProcessor (unsigned int width, unsigned int height, unsigned int colorBufferBits, unsigned int depthBufferBits, unsigned int stencilBufferBits, unsigned int samples) noexcept;
 
 			/**
-			 * Returns whether the post-processor is usable.
-			 *
+			 * @brief Returns whether the post-processor is usable.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool usable () const noexcept;
 
 			/**
-			 * Updates the program of the post processor if requested.
-			 *
-			 * @return bool
-			 */
-			//bool updateVideoMemoryForRendering () noexcept;
-
-			/**
-			 * Sets a list of post effect.
-			 *
+			 * @brief Sets a list of post effect.
 			 * @param effectsList The list of shader effects.
+			 * @return void
 			 */
 			void setEffectsList (const Saphir::FramebufferEffectsList & effectsList) noexcept;
 
-			/** Clear every effects. */
+			/**
+			 * @brief Clears every effects.
+			 * @return void
+			 */
 			void clearEffects () noexcept;
 
-			/** Prepares the post-processor for drawing to the off-screen framebuffer. */
+			/**
+			 * @brief Prepares the post-processor for drawing to the off-screen framebuffer.
+			 * @return void
+			 */
 			void begin () noexcept;
 
-			/** Release post-processor to let draw the off-screen framebuffer to view framebuffer. */
+			/**
+			 * @brief Release post-processor to let draw the off-screen framebuffer to view framebuffer.
+			 * @return void
+			 */
 			void end () noexcept;
 
 			/**
-			 * Render the off-screen buffer with effects to the default framebuffer.
-			 *
+			 * @brief Render the off-screen buffer with effects to the default framebuffer.
 			 * @param region The viewport area to blit/copy the render.
+			 * @return void
 			 */
 			void render (const Libraries::PixelFactory::Area< size_t > & region) const noexcept;
 
 			/**
-			 * Returns a pointer to the framebuffer responsible for the post-processor.
-			 *
+			 * @brief Returns a pointer to the framebuffer responsible for the post-processor.
 			 * @return const Framebuffer *
 			 */
 			//[[nodiscard]]
 			//const Framebuffer * framebuffer () const noexcept;
 
 			/**
-			 * Returns whether the framebuffer is using multisample.
-			 *
+			 * @brief Returns whether the framebuffer is using multisample.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool isMultisamplingEnabled () const noexcept;
 
 			/**
-			 * Sets the background color for the framebuffer.
-			 *
+			 * @brief Sets the background color for the framebuffer.
 			 * @param color A reference to a color.
+			 * @return void
 			 */
 			void setBackgroundColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 		private:
 
-			/* Flag names. */
-			static constexpr auto UpdateRequested = 0UL;
-			static constexpr auto Usable = 1UL;
-
 			/**
-			 * Resize the framebuffer.
-			 *
+			 * @brief Resizes the framebuffer.
 			 * @param width The new width.
 			 * @param height The new height.
 			 * @return bool
 			 */
 			bool resize (unsigned int width, unsigned int height) noexcept;
 
+			/**
+			 * @brief
+			 * @return bool
+			 */
 			bool loadGeometry () noexcept;
 
 			/**
-			 * Load the post-processor shading program.
-			 *
+			 * @brief Load the post-processor shading program.
 			 * @return bool
 			 */
 			bool loadProgram () noexcept;
 
+			/**
+			 * @brief
+			 * @param width
+			 * @param height
+			 * @param colorBufferBits
+			 * @param depthBufferBits
+			 * @param stencilBufferBits
+			 * @param samples
+			 * @return bool
+			 */
 			bool buildFramebuffer (unsigned int width, unsigned int height, unsigned int colorBufferBits, unsigned int depthBufferBits, unsigned int stencilBufferBits, unsigned int samples) noexcept;
+
+			/* Flag names. */
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto UpdateRequested{1UL};
 
 			//Framebuffer m_framebuffer{};
 			//std::shared_ptr< Vulkan::Texture2D > m_colorBuffer{};
@@ -157,8 +167,8 @@ namespace Emeraude::Graphics
 			//std::shared_ptr< Program > m_program{};
 			//RasterizationMode m_rasterizationMode{};
 			std::array< bool, 8 > m_flags{
-				false/*UpdateRequested, Say if post-processor effects need update for shading programs. */,
-				false/*Usable*/,
+				false/*ServiceInitialized*/,
+				false/*UpdateRequested*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

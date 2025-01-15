@@ -1,55 +1,84 @@
 /*
- * Emeraude/Graphics/Renderable/AbstractBackground.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/AbstractBackground.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <cstddef>
+/* STL inclusions. */
+#include <cstdint>
+#include <memory>
 #include <string>
 
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
+#include "Libraries/PixelFactory/Color.hpp"
 #include "Graphics/Geometry/IndexedVertexResource.hpp"
 
 namespace Emeraude::Graphics::Renderable
 {
 	/**
-	 * @brief The AbstractBackground class
+	 * @brief An abstract class to define the far background of a scene.
 	 * @extends Emeraude::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
 	 */
 	class AbstractBackground : public Interface
 	{
 		public:
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isReadyForInstantiation() */
-			[[nodiscard]]
-			bool isReadyForInstantiation () const noexcept final;
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			AbstractBackground (const AbstractBackground & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			AbstractBackground (AbstractBackground && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return AbstractBackground &
+			 */
+			AbstractBackground & operator= (const AbstractBackground & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return AbstractBackground &
+			 */
+			AbstractBackground & operator= (AbstractBackground && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the renderable background.
+			 */
+			~AbstractBackground () override = default;
 
 			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
 			[[nodiscard]]
@@ -59,37 +88,38 @@ namespace Emeraude::Graphics::Renderable
 			[[nodiscard]]
 			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept final;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::flags() */
-			[[nodiscard]]
-			int flags (size_t layerIndex) const noexcept final;
-
 			/**
 			 * @brief Sets the average color to represent the background.
 			 * @param color A reference to a color.
+			 * @return void
 			 */
 			void setAverageColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light position.
 			 * @param position A reference to a position vector.
+			 * @return void
 			 */
 			void setLightPosition (const Libraries::Math::Vector< 3, float > & position) noexcept;
 
 			/**
 			 * @brief Sets the light ambient color.
 			 * @param color A reference to a color.
+			 * @return void
 			 */
 			void setLightAmbientColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light diffuse color.
 			 * @param color A reference to a color.
+			 * @return void
 			 */
 			void setLightDiffuseColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light specular color.
 			 * @param color A reference to a color.
+			 * @return void
 			 */
 			void setLightSpecularColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
 
@@ -129,18 +159,18 @@ namespace Emeraude::Graphics::Renderable
 			const Libraries::PixelFactory::Color< float > & lightSpecularColor () const noexcept;
 
 			/**
-			 * @brief Creates and/or returns a skybox (cube) geometry.
+			 * @brief Creates and/or returns a sky box (cube) geometry.
 			 * @return shared_ptr< Geometry::IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			static std::shared_ptr< Geometry::IndexedVertexResource > getSkyboxGeometry () noexcept;
+			static std::shared_ptr< Geometry::IndexedVertexResource > getSkyBoxGeometry () noexcept;
 
 			/**
-			 * @brief Creates and/or returns a skydome (sphere) geometry.
+			 * @brief Creates and/or returns a sky dome (sphere) geometry.
 			 * @return shared_ptr< Geometry::IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			static std::shared_ptr< Geometry::IndexedVertexResource > getSkydomeGeometry () noexcept;
+			static std::shared_ptr< Geometry::IndexedVertexResource > getSkyDomeGeometry () noexcept;
 
 		protected:
 
@@ -151,27 +181,18 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit AbstractBackground (const std::string & name, uint32_t resourceFlagBits) noexcept;
 
-			/**
-			 * @brief Destructs the renderable background.
-			 */
-			~AbstractBackground () override = default;
-
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::setReadyForInstanciation() */
-			void setReadyForInstanciation (bool state) noexcept final;
-
 		private:
 
-			static constexpr auto SkyBoxGeometryName = "SkyboxGeometry";
-			static constexpr auto DomeGeometryName = "DomeGeometry";
+			static constexpr auto SkyBoxGeometryName{"SkyBoxGeometry"};
+			static constexpr auto SkyDomeGeometryName{"SkyDomeGeometry"};
 
 			/* FIXME: Set a correct size. */
-			static constexpr auto SkySize = 512.0F;
+			static constexpr auto SkySize{512.0F};
 
 			Libraries::PixelFactory::Color< float > m_averageColor{10.0F / 256.0F, 24.0F / 256.0F, 43.0F / 256.0F, 1.0F};
-			Libraries::Math::Vector< 3, float > m_lightPosition{0.6666666666666666, 0.3333333333333333, 0.6666666666666666};
+			Libraries::Math::Vector< 3, float > m_lightPosition{0.6666F, 0.3333F, 0.6666F};
 			Libraries::PixelFactory::Color< float > m_lightAmbientColor{0.0F, 0.0F, 0.13F, 1.0F};
 			Libraries::PixelFactory::Color< float > m_lightDiffuseColor{1.0F, 1.0F, 1.0F, 1.0F};
 			Libraries::PixelFactory::Color< float > m_lightSpecularColor{1.0F, 1.0F, 1.0F, 1.0F};
-			int m_renderableFlags = 0;
 	};
 }

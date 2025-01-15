@@ -1,33 +1,34 @@
 /*
- * Emeraude/Vulkan/UniformBufferObject.hpp
- * This file is part of Emeraude
+ * src/Vulkan/UniformBufferObject.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 
 /* Local inclusions for inheritances. */
@@ -37,40 +38,98 @@ namespace Emeraude::Vulkan
 {
 	/**
 	 * @brief Defines a convenient way to build a uniform buffer object (UBO).
-	 * @note OpenGL guaranteed a minimum size of 16Kb.
+	 * @note Vulkan guaranteed a minimum size of 16Kb.
 	 * @extends Emeraude::Vulkan::AbstractHostBuffer This is a host-side buffer.
 	 */
 	class UniformBufferObject final : public AbstractHostBuffer
 	{
 		public:
 
-			static constexpr auto Vector2Room = 4UL;
-			static constexpr auto Vector2iSize = Vector2Room * sizeof(int);
-			static constexpr auto Vector2fSize = Vector2Room * sizeof(float);
-			static constexpr auto Vector2dSize = Vector2Room * sizeof(double);
-			static constexpr auto Vector3Room = 4UL;
-			static constexpr auto Vector3iSize = Vector3Room * sizeof(int);
-			static constexpr auto Vector3fSize = Vector3Room * sizeof(float);
-			static constexpr auto Vector3dSize = Vector3Room * sizeof(double);
-			static constexpr auto Vector4Room = 4UL;
-			static constexpr auto Vector4iSize = Vector4Room * sizeof(int);
-			static constexpr auto Vector4fSize = Vector4Room * sizeof(float);
-			static constexpr auto Vector4dSize = Vector4Room * sizeof(double);
-			static constexpr auto Matrix2Room = 4UL;
-			static constexpr auto Matrix2fSize = Matrix2Room * sizeof(float);
-			static constexpr auto Matrix2dSize = Matrix2Room * sizeof(double);
-			static constexpr auto Matrix3Room = 12UL;
-			static constexpr auto Matrix3fSize = Matrix3Room * sizeof(float);
-			static constexpr auto Matrix3dSize = Matrix3Room * sizeof(double);
-			static constexpr auto Matrix4Room = 16UL;
-			static constexpr auto Matrix4fSize = Matrix4Room * sizeof(float);
-			static constexpr auto Matrix4dSize = Matrix4Room * sizeof(double);
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"VulkanUniformBufferObject"};
+
+			static constexpr auto Vector2Room{4UL};
+			static constexpr auto Vector2iSize{2UL * sizeof(int)};
+			static constexpr auto Vector2fSize{2UL * sizeof(float)};
+			static constexpr auto Vector2dSize{2UL * sizeof(double)};
+			static constexpr auto Vector3Room{4UL};
+			static constexpr auto Vector3iSize{3UL * sizeof(int)};
+			static constexpr auto Vector3fSize{3UL * sizeof(float)};
+			static constexpr auto Vector3dSize{3UL * sizeof(double)};
+			static constexpr auto Vector4Room{4UL};
+			static constexpr auto Vector4iSize{4UL * sizeof(int)};
+			static constexpr auto Vector4fSize{4UL * sizeof(float)};
+			static constexpr auto Vector4dSize{4UL * sizeof(double)};
+			static constexpr auto Matrix2Room{8UL};
+			static constexpr auto Matrix2fSize{4UL * sizeof(float)};
+			static constexpr auto Matrix2dSize{4UL * sizeof(double)};
+			static constexpr auto Matrix3Room{12UL};
+			static constexpr auto Matrix3fSize{9UL * sizeof(float)};
+			static constexpr auto Matrix3dSize{9UL * sizeof(double)};
+			static constexpr auto Matrix4Room{16UL};
+			static constexpr auto Matrix4fSize{16UL * sizeof(float)};
+			static constexpr auto Matrix4dSize{16UL * sizeof(double)};
+
+			using Buffer::getDescriptorInfo;
 
 			/**
 			 * @brief Constructs an uniform buffer object (UBO).
 			 * @param device A reference to a smart pointer to the device where the buffer will be created.
 			 * @param size The size of the buffer.
+			 * @param blockAlignedSize The size of a block. Default, no sub-objects.
 			 */
-			UniformBufferObject (const std::shared_ptr< Device > & device, VkDeviceSize size) noexcept;
+			UniformBufferObject (const std::shared_ptr< Device > & device, VkDeviceSize size, uint32_t blockAlignedSize = 0) noexcept;
+
+			/**
+			 * @brief Returns whether this uniform buffer can be used for multiple elements.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isShared () const noexcept
+			{
+				return m_blockAlignedSize > 0;
+			}
+
+			/**
+			 * @brief Returns the aligned block size.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			blockAlignedSize () const noexcept
+			{
+				return m_blockAlignedSize;
+			}
+
+			/**
+			 * @brief Returns the possible element count inside this buffer.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t maxElementCount () const noexcept;
+
+			/**
+			 * @brief Returns the descriptor buffer info.
+			 * @return VkDescriptorBufferInfo
+			 */
+			[[nodiscard]]
+			VkDescriptorBufferInfo
+			getDescriptorInfo () const noexcept
+			{
+				return this->getDescriptorInfo(0, this->bytes());
+			}
+
+			/**
+			 * @brief Returns the descriptor buffer info.
+			 * @param elementOffset The element offset inside the UBO.
+			 * @return VkDescriptorBufferInfo
+			 */
+			[[nodiscard]]
+			VkDescriptorBufferInfo getDescriptorInfo (uint32_t elementOffset) const noexcept;
+
+		private:
+
+			uint32_t m_blockAlignedSize{0};
 	};
 }

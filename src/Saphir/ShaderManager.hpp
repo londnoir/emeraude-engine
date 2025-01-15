@@ -1,43 +1,54 @@
 /*
- * Emeraude/Saphir/ShaderManager.hpp
- * This file is part of Emeraude
+ * src/Saphir/ShaderManager.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <memory>
-#include <map>
+/* Project configuration files. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+/* Third-party inclusions. */
+#include <vulkan/vulkan.h>
+#include "DirStackFileIncluder.hpp"
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "emeraude_config.hpp"
-#include "Path/File.hpp"
+#include "Vulkan/Types.hpp"
+#include "Saphir/Program.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
@@ -49,15 +60,24 @@ namespace Emeraude
 		class ShaderModule;
 	}
 
-	class Arguments;
-	class Settings;
-	class FileSystem;
+	namespace Saphir
+	{
+		class AbstractShader;
+	}
+
+	class PrimaryServices;
 }
 
 namespace Emeraude::Saphir
 {
-	class ShaderCompiler;
-	class AbstractShader;
+	static constexpr std::array< const char * const, 6 > ShaderFileExtensions{
+		VertexShaderFileExtension,
+		TesselationControlShaderFileExtension,
+		TesselationEvaluationShaderFileExtension,
+		GeometryShaderFileExtension,
+		FragmentShaderFileExtension,
+		ComputeShaderFileExtension
+	};
 
 	/**
 	 * @brief The shader manager service class.
@@ -73,61 +93,128 @@ namespace Emeraude::Saphir
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static constexpr std::array< const char * const, 6 > ShaderFileExtensions{
-				VertexShaderFileExtension,
-				TesselationControlShaderFileExtension,
-				TesselationEvaluationShaderFileExtension,
-				GeometryShaderFileExtension,
-				FragmentShaderFileExtension,
-				ComputeShaderFileExtension
+			/** @brief Observable notification codes. */
+			enum NotificationCode
+			{
+				ShaderCompilationSucceed,
+				ShaderCompilationFailed,
+				/* Enumeration boundary. */
+				MaxEnum
 			};
-
-			/* Settings keys */
-			static constexpr auto ShowLoadedSourceCodeKey = "Video/Shader/Manager/ShowLoadedSourceCode";
-			static constexpr auto DefaultShowLoadedSourceCode = BOOLEAN_FOLLOWING_DEBUG;
-			static constexpr auto SourceCodeCacheEnabledKey = "Video/Shader/Manager/SourceCodeCacheEnabled";
-			static constexpr auto DefaultSourceCodeCacheEnabled = !BOOLEAN_FOLLOWING_DEBUG;
-			static constexpr auto BinaryCacheEnabledKey = "Video/Shader/Manager/BinaryCacheEnabled";
-			static constexpr auto DefaultBinaryCacheEnabled = !BOOLEAN_FOLLOWING_DEBUG;
 
 			/**
 			 * @brief Constructs the shader manager.
-			 * @param arguments A reference to the application arguments.
-			 * @param fileSystem A reference to the file system.
-			 * @param coreSettings A reference to the core settings.
-			 * @param shaderCompiler A reference to the shader compiler.
+			 * @param primaryServices A reference to the primary services.
+			 * @param type The GPU work type.
 			 */
-			ShaderManager (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, ShaderCompiler & shaderCompiler) noexcept;
+			ShaderManager (PrimaryServices & primaryServices, Vulkan::GPUWorkType type) noexcept;
+
+			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			ShaderManager (const ShaderManager & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			ShaderManager (ShaderManager && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return ShaderManager &
+			 */
+			ShaderManager & operator= (const ShaderManager & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return ShaderManager &
+			 */
+			ShaderManager & operator= (ShaderManager && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the shader manager.
 			 */
 			~ShaderManager () override;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
-			 * @brief Takes a shader generated by the Saphir system and returns a vulkan shader module.
+			 * @brief Returns whether the print of generated shader in console is enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			showGeneratedSourceCode () const noexcept
+			{
+				return m_flags[ShowGeneratedSourceCode];
+			}
+
+			/**
+			 * @brief Builds a Vulkan shader module a shader generated by the Saphir system.
 			 * @param device A reference to a device smart pointer.
-			 * @param shader A reference to a Saphir shader smart pointer.
+			 * @param shader A reference to a Saphir shader.
 			 * @return std::shared_ptr< Vulkan::ShaderModule >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::ShaderModule > getShaderModuleFromGeneratedShader (const std::shared_ptr< Vulkan::Device > & device, const std::shared_ptr< AbstractShader > & shader) noexcept;
+			std::shared_ptr< Vulkan::ShaderModule > getShaderModuleFromGeneratedShader (const std::shared_ptr< Vulkan::Device > & device, const AbstractShader & shader) noexcept;
+
+			/**
+			 * @brief Builds a Vulkan shader module from source code.
+			 * @param device A reference to a device smart pointer.
+			 * @param shaderName A reference to a string.
+			 * @param shaderType The type of shader.
+			 * @param sourceCode A reference to a string.
+			 * @return std::shared_ptr< Vulkan::ShaderModule >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< Vulkan::ShaderModule > getShaderModuleFromSourceCode (const std::shared_ptr< Vulkan::Device > & device, const std::string & shaderName, ShaderType shaderType, const std::string & sourceCode) noexcept;
+
+			/**
+			 * @brief Returns shader modules corresponding to a program.
+			 * @param device A reference to a device smart pointer.
+			 * @param program A reference to a program smart pointer.
+			 * @return std::vector< std::shared_ptr< Vulkan::ShaderModule > >
+			 */
+			[[nodiscard]]
+			std::vector< std::shared_ptr< Vulkan::ShaderModule > > getShaderModules (const std::shared_ptr< Vulkan::Device > & device, const std::shared_ptr< Program > & program) noexcept;
 
 			/**
 			 * @brief Returns the instance of the shader manager.
+			 * @param type The transfer work type.
 			 * @return ShaderManager *
 			 */
 			[[nodiscard]]
-			static
-			ShaderManager * instance () noexcept;
+			static ShaderManager *
+			instance (Vulkan::GPUWorkType type) noexcept
+			{
+				return s_instances.at(static_cast< size_t >(type));
+			}
 
 		private:
 
@@ -138,18 +225,59 @@ namespace Emeraude::Saphir
 			bool onTerminate () noexcept override;
 
 			/**
+			 * @brief Returns the shader identification.
+			 * @param shaderType The shader type.
+			 * @param shaderName A reference to a string.
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			static
+			std::string
+			getShaderIdentificationString (ShaderType shaderType, const std::string & shaderName) noexcept
+			{
+				std::stringstream output;
+				output << to_string(shaderType);
+				output << shaderName;
+
+				return output.str();
+			}
+
+			/**
+			 * @brief Compiles a shader from a saphir generated source code.
+			 * @param shader A reference to a shader smart pointer.
+			 * @param binaryCode A reference to the binary data vector to complete.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool compile (const AbstractShader & shader, std::vector< uint32_t > & binaryCode) noexcept;
+
+			/**
+			 * @brief Compiles a shader from a source code.
+			 * @param shaderName A reference to a string.
+			 * @param type The shader type.
+			 * @param sourceCode A reference to a string.
+			 * @param binaryCode A reference to the binary data vector to complete.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool compile (const std::string & shaderName, ShaderType type, const std::string & sourceCode, std::vector< uint32_t > & binaryCode) noexcept;
+
+			/**
 			 * @brief Writes a shader source code on disk cache.
 			 * @param shader A reference to a shader.
 			 * @return bool
 			 */
-			bool cacheShaderSourceCode (const AbstractShader & shader) noexcept;
+			[[nodiscard]]
+			bool cacheShaderSourceCode (const AbstractShader & shader) const noexcept;
 
 			/**
 			 * @brief Writes a shader binary on disk cache.
 			 * @param shader A reference to a shader.
+			 * @param binaryCode A reference to the binary data vector.
 			 * @return bool
 			 */
-			bool cacheShaderBinary (const AbstractShader & shader) noexcept;
+			[[nodiscard]]
+			bool cacheShaderBinary (const AbstractShader & shader, const std::vector< uint32_t > & binaryCode) const noexcept;
 
 			/**
 			 * @brief Reads the cache to get shader source codes and binaries.
@@ -164,65 +292,97 @@ namespace Emeraude::Saphir
 			void clearCache () noexcept;
 
 			/**
-			 * @brief Generates an unique cache filepath for the shader source.
+			 * @brief Generates a unique cache filepath for the shader source.
 			 * @param shader A reference to a shader.
-			 * @return File
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			Libraries::Path::File generateShaderSourceCacheFilepath (const AbstractShader & shader) const noexcept;
+			std::filesystem::path generateShaderSourceCacheFilepath (const AbstractShader & shader) const noexcept;
 
 			/**
-			 * @brief Generates an unique cache filepath for the shader binary.
+			 * @brief Generates a unique cache filepath for the shader binary.
 			 * @param shader A reference to a shader.
-			 * @return File
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			Libraries::Path::File generateShaderBinaryCacheFilepath (const AbstractShader & shader) const noexcept;
+			std::filesystem::path generateShaderBinaryCacheFilepath (const AbstractShader & shader) const noexcept;
 
 			/**
 			 * @brief Returns the shader hash from the filepath.
+			 * @param filepath A reference to a filesystem path.
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			static size_t extractHashFromFilepath (const Libraries::Path::File & filepath) noexcept;
+			static size_t extractHashFromFilepath (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Checks whether a binary exists in the cache.
 			 * @param shader A reference to a shader.
+			 * @param binaryCode A reference to the binary code to complete if exists in the cache.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkBinaryFromCache (AbstractShader & shader) noexcept;
+			bool checkBinaryFromCache (const AbstractShader & shader, std::vector< uint32_t > & binaryCode) noexcept;
+
+			/**
+			 * @brief Prints compilation errors.
+			 * @param shaderIdentifier A reference to a string.
+			 * @param sourceCode A reference to a string.
+			 * @param log A pointer to a C-string.
+			 * @return void
+			 */
+			void printCompilationErrors (const std::string & shaderIdentifier, const std::string & sourceCode, const char * log) noexcept;
+
+			/**
+			 * @brief Converts shader type from saphir to GLSLang type.
+			 * @param shaderType The Saphir shader type.
+			 * @return EShLanguage
+			 */
+			[[nodiscard]]
+			static EShLanguage GLSLangShaderType (ShaderType shaderType) noexcept;
+
+			/**
+			 * @brief Converts shader type from saphir to Vulkan type.
+			 * @param shaderType The Saphir shader type.
+			 * @return VkShaderStageFlagBits
+			 */
+			[[nodiscard]]
+			static VkShaderStageFlagBits vkShaderType (ShaderType shaderType) noexcept;
 
 			/* Flag names. */
-			static constexpr auto Usable = 0UL;
-			static constexpr auto ShowLoadedSourceCode = 1UL;
-			static constexpr auto SourceCodeCacheEnabled = 2UL;
-			static constexpr auto BinaryCacheEnabled = 3UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto ShowGeneratedSourceCode{1UL};
+			static constexpr auto ShowLoadedSourceCode{2UL};
+			static constexpr auto SourceCodeCacheEnabled{3UL};
+			static constexpr auto BinaryCacheEnabled{4UL};
+			static constexpr auto ForceDefaultVersionAndProfile{5UL};
+			static constexpr auto ForwardCompatible{6UL};
 
-			static constexpr auto ShaderSourcesDirectoryName = "shader-sources";
-			static constexpr auto ShaderBinariesDirectoryName = "shader-binaries";
+			static constexpr auto ShaderSourcesDirectoryName{"shader-sources"};
+			static constexpr auto ShaderBinariesDirectoryName{"shader-binaries"};
 
-			static ShaderManager * s_instance; // NOLINT NOTE: Singleton behavior
+			static std::array< ShaderManager *, 2 > s_instances;
 
-			const Arguments & m_arguments;
-			const FileSystem & m_fileSystem;
-			Settings & m_coreSettings;
-			ShaderCompiler & m_shaderCompiler;
-			std::map< size_t, std::shared_ptr< Vulkan::ShaderModule > > m_shaders{};
-			std::map< size_t, Libraries::Path::File > m_cachedShaderSourceCodes{};
-			std::map< size_t, Libraries::Path::File > m_cachedShaderBinaries{};
-			Libraries::Path::Directory m_shadersSourcesDirectory{};
-			Libraries::Path::Directory m_shadersBinariesDirectory{};
+			PrimaryServices & m_primaryServices;
+			std::map< size_t, std::shared_ptr< Vulkan::ShaderModule > > m_shaderModules;
+			std::map< size_t, std::filesystem::path > m_cachedShaderSourceCodes;
+			std::map< size_t, std::filesystem::path > m_cachedShaderBinaries;
+			std::filesystem::path m_shadersSourcesDirectory;
+			std::filesystem::path m_shadersBinariesDirectory;
+			TBuiltInResource m_builtInResource{};
+			DirStackFileIncluder m_includer;
+			EProfile m_profile{ECoreProfile}; // ENoProfile
+			int m_defaultVersion{100};
+			EShMessages m_messageFilter{static_cast< EShMessages >(EShMsgDefault | EShMsgSpvRules | EShMsgVulkanRules | EShMsgDebugInfo)};
 			std::array< bool, 8 > m_flags{
-				false/*Usable*/,
-				DefaultShowLoadedSourceCode/*ShowLoadedSourceCode*/,
-				DefaultSourceCodeCacheEnabled/*SourceCodeCacheEnabled*/,
-				DefaultBinaryCacheEnabled/*BinaryCacheEnabled*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/
+				false/*ServiceInitialized*/,
+				BOOLEAN_FOLLOWING_DEBUG/*ShowGeneratedSourceCode*/,
+				BOOLEAN_FOLLOWING_DEBUG/*ShowLoadedSourceCode*/,
+				!BOOLEAN_FOLLOWING_DEBUG/*SourceCodeCacheEnabled*/,
+				!BOOLEAN_FOLLOWING_DEBUG/*BinaryCacheEnabled*/,
+				false/*ForceDefaultVersionAndProfile*/,
+				false/*ForwardCompatible*/,
+				true/*UNUSED*/
 			};
 	};
 }

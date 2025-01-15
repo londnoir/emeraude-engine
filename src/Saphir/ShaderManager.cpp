@@ -1,104 +1,94 @@
 /*
- * Emeraude/Saphir/ShaderManager.cpp
- * This file is part of Emeraude
+ * src/Saphir/ShaderManager.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ShaderManager.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "Arguments.hpp"
-#include "Settings.hpp"
-#include "FileSystem.hpp"
-#include "ShaderCompiler.hpp"
-#include "SourceCodeParser.hpp"
+/* STL inclusions. */
+#include <string>
+#include <algorithm>
+
+/* Third-party inclusions. */
+#include "SPIRV/GlslangToSpv.h"
+
+/* Local inclusions. */
+#include "Libraries/SourceCodeParser.hpp"
+#include "Libraries/IO.hpp"
 #include "Vulkan/ShaderModule.hpp"
+#include "AbstractShader.hpp"
+#include "PrimaryServices.hpp"
+#include "SettingKeys.hpp"
 
 namespace Emeraude::Saphir
 {
 	using namespace Libraries;
 	using namespace Vulkan;
 
-	const size_t ShaderManager::ClassUID{Observable::getClassUID()};
-	ShaderManager * ShaderManager::s_instance{nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t ShaderManager::ClassUID{getClassUID(ClassId)};
+	std::array< ShaderManager *, 2 > ShaderManager::s_instances{nullptr, nullptr};
 
-	ShaderManager::ShaderManager (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings, ShaderCompiler & shaderCompiler) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_fileSystem(fileSystem), m_coreSettings(coreSettings), m_shaderCompiler(shaderCompiler)
+	ShaderManager::ShaderManager (PrimaryServices & primaryServices, GPUWorkType type) noexcept
+		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
 	{
-		if ( s_instance != nullptr )
+		if ( s_instances.at(static_cast< size_t >(type)) != nullptr )
 		{
-			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n"; // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
 
-		s_instance = this;
+		s_instances.at(static_cast< size_t >(type)) = this;
 	}
 
 	ShaderManager::~ShaderManager ()
 	{
-		s_instance = nullptr;
-	}
-
-	ShaderManager *
-	ShaderManager::instance () noexcept
-	{
-		return s_instance;
-	}
-
-	bool
-	ShaderManager::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
+		for ( auto & pointer : s_instances )
 		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
+			if ( pointer == this )
+			{
+				pointer = nullptr;
 
-			return false;
+				break;
+			}
 		}
-
-		return classUID == ClassUID;
-	}
-
-	bool
-	ShaderManager::usable () const noexcept
-	{
-		return m_flags[Usable];
 	}
 
 	bool
 	ShaderManager::onInitialize () noexcept
 	{
 		/* Read core settings. */
-		m_flags[ShowLoadedSourceCode] = m_coreSettings.getAs< bool >(ShowLoadedSourceCodeKey, DefaultShowLoadedSourceCode);
-		m_flags[SourceCodeCacheEnabled] = m_coreSettings.getAs< bool >(SourceCodeCacheEnabledKey, DefaultSourceCodeCacheEnabled);
-		m_flags[BinaryCacheEnabled] = m_coreSettings.getAs< bool >(BinaryCacheEnabledKey, DefaultBinaryCacheEnabled);
+		m_flags[ShowGeneratedSourceCode] = m_primaryServices.settings().get< bool >(ShowGeneratedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowLoadedSourceCode] = m_primaryServices.settings().get< bool >(ShowLoadedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[SourceCodeCacheEnabled] = m_primaryServices.settings().get< bool >(SourceCodeCacheEnabledKey, !BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[BinaryCacheEnabled] = m_primaryServices.settings().get< bool >(BinaryCacheEnabledKey, !BOOLEAN_FOLLOWING_DEBUG);
 
 		/* Shader source cache directory. */
-		m_shadersSourcesDirectory = m_fileSystem.cacheDirectory(ShaderSourcesDirectoryName);
+		m_shadersSourcesDirectory = m_primaryServices.fileSystem().cacheDirectory(ShaderSourcesDirectoryName);
 
-		if ( !m_shadersSourcesDirectory.create() )
+		if ( !IO::createDirectory(m_shadersSourcesDirectory) )
 		{
 			TraceError{ClassId} << "Unable to create '" << m_shadersSourcesDirectory << "' directory !";
 
@@ -106,9 +96,9 @@ namespace Emeraude::Saphir
 		}
 
 		/* Shader binaries cache directory. */
-		m_shadersBinariesDirectory = m_fileSystem.cacheDirectory(ShaderBinariesDirectoryName);
+		m_shadersBinariesDirectory = m_primaryServices.fileSystem().cacheDirectory(ShaderBinariesDirectoryName);
 
-		if ( !m_shadersBinariesDirectory.create() )
+		if ( !IO::createDirectory(m_shadersBinariesDirectory) )
 		{
 			TraceError{ClassId} << "Unable to create '" << m_shadersBinariesDirectory << "' directory !";
 
@@ -116,7 +106,7 @@ namespace Emeraude::Saphir
 		}
 
 		/* Checks shader cache. */
-		if ( m_arguments.get("--clear-shader-cache").isPresent() )
+		if ( m_primaryServices.arguments().get("--clear-shader-cache").isPresent() )
 		{
 			this->clearCache();
 		}
@@ -125,7 +115,112 @@ namespace Emeraude::Saphir
 			this->readCache();
 		}
 
-		m_flags[Usable] = true;
+		TraceInfo{ClassId} << "GLSLang GLSL version supported : " << glslang::GetGlslVersionString();
+
+		if ( !glslang::InitializeProcess() )
+		{
+			Tracer::error(ClassId, "Unable to initialize GLSLang process !");
+
+			return false;
+		}
+
+		m_builtInResource.maxLights = 32;
+		m_builtInResource.maxClipPlanes = 6;
+		m_builtInResource.maxTextureUnits = 32;
+		m_builtInResource.maxTextureCoords = 32;
+		m_builtInResource.maxVertexAttribs = 64;
+		m_builtInResource.maxVertexUniformComponents = 4096;
+		m_builtInResource.maxVaryingFloats = 64;
+		m_builtInResource.maxVertexTextureImageUnits = 32;
+		m_builtInResource.maxCombinedTextureImageUnits = 80;
+		m_builtInResource.maxTextureImageUnits = 32;
+		m_builtInResource.maxFragmentUniformComponents = 4096;
+		m_builtInResource.maxDrawBuffers = 32;
+		m_builtInResource.maxVertexUniformVectors = 128;
+		m_builtInResource.maxVaryingVectors = 8;
+		m_builtInResource.maxFragmentUniformVectors = 16;
+		m_builtInResource.maxVertexOutputVectors = 16;
+		m_builtInResource.maxFragmentInputVectors = 15;
+		m_builtInResource.minProgramTexelOffset = -8;
+		m_builtInResource.maxProgramTexelOffset = 7;
+		m_builtInResource.maxClipDistances = 8;
+		m_builtInResource.maxComputeWorkGroupCountX = 65535;
+		m_builtInResource.maxComputeWorkGroupCountY = 65535;
+		m_builtInResource.maxComputeWorkGroupCountZ = 65535;
+		m_builtInResource.maxComputeWorkGroupSizeX = 1024;
+		m_builtInResource.maxComputeWorkGroupSizeY = 1024;
+		m_builtInResource.maxComputeWorkGroupSizeZ = 64;
+		m_builtInResource.maxComputeUniformComponents = 1024;
+		m_builtInResource.maxComputeTextureImageUnits = 16;
+		m_builtInResource.maxComputeImageUniforms = 8;
+		m_builtInResource.maxComputeAtomicCounters = 8;
+		m_builtInResource.maxComputeAtomicCounterBuffers = 1;
+		m_builtInResource.maxVaryingComponents = 60;
+		m_builtInResource.maxVertexOutputComponents = 64;
+		m_builtInResource.maxGeometryInputComponents = 64;
+		m_builtInResource.maxGeometryOutputComponents = 128;
+		m_builtInResource.maxFragmentInputComponents = 128;
+		m_builtInResource.maxImageUnits = 8;
+		m_builtInResource.maxCombinedImageUnitsAndFragmentOutputs = 8;
+		m_builtInResource.maxCombinedShaderOutputResources = 8;
+		m_builtInResource.maxImageSamples = 0;
+		m_builtInResource.maxVertexImageUniforms = 0;
+		m_builtInResource.maxTessControlImageUniforms = 0;
+		m_builtInResource.maxTessEvaluationImageUniforms = 0;
+		m_builtInResource.maxGeometryImageUniforms = 0;
+		m_builtInResource.maxFragmentImageUniforms = 8;
+		m_builtInResource.maxCombinedImageUniforms = 8;
+		m_builtInResource.maxGeometryTextureImageUnits = 16;
+		m_builtInResource.maxGeometryOutputVertices = 256;
+		m_builtInResource.maxGeometryTotalOutputComponents = 1024;
+		m_builtInResource.maxGeometryUniformComponents = 1024;
+		m_builtInResource.maxGeometryVaryingComponents = 64;
+		m_builtInResource.maxTessControlInputComponents = 128;
+		m_builtInResource.maxTessControlOutputComponents = 128;
+		m_builtInResource.maxTessControlTextureImageUnits = 16;
+		m_builtInResource.maxTessControlUniformComponents = 1024;
+		m_builtInResource.maxTessControlTotalOutputComponents = 4096;
+		m_builtInResource.maxTessEvaluationInputComponents = 128;
+		m_builtInResource.maxTessEvaluationOutputComponents = 128;
+		m_builtInResource.maxTessEvaluationTextureImageUnits = 16;
+		m_builtInResource.maxTessEvaluationUniformComponents = 1024;
+		m_builtInResource.maxTessPatchComponents = 120;
+		m_builtInResource.maxPatchVertices = 32;
+		m_builtInResource.maxTessGenLevel = 64;
+		m_builtInResource.maxViewports = 16;
+		m_builtInResource.maxVertexAtomicCounters = 0;
+		m_builtInResource.maxTessControlAtomicCounters = 0;
+		m_builtInResource.maxTessEvaluationAtomicCounters = 0;
+		m_builtInResource.maxGeometryAtomicCounters = 0;
+		m_builtInResource.maxFragmentAtomicCounters = 8;
+		m_builtInResource.maxCombinedAtomicCounters = 8;
+		m_builtInResource.maxAtomicCounterBindings = 1;
+		m_builtInResource.maxVertexAtomicCounterBuffers = 0;
+		m_builtInResource.maxTessControlAtomicCounterBuffers = 0;
+		m_builtInResource.maxTessEvaluationAtomicCounterBuffers = 0;
+		m_builtInResource.maxGeometryAtomicCounterBuffers = 0;
+		m_builtInResource.maxFragmentAtomicCounterBuffers = 1;
+		m_builtInResource.maxCombinedAtomicCounterBuffers = 1;
+		m_builtInResource.maxAtomicCounterBufferSize = 16384;
+		m_builtInResource.maxTransformFeedbackBuffers = 4;
+		m_builtInResource.maxTransformFeedbackInterleavedComponents = 64;
+		m_builtInResource.maxCullDistances = 8;
+		m_builtInResource.maxCombinedClipAndCullDistances = 8;
+		m_builtInResource.maxSamples = 4;
+
+		m_builtInResource.limits.nonInductiveForLoops = true;
+		m_builtInResource.limits.whileLoops = true;
+		m_builtInResource.limits.doWhileLoops = true;
+		m_builtInResource.limits.generalUniformIndexing = true;
+		m_builtInResource.limits.generalAttributeMatrixVectorIndexing = true;
+		m_builtInResource.limits.generalVaryingIndexing = true;
+		m_builtInResource.limits.generalSamplerIndexing = true;
+		m_builtInResource.limits.generalVariableIndexing = true;
+		m_builtInResource.limits.generalConstantMatrixVectorIndexing = true;
+
+		//m_includer.pushExternalLocalDirectory("");
+
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -133,17 +228,22 @@ namespace Emeraude::Saphir
 	bool
 	ShaderManager::onTerminate () noexcept
 	{
-		m_flags[Usable] = false;
+		if ( m_flags[ServiceInitialized] )
+		{
+			m_flags[ServiceInitialized] = false;
+
+			glslang::FinalizeProcess();
+		}
 
 		m_cachedShaderBinaries.clear();
 		m_cachedShaderSourceCodes.clear();
-		m_shaders.clear();
+		m_shaderModules.clear();
 
 		return true;
 	}
 
 	bool
-	ShaderManager::cacheShaderSourceCode (const AbstractShader & shader) noexcept
+	ShaderManager::cacheShaderSourceCode (const AbstractShader & shader) const noexcept
 	{
 		if ( !m_flags[SourceCodeCacheEnabled] )
 		{
@@ -170,7 +270,7 @@ namespace Emeraude::Saphir
 	}
 
 	bool
-	ShaderManager::cacheShaderBinary (const AbstractShader & shader) noexcept
+	ShaderManager::cacheShaderBinary (const AbstractShader & shader, const std::vector< uint32_t > & binaryCode) const noexcept
 	{
 		if ( !m_flags[BinaryCacheEnabled] )
 		{
@@ -186,9 +286,9 @@ namespace Emeraude::Saphir
 			return false;
 		}
 
-		if ( !shader.writeBinaryCode(cacheFilepath) )
+		if ( !IO::filePutContents(cacheFilepath, binaryCode) )
 		{
-			TraceError{ClassId} << "Unable to write the binary cache file '" << cacheFilepath << "' for shader '" << shader.name() << "' !";
+			TraceError{ClassId} << "Unable to write the shader binary code to file '" << cacheFilepath << "' for shader '" << shader.name() << "' !";
 
 			return false;
 		}
@@ -197,28 +297,32 @@ namespace Emeraude::Saphir
 	}
 
 	bool
-	ShaderManager::checkBinaryFromCache (AbstractShader & shader) noexcept
+	ShaderManager::checkBinaryFromCache (const AbstractShader & shader, std::vector< uint32_t > & binaryCode) noexcept
 	{
 		if ( !m_flags[BinaryCacheEnabled] )
 		{
 			return false;
 		}
 
-		auto binaryIt = m_cachedShaderBinaries.find(shader.hash());
+		const auto binaryIt = m_cachedShaderBinaries.find(shader.hash());
 
 		if ( binaryIt == m_cachedShaderBinaries.cend() )
 		{
 			return false;
 		}
 
-		/* Load the binary from cache. */
-		shader.loadBinaryCode(binaryIt->second);
+		if ( !IO::fileGetContents(binaryIt->second, binaryCode) )
+		{
+			TraceError{ClassId} << "Unable to read the shader binary code from file '" << binaryIt->second << "' !";
+
+			return false;
+		}
 
 		return true;
 	}
 
 	std::shared_ptr< ShaderModule >
-	ShaderManager::getShaderModuleFromGeneratedShader (const std::shared_ptr< Vulkan::Device > & device, const std::shared_ptr< AbstractShader > & shader) noexcept
+	ShaderManager::getShaderModuleFromGeneratedShader (const std::shared_ptr< Device > & device, const AbstractShader & shader) noexcept
 	{
 		if ( !this->usable() )
 		{
@@ -229,65 +333,64 @@ namespace Emeraude::Saphir
 
 		/* The shader must have a source code before anything else.
 		 * The hash depend on it. */
-		if ( !shader->isGenerated() )
+		if ( !shader.isGenerated() )
 		{
-			TraceError{ClassId} << "The shader '" << shader->name() << "' is empty ! Generate it first.";
+			TraceError{ClassId} <<
+				"The shader '" << shader.name() << "' is empty ! "
+				"Generate it first.";
 
 			return {};
 		}
 
 		if ( m_flags[ShowLoadedSourceCode] )
 		{
-			const SourceCodeParser parser{shader->sourceCode()};
-
 			TraceInfo{ClassId} << "\n"
 				"****** START OF LOADED GLSL SHADER CODE ******" "\n" <<
-				parser.getParsedSourceCode() <<
+				SourceCodeParser::parse(shader.sourceCode()) <<
 				"******  END OF LOADED GLSL SHADER CODE  ******" "\n";
 		}
 
-		const auto shaderHash = shader->hash();
+		const auto shaderHash = shader.hash();
 
 		/* Checks in loaded shader list with the hash. */
-		const auto shaderIt = m_shaders.find(shaderHash);
+		const auto shaderIt = m_shaderModules.find(shaderHash);
 
-		if ( shaderIt != m_shaders.cend() )
+		if ( shaderIt != m_shaderModules.cend() )
 		{
-			TraceSuccess{ClassId} << "The shader '" << shader->name() << "' already loaded !";
-
 			return shaderIt->second;
 		}
 
+		std::vector< uint32_t > binaryCode;
+
 		/* Checks in cached binaries to prevent a compilation. */
-		if ( this->checkBinaryFromCache(*shader) )
+		if ( this->checkBinaryFromCache(shader, binaryCode) )
 		{
-			TraceSuccess{ClassId} << "The shader '" << shader->name() << "' loaded from binary cache !";
+			TraceSuccess{ClassId} << "The shader '" << shader.name() << "' loaded from binary cache !";
 		}
+		/* If not, we compile it. */
 		else
 		{
-			/* Checks whether the shader is already compiled. */
-			if ( !shader->isCompiled() )
+			/* Write the source code to the cache. */
+			if ( !this->cacheShaderSourceCode(shader) )
 			{
-				this->cacheShaderSourceCode(*shader);
+				TraceWarning{ClassId} << "Unable to write the source code of shader '" << shader.name() << "' to the cache !";
+			}
 
-				/* If not, we compile it. */
-				if ( m_shaderCompiler.compile(shader) )
-				{
-					TraceSuccess{ClassId} << "The shader '" << shader->name() << "' is successfully compiled !";
+			if ( !this->compile(shader, binaryCode) )
+			{
+				TraceError{ClassId} << "Unable to compile shader '" << shader.name() << "' !";
 
-					this->cacheShaderBinary(*shader);
-				}
-				else
-				{
-					TraceError{ClassId} << "Unable to compile shader '" << shader->name() << "' !";
+				return {};
+			}
 
-					return {};
-				}
+			if ( !this->cacheShaderBinary(shader, binaryCode) )
+			{
+				TraceWarning{ClassId} << "Unable to write the binary code of shader '" << shader.name() << "' to the cache !";
 			}
 		}
 
-		auto shaderModule = std::make_shared< ShaderModule >(device, shader);
-		shaderModule->setIdentifier((std::stringstream{} << "ShaderManager-" << shader->name() << "-ShaderModule").str());
+		auto shaderModule = std::make_shared< ShaderModule >(device, ShaderManager::vkShaderType(shader.type()), binaryCode);
+		shaderModule->setIdentifier(ClassId, shader.name(), "ShaderModule");
 
 		if ( !shaderModule->createOnHardware() )
 		{
@@ -297,19 +400,86 @@ namespace Emeraude::Saphir
 		}
 
 		/* Save a copy into loaded shaders with the associated vulkan shader module. */
-		auto result = m_shaders.emplace(shaderHash, shaderModule);
+		const auto [newShader, success] = m_shaderModules.emplace(shaderHash, shaderModule);
 
-		return result.first->second;
+		return newShader->second;
+	}
+
+	std::shared_ptr< ShaderModule >
+	ShaderManager::getShaderModuleFromSourceCode (const std::shared_ptr< Device > & device, const std::string & shaderName, ShaderType shaderType, const std::string & sourceCode) noexcept
+	{
+		if ( !this->usable() )
+		{
+			Tracer::error(ClassId, "There is no device to load create the shader module !");
+
+			return {};
+		}
+
+		// TODO: This version do not use cache or save.
+
+		std::vector< uint32_t > binaryCode;
+
+		if ( !this->compile(shaderName, shaderType, sourceCode, binaryCode) )
+		{
+			TraceError{ClassId} << "Unable to compile shader '" << shaderName << "' !";
+
+			return {};
+		}
+
+		auto shaderModule = std::make_shared< ShaderModule >(device, ShaderManager::vkShaderType(shaderType), binaryCode);
+		shaderModule->setIdentifier(ClassId, shaderName, "ShaderModule");
+
+		if ( !shaderModule->createOnHardware() )
+		{
+			Tracer::error(ClassId, "Unable to create a shader module !");
+
+			return {};
+		}
+
+		return shaderModule;
+	}
+
+	std::vector< std::shared_ptr< ShaderModule > >
+	ShaderManager::getShaderModules (const std::shared_ptr< Device > & device, const std::shared_ptr< Program > & program) noexcept
+	{
+		std::vector< std::shared_ptr< ShaderModule > > shaderModules;
+		shaderModules.reserve(program->getShaderList().size());
+
+		for ( const auto * shader : program->getShaderList() )
+		{
+			const auto shaderModule = this->getShaderModuleFromGeneratedShader(device, *shader);
+
+			if ( shaderModule == nullptr )
+			{
+				TraceError{ClassId} << "Unable to create the shader module from the shader '" << shader->name() << "' source code !";
+
+				return {};
+			}
+
+			shaderModules.emplace_back(shaderModule);
+		}
+
+		return shaderModules;
 	}
 
 	void
 	ShaderManager::readCache () noexcept
 	{
-		for ( const auto & entry : m_shadersSourcesDirectory.entries() )
+		for ( const auto & filepath : IO::directoryEntries(m_shadersSourcesDirectory) )
 		{
-			const Path::File filepath{entry};
+			const auto extension = IO::getFileExtension(filepath);
+			bool isShaderFile = false;
 
-			if ( !filepath.hasExtensions(ShaderFileExtensions.data(), ShaderFileExtensions.size()) )
+			for ( const auto & allowedExtension : ShaderFileExtensions )
+			{
+				if ( extension == allowedExtension )
+				{
+					isShaderFile = true;
+					break;
+				}
+			}
+
+			if ( !isShaderFile )
 			{
 				continue;
 			}
@@ -318,7 +488,7 @@ namespace Emeraude::Saphir
 
 			if ( hash == 0 )
 			{
-				TraceError{ClassId} << "The hash from shader source file '" << entry << "' is invalid !";
+				TraceError{ClassId} << "The hash from shader source file '" << filepath << "' is invalid !";
 
 				continue;
 			}
@@ -326,11 +496,9 @@ namespace Emeraude::Saphir
 			m_cachedShaderSourceCodes.emplace(hash, filepath);
 		}
 
-		for ( const auto & entry : m_shadersBinariesDirectory.entries() )
+		for ( const auto & filepath : IO::directoryEntries(m_shadersBinariesDirectory) )
 		{
-			const Path::File filepath{entry};
-
-			if ( !filepath.hasExtension("bin") )
+			if ( IO::getFileExtension(filepath) != "bin" )
 			{
 				continue;
 			}
@@ -339,7 +507,7 @@ namespace Emeraude::Saphir
 
 			if ( hash == 0 )
 			{
-				TraceError{ClassId} << "The hash from shader binary file '" << entry << "' is invalid !";
+				TraceError{ClassId} << "The hash from shader binary file '" << filepath << "' is invalid !";
 
 				continue;
 			}
@@ -351,66 +519,84 @@ namespace Emeraude::Saphir
 	void
 	ShaderManager::clearCache () noexcept
 	{
-		for ( const auto & entry : m_shadersSourcesDirectory.entries() )
+		for ( const auto & filepath : IO::directoryEntries(m_shadersSourcesDirectory) )
 		{
-			const Path::File filepath{entry};
+			const auto extension = IO::getFileExtension(filepath);
+			bool isShaderFile = false;
 
-			if ( !filepath.hasExtensions(ShaderFileExtensions.data(), ShaderFileExtensions.size()) )
+			for ( const auto & allowedExtension : ShaderFileExtensions )
+			{
+				if ( extension == allowedExtension )
+				{
+					isShaderFile = true;
+					break;
+				}
+			}
+
+			if ( !isShaderFile )
 			{
 				continue;
 			}
 
-			if ( !Path::File::erase(entry) )
+			if ( !IO::eraseFile(filepath) )
 			{
-				TraceError{ClassId} << "Unable to erase '" << entry << "' !";
+				TraceError{ClassId} << "Unable to erase '" << filepath << "' !";
 			}
 		}
 
 		m_cachedShaderSourceCodes.clear();
 
-		for ( const auto & entry : m_shadersBinariesDirectory.entries() )
+		for ( const auto & filepath : IO::directoryEntries(m_shadersBinariesDirectory) )
 		{
-			const Path::File filepath{entry};
-
-			if ( !filepath.hasExtension("bin") )
+			if ( IO::getFileExtension(filepath) != "bin" )
 			{
 				continue;
 			}
 
-			if ( !Path::File::erase(entry) )
+			if ( !IO::eraseFile(filepath) )
 			{
-				TraceError{ClassId} << "Unable to erase '" << entry << "' !";
+				TraceError{ClassId} << "Unable to erase '" << filepath << "' !";
 			}
 		}
 
 		m_cachedShaderBinaries.clear();
 	}
 
-	Path::File
+	std::filesystem::path
 	ShaderManager::generateShaderSourceCacheFilepath (const AbstractShader & shader) const noexcept
 	{
-		return {m_shadersSourcesDirectory, (std::stringstream{} << shader.name() << '_' << shader.hash() << '.' << getShaderFileExtension(shader.type())).str()};
+		std::stringstream filename;
+		filename << shader.name() << '_' << shader.hash() << '.' << getShaderFileExtension(shader.type());
+
+		auto filepath = m_shadersSourcesDirectory;
+		filepath.append(filename.str());
+
+		return filepath;
 	}
 
-	Path::File
+	std::filesystem::path
 	ShaderManager::generateShaderBinaryCacheFilepath (const AbstractShader & shader) const noexcept
 	{
-		return {m_shadersBinariesDirectory, (std::stringstream{} << shader.name() << '_' << shader.hash() << ".bin").str()};
+		std::stringstream filename;
+		filename << shader.name() << '_' << shader.hash() << ".bin";
+
+		auto filepath = m_shadersBinariesDirectory;
+		filepath.append(filename.str());
+
+		return filepath;
 	}
 
 	size_t
-	ShaderManager::extractHashFromFilepath (const Path::File & filepath) noexcept
+	ShaderManager::extractHashFromFilepath (const std::filesystem::path & filepath) noexcept
 	{
-		const auto & filename = filepath.getFilename();
-
-		auto tmpA = String::explode(filename, '_');
+		const auto tmpA = String::explode(filepath.filename().string(), '_');
 
 		if ( tmpA.size() != 2 )
 		{
 			return 0;
 		}
 
-		auto tmpB = String::explode(tmpA[1], '.');
+		const auto tmpB = String::explode(tmpA[1], '.');
 
 		if ( tmpB.size() != 2 )
 		{
@@ -418,5 +604,211 @@ namespace Emeraude::Saphir
 		}
 
 		return std::stoull(tmpB[0]);
+	}
+
+	EShLanguage
+	ShaderManager::GLSLangShaderType (ShaderType shaderType) noexcept
+	{
+		switch ( shaderType )
+		{
+			case ShaderType::VertexShader :
+				return EShLangVertex;
+
+			case ShaderType::TesselationControlShader :
+				return EShLangTessControl;
+
+			case ShaderType::TesselationEvaluationShader :
+				return EShLangTessEvaluation;
+
+			case ShaderType::GeometryShader :
+				return EShLangGeometry;
+
+			case ShaderType::FragmentShader :
+				return EShLangFragment;
+
+			case ShaderType::ComputeShader :
+				return EShLangCompute;
+
+			default:
+				Tracer::error(ClassId, "Unknown shader type !");
+
+				return EShLangCount;
+		}
+	}
+
+	VkShaderStageFlagBits
+	ShaderManager::vkShaderType (ShaderType shaderType) noexcept
+	{
+		switch ( shaderType )
+		{
+			case ShaderType::VertexShader :
+				return VK_SHADER_STAGE_VERTEX_BIT;
+
+			case ShaderType::TesselationControlShader :
+				return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+
+			case ShaderType::TesselationEvaluationShader :
+				return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+
+			case ShaderType::GeometryShader :
+				return VK_SHADER_STAGE_GEOMETRY_BIT;
+
+			case ShaderType::FragmentShader :
+				return VK_SHADER_STAGE_FRAGMENT_BIT;
+
+			case ShaderType::ComputeShader :
+				return VK_SHADER_STAGE_COMPUTE_BIT;
+
+			default:
+				return static_cast< VkShaderStageFlagBits >(0);
+		}
+	}
+
+	bool
+	ShaderManager::compile (const AbstractShader & shader, std::vector< uint32_t > & binaryCode) noexcept
+	{
+		/* NOTE: The shader must have a source code before a compilation can occur. */
+		if ( !shader.isGenerated() )
+		{
+			TraceError{ClassId} << "The shader '" << shader.name() << "' has an empty source code !";
+
+			return false;
+		}
+
+		return this->compile(shader.name(), shader.type(), shader.sourceCode(), binaryCode);
+	}
+
+	bool
+	ShaderManager::compile (const std::string & shaderName, ShaderType type, const std::string & sourceCode, std::vector< uint32_t > & binaryCode) noexcept
+	{
+		/* NOTE: The shader must have a source code before a compilation can occur. */
+		if ( sourceCode.empty() )
+		{
+			TraceError{ClassId} << "The source code is empty !";
+
+			return false;
+		}
+
+		const std::string shaderIdentifier = ShaderManager::getShaderIdentificationString(type, shaderName);
+
+		/* NOTE: Convert shader shaderType to GLSLang shaderType. */
+		const auto shaderType = ShaderManager::GLSLangShaderType(type);
+		const auto * sourceCodeCString = sourceCode.c_str();
+
+		glslang::TShader glslShader{shaderType};
+		glslShader.setStrings(&sourceCodeCString, 1);
+		glslShader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, m_defaultVersion);
+#if IS_MACOS
+        glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+        glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+#else
+		glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_3);
+		glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_6);
+#endif
+
+		/* NOTE: Preprocess the source code. */
+		std::string preprocessedSource;
+
+		if ( !glslShader.preprocess(&m_builtInResource, m_defaultVersion, m_profile, m_flags[ForceDefaultVersionAndProfile], m_flags[ForwardCompatible], m_messageFilter, &preprocessedSource, m_includer) )
+		{
+			this->printCompilationErrors(shaderIdentifier, preprocessedSource, glslShader.getInfoLog());
+
+			return false;
+		}
+
+		preprocessedSource.erase(std::ranges::unique(preprocessedSource, [] (char chrA, char chrB) {
+			return chrA == '\n' && chrB == '\n';
+		}).begin(),preprocessedSource.end());
+
+		if ( m_primaryServices.settings().get< bool >(ShowPreprocessedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG) )
+		{
+			TraceInfo{ClassId} << "\n"
+				"****** START OF PREPROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n" <<
+				SourceCodeParser::parse(preprocessedSource) <<
+				"****** END OF PREPROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n";
+		}
+
+		/* NOTE: Parse the final source code. */
+		const auto * c_string = preprocessedSource.c_str();
+
+		glslShader.setStrings(&c_string, 1);
+
+		if ( !glslShader.parse(&m_builtInResource, m_defaultVersion, m_profile, m_flags[ForceDefaultVersionAndProfile], m_flags[ForwardCompatible], m_messageFilter, m_includer) )
+		{
+			this->printCompilationErrors(shaderIdentifier, preprocessedSource, glslShader.getInfoLog());
+
+			return false;
+		}
+
+		/* NOTE: Link the shader. */
+		glslang::TProgram program;
+		program.addShader(&glslShader);
+
+		if ( !program.link(m_messageFilter) )
+		{
+			this->printCompilationErrors(shaderIdentifier, preprocessedSource, glslShader.getInfoLog());
+
+			return false;
+		}
+
+		/* NOTE: Retrieve the binary data. */
+		spv::SpvBuildLogger logger;
+		glslang::SpvOptions spvOptions{
+			.generateDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
+			.stripDebugInfo = false,
+			.disableOptimizer = true,
+			.optimizeSize = false,
+			.disassemble = false,
+			.validate = false,
+			.emitNonSemanticShaderDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
+			.emitNonSemanticShaderDebugSource = false,//BOOLEAN_FOLLOWING_DEBUG,
+			.compileOnly = false,
+			.optimizerAllowExpandedIDBound = false
+		};
+
+		GlslangToSpv(*program.getIntermediate(shaderType), binaryCode, &logger, &spvOptions);
+
+		const auto messages = logger.getAllMessages();
+
+		if ( !messages.empty() )
+		{
+			TraceInfo{ClassId} << "GLSL to SPIR-V messages : " << messages;
+		}
+
+		this->notify(ShaderCompilationSucceed, shaderIdentifier);
+
+		return true;
+	}
+
+	void
+	ShaderManager::printCompilationErrors (const std::string & shaderIdentifier, const std::string & sourceCode, const char * log) noexcept
+	{
+		SourceCodeParser parser{sourceCode};
+
+		for ( const auto & error : String::explode(log, '\n') )
+		{
+			if ( std::ranges::count(error, ':') > 1 )
+			{
+				const auto chunks = String::explode(error, ':');
+
+				const auto line = std::stoi(chunks[2]);
+				const auto column = std::stoi(chunks[1]);
+
+				parser.notice(line, column, error);
+			}
+			else
+			{
+				parser.notice(error);
+			}
+		}
+
+		const std::string annotatedSourceCode = parser.getParsedSourceCode();
+
+		TraceError{ClassId} << "\n"
+			"****** START OF ERRONEOUS GLSL SHADER CODE " << shaderIdentifier << " ******" "\n" <<
+			annotatedSourceCode <<
+			"****** END OF ERRONEOUS GLSL SHADER CODE " << shaderIdentifier << " ******" "\n";
+
+		this->notify(ShaderCompilationFailed, std::pair< std::string, std::string >(shaderIdentifier, annotatedSourceCode));
 	}
 }

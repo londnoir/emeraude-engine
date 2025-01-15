@@ -1,0 +1,66 @@
+/*
+ * src/Libraries/Statistics.hpp
+ * This file is part of Emeraude-Engine
+ *
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude-Engine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+/* Information
+
+struct timespec timer = begin_timer();
+
+// Do stuffs ...
+
+long delay = terminate_timer(timer);
+
+printf("Time elapsed : %ld ns\n", delay);
+
+*/
+
+#pragma once
+
+#include "platform.hpp"
+
+#if IS_LINUX
+
+extern "C"
+{
+	/* C standard libraries */
+	#include <time.h>
+
+	/**
+	 * @brief Calls this function to execute a nanosecond-resolution timer.
+	 * @param start_time
+	 * @return void
+	 */
+	void begin_timer (timespec * start_time) noexcept;
+
+	/**
+	 * @brief Calls this function to end a timer, returning nanoseconds elapsed as a long.
+	 * @param start_time
+	 * @return long
+	 */
+	long terminate_timer (timespec start_time) noexcept;
+}
+
+#endif

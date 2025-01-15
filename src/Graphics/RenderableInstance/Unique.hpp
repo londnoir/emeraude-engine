@@ -1,43 +1,42 @@
 /*
- * Emeraude/Graphics/RenderableInstance/Unique.hpp
- * This file is part of Emeraude
+ * src/Graphics/RenderableInstance/Unique.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
 #include <memory>
-#include <mutex>
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "Math/Coordinates.hpp"
-#include "Vulkan/DescriptorSet.hpp"
-#include "Vulkan/UniformBufferObject.hpp"
+#include "Graphics/Renderable/Interface.hpp"
+#include "Libraries/Math/CartesianFrame.hpp"
 
 namespace Emeraude::Graphics::RenderableInstance
 {
@@ -56,82 +55,77 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @brief Constructs a renderable instance.
 			 * @param renderable A reference to a smart pointer of a renderable object.
 			 * @param location A reference to a coordinates for the initial location. Default origin.
+			 * @param flagBits The multiple renderable instance level flags. Default 0.
 			 */
-			explicit Unique (const std::shared_ptr< Renderable::Interface > & renderable, const Libraries::Math::Coordinates< float > & location = {}) noexcept;
+			explicit Unique (const std::shared_ptr< Renderable::Interface > & renderable, const Libraries::Math::CartesianFrame< float > & location = {}, uint32_t flagBits = 0) noexcept;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isCreated() */
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::isModelMatricesCreated() const */
 			[[nodiscard]]
-			bool isModelMatricesCreated () const noexcept override;
+			bool
+			isModelMatricesCreated () const noexcept override
+			{
+				return true;
+			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::resetMatrices() */
-			bool resetModelMatrices () noexcept override;
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::resetModelMatrices() */
+			void
+			resetModelMatrices () noexcept override
+			{
+				m_cartesianFrame.reset();
+			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::useModelUniformBufferObject() */
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelUniformBufferObject() */
 			[[nodiscard]]
-			bool useModelUniformBufferObject () const noexcept override;
+			bool
+			useModelUniformBufferObject () const noexcept override
+			{
+				return true;
+			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::useModelVertexBufferObject() */
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelVertexBufferObject() */
 			[[nodiscard]]
-			bool useModelVertexBufferObject () const noexcept override;
+			bool
+			useModelVertexBufferObject () const noexcept override
+			{
+				return false;
+			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::useModelVertexBufferObject() */
-			bool updateVideoMemoryForRendering (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) noexcept override;
-
-			/**
-			 * @brief Updates model matrices in video memory.
-			 * @param location A pointer to the model matrix. It can be nullptr.
-			 * @param Abstract A pointer to the render target. It can be nullptr.
-			 * @param shadowMap A pointer to the shadowMap. It can be nullptr.
-			 * @return bool
-			 */
-			bool updateModelMatrices (const Libraries::Math::Coordinates< float > * location, const RenderTarget::Abstract * renderTarget, const RenderTarget::Abstract * shadowMap) noexcept;
-
-			/**
-			 * @brief Updates model matrices in video memory.
-			 * @param location A reference to a model matrix representing the object.
-			 * @return bool
-			 */
-			bool updateWithModel (const Libraries::Math::Coordinates< float > & location) noexcept;
-
-			/**
-			 * @brief Updates model matrices in video memory for a specific view.
-			 * @param renderTarget A reference to the render target.
-			 * @return bool
-			 */
-			bool updateWithView (const RenderTarget::Abstract & renderTarget) noexcept;
-
-			/**
-			 * @brief Updates model matrices in video memory for a specific view.
-			 * @param shadowMap A reference to the shadow map.
-			 * @return bool
-			 */
-			[[deprecated("This will be removed, old OpenGL behavior not more useful in Vulkan")]]
-			bool updateWithShadowMap (const RenderTarget::Abstract & shadowMap) noexcept;
-
-			/**
-			 * @brief Gets the model matrices uniform block.
-			 * @param set The set number used in the descriptor set.
-			 * @param binding The binding used number the in descriptor set. Default 0.
-			 * @return Saphir::Declaration::UniformBlock
-			 */
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::worldPosition() */
 			[[nodiscard]]
-			static Saphir::Declaration::UniformBlock getModelUniformBlock (uint32_t set, uint32_t binding = 0) noexcept;
+			Libraries::Math::Vector< 3, float >
+			worldPosition () const noexcept override
+			{
+				return m_cartesianFrame.position();
+			}
+
+			/**
+			 * @brief Updates the renderable instance cartesian frame.
+			 * @note The coordinates of the frame expected to be absolute.
+			 * @param worldCartesianFrame A reference to a cartesian frame.
+			 * @return void
+			 */
+			void
+			updateModelMatrix (const Libraries::Math::CartesianFrame< float > & worldCartesianFrame) noexcept
+			{
+				m_cartesianFrame = worldCartesianFrame;
+			}
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::createModelMatrices() */
-			[[nodiscard]]
-			bool createModelMatrices () noexcept override;
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::pushMatrices() */
+			void pushMatrices (const Vulkan::CommandBuffer & commandBuffer, const Vulkan::PipelineLayout & pipelineLayout, const ViewMatricesInterface & viewMatrices, const Saphir::Program & program) const noexcept override;
 
 			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::instanceCount() */
 			[[nodiscard]]
-			size_t instanceCount () const noexcept override;
+			size_t
+			instanceCount () const noexcept override
+			{
+				return 1;
+			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::createModelMatrices() */
-			void bindInstanceLayer (const Vulkan::CommandBuffer & commandBuffer, const Vulkan::PipelineLayout & pipelineLayout, size_t layerIndex, uint32_t & setOffset) const noexcept override;
+			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::bindInstanceModelLayer() */
+			void bindInstanceModelLayer (const Vulkan::CommandBuffer & commandBuffer, size_t layerIndex) const noexcept override;
 
-			Libraries::Math::Matrix< 4, float > m_modelMatrixCopy{};
-			std::unique_ptr< Vulkan::UniformBufferObject > m_uniformBufferObject{};
-			std::unique_ptr< Vulkan::DescriptorSet > m_modelDescriptorSet{};
+			Libraries::Math::CartesianFrame< float > m_cartesianFrame;
 	};
 }

@@ -1,40 +1,51 @@
 /*
- * Emeraude/Audio/MusicResource.cpp
- * This file is part of Emeraude
+ * src/Audio/MusicResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "MusicResource.hpp"
 
-/* Local inclusions */
-#include "Manager.hpp"
-#include "Resources/Manager.hpp"
-#include "Tracer.hpp"
-#include "WaveFactory/Processor.hpp"
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/taglib.hpp"
+/* Third-party inclusions. */
+#ifdef TAGLIB_ENABLED
+	COMPILATION_SILENCE_WARNINGS
+
+	#include "taglib/tag.h"
+	#include "taglib/fileref.h"
+
+	COMPILATION_RESTORE_WARNINGS
+#endif
+
+/* Local inclusions. */
+#include "Libraries/WaveFactory/Processor.hpp"
+#include "Resources/Manager.hpp"
+#include "Buffer.hpp"
+#include "Manager.hpp"
+#include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -42,38 +53,24 @@ const char * const Emeraude::Resources::Container< Emeraude::Audio::MusicResourc
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Audio::MusicResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Audio::MusicResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Audio
 {
 	using namespace Libraries;
 
-	const size_t MusicResource::ClassUID{Observable::getClassUID()};
+	const size_t MusicResource::ClassUID{getClassUID(ClassId)};
 
 	MusicResource::MusicResource (const std::string & name, uint32_t resourceFlagBits) noexcept
-		: ResourceTrait(name, resourceFlagBits), m_title("Unknown"), m_artist("Unknown")
+		: ResourceTrait(name, resourceFlagBits)
 	{
 
-	}
-
-	bool
-	MusicResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
 	}
 
 	bool
 	MusicResource::onDependenciesLoaded () noexcept
 	{
 		const auto chunkSize = Manager::instance()->musicChunkSize();
-
 		const auto chunkCount = m_localData.chunkCount(chunkSize);
 
 		m_buffers.resize(chunkCount);
@@ -93,62 +90,41 @@ namespace Emeraude::Audio
 		return true;
 	}
 
-	size_t
-	MusicResource::streamable () const noexcept
-	{
-		return m_buffers.size();
-	}
 
-	std::shared_ptr< const Buffer >
-	MusicResource::buffer (size_t bufferIndex) const noexcept
-	{
-		return m_buffers.at(bufferIndex);
-	}
-
-#if defined(TAGLIB_ENABLED) && !defined(__clang__)
 	void
-	MusicResource::readMetaData (const std::string & filepath) noexcept
+	MusicResource::readMetaData (const std::filesystem::path & filepath) noexcept
 	{
-		TagLib::FileRef file(filepath.c_str());
+#ifdef TAGLIB_ENABLED
+		const TagLib::FileRef file(filepath.c_str());
 
-		if ( !file.isNull() )
+		if ( file.isNull() )
 		{
-			auto tag = file.tag();
+			TraceError{ClassId} << "Unable to read file '" << filepath << "' for audio tag extraction.";
 
-			if ( tag != nullptr )
-			{
-				m_title = tag->title().to8Bit(true);
-				m_artist = tag->artist().to8Bit(true);
-			}
-			else
-			{
-				Tracer::warning(ClassId, "Unable to get audio tag !");
-			}
+			return;
 		}
-		else
+
+		const auto * tag = file.tag();
+
+		if ( tag == nullptr )
 		{
-			Tracer::error(ClassId, Blob() << "Unable to read file '" << filepath << "' for audio tag extraction.");
+			TraceWarning{ClassId} << "Unable to read audio metadata from '" << filepath << "' !";
+
+			return;
 		}
-	}
+
+		m_title = tag->title().to8Bit(true);
+		m_artist = tag->artist().to8Bit(true);
 #else
-	void
-	MusicResource::readMetaData (const std::string & /*filepath*/) noexcept
-	{
 		m_title = "UnknownTitle";
 		m_artist = "UnknownArtist";
-	}
 #endif
-
-	const char *
-	MusicResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
 	MusicResource::load () noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -175,9 +151,9 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	MusicResource::load (const Path::File & filepath) noexcept
+	MusicResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -238,7 +214,7 @@ namespace Emeraude::Audio
 		}
 
 		/* Read optional metadata from soundtrack if available. */
-		this->readMetaData(to_string(filepath));
+		this->readMetaData(filepath);
 
 		return this->setLoadSuccess(true);
 	}
@@ -246,7 +222,7 @@ namespace Emeraude::Audio
 	bool
 	MusicResource::load (const Json::Value & /*data*/) noexcept
 	{
-		if ( !Manager::isAudioAvailable() )
+		if ( !Manager::instance()->usable() )
 		{
 			return true;
 		}
@@ -261,34 +237,10 @@ namespace Emeraude::Audio
 		return this->setLoadSuccess(false);
 	}
 
-	const WaveFactory::Wave< short int > &
-	MusicResource::localData () const noexcept
-	{
-		return m_localData;
-	}
-
-	WaveFactory::Wave< short int > &
-	MusicResource::localData () noexcept
-	{
-		return m_localData;
-	}
-
-	const std::string &
-	MusicResource::title () const noexcept
-	{
-		return m_title;
-	}
-
-	const std::string &
-	MusicResource::artist () const noexcept
-	{
-		return m_artist;
-	}
-
 	std::shared_ptr< MusicResource >
 	MusicResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->musics().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->musics().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< MusicResource >

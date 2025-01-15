@@ -1,37 +1,59 @@
 /*
- * Emeraude/Physics/Collision.hpp
- * This file is part of Emeraude
+ * src/Physics/Collision.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
+/* STL inclusions. */
+#include <cstdint>
+
 /* Local inclusions for usages. */
-#include "Math/Vector.hpp"
+#include "Libraries/Math/Vector.hpp"
+
+/* Forward declarations. */
+namespace Emeraude::Scenes
+{
+	class AbstractEntity;
+}
 
 namespace Emeraude::Physics
 {
+	/** @brief The type of collision enumeration. */
+	enum class CollisionType : uint8_t
+	{
+		/** @brief The imaginary limits of the scene. */
+		SceneBoundary,
+		/** @brief The scene ground if exists. */
+		SceneGround,
+		/** @brief Against a static entity. */
+		StaticEntity,
+		/** @brief Against an entity that has a MovableTrait. */
+		MovableEntity
+	};
+
 	/**
 	 * @brief This class defines a collision.
 	 */
@@ -39,60 +61,68 @@ namespace Emeraude::Physics
 	{
 		public:
 
-			/** @brief Collision type. */
-			enum class Type
-			{
-				SceneAreaBoundaries,
-				SceneAreaGround,
-				StaticEntity,
-				Node
-			};
-
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"PhysicsCollision"};
 
 			/**
-			 * @brief Constructs a collision structure.
-			 * @param type
-			 * @param target
-			 * @param direction
-			 * @param speed
+			 * @brief Constructs a collision structure against the scene area.
+			 * @param type The type of collision.
+			 * @param entity A pointer to an entity in case of a .
+			 * @param position A reference to a vector for the collision world position.
+			 * @param direction A reference to a vector for the collision direction.
 			 */
-			Collision (Type type, const void * target, const Libraries::Math::Vector< 3, float > & direction, float speed) noexcept;
+			Collision (CollisionType type, Scenes::AbstractEntity * entity, const Libraries::Math::Vector< 3, float > & position, const Libraries::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
-			 * @brief Returns the collision type.
-			 * @return Type
-			 */
-			[[nodiscard]]
-			Type type () const noexcept;
-
-			/**
-			 * @brief Returns a raw pointer to the object hit.
-			 * @return const void *
+			 * @brief Returns the type of collision.
+			 * @return CollisionType
 			 */
 			[[nodiscard]]
-			const void * target () const noexcept;
+			CollisionType
+			type () const noexcept
+			{
+				return m_type;
+			}
 
 			/**
-			 * @brief Returns the direction vector of the collision.
+			 * @brief Returns the entity involved in the collision when the type is StaticEntity or MovableEntity.
+			 * @warning This method can return nullptr if no entity is involved, check the type first !
+			 * @return Scenes::AbstractEntity *
+			 */
+			[[nodiscard]]
+			Scenes::AbstractEntity *
+			entity () const noexcept
+			{
+				return m_entity;
+			}
+
+			/**
+			 * @brief Returns the world position of the collision.
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > & direction () const noexcept;
+			const Libraries::Math::Vector< 3, float > &
+			position () const noexcept
+			{
+				return m_position;
+			}
 
 			/**
-			 * @brief Returns the speed at collision.
-			 * @return float
+			 * @brief Returns the world direction vector of the collision.
+			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			float speed () const noexcept;
+			const Libraries::Math::Vector< 3, float > &
+			direction () const noexcept
+			{
+				return m_direction;
+			}
 
 		private:
 
-			Type m_type;
-			const void * m_target;
+			CollisionType m_type;
+			Scenes::AbstractEntity * m_entity;
+			Libraries::Math::Vector< 3, float > m_position;
 			Libraries::Math::Vector< 3, float > m_direction;
-			float m_speed;
 	};
 }

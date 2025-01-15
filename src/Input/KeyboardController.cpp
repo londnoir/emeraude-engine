@@ -1,53 +1,52 @@
 /*
- * Emeraude/Input/KeyboardController.cpp
- * This file is part of Emeraude
+ * src/Input/KeyboardController.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "KeyboardController.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
 #include <algorithm>
 #include <sstream>
 
+/* Third-party libraries */
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
+
+/* Local usage. */
+#include "Window.hpp"
+
 namespace Emeraude::Input
 {
-	// NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-	constexpr auto TracerTag{"KeyboardController"};
-
-	std::array< bool, 349 > KeyboardController::s_deviceState{}; // NOLINT NOTE: Special state copy.
+	std::array< char, 349 > KeyboardController::s_deviceState{};
 
 	bool
-	KeyboardController::isConnected () const noexcept
+	KeyboardController::isKeyPressed (int32_t key) const noexcept
 	{
-		return true;
-	}
-
-	bool
-	KeyboardController::isKeyPressed (int key) const noexcept
-	{
-		if ( key == KeyUnknown )
+		if ( m_disabled || key == KeyUnknown )
 		{
 			return false;
 		}
@@ -58,15 +57,20 @@ namespace Emeraude::Input
 	bool
 	KeyboardController::isAnyKeyPressed () const noexcept
 	{
-		return std::any_of(s_deviceState.cbegin(), s_deviceState.cend(), [] (auto state) {
+		if ( m_disabled )
+		{
+			return false;
+		}
+
+		return std::ranges::any_of(s_deviceState, [] (auto state) {
 			return state;
 		});
 	}
 
 	bool
-	KeyboardController::isKeyReleased (int key) const noexcept
+	KeyboardController::isKeyReleased (int32_t key) const noexcept
 	{
-		if ( key == KeyUnknown )
+		if ( m_disabled || key == KeyUnknown )
 		{
 			return true;
 		}
@@ -77,25 +81,35 @@ namespace Emeraude::Input
 	std::string
 	KeyboardController::getRawState () const noexcept
 	{
-		std::stringstream output{};
+		std::stringstream output;
 
 		output << "Keyboard mapping." "\n";
 
-		for ( int key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST + 1; key++ )
+		for ( int32_t key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST + 1; key++ )
 		{
-			output << "Key #" << key << " : " << s_deviceState[static_cast< size_t >(key)] << '\n';
+			if ( s_deviceState.at(static_cast< size_t >(key)) )
+			{
+				output << "Key #" << key << " : Pressed" "\n";
+			}
+			else
+			{
+				output << "Button #" << key << " : Released" "\n";
+			}
 		}
 
 		return output.str();
 	}
 
 	void
-	KeyboardController::readDeviceState (GLFWwindow * window) noexcept
+	KeyboardController::readDeviceState (const Window & window) noexcept
 	{
-		for ( auto key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST + 1; key++ )
+#ifdef GLFW_EM_CUSTOM_VERSION
+		glfwGetKeyboardState(window.handle(), s_deviceState.data());
+#else
+		for ( int32_t key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST + 1; key++ )
 		{
-			s_deviceState[static_cast< size_t >(key)] = ( glfwGetKey(window, key) == GLFW_PRESS );
+			s_deviceState[static_cast< size_t >(key)] = glfwGetKey(window.handle(), key) == GLFW_PRESS ? 1 : 0;
 		}
+#endif
 	}
-	// NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 }

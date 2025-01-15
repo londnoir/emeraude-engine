@@ -1,27 +1,27 @@
 /*
- * Emeraude/Saphir/FragmentShader.hpp
- * This file is part of Emeraude
+ * src/Saphir/FragmentShader.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -30,42 +30,171 @@
 /* Local inclusions for inheritances. */
 #include "AbstractShader.hpp"
 
+/* Local inclusions for usages. */
+#include "Declaration/InputBlock.hpp"
+#include "Declaration/OutputFragment.hpp"
+#include "Declaration/StageInput.hpp"
+
+/* Forward declarations. */
+namespace Emeraude::Saphir
+{
+	class VertexShader;
+	class TesselationEvaluationShader;
+	class GeometryShader;
+}
+
 namespace Emeraude::Saphir
 {
 	/**
-	 * @brief The FragmentShader class.
+	 * @brief The fragment shader class.
 	 * @extends Emeraude::Saphir::AbstractShader The base class of every shader type.
 	 */
 	class FragmentShader final : public AbstractShader
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"FragmentShader"};
+
+			/** @brief Extends declaration from base class. */
+			using AbstractShader::declare;
+
 			/**
 			 * @brief Constructs a fragment shader.
 			 * @param name The name of the shader for identification.
 			 */
-			explicit FragmentShader (const std::string & name) noexcept;
+			FragmentShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept;
 
 			/** @copydoc Emeraude::Saphir::AbstractShader::type() */
 			[[nodiscard]]
-			ShaderType type () const noexcept override;
+			ShaderType
+			type () const noexcept override
+			{
+				return ShaderType::FragmentShader;
+			}
 
 			/**
-			 * @brief Returns names of program outputs (fragments).
-			 * @return const set< string >
-			 */
-			[[nodiscard]]
-			const std::set< std::string > & outputs () const noexcept;
-
-			/**
-			 * @brief Declares a fragment output.
-			 * @param name The identifier in GLSL code of the fragment output.
+			 * @brief Declares a stage input variable to be used in the shader.
+			 * @param declaration A reference to a ShaderStageInput.
 			 * @return bool
 			 */
-			bool declareOutput (const std::string & name) noexcept;
+			bool declare (const Declaration::StageInput & declaration) noexcept;
+
+			/**
+			 * @brief Declares an input block to be used in the shader.
+			 * @param declaration A reference to a InputBlock.
+			 * @return bool
+			 */
+			bool declare (const Declaration::InputBlock & declaration) noexcept;
+
+			/**
+			 * @brief Declares a fragment output to be used in a fragment shader.
+			 * @param declaration A reference to a OutputBlock.
+			 * @return bool
+			 */
+			bool declare (const Declaration::OutputFragment & declaration) noexcept;
+
+			/**
+			 * @brief Returns the list of stage input declarations.
+			 * @return const std::vector< Declaration::StageInput > &
+			 */
+			[[nodiscard]]
+			const std::vector< Declaration::StageInput > &
+			stageInputs () const noexcept
+			{
+				return m_stageInputs;
+			}
+
+			/**
+			 * @brief Returns the list of input block declarations.
+			 * @return const std::vector< Declaration::InputBlock > &
+			 */
+			[[nodiscard]]
+			const std::vector< Declaration::InputBlock > &
+			inputBlocks () const noexcept
+			{
+				return m_inputBlocks;
+			}
+
+			/**
+			 * @brief Returns the list of output fragment declarations.
+			 * @return const std::vector< Declaration::OutputFragment > &
+			 */
+			[[nodiscard]]
+			const std::vector< Declaration::OutputFragment > &
+			outputFragments () const noexcept
+			{
+				return m_outputFragments;
+			}
+
+			/**
+			 * @brief Declares the default fragment output.
+			 * @return bool
+			 */
+			bool
+			declareDefaultOutputFragment () noexcept
+			{
+				return this->declare(Declaration::OutputFragment{0, Keys::GLSL::FloatVector4, Keys::ShaderVariable::OutputFragment});
+			}
+
+			/**
+			 * @brief Sets the number of samples used by the frame buffer for a pixel.
+			 * @param samples
+			 * @return void
+			 */
+			void
+			setSamples (uint32_t samples) noexcept
+			{
+				m_samples = samples;
+			}
+
+			/**
+			 * @brief Returns the number of samples used by the frame buffer for a pixel.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			samples () const noexcept
+			{
+				return m_samples;
+			}
+
+			/**
+			 * @brief Copies output from a vertex shader to this fragment shader.
+			 * @param vertexShader A reference to a vertex shader.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool connectFromPreviousShader (const VertexShader & vertexShader) noexcept;
+
+			/**
+			 * @brief Copies output from a tesselation evaluation shader to this fragment shader.
+			 * @param vertexShader A reference to a tesselation evaluation shader.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool connectFromPreviousShader (const TesselationEvaluationShader & tesselationEvaluationShader) noexcept;
+
+			/**
+			 * @brief Copies output from a geometry shader to this fragment shader.
+			 * @param vertexShader A reference to a geometry shader.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool connectFromPreviousShader (const GeometryShader & geometryShader) noexcept;
 
 		private:
 
-			std::set< std::string > m_outputs;
+			/** @copydoc Emeraude::Saphir::AbstractShader::onSourceCodeGeneration() */
+			[[nodiscard]]
+			bool onSourceCodeGeneration (Generator::Abstract & generator, std::stringstream & code, std::string & topInstructions, std::string & outputInstructions) noexcept override;
+
+			/** @copydoc Emeraude::Saphir::AbstractShader::onGetDeclarationStats() */
+			void onGetDeclarationStats (std::stringstream & output) const noexcept override;
+
+			std::vector< Declaration::StageInput > m_stageInputs{};
+			std::vector< Declaration::InputBlock > m_inputBlocks{};
+			std::vector< Declaration::OutputFragment > m_outputFragments{};
+			uint32_t m_samples{1};
 	};
 }

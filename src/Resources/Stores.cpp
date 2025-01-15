@@ -1,74 +1,76 @@
 /*
- * Emeraude/Resources/Stores.cpp
- * This file is part of Emeraude
+ * src/Resources/Stores.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Stores.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstddef>
 #include <fstream>
-#include <iostream> // DEV
-#ifndef __WIN64__
-#include <glob.h>
-#endif
+#include <vector>
+#include <filesystem>
+#include <regex>
 
-/* Local inclusions */
-#include "Path/Path.hpp"
-#include "Tracer.hpp"
+/* Local inclusions. */
+#include "Libraries/Utility.hpp"
+#include "Libraries/IO.hpp"
+#include "PrimaryServices.hpp"
+#include "BaseInformation.hpp"
+#include "SettingKeys.hpp"
 
 namespace Emeraude::Resources
 {
 	using namespace Libraries;
 
-	const size_t Stores::ClassUID{Observable::getClassUID()};
+	const size_t Stores::ClassUID{getClassUID(ClassId)};
 	bool Stores::s_operationVerboseEnabled{BOOLEAN_FOLLOWING_DEBUG};
 	bool Stores::s_downloadEnabled{true};
 
-	Stores::Stores (const Arguments & arguments, const FileSystem & fileSystem, Settings & coreSettings) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_fileSystem(fileSystem), m_coreSettings(coreSettings)
+	Stores::Stores (PrimaryServices & primaryServices) noexcept
+		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
 	{
 
+	}
+
+	size_t
+	Stores::classUID () const noexcept
+	{
+		return ClassUID;
 	}
 
 	bool
 	Stores::is (size_t classUID) const noexcept
 	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
 		return classUID == ClassUID;
 	}
 
 	bool
 	Stores::usable () const noexcept
 	{
-		return m_registeredResources > 0;
+		return m_flags[ServiceInitialized];
 	}
 
 	const Stores::Store &
@@ -81,7 +83,7 @@ namespace Emeraude::Resources
 			return m_defaultStore;
 		}
 
-		auto storeIt = m_stores.find(storeName);
+		const auto storeIt = m_stores.find(storeName);
 
 		if ( storeIt == m_stores.cend() )
 		{
@@ -96,28 +98,39 @@ namespace Emeraude::Resources
 	bool
 	Stores::onInitialize () noexcept
 	{
-		s_operationVerboseEnabled = m_coreSettings.getAs< bool >(OperationVerboseEnabledKey, DefaultOperationVerboseEnabled);
-		s_downloadEnabled = m_coreSettings.getAs< bool >(Stores::DownloadEnabledKey, Stores::DefaultDownloadEnabled);
+		s_operationVerboseEnabled = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultCoreResourcesDownloadEnabled);
 
 		const auto indexes = this->getResourcesIndexFiles();
 
 		if ( indexes.empty() )
 		{
-			Tracer::warning(ClassId, "No resources index available !");
+			std::stringstream message{};
+
+			message <<
+				"No resources index available !" "\n"
+				"Checked directories :" "\n";
+
+			for ( auto directory : m_primaryServices.fileSystem().dataDirectories() )
+			{
+				message << directory.append(DataStores).string() << "\n";
+			}
+
+			TraceWarning{ClassId} << message;
 
 			return false;
 		}
 
-		const auto verbose = m_coreSettings.getAs< bool >(InitializationVerboseEnabledKey, DefaultInitializationVerboseEnabled);
+		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
 
 		m_registeredResources = 0;
 
-		for ( auto & indexFilepath : indexes )
+		for ( const auto & indexFilepath : indexes )
 		{
-			TraceInfo{ClassId} << "Reading resource index '" << indexFilepath << "' ...";
+			TraceInfo{ClassId} << "Loading resource index from file '" << indexFilepath << "' ...";
 
 			/* 1. Get raw JSON data from file */
-			Json::CharReaderBuilder builder;
+			const Json::CharReaderBuilder builder{};
 
 			std::ifstream json(indexFilepath, std::ifstream::binary);
 
@@ -156,13 +169,15 @@ namespace Emeraude::Resources
 			m_registeredResources += resourcesRead;
 		}
 
+		m_flags[ServiceInitialized] = true;
+
 		return true;
 	}
 
 	bool
 	Stores::onTerminate () noexcept
 	{
-		/* FIXME: Maybe save new local resources in the file ? */
+		m_flags[ServiceInitialized] = false;
 
 		m_defaultStore.clear();
 
@@ -174,7 +189,7 @@ namespace Emeraude::Resources
 	void
 	Stores::update (const Json::Value & root, const std::string & name) noexcept
 	{
-		const auto verbose = m_coreSettings.getAs< bool >(UpdateVerboseEnabledKey, DefaultUpdateVerboseEnabled);
+		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
 
 		if ( !root.isObject() )
 		{
@@ -184,7 +199,9 @@ namespace Emeraude::Resources
 		}
 
 		if ( !root.isMember(StoresKey) )
+		{
 			return;
+		}
 
 		const auto & stores = root[StoresKey];
 
@@ -196,7 +213,9 @@ namespace Emeraude::Resources
 		}
 
 		if ( verbose )
+		{
 			TraceInfo{ClassId} << "A '" << StoresKey << "' key is present in '" << name << "', adding new resources ...";
+		}
 
 		m_registeredResources += this->parseStores(stores, verbose);
 	}
@@ -206,18 +225,9 @@ namespace Emeraude::Resources
 	{
 		const auto & resourceStore = this->store(storeName);
 
-		return std::next(std::begin(resourceStore), Utility::trueRandom(0UL, resourceStore.size()))->first;
-	}
+		const auto random = Utility::random< size_t >(0, resourceStore.size());
 
-	Path::Directory
-	Stores::namedStore (const char * storeName) noexcept
-	{
-		std::string directory{};
-		directory += DataStores;
-		directory += Libraries::Path::Separator;
-		directory += storeName;
-
-		return FileSystem::instance()->dataDirectory(directory);
+		return std::next(std::begin(resourceStore), static_cast< long >(random))->first;
 	}
 
 	bool
@@ -227,40 +237,43 @@ namespace Emeraude::Resources
 	}
 
 	std::vector< std::string >
-	Stores::getResourcesIndexFiles () noexcept
+	Stores::getResourcesIndexFiles () const noexcept
 	{
-		std::vector< std::string > indexes;
+		std::vector< std::string > indexes{};
 
-		for ( auto directory : m_fileSystem.dataDirectoriesList() )
+		const std::regex indexMatchRule("ResourcesIndex.([0-9]{3}).json",std::regex_constants::ECMAScript);
+
+		/* NOTE: For each data directory pointed by the file system, we will look for resource index files. */
+		for ( auto dataStoreDirectory : m_primaryServices.fileSystem().dataDirectories() )
 		{
-			directory.append(DataStores);
+			dataStoreDirectory.append(DataStores);
 
-#ifdef __WIN64__
-			/* FIXME: Ugly solution caused by unavailability of glob.h with mingw-w64 */
-			for ( auto index = 0; index < 9; index++ )
+			if ( !IO::directoryExists(dataStoreDirectory) )
 			{
-				auto indexFile = Path::File(directory, "ResourcesIndex.00" + std::to_string(index) + ".json");
-
-				if ( indexFile.exists() )
-					indexes.emplace_back(indexFile.to_string());
+				/* No "data-stores/" in this data directory. */
+				continue;
 			}
-#else
-			/* Where to find every resource. */
-			const Path::File indexGlobRule{directory, ResourceIndexFiles};
 
-			TraceInfo{ClassId} << "Looking for resource index files with rule '" << indexGlobRule << "' ...";
-
+			for ( const auto & entry : std::filesystem::directory_iterator(dataStoreDirectory) )
 			{
-				glob_t files{};
+				if ( !is_regular_file(entry.path()) )
+				{
+					/* This entry is not a file. */
+					continue;
+				}
 
-				glob(to_string(indexGlobRule).c_str(), GLOB_TILDE, nullptr, &files);
+				const auto filepath = entry.path().string();
 
-				for ( size_t index = 0; index < files.gl_pathc; ++index )
-					indexes.emplace_back(files.gl_pathv[index]);
+				if ( !std::regex_search(filepath, indexMatchRule) )
+				{
+					/* No resource index file in this "data-stores/" directory. */
+					TraceWarning{ClassId} << "Directory '" << entry << "' do not contains any resource index file !";
 
-				globfree(&files);
+					continue;
+				}
+
+				indexes.emplace_back(filepath);
 			}
-#endif
 		}
 
 		return indexes;
@@ -289,7 +302,9 @@ namespace Emeraude::Resources
 				m_stores[storeName] = {};
 
 				if ( verbose )
+				{
 					TraceInfo{ClassId} << "Initializing '" << storeName << "' store...";
+				}
 			}
 
 			/* Crawling in resources definition. */
@@ -318,10 +333,12 @@ namespace Emeraude::Resources
 				}
 
 				/* Warns user if we erase an old resource named the same way. */
-				if ( m_stores[storeName].find(baseInformation.name()) != m_stores[storeName].cend() )
+				if ( m_stores[storeName].contains(baseInformation.name()) )
+				{
 					TraceWarning{ClassId} <<
 						"'" << baseInformation.name() << "' already exists in '" << storeName << "' store. "
 						"It will be erased !";
+				}
 
 				/* Adds resource to store. */
 				m_stores[storeName][baseInformation.name()] = baseInformation;
@@ -329,10 +346,40 @@ namespace Emeraude::Resources
 				resourcesRegistered++;
 
 				if ( verbose )
+				{
 					TraceInfo{ClassId} << "Resource '" << baseInformation.name() << "' added to store '" << storeName << "'.";
+				}
 			}
 		}
 
 		return resourcesRegistered;
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const Stores & obj)
+	{
+		if ( obj.m_stores.empty() )
+		{
+			return out << "There is no available resource store !" "\n";
+		}
+
+		out << "Resources stores :" "\n";
+
+		for ( const auto & [name, store] : obj.m_stores )
+		{
+			out << " - " << name << " (" << store.size() << " resources)" << '\n';
+		}
+
+		return out;
+	}
+
+	std::string
+	to_string (const Stores & obj) noexcept
+	{
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

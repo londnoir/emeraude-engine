@@ -1,37 +1,37 @@
 /*
- * Emeraude/Vulkan/DebugMessenger.cpp
- * This file is part of Emeraude
+ * src/Vulkan/DebugMessenger.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "DebugMessenger.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <iostream>
 #include <sstream>
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Instance.hpp"
 #include "Tracer.hpp"
 
@@ -80,27 +80,11 @@ namespace Emeraude::Vulkan
 			{
 				vkDestroyDebugUtilsMessengerEXT(m_instance.handle(), m_handle, nullptr);
 			}
-			else
-			{
-				Tracer::error(ClassId, "VK_EXT_debug_utils extension unavailable ! Unable to get vkDestroyDebugUtilsMessengerEXT() function.");
-			}
 
 			m_handle = VK_NULL_HANDLE;
 		}
 
 		this->setDestroyed();
-	}
-
-	VkDebugUtilsMessengerEXT
-	DebugMessenger::handle () noexcept
-	{
-		return m_handle;
-	}
-
-	VkDebugUtilsMessengerCreateInfoEXT
-	DebugMessenger::createInfo () noexcept
-	{
-		return m_createInfo;
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT
@@ -121,7 +105,9 @@ namespace Emeraude::Vulkan
 	VkBool32
 	DebugMessenger::debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT * pCallbackData, void * /*pUserData*/) noexcept
 	{
-		std::stringstream output{};
+		std::stringstream output;
+
+		output << "[VK]";
 
 		switch ( messageType )
 		{
@@ -137,7 +123,13 @@ namespace Emeraude::Vulkan
 				output << "[PERFORMANCE]";
 				break;
 
+			case VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT :
+				output << "[DEVICE_ADDRESS_BINDING]";
+				break;
+
+			case VK_DEBUG_UTILS_MESSAGE_TYPE_FLAG_BITS_MAX_ENUM_EXT :
 			default:
+				output << "[UNDEFINED]";
 				break;
 		}
 
@@ -165,6 +157,7 @@ namespace Emeraude::Vulkan
 				output << "[ERROR]";
 				break;
 
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT :
 			default:
 				isError = true;
 
@@ -173,7 +166,7 @@ namespace Emeraude::Vulkan
 		}
 
 		output <<
-			   "[ID:" << pCallbackData->pMessageIdName << " #" << pCallbackData->messageIdNumber << "]" "\n"
+			"[ID:" << pCallbackData->pMessageIdName << " #" << pCallbackData->messageIdNumber << "]" "\n"
 			"[MESSAGE:" << pCallbackData->pMessage << "]";
 
 		if ( isError )

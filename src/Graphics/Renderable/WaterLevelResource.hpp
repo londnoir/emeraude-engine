@@ -1,47 +1,52 @@
 /*
- * Emeraude/Graphics/Renderable/WaterLevelResource.hpp
- * This file is part of Emeraude
+ * src/Graphics/Renderable/WaterLevelResource.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "AbstractSeaLevel.hpp"
+#include "SeaLevelInterface.hpp"
+
+/* Local inclusions for usages. */
+#include "Resources/Container.hpp"
+#include "Graphics/Geometry/VertexGridResource.hpp"
 
 namespace Emeraude::Graphics::Renderable
 {
 	/**
 	 * @brief The water level resource class.
-	 * @extends Emeraude::Graphics::Renderable::AbstractSeaLevel
+	 * @extends Emeraude::Graphics::Renderable::SeaLevelInterface This is a sea level.
 	 */
-	class WaterLevelResource : public AbstractSeaLevel
+	class WaterLevelResource : public SeaLevelInterface
 	{
 		friend class Resources::Container< WaterLevelResource >;
 
@@ -55,9 +60,9 @@ namespace Emeraude::Graphics::Renderable
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static constexpr auto CellSize = 100.0F;
-			static constexpr auto DefaultSize = 1024.0F;
-			static constexpr auto DefaultDivision = 16;
+			static constexpr auto CellSize{100.0F};
+			static constexpr auto DefaultSize{1024.0F};
+			static constexpr auto DefaultDivision{16};
 
 			/**
 			 * @brief Constructs a water level resource.
@@ -66,39 +71,43 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit WaterLevelResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t classUID () const noexcept override;
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
-			bool isOpaque (size_t layerIndex = 0UL) const noexcept override;
+			bool isOpaque (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
-			const Material::Interface * material (size_t layerIndex = 0UL) const noexcept override;
+			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			[[nodiscard]]
+			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
+
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
 			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() */
+			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
 			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::prepareShaders() */
-			[[nodiscard]]
-			bool prepareShaders (const Geometry::Interface & geometry, const Material::Interface & material, RenderPassType renderPassType, bool enableInstancing, Vulkan::GraphicsShaderContainer & shaders) const noexcept override;
-
-			/** @copydoc Libraries::Resources::ResourceTrait::classLabel() */
+			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
@@ -109,7 +118,7 @@ namespace Emeraude::Graphics::Renderable
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
-			 * @brief load
+			 * @brief Loads a water level from geometry and material resources.
 			 * @param geometryResource A reference to a geometry resource smart pointer.
 			 * @param materialResource A reference to a material resource smart pointer.
 			 * @return bool

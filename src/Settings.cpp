@@ -1,123 +1,129 @@
 /*
- * Emeraude/Settings.cpp
- * This file is part of Emeraude
+ * src/Settings.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Settings.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <ctime>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <stack>
 
-/* Local inclusions */
-#include "Arguments.hpp"
-#include "Tracer.hpp"
+/* Third-party inclusions. */
+#ifndef JSON_USE_EXCEPTION
+#define JSON_USE_EXCEPTION 0
+#endif
+#include "json/json.h"
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/json.hpp"
+/* Local inclusions. */
+#include "Libraries/IO.hpp"
+#include "Libraries/String.hpp"
+#include "Arguments.hpp"
+#include "FileSystem.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude
 {
 	using namespace Libraries;
 
-	const size_t Settings::ClassUID{Observable::getClassUID()};
-	std::array< Settings *, 2 > Settings::s_instances{nullptr, nullptr}; // NOLINT NOTE: Singleton behavior
+	const size_t Settings::ClassUID{getClassUID(ClassId)};
 
-	// NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay, cppcoreguidelines-pro-bounds-constant-array-index)
-	Settings::Settings (const Arguments & arguments, SettingsType type, const char * serviceInstanceName) noexcept
-		: ServiceInterface(serviceInstanceName), m_arguments(arguments), m_type(type)
+	Settings * Settings::s_instance{nullptr};
+
+	Settings::Settings (const Arguments & arguments, const FileSystem & fileSystem, bool readOnly) noexcept
+		: ServiceInterface(ClassId), m_arguments(arguments), m_fileSystem(fileSystem)
 	{
-		const auto key = static_cast< size_t >(m_type);
-
-		if ( s_instances[key] != nullptr )
+		if ( s_instance != nullptr )
 		{
 			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
 			std::terminate();
 		}
 
-		s_instances[key] = this;
+		s_instance = this;
 
+		m_flags[ReadOnly] = readOnly;
 	}
 
 	Settings::~Settings ()
 	{
-		for ( auto & pointer : s_instances )
-		{
-			if ( pointer == this )
+		s_instance = nullptr;
+	}
+
+	bool
+	Settings::readLevel (const Json::Value & data, SettingStore & store) noexcept
+	{
+		const auto toAny = [] (const Json::Value & item) -> std::any {
+			if ( item.isBool() )
 			{
-				pointer = nullptr;
-
-				break;
+				return item.asBool();
 			}
-		}
 
-		const auto key = static_cast< size_t >(m_type);
+			if ( item.isInt() )
+			{
+				return item.asInt();
+			}
 
-		s_instances[key] = nullptr;
-	}
+			if ( item.isUInt() )
+			{
+				return item.asUInt();
+			}
 
-	Settings *
-	Settings::instance (SettingsType type) noexcept
-	{
-		const auto key = static_cast< size_t >(type);
+			if ( item.isInt64() )
+			{
+				return item.asInt64();
+			}
 
-		return s_instances[key];
-	}
-	// NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay, cppcoreguidelines-pro-bounds-constant-array-index)
+			if ( item.isUInt64() )
+			{
+				return item.asUInt64();
+			}
 
-	bool
-	Settings::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
+			if ( item.isDouble() )
+			{
+				return item.asDouble();
+			}
 
-			return false;
-		}
+			if ( item.isString() )
+			{
+				return item.asString();
+			}
 
-		return classUID == ClassUID;
-	}
+			return {};
+		};
 
-	bool
-	Settings::usable () const noexcept
-	{
-		return !m_filepath.empty();
-	}
-
-	bool
-	Settings::readLevel (const Json::Value & data, SettingStore & store) noexcept // NOLINT(misc-no-recursion)
-	{
 		for ( const auto & name : data.getMemberNames() )
 		{
 			const auto & items = data[name];
 
 			if ( items.isObject() )
 			{
-				auto & subStore = store.getSubStore(name);
+				auto & subStore = store.getOrCreateSubStore(name);
 
 				if ( !this->readLevel(items, subStore) )
 				{
@@ -128,12 +134,12 @@ namespace Emeraude
 			{
 				for ( const auto & item : items )
 				{
-					store.setInArray(name, item.asString());
+					store.setVariableInArray(name, toAny(item));
 				}
 			}
 			else
 			{
-				store.set(name, items.asString());
+				store.setVariable(name, toAny(items));
 			}
 		}
 
@@ -141,16 +147,14 @@ namespace Emeraude
 	}
 
 	bool
-	Settings::readFile (const Path::File & filepath) noexcept
+	Settings::readFile (const std::filesystem::path & filepath) noexcept
 	{
 		const Json::CharReaderBuilder builder{};
 
-		std::ifstream json{to_string(filepath), std::ifstream::binary};
+		std::ifstream json{filepath, std::ifstream::binary};
 
 		if ( !json.is_open() )
 		{
-			TraceError{ClassId} << "Unable to read the file " << filepath << "!";
-
 			return false;
 		}
 
@@ -158,7 +162,7 @@ namespace Emeraude
 
 		std::string errors{};
 
-		if ( !Json::parseFromStream(builder, json, &root, &errors) )
+		if ( !parseFromStream(builder, json, &root, &errors) )
 		{
 			TraceError{ClassId} <<
 				"Unable to parse JSON file ! "
@@ -171,33 +175,79 @@ namespace Emeraude
 	}
 
 	bool
-	Settings::writeLevel (const SettingStore & store, Json::Value & data) const noexcept // NOLINT(misc-no-recursion)
+	Settings::writeLevel (const SettingStore & store, Json::Value & data) const noexcept
 	{
-		/* Writes sub store to this level. */
-		for ( const auto & subStore : store.subStores() )
+		if ( store.empty() )
 		{
-			auto & json = data[subStore.first];
+			data = Json::objectValue;
 
-			if ( !this->writeLevel(subStore.second, json) )
+			return true;
+		}
+
+		/* Write sub-store at this level. */
+		for ( const auto & [name, subStore] : store.subStores() )
+		{
+			auto & json = data[name];
+
+			if ( !this->writeLevel(subStore, json) )
 			{
 				return false;
 			}
 		}
 
-		/* Write variables to this level. */
-		for ( const auto & variable : store.variables() )
+		const auto toJson = [] (const std::any & item) -> Json::Value {
+			if ( item.type() == typeid(bool) )
+			{
+				return std::any_cast< bool >(item);
+			}
+
+			if ( item.type() == typeid(int32_t) )
+			{
+				return std::any_cast< int32_t >(item);
+			}
+
+			if ( item.type() == typeid(uint32_t) )
+			{
+				return std::any_cast< uint32_t >(item);
+			}
+
+			if ( item.type() == typeid(int64_t) )
+			{
+				return std::any_cast< int64_t >(item);
+			}
+
+			if ( item.type() == typeid(uint64_t) )
+			{
+				return std::any_cast< uint64_t >(item);
+			}
+
+			if ( item.type() == typeid(double) )
+			{
+				return std::any_cast< double >(item);
+			}
+
+			if ( item.type() == typeid(std::string) )
+			{
+				return std::any_cast< std::string >(item);
+			}
+
+			return Json::stringValue;
+		};
+
+		/* Write variables at this level. */
+		for ( const auto & [name, value] : store.variables() )
 		{
-			data[variable.first] = variable.second;
+			data[name] = toJson(value);
 		}
 
-		/* Write array to this level. */
-		for ( const auto & array : store.arrays() )
+		/* Write array at this level. */
+		for ( const auto & [name, values] : store.arrays() )
 		{
-			data[array.first] = Json::arrayValue;
+			data[name] = Json::arrayValue;
 
-			for ( const auto & variable : array.second )
+			for ( const auto & value : values )
 			{
-				data[array.first].append(variable);
+				data[name].append(toJson(value));
 			}
 		}
 
@@ -205,36 +255,43 @@ namespace Emeraude
 	}
 
 	bool
-	Settings::writeFile (const Path::File & filepath) const noexcept
+	Settings::writeFile (const std::filesystem::path & filepath) const noexcept
 	{
 		Json::Value root{};
 
-		/* 1. JSON File header */
+		/* 1. JSON File header. */
+		{
+			std::stringstream text;
+			text << ENGINE_VERSION_MAJOR << '.' << ENGINE_VERSION_MINOR << '.' << ENGINE_VERSION_PATCH;
+
+			root[VersionKey] = text.str();
+		}
+
 		{
 			const auto timestamp = time(nullptr);
-			const auto * now = localtime(&timestamp); // NOLINT(concurrency-mt-unsafe) NOTE: Called once !
+			const auto * now = localtime(&timestamp);
 
-			root[VersionKey] = (std::stringstream{} << ENGINE_VERSION_MAJOR << '.' << ENGINE_VERSION_MINOR << '.' << ENGINE_VERSION_PATCH).str();
-			root[DateKey] = (std::stringstream{} << (now->tm_year + 1900) << '-' << (now->tm_mon + 1) << '-' << now->tm_mday).str(); // NOLINT(*-magic-numbers)
+			std::stringstream text;
+			text << now->tm_year + 1900 << '-' << now->tm_mon + 1 << '-' << now->tm_mday;
+
+			root[DateKey] = text.str();
 		}
 
-		/* 2. JSON File body */
+		/* 2. JSON File body. */
+		if ( !this->writeLevel(m_store, root) )
 		{
-			if ( !this->writeLevel(m_store, root) )
-			{
-				Tracer::error(ClassId, "Unable to generate a store JSON data.");
+			Tracer::error(ClassId, "Unable to generate a store JSON data.");
 
-				return false;
-			}
+			return false;
 		}
 
-		/* 3. File writing */
+		/* 3. File writing. */
 		{
 			Json::StreamWriterBuilder writer{};
 			writer["indentation"] = "\t";
 			writer["dropNullPlaceholders"] = true;
 
-			const auto jsonString = Json::writeString(writer, root);
+			const auto jsonString = writeString(writer, root);
 
 			if ( jsonString.empty() )
 			{
@@ -243,200 +300,190 @@ namespace Emeraude
 				return false;
 			}
 
-			return Utility::filePutContents(filepath, jsonString);
+			return IO::filePutContents(filepath, jsonString);
 		}
-	}
-
-	SettingStore *
-	Settings::getStorePointer (const std::string & key, std::string & variableName) noexcept
-	{
-		/* We execute in the root store. */
-		auto * currentStorePtr = &m_store;
-
-		if ( key.find('/') != std::string::npos )
-		{
-			auto list = String::explode(key, '/', false);
-
-			/* Send the variable name outside the function. */
-			variableName = list.back();
-
-			/* The last part is the variable. */
-			list.pop_back();
-
-			for ( const auto & term : list )
-			{
-				currentStorePtr = currentStorePtr->getSubStorePointer(term, true);
-			}
-		}
-		else
-		{
-			variableName = key;
-		}
-
-		return currentStorePtr;
 	}
 
 	const SettingStore *
-	Settings::getStorePointer (const std::string & key, std::string & variableName) const noexcept
+	Settings::parseKey (const std::string & key, std::string & variableName) const noexcept
 	{
-		/* We execute in the root store. */
-		const auto * currentStorePtr = &m_store;
-
 		if ( key.find('/') != std::string::npos )
 		{
-			auto list = String::explode(key, '/', false);
+			const auto sections = String::explode(key, '/', false);
+			const auto * currentStore = &m_store;
 
-			/* Send the variable name outside the function. */
-			variableName = list.back();
-
-			/* The last part is the variable. */
-			list.pop_back();
-
-			for ( const auto & term : list )
+			for ( const auto & section : sections )
 			{
-				currentStorePtr = currentStorePtr->getSubStorePointer(term);
+				/* If a sub-store exists with this name, we continue a depth below. */
+				if ( currentStore->subStoreExists(section) )
+				{
+					currentStore = currentStore->getSubStorePointer(section);
+				}
+				else if ( currentStore->variableExists(section) || currentStore->arrayExists(section) )
+				{
+					variableName = section;
+
+					return currentStore;
+				}
+				else
+				{
+					return nullptr;
+				}
 			}
 		}
 
-		return currentStorePtr;
+		if ( m_store.variableExists(key) && m_store.arrayExists(key) && m_store.subStoreExists(key) )
+		{
+			return nullptr;
+		}
+
+		variableName = key;
+
+		return &m_store;
 	}
 
-	void
-	Settings::setFilepath (const Path::File & filepath) noexcept
+	SettingStore *
+	Settings::parseKey (const std::string & key, std::string & variableName) noexcept
 	{
-		m_filepath = filepath;
-	}
+		if ( key.find('/') == std::string::npos )
+		{
+			return &m_store;
+		}
 
-	void
-	Settings::doNotCreateConfigFile () noexcept
-	{
-		TraceWarning{ClassId} << "Automatic writing '" << m_filepath << "' settings file is disabled.";
+		auto sections = String::explode(key, '/', false);
+		auto * currentStore = &m_store;
 
-		m_flags[SaveAtExit] = false;
+		/* Remove the last section which is the variable name. */
+		variableName = sections.back();
+		sections.pop_back();
+
+		for ( const auto & section : sections )
+		{
+			/* If a sub-store exists with this name, we continue a depth below. */
+			if ( currentStore->subStoreExists(section) )
+			{
+				currentStore = currentStore->getSubStorePointer(section);
+			}
+			else
+			{
+				currentStore = &currentStore->getOrCreateSubStore(section);
+			}
+		}
+
+		return currentStore;
 	}
 
 	bool
 	Settings::variableExists (const std::string & key) const noexcept
 	{
-		std::string variableName{};
+		std::string name;
 
-		const auto * storePtr = this->getStorePointer(key, variableName);
+		const auto * store = this->parseKey(key, name);
 
-		if ( storePtr == nullptr )
+		if ( store == nullptr )
 		{
 			return false;
 		}
 
-		return storePtr->variableExists(variableName);
+		return store->variableExists(name);
 	}
 
 	bool
 	Settings::arrayExists (const std::string & key) const noexcept
 	{
-		std::string variableName{};
+		std::string name;
 
-		const auto * storePtr = this->getStorePointer(key, variableName);
+		const auto * store = this->parseKey(key, name);
 
-		if ( storePtr == nullptr )
+		if ( store == nullptr )
 		{
 			return false;
 		}
 
-		return storePtr->arrayExists(variableName);
+		return store->arrayExists(name);
 	}
 
 	bool
 	Settings::storeExists (const std::string & key) const noexcept
 	{
-		std::string storeName{};
+		std::string name;
 
-		const auto * storePtr = this->getStorePointer(key, storeName);
+		const auto * store = this->parseKey(key, name);
 
-		if ( storePtr == nullptr )
+		if ( store == nullptr )
 		{
 			return false;
 		}
 
-		return storePtr->subStoreExists(storeName);
+		return store->subStoreExists(name);
 	}
 
-	std::string
+	std::any
 	Settings::get (const std::string & key) const noexcept
 	{
-		std::string variableName{};
+		std::string name;
 
-		const auto * storePtr = this->getStorePointer(key, variableName);
+		const auto * store = this->parseKey(key, name);
 
-		/* The store and/or sub-store doesn't exist. */
-		if ( storePtr == nullptr )
+		if ( store == nullptr )
+		{
+			TraceWarning{ClassId} << "The key '" << key << "' doesn't exists in the settings file and won't be saved.";
+
+			return {};
+		}
+
+		const auto * value = store->getValuePointer(name);
+
+		if ( value == nullptr )
 		{
 			return {};
 		}
 
-		return storePtr->get(variableName);
-	}
-
-	std::string
-	Settings::get (const std::string & key, const std::string & defaultValue) noexcept
-	{
-		std::string variableName{};
-
-		return this->getStorePointer(key, variableName)->getOrSet(variableName, defaultValue);
-	}
-
-	std::vector< std::string >
-	Settings::asStringList (const std::string & key) const noexcept
-	{
-		std::vector< std::string > list{};
-
-		std::string variableName{};
-
-		const auto * storePtr = this->getStorePointer(key, variableName);
-
-		if ( storePtr != nullptr && !variableName.empty() )
-		{
-			const auto * variablePtr = storePtr->getArray(variableName);
-
-			if ( variablePtr != nullptr )
-			{
-				std::copy(variablePtr->cbegin(), variablePtr->cend(), std::back_inserter(list));
-			}
-		}
-
-		return list;
+		return *value;
 	}
 
 	bool
 	Settings::isArrayEmpty (const std::string & key) const noexcept
 	{
-		std::string variableName{};
+		std::string name{};
 
-		const auto * storePtr = this->getStorePointer(key, variableName);
+		const auto * store = this->parseKey(key, name);
 
-		if ( storePtr == nullptr )
+		if ( store == nullptr || !store->arrayExists(name) )
 		{
 			return true;
 		}
 
-		const auto * variablePtr = storePtr->getArray(variableName);
-
-		if ( variablePtr == nullptr )
-		{
-			return true;
-		}
-
-		return variablePtr->empty();
+		return store->getArrayPointer(name)->empty();
 	}
 
 	bool
 	Settings::onInitialize () noexcept
 	{
-		/* Checks the file presence, if not, it will be created and uses the default engine values. */
-		if ( !m_filepath.exists() )
+		const auto argument = m_arguments.get("--settings-filepath");
+
+		if ( argument.isPresent() )
 		{
-			TraceWarning{ClassId} <<
-				"Settings file '" << m_filepath << "' doesn't exist. "
-				"Writing a new one ...";
+			m_filepath = argument.value();
+		}
+		else
+		{
+			m_filepath = m_fileSystem.configDirectory(Settings::Filename);
+		}
+
+		if ( m_filepath.empty() )
+		{
+			TraceWarning{ClassId} << "The settings file path variable is not set !";
+
+			return false;
+		}
+
+		TraceInfo{ClassId} << "Loading settings from file '" << m_filepath.string() << "' ...";
+
+		/* Checks the file presence, if not, it will be created and uses the default engine values. */
+		if ( !IO::fileExists(m_filepath) )
+		{
+			TraceWarning{ClassId} << "Settings file '" << m_filepath.string() << "' doesn't exist. Writing a new one ...";
 
 			m_flags[SaveAtExit] = true;
 
@@ -446,16 +493,24 @@ namespace Emeraude
 		/* Reading the file ... */
 		if ( !this->readFile(m_filepath) )
 		{
-			TraceError{ClassId} << "Unable to read settings file from '" << m_filepath << "' path !";
+			TraceError{ClassId} << "Unable to read settings file from '" << m_filepath.string() << "' path !";
 
 			m_flags[SaveAtExit] = false;
 
 			return false;
 		}
 
-#ifdef DEBUG
-		std::cout << *this << '\n';
-#endif
+		if ( m_arguments.get("--disable-settings-autosave").isPresent() )
+		{
+			m_flags[SaveAtExit] = false;
+		}
+
+		if ( m_arguments.get("--verbose").isPresent() )
+		{
+			std::cout << *this << '\n';
+		}
+
+		m_flags[ServiceInitialized] = true;
 
 		return true;
 	}
@@ -463,6 +518,8 @@ namespace Emeraude
 	bool
 	Settings::onTerminate () noexcept
 	{
+		m_flags[ServiceInitialized] = false;
+
 		if ( m_flags[SaveAtExit] )
 		{
 			if ( m_filepath.empty() )
@@ -478,6 +535,8 @@ namespace Emeraude
 
 				return false;
 			}
+
+			TraceSuccess{ClassId} << "Settings file saved to '" << m_filepath << "' !";
 		}
 
 		return true;
@@ -496,80 +555,113 @@ namespace Emeraude
 		return this->writeFile(m_filepath);
 	}
 
-	void
-	Settings::clear () noexcept
-	{
-		m_store.clear();
-	}
-
 	std::ostream &
 	operator<< (std::ostream & out, const Settings & obj)
 	{
-		using namespace std;
+		auto dashes = [&out] (size_t depth) {
+			out << ' ';
 
-		std::stack< std::pair< std::string, const SettingStore * > > stores{};
+			for ( size_t i = 0; i < depth; i++ )
+			{
+				out << "----";
+			}
+		};
 
-		auto depth = 0UL;
+		auto printValue = [] (const std::any & value) -> std::string {
+			if ( value.type() == typeid(std::string) )
+			{
+				return std::any_cast< std::string >(value);
+			}
+
+			if ( value.type() == typeid(bool) )
+			{
+				return std::any_cast< bool >(value) ? "On" : "Off";
+			}
+
+			if ( value.type() == typeid(int32_t) )
+			{
+				return std::to_string(std::any_cast< int32_t >(value));
+			}
+
+			if ( value.type() == typeid(uint32_t) )
+			{
+				return std::to_string(std::any_cast< uint32_t >(value));
+			}
+
+			if ( value.type() == typeid(float) )
+			{
+				return std::to_string(std::any_cast< float >(value));
+			}
+
+			if ( value.type() == typeid(double) )
+			{
+				return std::to_string(std::any_cast< double >(value));
+			}
+
+			return "UNHANDLED";
+		};
+
+		struct node_t
+		{
+			size_t depth;
+			std::string name;
+			const SettingStore * store;
+		};
+
+		std::stack< node_t > stores;
 
 		/* Sets the top Store */
-		stores.emplace("Root", &obj.m_store);
+        stores.emplace(node_t{
+            .depth = 0,
+            .name = "Root",
+            .store = &obj.m_store
+        });
 
-		out << "\n" "[Core] Settings (" << obj.m_filepath << ") :" "\n";
+		out << "Settings (" << obj.m_filepath << ") :" "\n";
 
 		/* Crawling inside all stores. */
 		while ( !stores.empty() )
 		{
-			const auto * store = stores.top().second;
+			/* Get a copy and remove it from the stack.*/
+			const auto node = stores.top();
+			stores.pop();
 
-			out << ' ';
+			dashes(node.depth);
 
-			if ( depth > 0 )
-			{
-				for ( size_t i = 0; i < depth; i++ )
-				{
-					out << "----";
-				}
-			}
-
-			out << '[' << stores.top().first << "]" "\n";
+			out << " [" << node.name << "]" "\n";
 
 			/* Print every variable */
-			for ( const auto & pair : store->variables() )
+			for ( const auto & [name, value] : node.store->variables() )
 			{
-				out << ' ';
+				dashes(node.depth + 1);
 
-				for ( size_t i = 0; i <= depth; i++ )
-				{
-					out << "----";
-				}
-
-				out << ' ' << pair.first << " = " << pair.second << '\n';
+				out << "  " << name << " = " << printValue(value) << '\n';
 			}
 
 			/* Print every arrays */
-			for ( const auto & pair : store->arrays() )
+			for ( const auto & [name, values] : node.store->arrays() )
 			{
-				out << ' ';
+				dashes(node.depth + 1);
 
-				for ( size_t i = 0; i <= depth; i++ )
+				std::string output;
+
+				for ( const auto & value : values )
 				{
-					out << "----";
+					output += printValue(value) + ", ";
 				}
 
-				out << ' ' << pair.first << " = [" << String::implode(pair.second, ", ") << "]" "\n";
+				out << "  " << name << " = [" << output << "]" "\n";
 			}
 
-			/* Removing it from the queue. */
-			stores.pop();
-
-			/* Then load every sub stores from
-			 * this store for the next loop cycle. */
-			for ( const auto & pair : store->subStores() )
+			/* Then load every sub stores from this store for the next loop cycle. */
+			for ( const auto & [name, subStore] : node.store->subStores() )
 			{
-				stores.emplace(pair.first, &(pair.second));
+                stores.emplace(node_t{
+                    .depth = node.depth + 1,
+                    .name = name,
+                    .store = &subStore
+                });
 			}
-
-			depth++;
 		}
 
 		return out;
@@ -578,6 +670,10 @@ namespace Emeraude
 	std::string
 	to_string (const Settings & obj) noexcept
 	{
-		return (std::stringstream{} << obj).str();
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

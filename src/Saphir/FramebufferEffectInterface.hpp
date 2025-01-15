@@ -1,58 +1,55 @@
 /*
- * Emeraude/Saphir/FramebufferEffectInterface.hpp
- * This file is part of Emeraude
+ * src/Saphir/FramebufferEffectInterface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <memory>
 #include <set>
 
-/* Local inclusions */
-/* VULKAN_DEV */
-//#include "Program.hpp"
-
-/* Forward declarations. */
-namespace Emeraude::Graphics
+/* Forward declarations */
+namespace Emeraude::Saphir
 {
-	class PostProcessor;
+	namespace Generator
+	{
+		class Abstract;
+	}
+
+	class VertexShader;
+	class FragmentShader;
 }
 
 namespace Emeraude::Saphir
 {
-	/* Forward declarations. */
-	class ShaderGenerator;
-
 	/**
 	 * @brief The framebuffer effect interface.
 	 */
 	class FramebufferEffectInterface
 	{
-		friend class Emeraude::Graphics::PostProcessor;
-
 		public:
 
 			/**
@@ -86,15 +83,6 @@ namespace Emeraude::Saphir
 			 */
 			virtual ~FramebufferEffectInterface () = default;
 
-			/**
-			 * @brief Activate will bind or send data to the program for this effect.
-			 * @warning Old OpenGL behavior
-			 * @param program A reference to the Program.
-			 * @param nextTextureUnit A reference to a texture unit counter.
-			 * @return bool
-			 */
-			//virtual void activate (const Program & program, unsigned int & nextTextureUnit) const noexcept;
-
 		protected:
 
 			/** 
@@ -108,7 +96,12 @@ namespace Emeraude::Saphir
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool overrideFragmentFetching () const noexcept;
+			virtual
+			bool
+			overrideFragmentFetching () const noexcept
+			{
+				return false;
+			}
 
 			/**
 			 * @brief Says this shader needs screen coordinates. Geometry texture coordinates attribute will be available.
@@ -116,7 +109,12 @@ namespace Emeraude::Saphir
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool requestScreenCoordinates () const noexcept;
+			virtual
+			bool
+			requestScreenCoordinates () const noexcept
+			{
+				return false;
+			}
 
 			/**
 			 * @brief Says this shader needs screen sizes. em_FrameSize will be available.
@@ -124,15 +122,21 @@ namespace Emeraude::Saphir
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool requestScreenSize () const noexcept;
+			virtual
+			bool
+			requestScreenSize () const noexcept
+			{
+				return false;
+			}
 
 			/**
-			 * @brief Generates shader effect code.
-			 * @param generator A reference to the ShaderGenerator.
-			 * @param samples Hint on the output interfaces samples usage.
+			 * @brief Generates the code responsible for the fragment shader.
+			 * @param generator A reference to the graphics shader generator.
+			 * @param fragmentShader A reference to the fragment shader.
 			 * @return bool
 			 */
-			virtual bool generate (ShaderGenerator & generator, int samples) const noexcept = 0;
+			[[nodiscard]]
+			virtual bool generateFragmentShaderCode (Generator::Abstract & generator, FragmentShader & fragmentShader) const noexcept = 0;
 	};
 
 	using FramebufferEffectsList = std::set< std::shared_ptr< FramebufferEffectInterface > >;

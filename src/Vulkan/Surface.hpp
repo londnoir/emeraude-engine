@@ -1,49 +1,55 @@
 /*
- * Emeraude/Vulkan/Surface.hpp
- * This file is part of Emeraude
+ * src/Vulkan/Surface.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries */
+/* STL inclusions. */
 #include <memory>
+#include <string>
 #include <vector>
 
-/* Third-party libraries */
-#include "Third-Party-Inclusion/vulkan.hpp"
+/* Local inclusions for inheritances. */
+#include "AbstractObject.hpp"
 
+/* Forward declarations. */
 namespace Emeraude::Vulkan
 {
 	class Instance;
 	class PhysicalDevice;
 	class Device;
+};
 
+namespace Emeraude::Vulkan
+{
 	/**
-	 * @brief The Surface class
+	 * @brief Defines the surface where the final image will be draw and presented to the screen.
+	 * @extends Emeraude::Vulkan::AbstractObject This is a Vulkan API object.
 	 */
-	class Surface final
+	class Surface final : public AbstractObject
 	{
 		public:
 
@@ -84,17 +90,17 @@ namespace Emeraude::Vulkan
 			/**
 			 * @brief Destructs the surface.
 			 */
-			~Surface ();
+			~Surface () override;
 
 			/**
-			 * @brief Updates surface informations with a physical device.
+			 * @brief Updates surface information with a physical device.
 			 * @param physicalDevice A reference to the physical device smart pointer.
 			 * @return bool
 			 */
 			bool update (const std::shared_ptr< PhysicalDevice > & physicalDevice) noexcept;
 
 			/**
-			 * @brief Updates surface informations with a physical device.
+			 * @brief Updates surface information with a physical device.
 			 * @param device A reference to the device smart pointer.
 			 * @return bool
 			 */
@@ -105,42 +111,66 @@ namespace Emeraude::Vulkan
 			 * @return VkSurfaceKHR
 			 */
 			[[nodiscard]]
-			VkSurfaceKHR handle () const noexcept;
+			VkSurfaceKHR
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the surface capabilities.
 			 * @return const VkSurfaceCapabilitiesKHR &
 			 */
 			[[nodiscard]]
-			const VkSurfaceCapabilitiesKHR & capabilities () const noexcept;
+			const VkSurfaceCapabilitiesKHR &
+			capabilities () const noexcept
+			{
+				return m_capabilities;
+			}
 
 			/**
 			 * @brief Returns the surface formats.
 			 * @return const std::vector< VkSurfaceFormatKHR > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkSurfaceFormatKHR > & formats () const noexcept;
+			const std::vector< VkSurfaceFormatKHR > &
+			formats () const noexcept
+			{
+				return m_formats;
+			}
 
 			/**
 			 * @brief Returns the surface present modes.
 			 * @return const std::vector< VkPresentModeKHR > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkPresentModeKHR > & presentModes () const noexcept;
+			const std::vector< VkPresentModeKHR > &
+			presentModes () const noexcept
+			{
+				return m_presentModes;
+			}
 
 			/**
 			 * @brief Returns the surface present rectangles.
 			 * @return const std::vector< VkRect2D > &
 			 */
 			[[nodiscard]]
-			const std::vector< VkRect2D > & presentRectangles () const noexcept;
+			const std::vector< VkRect2D > &
+			presentRectangles () const noexcept
+			{
+				return m_presentRectangles;
+			}
 
 			/**
 			 * @brief Returns whether the presentation is supported by this surface.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool presentationSupported () const noexcept;
+			bool
+			presentationSupported () const noexcept
+			{
+				return m_supported;
+			}
 
 			/**
 			 * @brief Returns a string of surface capabilities.
@@ -152,12 +182,12 @@ namespace Emeraude::Vulkan
 
 		private:
 
-			const Instance & m_instance; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+			const Instance & m_instance;
 			VkSurfaceKHR m_handle{VK_NULL_HANDLE};
 			VkSurfaceCapabilitiesKHR m_capabilities{};
-			std::vector< VkSurfaceFormatKHR > m_formats{};
-			std::vector< VkPresentModeKHR > m_presentModes{};
-			std::vector< VkRect2D > m_presentRectangles{};
+			std::vector< VkSurfaceFormatKHR > m_formats;
+			std::vector< VkPresentModeKHR > m_presentModes;
+			std::vector< VkRect2D > m_presentRectangles;
 			bool m_supported{false};
 	};
 }

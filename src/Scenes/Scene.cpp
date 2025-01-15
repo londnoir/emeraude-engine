@@ -1,42 +1,44 @@
 /*
- * Emeraude/Scenes/Scene.cpp
- * This file is part of Emeraude
+ * src/Scenes/Scene.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Scene.hpp"
 
-/* C/C++ standard libraries. */
-#include <thread>
+/* STL inclusions. */
+#include <cstdlib>
+#include <algorithm>
+#include <ranges>
 
 /* Local inclusions. */
+#include "Input/Manager.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Saphir/Generator/SceneRendering.hpp"
+#include "Vulkan/SwapChain.hpp" // FIXME: Should not be there
 #include "NodeCrawler.hpp"
-#include "OctreeSector.hpp"
-#include "OctreeSectorCrawler.hpp"
 #include "Tracer.hpp"
-#include "Vulkan/SwapChain.hpp"
 
 namespace Emeraude::Scenes
 {
@@ -47,13 +49,14 @@ namespace Emeraude::Scenes
 	using namespace Saphir;
 	using namespace Physics;
 
-	const size_t Scene::ClassUID{Observable::getClassUID()};
-	const std::string Scene::DefaultOctreeName{"DefaultOctree"};
+	const size_t Scene::ClassUID{getClassUID(ClassId)};
 
-	Scene::Scene (const std::string & name, float boundary, const std::shared_ptr< Renderable::AbstractBackground > & background, const std::shared_ptr< Renderable::AbstractSceneArea > & sceneArea, const std::shared_ptr< Renderable::AbstractSeaLevel > & seaLevel) noexcept
-		: NamedItem(name),
+	Scene::Scene (Renderer & graphicsRenderer, Audio::Manager & audioManager, const std::string & name, float boundary, const std::shared_ptr< Renderable::AbstractBackground > & background, const std::shared_ptr< Renderable::SceneAreaInterface > & sceneArea, const std::shared_ptr< Renderable::SeaLevelInterface > & seaLevel, const SceneOctreeOptions & octreeOptions) noexcept
+		: NameableTrait(name),
+		  m_graphicsRenderer(graphicsRenderer),
+		  m_audioManager(audioManager),
 		  m_masterControlConsole(name),
-		  m_rootNode(std::make_shared< Node >(this)),
+		  m_rootNode(std::make_shared< Node >()),
 		  m_background(background),
 		  m_sceneArea(sceneArea),
 		  m_seaLevel(seaLevel),
@@ -62,99 +65,58 @@ namespace Emeraude::Scenes
 		this->observe(&m_masterControlConsole);
 		this->observe(m_rootNode.get());
 
-		this->buildOctree(DefaultOctreeName);
-
-		TraceInfo{ClassId} << "The scene '" << this->name() << "' is constructed !";
+		this->buildOctrees(octreeOptions);
 	}
 
 	Scene::~Scene ()
 	{
-		this->clear();
-
-		m_lightSet.clear();
-		m_masterControlConsole.clear();
-
-		TraceInfo{ClassId} << "The scene '" << this->name() << "' is destructed !";
+		this->destroy();
 	}
 
 	void
-	Scene::registerSceneVisualComponents (Renderer & renderer) noexcept
+	Scene::registerSceneVisualComponents () noexcept
 	{
-		m_sceneVisualComponents.clear();
-
 		if ( m_background != nullptr )
 		{
-			auto result = m_sceneVisualComponents.emplace_back(std::make_shared< VisualComponent >("Background", *m_rootNode, m_background));
+			m_sceneVisualComponents[0] = std::make_shared< Component::Visual >("Background", *m_rootNode, m_background);
 
 			/* NOTE: Disables lighting model on the background.
-			 * FIXME: Check to disable at construct time */
-			auto * renderableInstance = result->getRenderableInstance();
-			renderableInstance->setReceivingLights(false);
-			renderableInstance->setReceiveShadows(false);
+			 * TODO: Check to disable at construct time. */
+			const auto renderableInstance = m_sceneVisualComponents[0]->getRenderableInstance();
 			renderableInstance->setUseInfinityView(true);
 			renderableInstance->disableDepthTest(true);
 			renderableInstance->disableDepthWrite(true);
 
-			this->checkRenderableInstance(renderer, renderableInstance);
+			this->checkRenderableInstance(renderableInstance);
 		}
 
 		if ( m_sceneArea != nullptr )
 		{
-			auto result = m_sceneVisualComponents.emplace_back(std::make_shared< VisualComponent >("SceneArea", *m_rootNode, m_sceneArea));
+			m_sceneVisualComponents[1] = std::make_shared< Component::Visual >("SceneArea", *m_rootNode, m_sceneArea);
 
-			auto * renderableInstance = result->getRenderableInstance();
+			const auto renderableInstance = m_sceneVisualComponents[1]->getRenderableInstance();
+			renderableInstance->enableLighting();
+			renderableInstance->disableLightDistanceCheck();
+			renderableInstance->enableDisplayTBNSpace(false);
 
-			this->checkRenderableInstance(renderer, renderableInstance);
+			this->checkRenderableInstance(renderableInstance);
 		}
 
 		if ( m_seaLevel != nullptr )
 		{
-			auto result = m_sceneVisualComponents.emplace_back(std::make_shared< VisualComponent >("SeaLevel", *m_rootNode, m_seaLevel));
+			m_sceneVisualComponents[2] = std::make_shared< Component::Visual >("SeaLevel", *m_rootNode, m_seaLevel);
 
-			auto * renderableInstance = result->getRenderableInstance();
+			const auto renderableInstance = m_sceneVisualComponents[2]->getRenderableInstance();
+			renderableInstance->enableLighting();
+			renderableInstance->disableLightDistanceCheck();
+			renderableInstance->enableDisplayTBNSpace(false);
 
-			this->checkRenderableInstance(renderer, renderableInstance);
+			this->checkRenderableInstance(renderableInstance);
 		}
 	}
 
 	bool
-	Scene::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	void
-	Scene::setBoundary (float boundary) noexcept
-	{
-		m_boundary = std::abs(boundary);
-
-		/*if ( m_sceneArea != nullptr )
-			m_sceneArea->setBoundary(m_boundary);*/
-
-		this->rebuildAllOctrees(true);
-	}
-
-	float
-	Scene::boundary () const noexcept
-	{
-		return m_boundary;
-	}
-
-	float
-	Scene::size () const noexcept
-	{
-		return m_boundary * 2;
-	}
-
-	bool
-	Scene::initializeBaseComponents () noexcept
+	Scene::initializeBaseComponents () const noexcept
 	{
 		auto hasCamera = false;
 		auto hasMicrophone = false;
@@ -166,13 +128,13 @@ namespace Emeraude::Scenes
 
 			while ( (currentNode = crawler.nextNode()) != nullptr )
 			{
-				for ( const auto & component : currentNode->components() )
+				for ( const auto & component : std::ranges::views::values(currentNode->components()) )
 				{
-					if ( std::dynamic_pointer_cast< Camera >(component.second) != nullptr )
+					if ( std::dynamic_pointer_cast< Component::Camera >(component) != nullptr )
 					{
 						hasCamera = true;
 					}
-					else if ( std::dynamic_pointer_cast< Microphone >(component.second) != nullptr )
+					else if ( std::dynamic_pointer_cast< Component::Microphone >(component) != nullptr )
 					{
 						hasMicrophone = true;
 					}
@@ -193,7 +155,7 @@ namespace Emeraude::Scenes
 
 			const std::string name{"DefaultCamera"};
 
-			if ( m_rootNode->createSubNode(name + "Node")->newCamera(name, true) == nullptr )
+			if ( m_rootNode->createChild(name + "Node", m_lifetimeMS)->newCamera(true, true, name) == nullptr )
 			{
 				Tracer::error(ClassId, "Scene initialization error : Unable to create a default camera !");
 
@@ -207,7 +169,7 @@ namespace Emeraude::Scenes
 
 			const std::string name{"DefaultMicrophone"};
 
-			if ( m_rootNode->createSubNode(name + "Node")->newMicrophone(name, true) == nullptr )
+			if ( m_rootNode->createChild(name + "Node", m_lifetimeMS)->newMicrophone(true, name) == nullptr )
 			{
 				Tracer::error(ClassId, "Scene initialization error : Unable to create a default microphone !");
 
@@ -215,43 +177,61 @@ namespace Emeraude::Scenes
 			}
 		}
 
+		/* Set audio properties for this scene. */
+		m_audioManager.setSoundEnvironmentProperties(m_soundEnvironmentProperties);
+
 		return true;
 	}
 
 	bool
-	Scene::initialize (Settings & coreSettings, Renderer & renderer) noexcept
+	Scene::initialize (Settings & settings) noexcept
 	{
-		this->registerSceneVisualComponents(renderer);
-
-		/* Create missing camera and/or microphone. */
-		if ( !this->initializeBaseComponents() )
+		if ( !m_flags[Initialized] )
 		{
-			return false;
-		}
+			this->registerSceneVisualComponents();
 
-		{
-			Tracer::info(ClassId, "Initializing the scene master control ...");
+			/* Create missing camera and/or microphone. */
+			if ( !this->initializeBaseComponents() )
+			{
+				return false;
+			}
 
-			const auto & swapChain = renderer.swapChain();
+			const auto & swapChain = m_graphicsRenderer.swapChain();
 
 			if ( swapChain != nullptr )
 			{
 				m_masterControlConsole.addVideoDevice(swapChain, true);
 			}
 
-			if ( !m_masterControlConsole.autoConnectPrimaryVideoDevices(coreSettings) )
+			if ( !m_masterControlConsole.autoConnectPrimaryVideoDevices(m_graphicsRenderer, settings) )
 			{
-				TraceError{ClassId} <<
-					"Unable to auto-connect primary video devices !" "\n" <<
-					m_masterControlConsole.getConnexionStates();
+				TraceError{ClassId} << "Unable to auto-connect primary video devices !";
 
 				return false;
 			}
 
-			TraceSuccess{ClassId} <<
-				"Initial device connexions :" "\n" <<
-				m_masterControlConsole.getConnexionStates();
+			if ( !m_masterControlConsole.autoConnectPrimaryAudioDevices(m_audioManager, settings) )
+			{
+				TraceError{ClassId} << "Unable to auto-connect primary audio devices !";
+
+				return false;
+			}
+
+			TraceInfo{ClassId} << m_masterControlConsole.getConnexionStates();
+
+			if ( !m_lightSet.initialize(m_graphicsRenderer, this->name()) )
+			{
+				TraceError{ClassId} << "Unable to initialize the light set !";
+
+				return false;
+			}
+
+			m_flags[Initialized] = true;
 		}
+
+		/* FIXME: When re-enabling, the swap-chain do not have the correct ambient light parameters ! */
+
+		Input::Manager::instance()->addKeyboardListener(&m_nodeController);
 
 		return true;
 	}
@@ -259,34 +239,19 @@ namespace Emeraude::Scenes
 	void
 	Scene::shutdown () noexcept
 	{
-		/* Disconnect all audio/video devices from master control. */
-		/* FIXME: Check for the main output. */
-	}
+		/* FIXME: Find a better way to stop the node controller ! */
+		m_nodeController.releaseNode();
+		m_nodeController.disconnectDevice();
 
-	void
-	Scene::setPhysicalEnvironmentProperties (const PhysicalEnvironmentProperties & properties) noexcept
-	{
-		m_physicalEnvironmentProperties = properties;
+		Input::Manager::instance()->removeKeyboardListener(&m_nodeController);
 	}
 
 	std::shared_ptr< StaticEntity >
-	Scene::createStaticEntity (const std::string & name, const Coordinates< float > & coordinates) noexcept
+	Scene::createStaticEntity (const std::string & name, const CartesianFrame< float > & coordinates) noexcept
 	{
-		auto staticEntity = std::make_shared< StaticEntity >(name, this, coordinates);
+		auto staticEntity = std::make_shared< StaticEntity >(name, m_lifetimeMS, coordinates);
 
 		m_staticEntities.emplace(name, staticEntity);
-
-		/* Adds the entity to the default octree if enabled */
-		{
-			auto defaultOctree = this->getDefaultOctree();
-
-			if ( defaultOctree != nullptr )
-			{
-				defaultOctree->addElement(staticEntity);
-			}
-		}
-
-		this->notify(StaticCreated, staticEntity);
 
 		this->observe(staticEntity.get());
 
@@ -297,298 +262,245 @@ namespace Emeraude::Scenes
 	Scene::removeStaticEntity (const std::string & name) noexcept
 	{
 		/* Fist, check the presence of the entity in the list. */
-		auto staticEntityIt = m_staticEntities.find(name);
+		const auto staticEntityIt = m_staticEntities.find(name);
 
 		if ( staticEntityIt == m_staticEntities.end() )
 		{
 			return false;
 		}
 
-		auto staticEntity = staticEntityIt->second;
+		const auto staticEntity = staticEntityIt->second;
 
 		this->forget(staticEntity.get());
 
-		this->notify(StaticDeleting, staticEntity);
-
-		/* Remove the entity from scene area, then from scene entity list. */
+		if ( m_renderingOctree != nullptr && staticEntity->isRenderable() )
 		{
-			auto defaultOctree = this->getDefaultOctree();
+			const std::lock_guard< std::mutex > lockGuard{m_renderingOctreeMutex};
 
-			if ( defaultOctree != nullptr )
-			{
-				defaultOctree->removeElement(staticEntity);
-			}
+			m_renderingOctree->erase(staticEntity);
 		}
 
-		m_staticEntities.erase(staticEntityIt);
+		if ( m_physicsOctree != nullptr )
+		{
+			const std::lock_guard< std::mutex > lockGuard{m_physicsOctreeMutex};
 
-		this->notify(StaticDeleted);
+			m_physicsOctree->erase(staticEntity);
+		}
+
+		staticEntity->clearComponents();
+
+		m_staticEntities.erase(staticEntityIt);
 
 		return true;
 	}
 
 	void
-	Scene::addEnvironmentEffect (const std::shared_ptr< EffectInterface > & effect) noexcept
+	Scene::destroy () noexcept
 	{
-		/* We don't want to notify an effect twice. */
-		if ( m_environmentEffects.find(effect) != m_environmentEffects.cend() )
+		m_environmentEffects.clear();
+
+		/* NOTE: Remove the scene global visuals */
 		{
-			return;
+			for ( auto & visual : m_sceneVisualComponents )
+			{
+				visual.reset();
+			}
+
+			m_seaLevel.reset();
+			m_sceneArea.reset();
+			m_background.reset();
 		}
 
-		m_environmentEffects.emplace(effect);
-	}
-
-	bool
-	Scene::isEnvironmentEffectPresent (const std::shared_ptr< EffectInterface > & effect) const noexcept
-	{
-		return m_environmentEffects.find(effect) != m_environmentEffects.cend();
-	}
-
-	void
-	Scene::clearEnvironmentEffects () noexcept
-	{
-		m_environmentEffects.clear();
-	}
-
-	void
-	Scene::clear () noexcept
-	{
-		/* NOTE: Clean the master control console. */
-		m_masterControlConsole.clear();
-
-		/* First, clear properly the octree system before removing the scene content. */
-		this->destroyAllOctrees();
-
-		m_sceneVisualComponents.clear();
-		m_environmentEffects.clear();
 		m_modifiers.clear();
-		m_staticEntities.clear();
+
+		/* FIXME: Find a better solution ! */
+		{
+			m_lightSet.removeAllLights();
+			m_lightSet.terminate(*Renderer::instance());
+		}
+
+		this->destroyOctrees();
+		m_nodeController.releaseNode();
 		this->resetNodeTree();
-		m_seaLevel.reset();
-		m_background.reset();
-		m_sceneArea.reset();
+		m_staticEntities.clear();
+		m_masterControlConsole.clear();
 	}
 
 	bool
-	Scene::defaultOctreeEnabled () const noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		return m_octrees.contains(DefaultOctreeName);
-	}
-
-	std::shared_ptr< OctreeSector >
-	Scene::getDefaultOctree () noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		auto octreeIt = m_octrees.find(DefaultOctreeName);
-
-		if ( octreeIt == m_octrees.end() )
-		{
-			return nullptr;
-		}
-
-		return octreeIt->second;
-	}
-
-	std::shared_ptr< OctreeSector >
-	Scene::getOctree (const std::string & octreeName) noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		auto octreeIt = m_octrees.find(octreeName);
-
-		if ( octreeIt == m_octrees.end() )
-		{
-			return nullptr;
-		}
-
-		return octreeIt->second;
-	}
-
-	std::shared_ptr< OctreeSector >
-	Scene::createOctreeRootSector () const noexcept
+	Scene::buildOctrees (const SceneOctreeOptions & octreeOptions) noexcept
 	{
 		if ( m_boundary <= 0.0F )
 		{
 			Tracer::error(ClassId, "The scene boundary is null ! Unable to create an octree root sector !");
 
-			return nullptr;
-		}
-
-		return std::make_shared< OctreeSector >(
-			Vector< 3, float >{m_boundary, m_boundary, m_boundary},
-			Vector< 3, float >{-m_boundary, -m_boundary, -m_boundary}
-		);
-	}
-
-	std::shared_ptr< OctreeSector >
-	Scene::buildOctree (const std::string & octreeName) noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		if ( m_octrees.contains(octreeName) )
-		{
-			TraceWarning{ClassId} << "An octree named '" << octreeName << "' already exists !";
-
-			return nullptr;
-		}
-
-		/* Allocate the root sector using the scene boundary. */
-		auto octree = this->createOctreeRootSector();
-
-		if ( octree == nullptr )
-		{
-			return nullptr;
-		}
-
-		m_octrees.emplace(octreeName, octree);
-
-		return octree;
-	}
-
-	bool
-	Scene::destroyOctree (const std::string & octreeName) noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		auto octreeIt = m_octrees.find(octreeName);
-
-		if ( octreeIt == m_octrees.end() )
-		{
-			TraceWarning{ClassId} << "There is no octree named '" << octreeName << "' to destroy !";
-
 			return false;
 		}
 
-		/* NOTE: Destroys the tree first. As each sector as parenting,
-		 * so removing simply the shared_ptr from the map won't fire the tree destruction. */
-		octreeIt->second->destroyTree();
+		if ( m_renderingOctree == nullptr )
+		{
+			m_renderingOctree = std::make_shared< OctreeSector< AbstractEntity, false > >(
+				Vector< 3, float >{m_boundary, m_boundary, m_boundary},
+				Vector< 3, float >{-m_boundary, -m_boundary, -m_boundary},
+				octreeOptions.renderingOctreeAutoExpandAt,
+				false
+			);
 
-		m_octrees.erase(octreeIt);
+			if ( octreeOptions.renderingOctreeReserve > 0 )
+			{
+				m_renderingOctree->reserve(octreeOptions.renderingOctreeReserve);
+			}
+		}
+		else
+		{
+			TraceWarning{ClassId} << "The rendering octree already exists !";
+		}
+
+		if ( m_physicsOctree == nullptr )
+		{
+			m_physicsOctree = std::make_shared< OctreeSector< AbstractEntity, true > >(
+				Vector< 3, float >{m_boundary, m_boundary, m_boundary},
+				Vector< 3, float >{-m_boundary, -m_boundary, -m_boundary},
+				octreeOptions.physicsOctreeAutoExpandAt,
+				false
+			);
+
+			if ( octreeOptions.physicsOctreeReserve > 0 )
+			{
+				m_physicsOctree->reserve(octreeOptions.physicsOctreeReserve);
+			}
+		}
+		else
+		{
+			TraceWarning{ClassId} << "The physics octree already exists !";
+		}
 
 		return true;
 	}
 
 	void
-	Scene::destroyAllOctrees () noexcept
+	Scene::destroyOctrees () noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		for ( const auto & octreeIt : m_octrees )
+		if ( m_renderingOctree != nullptr )
 		{
-			octreeIt.second->destroyTree();
+			const std::lock_guard< std::mutex > lock{m_renderingOctreeMutex};
+
+			m_renderingOctree.reset();
 		}
 
-		m_octrees.clear();
+		if ( m_physicsOctree != nullptr )
+		{
+			const std::lock_guard< std::mutex > lock{m_physicsOctreeMutex};
+
+			m_physicsOctree.reset();
+		}
 	}
 
 	bool
-	Scene::rebuildOctree (const std::string & octreeName, bool keepElements) noexcept
+	Scene::rebuildRenderingOctree (bool keepElements) noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
+		const std::lock_guard< std::mutex > lock{m_renderingOctreeMutex};
 
-		auto octreeIt = m_octrees.find(octreeName);
-
-		if ( octreeIt == m_octrees.end() )
+		if ( m_boundary <= 0.0F )
 		{
-			TraceWarning{ClassId} << "There is no sector layer named '" << octreeName << "' to rebuild !";
+			Tracer::error(ClassId, "The scene boundary is null ! Unable to rebuild an octree !");
 
 			return false;
 		}
 
-		return this->rebuildOctree(octreeIt, keepElements);
-	}
-
-	void
-	Scene::rebuildAllOctrees (bool keepElements) noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-		for ( auto octreeLayerIt = m_octrees.begin(); octreeLayerIt != m_octrees.end(); ++octreeLayerIt )
-		{
-			this->rebuildOctree(octreeLayerIt, keepElements);
-		}
-	}
-
-	bool
-	Scene::rebuildOctree (const std::map< std::string, std::shared_ptr< Scenes::OctreeSector > >::iterator & octreeIt, bool keepElements) noexcept
-	{
 		/* Allocate a new octree. */
-		auto octree = this->createOctreeRootSector();
+		const auto newOctree = std::make_shared< OctreeSector< AbstractEntity, false > >(
+			Vector< 3, float >{m_boundary, m_boundary, m_boundary},
+			Vector< 3, float >{-m_boundary, -m_boundary, -m_boundary},
+				m_renderingOctree->maxElementPerSector(),
+			m_renderingOctree->autoCollapseEnabled()
+		);
 
-		if ( octree == nullptr )
-		{
-			return false;
-		}
-
-		/* Transfer all elements from the previous octree (root sector) to the new one. */
+		/* Transfer all elements from the previous oldOctree (only the root sector) to the new one. */
 		if ( keepElements )
 		{
-			for ( const auto & element : octreeIt->second->elements() )
+			for ( const auto & element : m_renderingOctree->elements() )
 			{
-				octree->addElement(element);
+				newOctree->insert(element);
 			}
 		}
 
-		octreeIt->second.reset();
-		octreeIt->second = octree;
+		m_renderingOctree.reset();
+		m_renderingOctree = newOctree;
 
 		return true;
 	}
 
-	/* FIXME: Seems an old and useless function. */
 	bool
-	Scene::insertSceneElementsToOctree (const std::shared_ptr< Scenes::OctreeSector > & octree) noexcept
+	Scene::rebuildPhysicsOctree (bool keepElements) noexcept
 	{
-		/* FIXME: Check for getting the root sector if useful. */
-		if ( !octree->isRoot() )
+		const std::lock_guard< std::mutex > lock{m_physicsOctreeMutex};
+
+		if ( m_boundary <= 0.0F )
 		{
-			Tracer::error(ClassId, "This sector is not the root of the octree !");
+			Tracer::error(ClassId, "The scene boundary is null ! Unable to rebuild an octree !");
 
 			return false;
 		}
 
-		/* Insert all existing nodes. */
-		if ( m_rootNode != nullptr )
+		/* Allocate a new octree. */
+		const auto newOctree = std::make_shared< OctreeSector< AbstractEntity, true > >(
+			Vector< 3, float >{m_boundary, m_boundary, m_boundary},
+			Vector< 3, float >{-m_boundary, -m_boundary, -m_boundary},
+			m_physicsOctree->maxElementPerSector(),
+			m_physicsOctree->autoCollapseEnabled()
+		);
+
+		/* Transfer all elements from the previous oldOctree (only the root sector) to the new one. */
+		if ( keepElements )
 		{
-			/* NOTE: Prevent scene node deletion from logic update thread to crash the rendering. */
-			const std::lock_guard< std::mutex > lock{m_sceneNodesMutex};
-
-			NodeCrawler< Node > crawler(m_rootNode);
-
-			std::shared_ptr< Node > currentNode;
-
-			while ( (currentNode = crawler.nextNode()) != nullptr )
+			for ( const auto & element : m_physicsOctree->elements() )
 			{
-				/* Check whether the scene node contains something to render. */
-				if ( !currentNode->isRenderable() )
-				{
-					continue;
-				}
-
-				octree->addElement(currentNode);
+				newOctree->insert(element);
 			}
 		}
 
-		/* Insert all existing static entities. */
-		if ( !m_staticEntities.empty() )
-		{
-			const std::lock_guard< std::mutex > lock{m_staticEntitiesMutex};
-
-			for ( auto & entityPair : m_staticEntities )
-			{
-				octree->addElement(entityPair.second);
-			}
-		}
+		m_physicsOctree.reset();
+		m_physicsOctree = newOctree;
 
 		return true;
 	}
 
 	void
-	Scene::resetNodeTree () noexcept
+	Scene::checkEntityLocationInOctrees (const std::shared_ptr< AbstractEntity > & entity) const noexcept
+	{
+		/* Check the entity in the rendering octree. */
+		if ( m_renderingOctree != nullptr && entity->isRenderable() )
+		{
+			const std::lock_guard< std::mutex > lockGuard{m_renderingOctreeMutex};
+
+			if ( m_renderingOctree->contains(entity) )
+			{
+				m_renderingOctree->update(entity);
+			}
+			else
+			{
+				m_renderingOctree->insert(entity);
+			}
+		}
+
+		/* Check the entity in the physics octree. */
+		if ( m_physicsOctree != nullptr && entity->isDeflector() )
+		{
+			const std::lock_guard< std::mutex > lockGuard{m_physicsOctreeMutex};
+
+			if ( m_physicsOctree->contains(entity) )
+			{
+				m_physicsOctree->update(entity);
+			}
+			else
+			{
+				m_physicsOctree->insert(entity);
+			}
+		}
+	}
+
+	void
+	Scene::resetNodeTree () const noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_sceneNodesMutex};
 
@@ -596,75 +508,122 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	Scene::processLogics (size_t cycle) noexcept
+	Scene::processLogics (size_t engineCycle) noexcept
 	{
-		/* Update scene static entity logics. */
+		m_lifetimeUS += EngineUpdateCycleDurationUS< uint64_t >;
+		m_lifetimeMS += EngineUpdateCycleDurationMS< uint32_t >;
+
+		m_nodeController.update();
+
+		/* Update scene static entities logics. */
 		{
 			const std::lock_guard< std::mutex > lock{m_staticEntitiesMutex};
 
-			for ( auto & staticEntity : m_staticEntities )
+			for ( const auto & staticEntity : std::ranges::views::values(m_staticEntities) )
 			{
-				staticEntity.second->processLogics(*this, cycle);
+				if ( staticEntity->processLogics(*this, engineCycle) )
+				{
+					this->checkEntityLocationInOctrees(staticEntity);
+				}
 			}
 		}
 
-		/* Update scene node logics. */
+		/* Update scene nodes logics. */
 		{
 			const std::lock_guard< std::mutex > lock{m_sceneNodesMutex};
 
 			NodeCrawler< Node > crawler(m_rootNode);
 
-			std::shared_ptr< Node > currentNode;
-
-			auto defaultOctree = this->getDefaultOctree();
+			std::shared_ptr< Node > currentNode{};
 
 			while ( (currentNode = crawler.nextNode()) != nullptr )
 			{
-				if ( !currentNode->processLogics(*this, cycle) )
+				if ( currentNode->processLogics(*this, engineCycle) )
 				{
-					continue;
-				}
-
-				/* If the scene node moved, we check it with the scene area. */
-				if ( defaultOctree != nullptr )
-				{
-					defaultOctree->checkElementOverlap(currentNode);
+					this->checkEntityLocationInOctrees(currentNode);
 				}
 			}
 
 			/* Clean all dead nodes. */
-			m_rootNode->cleanTree();
+			m_rootNode->trimTree();
 		}
 
 		/* Launch the collision test step. */
-		if ( m_octrees.empty() )
+		if ( m_physicsOctree != nullptr )
 		{
-			// TODO: Performs collisions without tree acceleration ...
-		}
-		else
-		{
-			for ( const auto & octreeItem : m_octrees )
+			this->sectorCollisionTest(*m_physicsOctree);
+
+			/* Final collisions check against scene boundaries and ground,
+			 * then resolve all collisions detected on movable entities. */
+			for ( const auto & entity : m_physicsOctree->elements() )
 			{
-				std::array< size_t, 3 > stats{0UL, 0UL, 0UL};
+				auto * movableEntity = entity->getMovableTrait();
 
-				//unsigned long int time = 0;
-
+				if ( movableEntity == nullptr )
 				{
-					//Time::ScopeElapsedTime stat(time);
-
-					this->sectorCollisionTest(*octreeItem.second, stats);
+					continue;
 				}
 
-				//std::cout << "Resolutions (" << time << " µs): " << stats[2] << ", tests: " << stats[0] << ", sub-tests " << stats[1] << "." << std::endl;
+				/* Check collision against scene boundaries. */
+				if ( !entity->isSimulationPaused() )
+				{
+					if ( entity->sphereCollisionIsEnabled() )
+					{
+						this->clipWithBoundingSphere(entity);
+					}
+					else
+					{
+						this->clipWithBoundingBox(entity);
+					}
+				}
+
+				/* Resolve accumulated collisions from the entity collider. */
+				if ( auto & collider = movableEntity->collider(); collider.hasCollisions() )
+				{
+					/* NOTE: Collisions resolution can resume the physics simulation. */
+					collider.resolveCollisions(*entity);
+				}
+
+				/* This movable entity will never check for a simulation pause. */
+				if ( movableEntity->alwaysComputePhysics() )
+				{
+					continue;
+				}
+
+				/* Check for entity inertia to pause the simulation. */
+				if ( !entity->isSimulationPaused() && (!movableEntity->isMovable() || movableEntity->checkSimulationInertia()) )
+				{
+					entity->pauseSimulation(true);
+				}
 			}
+		}
+
+		m_cycle++;
+	}
+
+	void
+	Scene::applyModifiers (Node & node) const noexcept
+	{
+		for ( const auto & modifier : m_modifiers )
+		{
+			/* NOTE: Avoid working on the same Node. */
+			if ( &node == &modifier->parentEntity() )
+			{
+				continue;
+			}
+
+			/* FIXME: Use AABB when usable */
+			const auto modifierForce = modifier->getForceAppliedToEntity(node.getWorldCoordinates(), node.getWorldBoundingSphere());
+
+			node.addForce(modifierForce);
 		}
 	}
 
 	void
-	Scene::sectorCollisionTest (const OctreeSector & sector, std::array< size_t, 3 > & stats) noexcept // NOLINT(misc-no-recursion)
+	Scene::sectorCollisionTest (const OctreeSector< AbstractEntity, true > & sector) noexcept
 	{
-		/* If no scene node here, we stop this branch. */
-		if ( sector.elements().empty() )
+		/* No element present. */
+		if ( sector.empty() )
 		{
 			return;
 		}
@@ -675,7 +634,7 @@ namespace Emeraude::Scenes
 			//#pragma omp parallel for
 			for ( const auto & subSector : sector.subSectors() )
 			{
-				this->sectorCollisionTest(*subSector, stats);
+				this->sectorCollisionTest(*subSector);
 			}
 
 			return;
@@ -686,324 +645,366 @@ namespace Emeraude::Scenes
 
 		for ( auto elementIt = elements.begin(); elementIt != elements.end(); ++elementIt )
 		{
-			const auto & elementA = *elementIt;
+			/* NOTE: The entity A can be a node or a static entity. */
+			const auto & entityA = *elementIt;
+			const bool entityAHasMovableAbility = entityA->hasMovableAbility();
 
-			if ( !elementA->hasPhysicalObjectProperties() )
-			{
-				continue;
-			}
-
-			auto nodeA = std::dynamic_pointer_cast< Node >(elementA);
-
-			/* If not a node or the no clipping mode enabled or node is not moving. We skip the check. */
-			if ( nodeA == nullptr || nodeA->isNoClippingModeEnabled() || !nodeA->isMoving() )
-			{
-				continue;
-			}
-
-			++stats[0];
-
-			Collider collider{nodeA};
-
-			/* First the scene node collision against the scene area (boundaries and ground).
-			 * FIXME: Scene nodes in multiple sectors are calculated more than once against the scene area. */
-			this->clip(nodeA, collider);
-
-			/* Then test collisions against all other scene nodes present in the sector. */
+			/* Copy the iterator to iterate through next elements with it without modify the initial one. */
 			auto elementItCopy = elementIt;
 
 			for ( ++elementItCopy; elementItCopy != elements.end(); ++elementItCopy )
 			{
-				const auto & elementB = *elementItCopy;
+				/* NOTE: The entity B can also be a node or a static entity. */
+				const auto & entityB = *elementItCopy;
+				const bool entityBHasMovableAbility = entityB->hasMovableAbility();
 
-				if ( !elementB->hasPhysicalObjectProperties() )
+				/* Both entities are static or both entities are paused. */
+				if ( (!entityAHasMovableAbility && !entityBHasMovableAbility) || (entityA->isSimulationPaused() && entityB->isSimulationPaused()) )
 				{
 					continue;
 				}
 
-				auto nodeB = std::dynamic_pointer_cast< Node >(elementB);
-
-				/* FIXME: For now we are totally ignoring static stuffs ! */
-				if ( nodeB == nullptr || nodeB->isNoClippingModeEnabled() )
+				if ( entityAHasMovableAbility )
 				{
-					continue;
+					auto & colliderA = entityA->getMovableTrait()->collider();
+
+					/* Check for cross sector collisions duplicates. */
+					if ( colliderA.hasCollisionWith(*entityB) )
+					{
+						continue;
+					}
+
+					/* NOTE: Here the entity A is movable.
+					 * We will check the collision from entity A. */
+					if ( entityBHasMovableAbility )
+					{
+						colliderA.checkCollisionAgainstMovable(*entityA, *entityB);
+					}
+					else
+					{
+						if ( entityA->isSimulationPaused() )
+						{
+							continue;
+						}
+
+						colliderA.checkCollisionAgainstStatic(*entityA, *entityB);
+					}
 				}
+				else
+				{
+					if ( entityB->isSimulationPaused() )
+					{
+						continue;
+					}
 
-				++stats[1];
+					auto & colliderB = entityB->getMovableTrait()->collider();
 
-				collider.checkCollision(nodeB.get());
+					/* Check for cross sector collisions duplicates. */
+					if ( colliderB.hasCollisionWith(*entityA) )
+					{
+						continue;
+					}
+
+					/* NOTE: Here the entity A is static and B cannot be static.
+					 * We will check the collision from entity B. */
+					colliderB.checkCollisionAgainstStatic(*entityB, *entityA);
+				}
 			}
-
-			if ( !collider.collisionManifold().hitSomething() )
-			{
-				continue;
-			}
-
-			collider.resolveCollisions();
-
-			++stats[2];
 		}
 	}
 
 	void
-	Scene::clip (const std::shared_ptr< Node > & node, Collider & collider) const noexcept
+	Scene::clipWithBoundingSphere (const std::shared_ptr< AbstractEntity > & entity) const noexcept
 	{
-		auto & collisionManifold = collider.collisionManifold();
+		const auto worldCoordinates = entity->getWorldCoordinates();
+		const auto & worldPosition = worldCoordinates.position();
 
-		if ( node->sphereCollisionIsEnabled() )
+		auto & collider = entity->getMovableTrait()->collider();
+
+		if ( m_sceneArea != nullptr )
 		{
-			/* Gets the absolute position to test against the scene boundaries. */
-			const auto worldPosition = node->getWorldCoordinates().position();
+			const auto groundLevel = m_sceneArea->getLevelAt(worldPosition) - entity->getWorldBoundingSphere().radius();
 
-			if ( m_sceneArea != nullptr )
+			if ( worldPosition[Y] >= groundLevel )
 			{
-				const auto groundLevel = m_sceneArea->getLevelAt(worldPosition) - node->getWorldBoundingSphere().radius() - CollisionCorrectionDistance;
+				entity->setYPosition(groundLevel, TransformSpace::World);
 
-				if ( worldPosition[Y] > groundLevel )
+				collider.addCollision(CollisionType::SceneGround, nullptr, worldPosition, m_sceneArea->getNormalAt(worldPosition));
+			}
+		}
+
+		/* Compute the max boundary. */
+		const auto boundaryLimit = m_boundary - entity->getWorldBoundingSphere().radius();
+
+		/* X-Axis test. */
+		if ( std::abs(worldPosition[X]) > boundaryLimit )
+		{
+			if ( worldPosition[X] > boundaryLimit )
+			{
+				entity->setXPosition(boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeX());
+			}
+			else
+			{
+				entity->setXPosition(-boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveX());
+			}
+		}
+
+		/* Y-Axis test. */
+		if ( std::abs(worldPosition[Y]) > boundaryLimit )
+		{
+			if ( worldPosition[Y] > boundaryLimit )
+			{
+				entity->setYPosition(boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeY());
+			}
+			else
+			{
+				entity->setYPosition(-boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveY());
+			}
+		}
+
+		/* Z-Axis test. */
+		if ( std::abs(worldPosition[Z]) > boundaryLimit )
+		{
+			if ( worldPosition[Z] > boundaryLimit )
+			{
+				entity->setZPosition(boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeZ());
+			}
+			else
+			{
+				entity->setZPosition(-boundaryLimit, TransformSpace::World);
+
+				collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveZ());
+			}
+		}
+	}
+
+	void
+	Scene::clipWithBoundingBox (const std::shared_ptr< AbstractEntity > & entity) const noexcept
+	{
+		const auto worldCoordinates = entity->getWorldCoordinates();
+		const auto & worldPosition = worldCoordinates.position();
+		const auto AABB = entity->getWorldBoundingBox();
+
+		auto & collider = entity->getMovableTrait()->collider();
+
+		/* Running the subtest first. */
+		if ( m_sceneArea != nullptr )
+		{
+			/* Gets the four points of the bottom of the box. */
+			const std::array< Vector< 3, float >, 4 > points{
+				AABB.bottomSouthEast(),
+				AABB.bottomSouthWest(),
+				AABB.bottomNorthWest(),
+				AABB.bottomNorthEast()
+			};
+
+			/* These will keep the deepest collision of the four points. */
+			const Vector< 3, float > * collisionPosition = nullptr;
+			auto highestDistance = 0.0F;
+
+			for ( const auto & position : points )
+			{
+				const auto groundLevel = m_sceneArea->getLevelAt(position);
+				const auto distance = groundLevel - position[Y];
+
+				if ( distance <= highestDistance )
 				{
-					node->moveOnYAxisTo(groundLevel, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaGround, this, m_sceneArea->getNormalAt(worldPosition), 0.0F);
+					collisionPosition = &position;
+					highestDistance = distance;
 				}
 			}
 
-			/* Compute the max boundary. */
-			const auto boundaryLimit = m_boundary - node->getWorldBoundingSphere().radius() - CollisionCorrectionDistance;
-
-			/* X-Axis test. */
-			if ( std::abs(worldPosition[X]) > boundaryLimit )
+			if ( collisionPosition != nullptr )
 			{
-				/* Reset position in scene boundaries. */
-				if ( worldPosition[X] > boundaryLimit )
-				{
-					node->moveOnXAxisTo(boundaryLimit, TransformSpace::World);
+				entity->moveY(highestDistance, TransformSpace::World);
 
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeX(), 0.0F);
-				}
-				else
-				{
-					node->moveOnXAxisTo(-boundaryLimit, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveX(), 0.0F);
-				}
+				collider.addCollision(CollisionType::SceneGround, nullptr, *collisionPosition, m_sceneArea->getNormalAt(*collisionPosition));
 			}
+		}
 
-			/* Y-Axis test. */
-			if ( std::abs(worldPosition[Y]) > boundaryLimit )
+		/* X-Axis test */
+		if ( AABB.maximum(X) > m_boundary )
+		{
+			const auto delta = AABB.maximum(X) - m_boundary;
+
+			entity->moveX(-delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeX());
+		}
+		else if ( AABB.minimum(X) < -m_boundary )
+		{
+			const auto delta = std::abs(AABB.minimum(X)) - m_boundary;
+
+			entity->moveX(delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveX());
+		}
+
+		/* Y-Axis test */
+		if ( AABB.maximum(Y) > m_boundary )
+		{
+			const auto delta = AABB.maximum(Y) - m_boundary;
+
+			entity->moveY(-delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeY());
+		}
+		else if ( AABB.minimum(Y) <= -m_boundary )
+		{
+			const auto delta = std::abs(AABB.minimum(Y)) - m_boundary;
+
+			entity->moveY(delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveY());
+		}
+
+		/* Z-Axis test */
+		if ( AABB.maximum(Z) > m_boundary )
+		{
+			const auto delta = AABB.maximum(Z) - m_boundary;
+
+			entity->moveZ(-delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::negativeZ());
+		}
+		else if ( AABB.minimum(Z) < -m_boundary )
+		{
+			const auto delta = std::abs(AABB.minimum(Z)) - m_boundary;
+
+			entity->moveZ(delta, TransformSpace::World);
+
+			collider.addCollision(CollisionType::SceneBoundary, nullptr, worldPosition, Vector< 3, float >::positiveZ());
+		}
+	}
+
+	void
+	Scene::insertInRenderLists (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance, float distance, bool shadowRendering) noexcept
+	{
+		/* Check whether the renderable instance is ready to render. */
+		if ( !renderableInstance->isReadyToRender(renderTarget) )
+		{
+			return;
+		}
+
+		/* This is a raw pointer to the renderable interface. */
+		const auto * renderable = renderableInstance->renderable();
+
+#ifdef DEBUG
+		if ( renderable == nullptr )
+		{
+			Tracer::fatal(ClassId, "The renderable interface pointer is a null !");
+
+			return;
+		}
+
+		/* NOTE: Check whether the renderable is ready to draw.
+		 * Only done in debug mode, because a renderable instance ready to
+		 * render implies the renderable is ready to draw. */
+		if ( !renderable->isReadyForInstantiation() )
+		{
+			Tracer::fatal(ClassId, "The renderable interface is not ready !");
+
+			return;
+		}
+#endif
+
+		const auto layerCount = renderable->layerCount();
+
+		if ( shadowRendering )
+		{
+			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
-				if ( worldPosition[Y] > boundaryLimit )
-				{
-					node->moveOnYAxisTo(boundaryLimit, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeY(), 0.0F);
-				}
-				else
-				{
-					node->moveOnYAxisTo(-boundaryLimit, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveY(), 0.0F);
-				}
-			}
-
-			/* Z-Axis test. */
-			if ( std::abs(worldPosition[Z]) > boundaryLimit )
-			{
-				if ( worldPosition[Z] > boundaryLimit )
-				{
-					node->moveOnZAxisTo(boundaryLimit, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeZ(), 0.0F);
-				}
-				else
-				{
-					node->moveOnZAxisTo(-boundaryLimit, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveZ(), 0.0F);
-				}
+				RenderBatch::create(m_renderLists[Shadows], distance, renderableInstance, layerIndex);
 			}
 		}
 		else
 		{
-			const auto & AABB = node->getWorldBoundingBox();
-
-			/* Running the subtest first. */
-			if ( m_sceneArea != nullptr )
+			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
-				/* Gets the four points of the bottom of the box. */
-				std::array< Vector< 3, float >, 4 > points{
-					AABB.bottomSouthEast(),
-					AABB.bottomSouthWest(),
-					AABB.bottomNorthWest(),
-					AABB.bottomNorthEast()
-				};
+				const auto isOpaque = renderable->isOpaque(layerIndex);
 
-				/* These will keep the deepest collision of the four points. */
-				Vector< 3, float > * collisionPosition = nullptr;
-				auto highestDistance = 0.0F;
-
-				for ( auto & position : points )
+				if ( m_lightSet.isEnabled() && renderableInstance->isLightingEnabled() )
 				{
-					const auto groundLevel = m_sceneArea == nullptr ? -m_boundary : m_sceneArea->getLevelAt(position);
-
-					const auto distance = groundLevel - position[Y];
-
-					if ( distance > highestDistance )
+					if ( isOpaque )
 					{
-						collisionPosition = &position;
-						highestDistance = distance;
+						RenderBatch::create(m_renderLists[OpaqueLighted], distance, renderableInstance, layerIndex);
+					}
+					else
+					{
+						RenderBatch::create(m_renderLists[TranslucentLighted], distance * -1.0F, renderableInstance, layerIndex);
 					}
 				}
-
-				if ( collisionPosition != nullptr )
+				else
 				{
-					node->moveOnYAxisBy(highestDistance + CollisionCorrectionDistance, TransformSpace::World);
-
-					collisionManifold.addCollision(Collision::Type::SceneAreaGround, this, m_sceneArea->getNormalAt(*collisionPosition), 0.0F);
+					if ( isOpaque )
+					{
+						RenderBatch::create(m_renderLists[Opaque], distance, renderableInstance, layerIndex);
+					}
+					else
+					{
+						RenderBatch::create(m_renderLists[Translucent], distance * -1.0F, renderableInstance, layerIndex);
+					}
 				}
-			}
-
-			/* X-Axis test */
-			if ( AABB.maximum(X) > m_boundary )
-			{
-				auto delta = (AABB.maximum(X) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnXAxisBy(-delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeX(), 0.0F);
-			}
-			else if ( AABB.minimum(X) < -m_boundary )
-			{
-				auto delta = (std::abs(AABB.minimum(X)) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnXAxisBy(delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveX(), 0.0F);
-			}
-
-			/* Y-Axis test */
-			if ( AABB.maximum(Y) > m_boundary )
-			{
-				auto delta = (AABB.maximum(Y) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnYAxisBy(-delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeY(), 0.0F);
-			}
-			else if ( AABB.minimum(Y) < -m_boundary )
-			{
-				auto delta = (std::abs(AABB.minimum(Y)) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnYAxisBy(delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveY(), 0.0F);
-			}
-
-			/* Z-Axis test */
-			if ( AABB.maximum(Z) > m_boundary )
-			{
-				auto delta = (AABB.maximum(Z) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnZAxisBy(-delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::negativeZ(), 0.0F);
-			}
-			else if ( AABB.minimum(Z) < -m_boundary )
-			{
-				auto delta = (std::abs(AABB.minimum(Z)) - m_boundary) + CollisionCorrectionDistance;
-
-				node->moveOnZAxisBy(delta, TransformSpace::World);
-
-				collisionManifold.addCollision(Collision::Type::SceneAreaBoundaries, this, Vector< 3, float >::positiveZ(), 0.0F);
 			}
 		}
 	}
 
 	bool
-	Scene::getRenderLists (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, RenderBatch::List & opaqueRenderList, RenderBatch::List & translucentRenderList) const noexcept
+	Scene::populateRenderLists (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, bool shadowRendering) noexcept
 	{
-		opaqueRenderList.clear();
-		translucentRenderList.clear();
+		/* FIXME: TODO integrate the max viewable distance and the frustum culling. */
 
-		/* NOTE: The camera position do not move from the whole process. */
+		/* NOTE: Clean render lists before. */
+		if ( shadowRendering )
+		{
+			m_renderLists[Shadows].clear();
+		}
+		else
+		{
+			m_renderLists[Opaque].clear();
+			m_renderLists[Translucent].clear();
+			m_renderLists[OpaqueLighted].clear();
+			m_renderLists[TranslucentLighted].clear();
+		}
+
+		/* NOTE : The camera position do not move from the whole process. */
 		const auto & cameraPosition = renderTarget->viewMatrices().position();
 		Vector< 3, float > entityPosition{};
 
-		/* Lambda to read components. */
-		auto insertComponentInSortList = [&cameraPosition, &entityPosition, &opaqueRenderList, &translucentRenderList] (const AbstractComponent & component) -> bool {
-			/* Check whether the current component is renderable in this entity. */
-			if ( !component.isRenderable() )
+		/* Sorting global renderable objects from the scene. */
+		for ( const auto & visualComponent : m_sceneVisualComponents )
+		{
+			if ( visualComponent == nullptr )
 			{
-				return false;
+				continue;
 			}
 
-			/* This is a raw pointer to the abstract renderable instance. */
-			const auto * renderableInstance = component.getRenderableInstance();
+			const auto renderableInstance = visualComponent->getRenderableInstance();
 
-#ifdef DEBUG
 			if ( renderableInstance == nullptr )
 			{
-				Tracer::error(ClassId, "The abstract renderable instance pointer is a null !");
-
-				return false;
-			}
-#endif
-
-			/* Check whether the renderable instance is ready to render. */
-			if ( !renderableInstance->isReadyToRender() )
-			{
-				return false;
+				continue;
 			}
 
-			/* This is a raw pointer to the renderable interface. */
-			const auto * renderable = renderableInstance->renderable();
-
-#ifdef DEBUG
-			if ( renderable == nullptr )
-			{
-				Tracer::error(ClassId, "The renderable interface pointer is a null !");
-
-				return false;
-			}
-
-			/* Check whether the renderable is ready to draw.
-			 * Only done in debug mode, because a renderable instance ready to
-			 * render implies the renderable is ready to draw. */
-			if ( !renderable->isReadyForInstantiation() )
-			{
-				return false;
-			}
-#endif
-
-			const auto distance = Vector< 3, float >::distance(cameraPosition, entityPosition);
-			const auto layerCount = renderable->layerCount();
-
-			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
-			{
-				RenderBatch::create(
-					renderable->isOpaque(layerIndex) ? opaqueRenderList : translucentRenderList,
-					distance,
-					renderableInstance,
-					layerIndex
-				);
-			}
-
-			return false;
-		};
-
-		/* Sorting global renderable objects from the scene. */
-		for ( const auto & renderable : m_sceneVisualComponents )
-		{
-			insertComponentInSortList(*renderable);
+			this->insertInRenderLists(renderTarget, renderableInstance, 0.0F, shadowRendering);
 		}
 
 		/* Sorting renderable objects from scene static entities. */
 		{
 			const std::lock_guard< std::mutex > lock{m_staticEntitiesMutex};
 
-			for ( const auto & pair : m_staticEntities )
+			for ( const auto & staticEntity : std::ranges::views::values(m_staticEntities) )
 			{
-				const auto & staticEntity = pair.second;
-
 				/* Check whether the static entity contains something to render. */
 				if ( !staticEntity->isRenderable() )
 				{
@@ -1013,7 +1014,17 @@ namespace Emeraude::Scenes
 				/* Prepares the entity position (costly) for the lambda. */
 				entityPosition = staticEntity->getWorldCoordinates().position();
 
-				staticEntity->forEachComponent(insertComponentInSortList);
+				for ( const auto & [componentName, component] : staticEntity->components() )
+				{
+					const auto renderableInstance = component->getRenderableInstance();
+
+					if ( renderableInstance == nullptr )
+					{
+						continue;
+					}
+
+					this->insertInRenderLists(renderTarget, renderableInstance, Vector< 3, float >::distance(cameraPosition, entityPosition), shadowRendering);
+				}
 			}
 		}
 
@@ -1037,144 +1048,234 @@ namespace Emeraude::Scenes
 				/* Prepares the entity position (costly) for the lambda. */
 				entityPosition = node->getWorldCoordinates().position();
 
-				node->forEachComponent(insertComponentInSortList);
+				for ( const auto & [componentName, component] : node->components() )
+				{
+					const auto renderableInstance = component->getRenderableInstance();
+
+					if ( renderableInstance == nullptr )
+					{
+						continue;
+					}
+
+					this->insertInRenderLists(renderTarget, renderableInstance, Vector< 3, float >::distance(cameraPosition, entityPosition), shadowRendering);
+				}
 			}
 		}
 
-		/* Return if something can be rendered. */
-		return !opaqueRenderList.empty() || !translucentRenderList.empty();
+		/* Return true if something can be rendered. */
+		return std::ranges::any_of(m_renderLists, [] (const auto & renderList) {
+			return !renderList.empty();
+		});
 	}
 
 	void
-	Scene::updateVideoMemoryForRendering (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept
+	Scene::updateVideoMemory () const noexcept
 	{
-		/* Sorting global renderable objects from the scene. */
-		for ( const auto & renderable : m_sceneVisualComponents )
+		if ( !m_lightSet.updateVideoMemory() )
 		{
-			if ( !renderable->isRenderable() )
-			{
-				continue;
-			}
-
-			renderable->getRenderableInstance()->updateVideoMemoryForRendering(renderTarget);
-		}
-
-		/* Sorting renderable objects from scene static entities. */
-		{
-			const std::lock_guard< std::mutex > lock{m_staticEntitiesMutex};
-
-			for ( const auto & pair : m_staticEntities )
-			{
-				const auto & staticEntity = pair.second;
-
-				/* Check whether the static entity contains something to render. */
-				if ( !staticEntity->isRenderable() )
-				{
-					continue;
-				}
-
-				for ( const auto & component : staticEntity->components() )
-				{
-					if ( !component.second->isRenderable() )
-					{
-						continue;
-					}
-
-					component.second->getRenderableInstance()->updateVideoMemoryForRendering(renderTarget);
-				}
-			}
-		}
-
-		/* Sorting renderable objects from the scene node tree. */
-		{
-			/* NOTE: Prevent scene node deletion from logic update thread to crash the rendering. */
-			const std::lock_guard< std::mutex > lock{m_sceneNodesMutex};
-
-			NodeCrawler< const Node > crawler{m_rootNode};
-
-			std::shared_ptr< const Node > node{};
-
-			while ( (node = crawler.nextNode()) != nullptr )
-			{
-				/* Check whether the scene node contains something to render. */
-				if ( !node->isRenderable() )
-				{
-					continue;
-				}
-
-				for ( const auto & component : node->components() )
-				{
-					if ( !component.second->isRenderable() )
-					{
-						continue;
-					}
-
-					component.second->getRenderableInstance()->updateVideoMemoryForRendering(renderTarget);
-				}
-			}
+			Tracer::error(ClassId, "Unable to update the light set data to the video memory !");
 		}
 	}
 
 	void
 	Scene::castShadows (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) noexcept
 	{
-
-	}
-
-	void
-	Scene::render (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) const noexcept
-	{
-		/* NOTE: Keep lists as static to benefit of amortized constant time complexity. */
-		static RenderBatch::List depthOrderRenderList;
-		static RenderBatch::List reverseDepthOrderRenderList;
-
-		if ( this->getRenderLists(renderTarget, depthOrderRenderList, reverseDepthOrderRenderList) )
+		if ( !m_lightSet.isEnabled() )
 		{
-			/* Launching the render from the two depth ordering lists. */
-			for ( const auto & renderBatch : depthOrderRenderList )
-			{
-				renderBatch.second.renderableInstance()->render(renderTarget, RenderPassType::SimpleWithFakeLightPass, commandBuffer);
-			}
+			return;
+		}
 
-			for ( const auto & renderBatch : reverseDepthOrderRenderList )
+		/* Sort the scene according to the point of view. */
+		if ( this->populateRenderLists(renderTarget, true) )
+		{
+			for ( const auto & renderBatch : m_renderLists[Shadows] )
 			{
-				renderBatch.second.renderableInstance()->render(renderTarget, RenderPassType::SimpleWithFakeLightPass, commandBuffer);
+				renderBatch.second.renderableInstance()->castShadows(renderTarget, commandBuffer);
 			}
 		}
 	}
 
-	bool
-	Scene::checkMasterControlConsoleNotification (int notificationCode, const std::any & data) noexcept
+	void
+	Scene::renderSelection (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer, const RenderBatch::List & unlightedObjects, const RenderBatch::List & lightedObjects) const noexcept
+	{
+		if ( !unlightedObjects.empty() )
+		{
+			for ( const auto & [distance, renderBatch] : unlightedObjects )
+			{
+				renderBatch.renderableInstance()->render(renderTarget, nullptr, RenderPassType::SimplePass, commandBuffer);
+			}
+		}
+
+		if ( !m_lightSet.isEnabled() || lightedObjects.empty() )
+		{
+			return;
+		}
+
+		if ( m_lightSet.isUsingStaticLighting() )
+		{
+			for ( const auto & [distance, renderBatch] : lightedObjects )
+			{
+				renderBatch.renderableInstance()->render(renderTarget, nullptr, RenderPassType::SimplePass, commandBuffer);
+			}
+
+			return;
+		}
+
+		/* For all objects. */
+		for ( const auto & [distance, renderBatch] : lightedObjects )
+		{
+			const std::lock_guard< std::mutex > lock{m_lightSet.mutex()};
+
+			/* Ambient pass. */
+			renderBatch.renderableInstance()->render(renderTarget, nullptr, RenderPassType::AmbientPass, commandBuffer);
+
+			/* Loop through all directional lights. */
+			for ( const auto & light : m_lightSet.directionalLights() )
+			{
+				if ( !light->isEnabled() )
+				{
+					continue;
+				}
+
+				renderBatch.renderableInstance()->render(renderTarget, light.get(), RenderPassType::DirectionalLightPassNoShadow, commandBuffer);
+			}
+
+			/* Loop through all point lights. */
+			for ( const auto & light : m_lightSet.pointLights() )
+			{
+				if ( !light->isEnabled() )
+				{
+					continue;
+				}
+
+				const auto & instance = renderBatch.renderableInstance();
+
+				if ( instance->isLightDistanceCheckDisabled() || light->touch(instance->worldPosition()) )
+				{
+					instance->render(renderTarget, light.get(), RenderPassType::PointLightPassNoShadow, commandBuffer);
+				}
+			}
+
+			/* Loop through all spotlights. */
+			for ( const auto & light : m_lightSet.spotLights() )
+			{
+				if ( !light->isEnabled() )
+				{
+					continue;
+				}
+
+				const auto & instance = renderBatch.renderableInstance();
+
+				if ( instance->isLightDistanceCheckDisabled() || light->touch(instance->worldPosition()) )
+				{
+					renderBatch.renderableInstance()->render(renderTarget, light.get(), RenderPassType::SpotLightPassNoShadow, commandBuffer);
+				}
+			}
+		}
+	}
+
+	void
+	Scene::render (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) noexcept
+	{
+		/* Sort the scene according to the point of view. */
+		if ( !this->populateRenderLists(renderTarget, false) )
+		{
+			/* There is nothing to draw... */
+			return;
+		}
+
+		/*TraceDebug{ClassId} <<
+			"Frame content :" "\n"
+			" - Opaque / +lighted : " << m_renderLists[Opaque].size() << " / " << m_renderLists[OpaqueLighted].size() << "\n"
+			" - Translucent / +lighted : " << m_renderLists[Translucent].size() << " / " << m_renderLists[TranslucentLighted].size() << "\n";*/
+
+		/* First, we render all opaque renderable objects. */
+		this->renderSelection(renderTarget, commandBuffer, m_renderLists[Opaque], m_renderLists[OpaqueLighted]);
+
+		/* After, we render all translucent renderable objects. */
+		this->renderSelection(renderTarget, commandBuffer, m_renderLists[Translucent], m_renderLists[TranslucentLighted]);
+
+		/* Optional rendering.
+		 * FIXME: Add a master control. */
+		/*{
+			for ( const auto & renderBatch : m_renderLists[Opaque] )
+			{
+				const auto * renderableInstance = renderBatch.second.renderableInstance();
+
+				if ( renderableInstance->isDisplayTBNSpaceEnabled() )
+				{
+					renderableInstance->renderTBNSpace(renderTarget, commandBuffer);
+				}
+			}
+
+			for ( const auto & renderBatch : m_renderLists[Translucent] )
+			{
+				const auto * renderableInstance = renderBatch.second.renderableInstance();
+
+				if ( renderableInstance->isDisplayTBNSpaceEnabled() )
+				{
+					renderableInstance->renderTBNSpace(renderTarget, commandBuffer);
+				}
+			}
+
+			for ( const auto & renderBatch : m_renderLists[OpaqueLighted] )
+			{
+				const auto * renderableInstance = renderBatch.second.renderableInstance();
+
+				if ( renderableInstance->isDisplayTBNSpaceEnabled() )
+				{
+					renderableInstance->renderTBNSpace(renderTarget, commandBuffer);
+				}
+			}
+
+			for ( const auto & renderBatch : m_renderLists[TranslucentLighted] )
+			{
+				const auto * renderableInstance = renderBatch.second.renderableInstance();
+
+				if ( renderableInstance->isDisplayTBNSpaceEnabled() )
+				{
+					renderableInstance->renderTBNSpace(renderTarget, commandBuffer);
+				}
+			}
+		}*/
+	}
+
+	void
+	Scene::checkMasterControlConsoleNotification (int notificationCode, const std::any & data) const noexcept
 	{
 		switch ( notificationCode )
 		{
 			case MasterControl::Console::VideoDeviceAdded :
 				TraceDebug{ClassId} << "A new video device is available.";
-				return true;
+
+				break;
 
 			case MasterControl::Console::VideoDeviceRemoved :
 				TraceDebug{ClassId} << "A video device has been removed.";
-				return true;
+
+				break;
 
 			case MasterControl::Console::AudioDeviceAdded :
 				TraceDebug{ClassId} << "A new audio device is available.";
-				return true;
+				break;
 
 			case MasterControl::Console::AudioDeviceRemoved :
 				TraceDebug{ClassId} << "An audio device has been removed.";
-				return true;
 
-			case MasterControl::Console::RenderToViewAdded :
+				break;
+
+			case MasterControl::Console::RenderToShadowMapAdded :
 			{
 				TraceDebug{ClassId} <<
-					"A new render to view is available ! "
+					"A new render to shadow map is available ! "
 					"Updating renderable instances from the scene ...";
 
-				auto renderToView = std::any_cast< std::shared_ptr< RenderTarget::View::Abstract > >(data);
+				/* FIXME: Set a better check ! */
+				const auto renderToShadowMap = std::any_cast< std::shared_ptr< RenderTarget::ShadowMap::Abstract > >(data);
 
-				this->updateRenderableInstancesForRendering(*Renderer::instance(), renderToView);
+				this->initializeRenderTarget(renderToShadowMap);
 			}
-				return true;
+				break;
 
 			case MasterControl::Console::RenderToTextureAdded :
 			{
@@ -1182,263 +1283,280 @@ namespace Emeraude::Scenes
 					"A new render to texture is available ! "
 					"Updating renderable instances from the scene ...";
 
-				auto renderToTexture = std::any_cast< std::shared_ptr< RenderTarget::Texture::Abstract > >(data);
+				/* FIXME: Set a better check ! */
+				const auto renderToTexture = std::any_cast< std::shared_ptr< RenderTarget::Texture::Abstract > >(data);
 
-				this->updateRenderableInstancesForRendering(*Renderer::instance(), renderToTexture);
+				this->initializeRenderTarget(renderToTexture);
 			}
-				return true;
+				break;
 
-			case MasterControl::Console::RenderToShadowMapAdded :
+			case MasterControl::Console::RenderToViewAdded :
 			{
 				TraceDebug{ClassId} <<
-				"A new render to shadow map is available ! "
-				"Updating renderable instances from the scene ...";
+					"A new render to view is available ! "
+					"Updating renderable instances from the scene ...";
 
-				auto renderToShadowMap = std::any_cast< std::shared_ptr< RenderTarget::ShadowMap::Abstract > >(data);
+				/* FIXME: Set a better check ! */
+				const auto renderToView = std::any_cast< std::shared_ptr< RenderTarget::View::Abstract > >(data);
 
-				this->updateRenderableInstancesForRendering(*Renderer::instance(), renderToShadowMap);
+				this->initializeRenderTarget(renderToView);
 			}
-				return true;
+				break;
 
 			default :
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 				TraceDebug{ClassId} << "Event #" << notificationCode << " from a master control console ignored.";
-				return false;
+#endif
+				break;
 		}
 	}
 
 	bool
-	Scene::checkNodeNotification (const Node * observableNode, int notificationCode, const std::any & data) noexcept
+	Scene::checkRootNodeNotification (int notificationCode, const std::any & data) noexcept
 	{
 		switch ( notificationCode )
 		{
-			/* A new scene node must be registered in sectors of the current scene area. */
-			case Node::NodeCreated :
+			/* NOTE: A node is creating a child. The data will be a smart pointer to the parent node. */
+			case Node::SubNodeCreating :
+				return true;
+
+			/* NOTE: A node created a child. The data will be a smart pointer to the child node. */
+			case Node::SubNodeCreated :
+				return true;
+
+			/* NOTE: A node is destroying one of its child. The data will be a smart pointer to the child node. */
+			case Node::SubNodeDeleting :
 			{
-				auto node = std::any_cast< std::shared_ptr< Node > >(data);
+				const auto node = std::any_cast< std::shared_ptr< Node > >(data);
 
-				/* Add the node to the default octree, if enabled */
+				/* NOTE: If node controller was set up with this node, we stop it. */
+				if ( m_nodeController.node() == node )
 				{
-					auto defaultOctree = this->getDefaultOctree();
-
-					if ( defaultOctree != nullptr )
-					{
-						defaultOctree->addElement(node);
-					}
+					m_nodeController.releaseNode();
 				}
 
-				this->notify(NodeCreated, node);
+				if ( m_renderingOctree != nullptr && node->isRenderable() )
+				{
+					const std::lock_guard< std::mutex > lockGuard{m_renderingOctreeMutex};
+
+					m_renderingOctree->erase(node);
+				}
+
+				if ( m_physicsOctree != nullptr )
+				{
+					const std::lock_guard< std::mutex > lockGuard{m_physicsOctreeMutex};
+
+					m_physicsOctree->erase(node);
+				}
 			}
 				return true;
 
-			/* When a scene node is destroyed, we want to remove it from sectors of the current scene area. */
-			case Node::NodeDeleted :
-			{
-				auto node = std::any_cast< std::shared_ptr< Node > >(data);
-
-				this->notify(NodeDeleting, node);
-
-				/* Remove the node from the default octree, if enabled */
-				{
-					auto defaultOctree = this->getDefaultOctree();
-
-					if ( defaultOctree != nullptr )
-					{
-						defaultOctree->removeElement(node);
-					}
-				}
-
-				this->notify(NodeDeleted);
-			}
+			case Node::SubNodeDeleted :
 				return true;
 
 			default:
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 				TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << observableNode->name() << "' ignored.";
+#endif
 				return false;
 		}
 	}
 
 	bool
-	Scene::checkEntityNotification (const AbstractEntity * observableEntity, int notificationCode, const std::any & data) noexcept
+	Scene::checkEntityNotification (int notificationCode, const std::any & data) noexcept
 	{
 		switch ( notificationCode )
 		{
-			/* If an entity content has been modified in the scene, we want to check the overlap from the new bounding box. */
-			case AbstractEntity::ContentModified :
-			{
-				auto defaultOctree = this->getDefaultOctree();
-
-				if ( defaultOctree != nullptr )
-				{
-					auto entity = std::any_cast< std::shared_ptr< AbstractEntity > >(data);
-
-					defaultOctree->checkElementOverlap(entity);
-				}
-			}
-				return true;
-
 			case AbstractEntity::ModifierCreated :
-				m_modifiers.emplace(std::any_cast< std::shared_ptr< AbstractModifier > >(data));
+				m_modifiers.emplace(std::any_cast< std::shared_ptr< Component::AbstractModifier > >(data));
+
 				return true;
 
 			case AbstractEntity::ModifierDestroyed :
-				m_modifiers.erase(std::any_cast< std::shared_ptr< AbstractModifier > >(data));
+				m_modifiers.erase(std::any_cast< std::shared_ptr< Component::AbstractModifier > >(data));
+
 				return true;
 
 			case AbstractEntity::CameraCreated :
-				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Camera > >(data));
+				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
+
 				return true;
 
 			case AbstractEntity::PrimaryCameraCreated :
-				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Camera > >(data), true);
+				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data), true);
+
 				return true;
 
 			case AbstractEntity::CameraDestroyed :
-				m_masterControlConsole.removeVideoDevice(std::any_cast< std::shared_ptr< Camera > >(data));
+				m_masterControlConsole.removeVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
+
 				return true;
 
 			case AbstractEntity::MicrophoneCreated :
-				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Microphone > >(data));
+				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
+
 				return true;
 
 			case AbstractEntity::PrimaryMicrophoneCreated :
-				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Microphone > >(data), true);
+				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data), true);
+
 				return true;
 
 			case AbstractEntity::MicrophoneDestroyed :
-				m_masterControlConsole.removeAudioDevice(std::any_cast< std::shared_ptr< Microphone > >(data));
+				m_masterControlConsole.removeAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
+
 				return true;
 
 			case AbstractEntity::DirectionalLightCreated :
-				m_lightSet.add(std::any_cast< std::shared_ptr< DirectionalLight > >(data));
+				m_lightSet.add(std::any_cast< std::shared_ptr< Component::DirectionalLight > >(data), m_graphicsRenderer);
+
 				return true;
 
 			case AbstractEntity::DirectionalLightDestroyed :
-				m_lightSet.remove(std::any_cast< std::shared_ptr< DirectionalLight > >(data));
+				m_lightSet.remove(std::any_cast< std::shared_ptr< Component::DirectionalLight > >(data));
+
 				return true;
 
 			case AbstractEntity::PointLightCreated :
-				m_lightSet.add(std::any_cast< std::shared_ptr< PointLight > >(data));
+				m_lightSet.add(std::any_cast< std::shared_ptr< Component::PointLight > >(data), m_graphicsRenderer);
+
 				return true;
 
 			case AbstractEntity::PointLightDestroyed :
-				m_lightSet.remove(std::any_cast< std::shared_ptr< PointLight > >(data));
+				m_lightSet.remove(std::any_cast< std::shared_ptr< Component::PointLight > >(data));
+
 				return true;
 
 			case AbstractEntity::SpotLightCreated :
-				m_lightSet.add(std::any_cast< std::shared_ptr< SpotLight > >(data));
+				m_lightSet.add(std::any_cast< std::shared_ptr< Component::SpotLight > >(data), m_graphicsRenderer);
+
 				return true;
 
 			case AbstractEntity::SpotLightDestroyed :
-				m_lightSet.remove(std::any_cast< std::shared_ptr< SpotLight > >(data));
+				m_lightSet.remove(std::any_cast< std::shared_ptr< Component::SpotLight > >(data));
+
 				return true;
 
 			case AbstractEntity::VisualComponentCreated :
 			{
-				auto component = std::any_cast< std::shared_ptr< VisualComponent > >(data);
+				const auto component = std::any_cast< std::shared_ptr< Component::Visual > >(data);
 
-				this->checkRenderableInstance(*Renderer::instance(), component->getRenderableInstance());
+				this->checkRenderableInstance(component->getRenderableInstance());
 			}
 				return true;
 
 			case AbstractEntity::VisualComponentDestroyed :
 			{
-				auto component = std::any_cast< std::shared_ptr< VisualComponent > >(data);
+				const auto component = std::any_cast< std::shared_ptr< Component::Visual > >(data);
 
-				this->forget(component->getRenderableInstance());
+				this->forget(component->getRenderableInstance().get());
 			}
 				return true;
 
 			case AbstractEntity::MultipleVisualsComponentCreated :
 			{
-				auto component = std::any_cast< std::shared_ptr< MultipleVisualsComponent > >(data);
+				const auto component = std::any_cast< std::shared_ptr< Component::MultipleVisuals > >(data);
 
-				this->checkRenderableInstance(*Renderer::instance(), component->getRenderableInstance());
+				this->checkRenderableInstance(component->getRenderableInstance());
 			}
 				return true;
 
 			case AbstractEntity::MultipleVisualsComponentDestroyed :
 			{
-				auto component = std::any_cast< std::shared_ptr< MultipleVisualsComponent > >(data);
+				const auto component = std::any_cast< std::shared_ptr< Component::MultipleVisuals > >(data);
 
-				this->forget(component->getRenderableInstance());
+				this->forget(component->getRenderableInstance().get());
+			}
+				return true;
+
+			case AbstractEntity::ParticlesEmitterCreated :
+			{
+				const auto component = std::any_cast< std::shared_ptr< Component::ParticlesEmitter > >(data);
+
+				this->checkRenderableInstance(component->getRenderableInstance());
+			}
+				return true;
+
+			case AbstractEntity::ParticlesEmitterDestroyed :
+			{
+				const auto component = std::any_cast< std::shared_ptr< Component::ParticlesEmitter > >(data);
+
+				this->forget(component->getRenderableInstance().get());
 			}
 				return true;
 
 			default:
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 				TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << observableEntity->name() << "' ignored.";
+#endif
 				return false;
 		}
 	}
 
 	bool
-	Scene::onNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept
+	Scene::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept
 	{
 		if ( observable == &m_masterControlConsole )
 		{
-			if ( this->checkMasterControlConsoleNotification(notificationCode, data) )
-			{
-				return true;
-			}
+			this->checkMasterControlConsoleNotification(notificationCode, data);
 
+			/* Keep listening. */
 			return true;
 		}
 
 		if ( observable->is(StaticEntity::ClassUID) )
 		{
-			if ( this->checkEntityNotification(dynamic_cast< const AbstractEntity * >(observable), notificationCode, data) )
+			if ( notificationCode == AbstractEntity::EntityContentModified )
 			{
-				return true;
+				auto * abstractEntity = std::any_cast< AbstractEntity * >(data);
+				const auto staticEntity = dynamic_cast< StaticEntity * >(abstractEntity)->shared_from_this();
+
+				this->checkEntityLocationInOctrees(staticEntity);
+			}
+			else
+			{
+				this->checkEntityNotification(notificationCode, data);
 			}
 
+			/* Keep listening. */
 			return true;
 		}
 
 		if ( observable->is(Node::ClassUID) )
 		{
-			if ( this->checkNodeNotification(dynamic_cast< const Node * >(observable), notificationCode, data) )
+			if ( notificationCode == AbstractEntity::EntityContentModified )
 			{
-				return true;
+				auto * abstractEntity = std::any_cast< AbstractEntity * >(data);
+				const auto node = dynamic_cast< Node * >(abstractEntity)->shared_from_this();
+
+				this->checkEntityLocationInOctrees(node);
+			}
+			else if ( !this->checkRootNodeNotification(notificationCode, data) )
+			{
+				this->checkEntityNotification(notificationCode, data);
 			}
 
-			/* NOTE: A node is also an entity. */
-			if ( this->checkEntityNotification(dynamic_cast< const AbstractEntity * >(observable), notificationCode, data) )
-			{
-				return true;
-			}
-
-			/* NOTE: We never want to stop listening from the root node. */
+			/* Keep listening. */
 			return true;
 		}
 
 		if ( observable->is(RenderableInstance::Abstract::ClassUID) )
 		{
-			switch ( notificationCode )
+			if ( notificationCode == RenderableInstance::Abstract::ReadyToSetupOnGPU )
 			{
-				case RenderableInstance::Abstract::Broken :
-					Tracer::error(ClassId, "The renderable instance is broken !");
+				const auto renderableInstance = std::any_cast< std::shared_ptr< RenderableInstance::Abstract > >(data);
 
-					return false;
-
-				case RenderableInstance::Abstract::ReadyToSetupOnGPU :
-				{
-					auto * renderableInstance = std::any_cast< RenderableInstance::Abstract * >(data);
-
-					this->updateRenderableInstanceForRendering(*Renderer::instance(), renderableInstance);
-				}
-					return false;
-
-				default:
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from a scene renderable instance ignored.";
-					break;
+				this->initializeRenderableInstance(renderableInstance);
 			}
 
+			/* Keep listening. */
 			return true;
 		}
 
 #ifdef DEBUG
 		/* NOTE: Don't know what is it, goodbye ! */
 		TraceInfo{ClassId} <<
-			"Received an unhandled event from observable @" << observable << " (code:" << notificationCode << ") ! "
+			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
 #endif
 
@@ -1446,18 +1564,12 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	Scene::checkRenderableInstance (Renderer & renderer, RenderableInstance::Abstract * renderableInstance) noexcept
+	Scene::checkRenderableInstance (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) noexcept
 	{
 		if ( renderableInstance == nullptr )
 		{
 			Tracer::error(ClassId, "The renderable instance pointer is a null !");
 
-			return;
-		}
-
-		/* NOTE: If the renderable instance is ready to render, we can stop here. */
-		if ( renderableInstance->isReadyToRender() )
-		{
 			return;
 		}
 
@@ -1473,42 +1585,50 @@ namespace Emeraude::Scenes
 		/* NOTE: If the renderable is ready for instantiation, we configure the rendering now ... */
 		if ( renderable->isReadyForInstantiation() )
 		{
-			this->updateRenderableInstanceForRendering(renderer, renderableInstance);
+			this->initializeRenderableInstance(renderableInstance);
 		}
 		else /* ... Or we delay the update later. */
 		{
-			this->observe(renderableInstance);
+			/* This will wait for the event "RenderableInstance::Abstract::ReadyToSetupOnGPU". */
+			this->observe(renderableInstance.get());
 		}
 	}
 
 	void
-	Scene::updateRenderableInstanceForRendering (Renderer & renderer, RenderableInstance::Abstract * renderableInstance) const noexcept
+	Scene::initializeRenderableInstance (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) const noexcept
 	{
-		if ( renderableInstance == nullptr )
+		for ( const auto & renderTarget : m_masterControlConsole.renderToShadowMaps() )
 		{
-			Tracer::error(ClassId, "The renderable instance pointer is null !");
+			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
+			{
+				TraceError{ClassId} << "The initialization of renderable instance '" << renderableInstance->renderable()->name() << "' for render target '" << renderTarget->id() << "' has failed !";
+			}
+		}
 
-			return;
+		for ( const auto & renderTarget : m_masterControlConsole.renderToTextures() )
+		{
+			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
+			{
+				TraceError{ClassId} << "The initialization of renderable instance '" << renderableInstance->renderable()->name() << "' for render target '" << renderTarget->id() << "' has failed !";
+			}
 		}
 
 		for ( const auto & renderTarget : m_masterControlConsole.renderToViews() )
 		{
-			if ( !renderer.getRenderableInstanceReadyForRender(*renderableInstance, renderTarget, m_lightSet) )
+			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{
-				Tracer::error(ClassId, "The renderable instance preparation for rendering has failed !");
+				TraceError{ClassId} << "The initialization of renderable instance '" << renderableInstance->renderable()->name() << "' for render target '" << renderTarget->id() << "' has failed !";
 			}
 		}
 	}
 
 	void
-	Scene::updateRenderableInstancesForRendering (Renderer & renderer, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
+	Scene::initializeRenderTarget (const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
-		TraceInfo{ClassId} << "Prepare renderable instance for render target '" << renderTarget->id() << "' ...";
-
-		this->forEachRenderableInstance([this, &renderer, renderTarget] (RenderableInstance::Abstract & renderableInstance) {
-			if ( !renderer.getRenderableInstanceReadyForRender(renderableInstance, renderTarget, m_lightSet) )
+		this->forEachRenderableInstance([this, renderTarget] (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) {
+			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{
-				Tracer::error(ClassId, "The renderable instance preparation for rendering has failed !");
+				TraceError{ClassId} << "The initialization of renderable instance '" << renderableInstance->renderable()->name() << "' from render target '" << renderTarget->id() << "' has failed !";
 			}
 
 			return true;
@@ -1518,10 +1638,8 @@ namespace Emeraude::Scenes
 	void
 	Scene::refreshRenderableInstances (const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
-		TraceInfo{ClassId} << "Refreshing renderable instance for render target '" << renderTarget->id() << "' ...";
-
-		this->forEachRenderableInstance([renderTarget] (RenderableInstance::Abstract & renderableInstance) {
-			if ( !renderableInstance.refreshGraphicsPipelines(renderTarget) )
+		this->forEachRenderableInstance([renderTarget] (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) {
+			if ( !renderableInstance->refreshGraphicsPipelines(renderTarget) )
 			{
 				Tracer::error(ClassId, "The renderable instance refresh for rendering has failed !");
 			}
@@ -1531,12 +1649,17 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	Scene::forEachRenderableInstance (const std::function< bool (RenderableInstance::Abstract & renderableInstance) > & function) const noexcept
+	Scene::forEachRenderableInstance (const std::function< bool (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) > & function) const noexcept
 	{
 		/* Check global renderable objects from the scene. */
-		for ( const auto & sceneVisualComponent : m_sceneVisualComponents )
+		for ( const auto & visualComponent : m_sceneVisualComponents )
 		{
-			auto * renderableInstance = sceneVisualComponent->getRenderableInstance();
+			if ( visualComponent == nullptr )
+			{
+				continue;
+			}
+
+			const auto renderableInstance = visualComponent->getRenderableInstance();
 
 			if ( renderableInstance == nullptr )
 			{
@@ -1545,7 +1668,7 @@ namespace Emeraude::Scenes
 				continue;
 			}
 
-			if ( !function(*renderableInstance) )
+			if ( !function(renderableInstance) )
 			{
 				return;
 			}
@@ -1555,10 +1678,8 @@ namespace Emeraude::Scenes
 		{
 			const std::lock_guard< std::mutex > lock{m_staticEntitiesMutex};
 
-			for ( const auto & pair : m_staticEntities )
+			for ( const auto & staticEntity : std::ranges::views::values(m_staticEntities) )
 			{
-				const auto & staticEntity = pair.second;
-
 				/* Check whether the static entity contains something to render. */
 				if ( !staticEntity->isRenderable() )
 				{
@@ -1566,25 +1687,23 @@ namespace Emeraude::Scenes
 				}
 
 				/* Go through each entity component to update visuals. */
-				for ( const auto & componentPair : staticEntity->components() )
+				for ( const auto & [name, component] : staticEntity->components() )
 				{
-					const auto & component = componentPair.second;
-
 					if ( !component->isRenderable() )
 					{
 						continue;
 					}
 
-					auto * renderableInstance = component->getRenderableInstance();
+					const auto renderableInstance = component->getRenderableInstance();
 
 					if ( renderableInstance == nullptr )
 					{
-						TraceError{ClassId} << "The static entity '" << staticEntity->name() << "' component '" << componentPair.first << "' renderable instance pointer is null !";
+						TraceError{ClassId} << "The static entity '" << staticEntity->name() << "' component '" << name << "' renderable instance pointer is null !";
 
 						continue;
 					}
 
-					if ( !function(*renderableInstance) )
+					if ( !function(renderableInstance) )
 					{
 						return;
 					}
@@ -1610,115 +1729,29 @@ namespace Emeraude::Scenes
 				}
 
 				/* Go through each entity component to update visuals. */
-				for ( const auto & componentPair : node->components() )
+				for ( const auto & [name, component] : node->components() )
 				{
-					const auto & component = componentPair.second;
-
 					if ( !component->isRenderable() )
 					{
 						continue;
 					}
 
-					auto * renderableInstance = component->getRenderableInstance();
+					const auto renderableInstance = component->getRenderableInstance();
 
 					if ( renderableInstance == nullptr )
 					{
-						TraceError{ClassId} << "The scene node '" << node->name() << "' component '" << componentPair.first << "' renderable instance pointer is null !";
+						TraceError{ClassId} << "The scene node '" << node->name() << "' component '" << name << "' renderable instance pointer is null !";
 
 						continue;
 					}
 
-					if ( !function(*renderableInstance) )
+					if ( !function(renderableInstance) )
 					{
 						return;
 					}
 				}
 			}
 		}
-	}
-
-	const MasterControl::Console &
-	Scene::masterControlConsole () const noexcept
-	{
-		return m_masterControlConsole;
-	}
-
-	MasterControl::Console &
-	Scene::masterControlConsole () noexcept
-	{
-		return m_masterControlConsole;
-	}
-
-	const LightSet &
-	Scene::lightSet () const noexcept
-	{
-		return m_lightSet;
-	}
-
-	LightSet &
-	Scene::lightSet () noexcept
-	{
-		return m_lightSet;
-	}
-
-	const PhysicalEnvironmentProperties &
-	Scene::physicalEnvironmentProperties () const noexcept
-	{
-		return m_physicalEnvironmentProperties;
-	}
-
-	PhysicalEnvironmentProperties &
-	Scene::physicalEnvironmentProperties () noexcept
-	{
-		return m_physicalEnvironmentProperties;
-	}
-
-	void
-	Scene::setBackground (const std::shared_ptr< Renderable::AbstractBackground > & background) noexcept
-	{
-		m_background = background;
-
-		this->registerSceneVisualComponents(*Renderer::instance());
-	}
-
-	const std::shared_ptr< Renderable::AbstractBackground > &
-	Scene::background () const noexcept
-	{
-		return m_background;
-	}
-
-	void
-	Scene::setSceneArea (const std::shared_ptr< Renderable::AbstractSceneArea > & sceneArea) noexcept
-	{
-		m_sceneArea = sceneArea;
-
-		this->registerSceneVisualComponents(*Renderer::instance());
-	}
-
-	const std::shared_ptr< Renderable::AbstractSceneArea > &
-	Scene::sceneArea () const noexcept
-	{
-		return m_sceneArea;
-	}
-
-	void
-	Scene::setSeaLevel (const std::shared_ptr< Renderable::AbstractSeaLevel > & seaLevel) noexcept
-	{
-		m_seaLevel = seaLevel;
-
-		this->registerSceneVisualComponents(*Renderer::instance());
-	}
-
-	const std::shared_ptr< Renderable::AbstractSeaLevel > &
-	Scene::seaLevel () const noexcept
-	{
-		return m_seaLevel;
-	}
-
-	const std::shared_ptr< Node > &
-	Scene::root () const noexcept
-	{
-		return m_rootNode;
 	}
 
 	std::shared_ptr< Node >
@@ -1739,24 +1772,6 @@ namespace Emeraude::Scenes
 		return nullptr;
 	}
 
-	const std::map< std::string , std::shared_ptr< StaticEntity > > &
-	Scene::staticEntities () const noexcept
-	{
-		return m_staticEntities;
-	}
-
-	const std::set< std::shared_ptr< AbstractModifier > > &
-	Scene::modifiers () const noexcept
-	{
-		return m_modifiers;
-	}
-
-	const EffectsList &
-	Scene::environmentEffects () const noexcept
-	{
-		return m_environmentEffects;
-	}
-
 	std::array< size_t, 2 >
 	Scene::getNodeStatistics () const noexcept
 	{
@@ -1768,40 +1783,13 @@ namespace Emeraude::Scenes
 
 		do
 		{
-			stats[0] += currentNode->subNodes().size();
+			stats[0] += currentNode->children().size();
 
 			const auto depth = currentNode->getDepth();
 
-			if ( stats[1] < depth )
-			{
-				stats[1] = depth;
-			}
+			stats[1] = std::max(stats[1], depth);
 		}
 		while ( (currentNode = crawler.nextNode()) != nullptr );
-
-		return stats;
-	}
-
-	std::array< size_t, 2 >
-	Scene::getSectorStatistics (const std::shared_ptr< Scenes::OctreeSector > & sector) noexcept
-	{
-		std::array< size_t, 2 > stats{1UL, 0UL};
-
-		OctreeSectorCrawler< const OctreeSector > crawler(sector);
-
-		std::shared_ptr< const OctreeSector > currentSector;
-
-		while ( (currentSector = crawler.nextSector()) != nullptr )
-		{
-			stats[0]++;
-
-			const auto depth = currentSector->getDepth();
-
-			if ( depth > stats[1] )
-			{
-				stats[1] = depth;
-			}
-		}
 
 		return stats;
 	}
@@ -1830,160 +1818,390 @@ namespace Emeraude::Scenes
 		return true;
 	}
 
-	Vector < 3, float>
-	Scene::getRandomPosition () const noexcept
+	std::vector< RenderPassType >
+	Scene::prepareRenderPassTypes (const RenderableInstance::Abstract & renderableInstance) const noexcept
 	{
-		return {
-			Utility::random(-m_boundary, m_boundary),
-			Utility::random(-m_boundary, m_boundary),
-			Utility::random(-m_boundary, m_boundary)
-		};
-	}
+		const std::lock_guard< std::mutex > lock{m_lightSet.mutex()};
 
-	void
-	Scene::showSectors (bool state) noexcept
-	{
-		if ( m_flags[ShowSectors] == state )
-		{
-			return;
-		}
+		std::vector< RenderPassType > renderPassTypes{};
 
-		if ( state )
+		if ( !m_lightSet.isEnabled() || !renderableInstance.isLightingEnabled() || m_lightSet.isUsingStaticLighting() )
 		{
-			m_flags[ShowSectors] = true;
+			renderPassTypes.emplace_back(RenderPassType::SimplePass);
 		}
 		else
 		{
-			m_flags[ShowSectors] = false;
+			renderPassTypes.emplace_back(RenderPassType::AmbientPass);
+
+			//if ( !m_lightSet.directionalLights().empty() )
+			{
+				//renderPassTypes.emplace_back(RenderPassType::DirectionalLightPass);
+				renderPassTypes.emplace_back(RenderPassType::DirectionalLightPassNoShadow);
+			}
+
+			//if ( !m_lightSet.pointLights().empty() )
+			{
+				//renderPassTypes.emplace_back(RenderPassType::PointLightPass);
+				renderPassTypes.emplace_back(RenderPassType::PointLightPassNoShadow);
+			}
+
+			//if ( !m_lightSet.spotLights().empty() )
+			{
+				//renderPassTypes.emplace_back(RenderPassType::SpotLightPass);
+				renderPassTypes.emplace_back(RenderPassType::SpotLightPassNoShadow);
+			}
 		}
+
+		return renderPassTypes;
 	}
 
-	void
-	Scene::showGroundZero (bool /*state*/, float /*space*/) noexcept
+	bool
+	Scene::getRenderableInstanceReadyForRender (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
-		/* FIXME: Old OpenGL behavior. */
+		//TraceDebug{ClassId} << "Preparing renderable instance '" << renderableInstance->renderable()->name() << "' for render target '" << renderTarget->id() << "' ...";
+
+		/* If the object is ready to render, there is nothing more to do ! */
+		if ( renderableInstance->isReadyToRender(renderTarget) )
+		{
+			return true;
+		}
+
+		/* A previous try to set up the renderable instance for rendering has failed ... */
+		if ( renderableInstance->isBroken() )
+		{
+			return false;
+		}
+
+		/* NOTE : Checking the renderable interface.
+		 * This is the shared part between all renderable instances. */
+		/* TODO: Check for renderable interface already in video memory to reduce renderable instance preparation time. */
+		const auto * renderable = renderableInstance->renderable();
+
+		if ( renderable == nullptr )
+		{
+#ifdef DEBUG
+			renderableInstance->setBroken("The renderable instance has no renderable interface !");
+#else
+			renderableInstance->setBroken();
+#endif
+
+			return false;
+		}
+
+		/* NOTE : Check whether the renderable interface is ready for instantiation.
+		 * If not, this is no big deal, a loading event exists to relaunch the whole process. */
+		if ( !renderable->isReadyForInstantiation() )
+		{
+			return true;
+		}
+
+		/* NOTE : Check how many render pass this renderable instance needs. */
+		const auto renderPassTypes = this->prepareRenderPassTypes(*renderableInstance);
+
+		if ( renderPassTypes.empty() )
+		{
+			renderableInstance->setBroken((std::stringstream{} <<
+				"No render pass type requested ! "
+				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
+			).str());
+
+			return false;
+		}
+
+		const auto layerCount = renderable->layerCount();
+
+#ifdef DEBUG
+		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+		if ( layerCount == 0 )
+		{
+			renderableInstance->setBroken((std::stringstream{} <<
+				"The renderable interface has no layer ! It must have at least one. "
+				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
+			).str());
+
+			return false;
+		}
+#endif
+
+		/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
+		const auto * geometry = renderable->geometry();
+
+
+#ifdef DEBUG
+		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+		if ( geometry == nullptr )
+		{
+			renderableInstance->setBroken((std::stringstream{} <<
+				"The renderable interface has no geometry interface ! "
+				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
+			).str());
+
+			return false;
+		}
+#endif
+
+		for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+		{
+			for ( const auto renderPassType : renderPassTypes )
+			{
+				/* FIXME: Try to identify earlier a shader is already ok. */
+				//TraceInfo{ClassId} << "Generating shader program for '" << renderable->name() << "' (RenderPass:'" << to_string(renderPassType) << "', layer:" << layerIndex << ") ...";
+
+				/* The first step is to generate the shaders source code from every resource involved. */
+				Generator::SceneRendering generator{
+					m_graphicsRenderer.primaryServices().settings(),
+					(std::stringstream{} << "RenderableInstance" << to_string(renderPassType)).str(),
+					renderTarget,
+					renderableInstance,
+					layerIndex,
+					renderPassType,
+					*this
+				};
+
+				if ( m_graphicsRenderer.shaderManager().showGeneratedSourceCode() )
+				{
+					generator.enableDebugging();
+				}
+
+				/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
+				if ( !generator.generateProgram(m_graphicsRenderer.vertexBufferFormatManager()) )
+				{
+#ifdef DEBUG
+					renderableInstance->setBroken((std::stringstream{} <<
+						"Unable to generate the renderable instance '" << renderable->name() << "' (RenderPass:'" << to_string(renderPassType) << "', layer:" << layerIndex << ") program !"
+					).str());
+#else
+					renderableInstance->setBroken();
+#endif
+
+					return false;
+				}
+
+				/* The second step is to check every resource needed by shaders (UBO, Samples, etc.).
+				 * NOTE: VBO is an exception done before. */
+				if ( !generator.generateProgramLayout(m_graphicsRenderer) )
+				{
+#ifdef DEBUG
+					renderableInstance->setBroken((std::stringstream{} <<
+						"Unable to get the program layout for layer #" << layerIndex << " "
+						"of the renderable instance '" << renderable->name() << "' "
+						"and the render pass type '" << to_string(renderPassType) << "' !"
+					).str());
+#else
+					renderableInstance->setBroken();
+#endif
+					return false;
+				}
+
+				/* The third step is to check if separate shaders already exists to avoid an extra compilation.
+				 * Retrieve the graphics pipeline for the combination of the current renderable instance layer and the render pass. */
+				if ( !generator.createGraphicsPipeline(m_graphicsRenderer) )
+				{
+#ifdef DEBUG
+					renderableInstance->setBroken((std::stringstream{} <<
+						"Unable to get a program for layer #" << layerIndex << " "
+						"of the renderable instance '" << renderable->name() << "' "
+						"and the render pass type '" << to_string(renderPassType) << "' !"
+					).str());
+#else
+					renderableInstance->setBroken();
+#endif
+
+					return false;
+				}
+
+				renderableInstance->setProgram(renderTarget, renderPassType, layerIndex, generator.program());
+			}
+		}
+
+		/* FIXME: Bad idea ! */
+		//renderableInstance->setShadowProgram(m_graphicsRenderer.getShadowProgram(renderTarget, renderableInstance));
+
+		if ( renderableInstance->isDisplayTBNSpaceEnabled() )
+		{
+			renderableInstance->setTBNSpaceProgram(m_graphicsRenderer.getTBNSpaceProgram(renderTarget, renderableInstance));
+		}
+
+		return renderableInstance->validate(renderTarget);
 	}
 
-	void
-	Scene::showBoundaries (bool /*state*/, float /*space*/) noexcept
+	bool
+	Scene::refreshRenderableInstance (RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) noexcept
 	{
-		/* FIXME: Old OpenGL behavior. */
+		renderableInstance.disableForRender(renderTarget);
+
+		/* A previous try to set up the renderable instance for rendering has failed ... */
+		if ( renderableInstance.isBroken() )
+		{
+			return false;
+		}
+
+		/*const auto renderable = renderableInstance.renderable();
+		const auto layerCount = renderable->layerCount();
+
+		std::vector< RenderPassType > renderPassTypes{
+			RenderPassType::SimplePass
+		};
+
+		for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+		{
+
+		}*/
+
+		return renderableInstance.validate(renderTarget);
+	}
+
+
+	std::string
+	Scene::getNodeSystemStatistics (bool showTree) const noexcept
+	{
+		std::stringstream output;
+
+		output << "Node system: " "\n";
+
+		if ( m_rootNode != nullptr )
+		{
+			const auto stats = this->getNodeStatistics();
+
+			output <<
+				"Node count: " << stats[0] << "\n"
+				"Node depth: " << stats[1] << '\n';
+
+			if ( showTree )
+			{
+				std::shared_ptr< const Node > currentNode = m_rootNode;
+
+				NodeCrawler< const Node > crawler(currentNode);
+
+				do
+				{
+					const std::string pad(currentNode->getDepth() * 2, ' ');
+
+					output << pad <<
+						"[Node:" << currentNode->name() << "]"
+						"[Location: " << currentNode->getWorldCoordinates().position() << "] ";
+
+					if ( !currentNode->components().empty() )
+					{
+						output << '\n';
+
+						for ( const auto & component : std::ranges::views::values(currentNode->components()) )
+						{
+							output << pad << "   {" << component->getComponentType() << ":" << component->name() << "}" "\n";
+						}
+					}
+					else
+					{
+						output << "(Empty node)" "\n";
+					}
+				}
+				while ( (currentNode = crawler.nextNode()) != nullptr );
+			}
+		}
+		else
+		{
+			output << "No root node !" "\n";
+		}
+
+		return output.str();
 	}
 
 	std::string
-	Scene::getStatisticsString (bool printNodeSystem, bool printStaticEntitySystem, bool printSectorSystem, bool printTrees) const noexcept
+	Scene::getStaticEntitySystemStatistics (bool showTree) const noexcept
 	{
-		std::stringstream output{};
+		std::stringstream output;
 
-		output << "Scene '" << this->name() << "' content:" "\n";
+		output << "Static entity system: " "\n";
 
-		if ( printNodeSystem )
+		if ( m_staticEntities.empty() )
 		{
-			output << "Node system: " "\n";
-
-			if ( m_rootNode != nullptr )
-			{
-				const auto stats = this->getNodeStatistics();
-
-				output << "Node count: " << stats[0] << "\n"
-					  "Node depth: " << stats[1] << '\n';
-
-				if ( printTrees )
-				{
-					std::shared_ptr< const Node > currentNode = m_rootNode;
-
-					NodeCrawler< const Node > crawler(currentNode);
-
-					do
-					{
-						const std::string pad(currentNode->getDepth() * 2, ' ');
-
-						output << pad << "[Node:" << currentNode->name() << "][Location: " << currentNode->getWorldCoordinates().position() << "] ";
-
-						if ( !currentNode->components().empty() )
-						{
-							output << '\n';
-
-							for ( const auto & component : currentNode->components() )
-							{
-								output << pad << "   {" << component.second->getComponentType() << ":" << component.second->name() << "}\n";
-							}
-						}
-						else
-						{
-							output << "(Empty node)\n";
-						}
-					}
-					while ( (currentNode = crawler.nextNode()) != nullptr );
-				}
-			}
-			else
-			{
-				output << "No root node !" "\n";
-			}
+			output << "No static entity !" "\n";
 		}
-
-		if ( printStaticEntitySystem )
+		else
 		{
-			output << "Static entity system: " "\n";
+			output << "Static entity count: " << m_staticEntities.size() << "\n";
 
-			if ( m_staticEntities.empty() )
+			if ( showTree )
 			{
-				output << "No static entity !" "\n";
-			}
-			else
-			{
-				output << "Static entity count: " << m_staticEntities.size() << "\n";
-
-				if ( printTrees )
+				for ( auto staticEntityIt = m_staticEntities.cbegin(); staticEntityIt != m_staticEntities.cend(); ++staticEntityIt )
 				{
-					for ( auto staticEntityIt = m_staticEntities.cbegin(); staticEntityIt != m_staticEntities.cend(); ++staticEntityIt )
-					{
-						const auto & instance = staticEntityIt->second;
-
-						output << "[Static entity #" << std::distance(m_staticEntities.cbegin(), staticEntityIt) << ":" << staticEntityIt->first << "][Location: " << instance->getWorldCoordinates().position() << "] ";
-
-						if ( !instance->components().empty() )
-						{
-							output << '\n';
-
-							for ( const auto & component : instance->components() )
-							{
-								output << "   {" << component.second->getComponentType() << ":" << component.second->name() << "}\n";
-							}
-						}
-						else
-						{
-							output << "(Empty static entity)\n";
-						}
-					}
-				}
-			}
-		}
-
-		if ( printSectorSystem )
-		{
-			const std::lock_guard< std::mutex > lock{m_octreesMutex};
-
-			if ( m_octrees.empty() )
-			{
-				output << "No octree enabled !" "\n";
-			}
-			else
-			{
-				for ( const auto & octreeItem : m_octrees )
-				{
-					output << "Octree '" << octreeItem.first << "':" "\n";
-
-					const auto stats = this->getSectorStatistics(octreeItem.second);
+					const auto & instance = staticEntityIt->second;
 
 					output <<
-						   "Sector count: " << stats[0] << "\n"
-						"Sector depth: " << stats[1] << '\n';
+						"[Static entity #" << std::distance(m_staticEntities.cbegin(), staticEntityIt) << ":" << staticEntityIt->first << "]"
+						"[Location: " << instance->getWorldCoordinates().position() << "] ";
 
-					if ( printTrees )
+					if ( !instance->components().empty() )
 					{
+						output << '\n';
 
+						for ( const auto & component : std::ranges::views::values(instance->components()) )
+						{
+							output << "   {" << component->getComponentType() << ":" << component->name() << "}" "\n";
+						}
+					}
+					else
+					{
+						output << "(Empty static entity)" "\n";
+					}
+				}
+			}
+		}
+
+		return output.str();
+	}
+
+	std::string
+	Scene::getSectorSystemStatistics (bool showTree) const noexcept
+	{
+		std::stringstream output;
+
+		if ( m_renderingOctree == nullptr )
+		{
+			output << "No rendering octree enabled !" "\n";
+		}
+		else
+		{
+			const std::lock_guard< std::mutex > lock{m_renderingOctreeMutex};
+
+			output <<
+				"Rendering octree :" "\n"
+				"Sector depth: " << m_renderingOctree->getDepth() << "\n"
+				"Sector count: " << m_renderingOctree->getSectorCount() << "\n"
+				"Root element count: " << m_renderingOctree->elements().size() << '\n';
+
+			if ( showTree )
+			{
+				for ( const auto & element : m_renderingOctree->elements() )
+				{
+					output << "\t" "- " << element->name() << "\n";
+				}
+			}
+		}
+
+		if ( m_physicsOctree == nullptr )
+		{
+			output << "No physics octree enabled !" "\n";
+		}
+		else
+		{
+			const std::lock_guard< std::mutex > lock{m_physicsOctreeMutex};
+
+			output <<
+				"Physics octree :" "\n"
+				"Sector depth: " << m_physicsOctree->getDepth() << "\n"
+				"Sector count: " << m_physicsOctree->getSectorCount() << "\n"
+				"Root element count: " << m_physicsOctree->elements().size() << '\n';
+
+			if ( showTree )
+			{
+				for ( const auto & subSector : m_physicsOctree->subSectors() )
+				{
+					output << " Sector depth:" << subSector->getDistance() << ", slot:" << subSector->slot() << "\n";
+
+					for ( const auto & element : subSector->elements() )
+					{
+						output << "\t" "- " << element->name() << "\n";
 					}
 				}
 			}

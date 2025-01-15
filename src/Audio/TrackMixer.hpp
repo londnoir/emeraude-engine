@@ -1,41 +1,40 @@
 /*
- * Emeraude/Audio/TrackMixer.hpp
- * This file is part of Emeraude
+ * src/Audio/TrackMixer.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <array>
 #include <memory>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 #include "ConsoleControllable.hpp"
-#include "Observable.hpp"
-#include "Observer.hpp"
+#include "Libraries/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "MusicResource.hpp"
@@ -44,26 +43,28 @@
 /* Forward declarations. */
 namespace Emeraude
 {
+	namespace Audio
+	{
+		class Manager;
+	}
+
 	namespace Resources
 	{
 		class Manager;
 	}
 
-	class Arguments;
-	class Settings;
+	class PrimaryServices;
 }
 
 namespace Emeraude::Audio
 {
-	class Manager;
-
 	/**
 	 * @brief The track mixer service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
 	 * @extends Emeraude::ConsoleControllable This can be controlled by the console.
-	 * @extends Libraries::Observer
+	 * @extends Libraries::ObserverTrait
 	 */
-	class TrackMixer final : public ServiceInterface, public ConsoleControllable, public Libraries::Observer
+	class TrackMixer final : public ServiceInterface, public ConsoleControllable, public Libraries::ObserverTrait
 	{
 		public:
 
@@ -87,20 +88,35 @@ namespace Emeraude::Audio
 
 			/**
 			 * @brief Constructs the external audio input.
-			 * @param arguments A reference to the core arguments.
-			 * @param coreSettings A reference to the core settings.
+			 * @param primaryServices A reference to primary services.
 			 * @param resourceManager A reference to the resource manager.
 			 * @param audioManager A reference to the audio manager.
 			 */
-			TrackMixer (const Arguments & arguments, Settings & coreSettings, Resources::Manager & resourceManager, Manager & audioManager) noexcept;
+			TrackMixer (PrimaryServices & primaryServices, Resources::Manager & resourceManager, Manager & audioManager) noexcept;
 
-			/** @copydoc Libraries::Observable::is() */
+			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc Libraries::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc Emeraude::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Updates the track mixer.
@@ -118,10 +134,14 @@ namespace Emeraude::Audio
 			 * @return float
 			 */
 			[[nodiscard]]
-			float volume () const noexcept;
+			float
+			volume () const noexcept
+			{
+				return m_gain;
+			}
 
 			/**
-			 * @brief Plays a sound track.
+			 * @brief Plays a soundtrack.
 			 * @param track A reference to a music resource.
 			 * @param fade Enable fading. Default false.
 			 * @return bool
@@ -153,19 +173,10 @@ namespace Emeraude::Audio
 			 */
 			void stop () noexcept;
 
-			/** @brief Console function to play a music. */
-			int CFPlay (const std::vector< std::string > & parameters) noexcept;
-
-			/** @brief Console function to pause music playback. */
-			int CFPause (const std::vector< std::string > & parameters) noexcept;
-
-			/** @brief Console function to stop music playback. */
-			int CFStop (const std::vector< std::string > & parameters) noexcept;
-
 		private:
 
 			/** @brief The track type enumerations. */
-			enum class PlayingTrack
+			enum class PlayingTrack : uint8_t
 			{
 				None,
 				TrackA,
@@ -178,9 +189,9 @@ namespace Emeraude::Audio
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::Observer::onTerminate() */
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Fades a track.
@@ -199,23 +210,20 @@ namespace Emeraude::Audio
 			bool checkTrackLoading (const std::shared_ptr< MusicResource > & track) noexcept;
 
 			/* Flag names. */
-			static constexpr auto Usable = 0UL;
-			static constexpr auto IsFadingWasDemanded = 1UL;
-			static constexpr auto IsTrackingFading = 2UL;
+			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto IsFadingWasDemanded{1UL};
+			static constexpr auto IsTrackingFading{2UL};
 
-			// NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) NOTE: Services inter-connexions.
-			const Arguments & m_arguments;
-			Settings & m_coreSettings;
+			PrimaryServices & m_primaryServices;
 			Resources::Manager & m_resourceManager;
 			Manager & m_audioManager;
-			// NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
-			std::shared_ptr< Source > m_trackA{};
-			std::shared_ptr< Source > m_trackB{};
-			float m_gain = 0.0F;
-			PlayingTrack m_playingTrack = PlayingTrack::None;
-			std::shared_ptr< MusicResource > m_loadingTrack{};
-			std::array< bool, 8 > m_flags{ // NOLINT(*-magic-numbers)
-				false/*Usable*/,
+			std::shared_ptr< Source > m_trackA;
+			std::shared_ptr< Source > m_trackB;
+			float m_gain{0.0F};
+			PlayingTrack m_playingTrack{PlayingTrack::None};
+			std::shared_ptr< MusicResource > m_loadingTrack;
+			std::array< bool, 8 > m_flags{
+				false/*ServiceInitialized*/,
 				false/*IsFadingWasDemanded*/,
 				false/*IsTrackingFading*/,
 				false/*UNUSED*/,

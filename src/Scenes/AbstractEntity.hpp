@@ -1,85 +1,103 @@
 /*
- * Emeraude/Scenes/AbstractEntity.hpp
- * This file is part of Emeraude
+ * src/Scenes/AbstractEntity.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
-#include <string>
+/* STL inclusions. */
+#include <cstddef>
+#include <cstdint>
 #include <map>
-#include <array>
-#include <unordered_set>
+#include <vector>
+#include <string>
+#include <any>
 #include <memory>
-#include <functional>
+#include <mutex>
 
 /* Local inclusions for inheritances. */
-#include "AbstractOctreeElement.hpp"
-#include "Physics/PhysicalInterface.hpp"
-#include "Observable.hpp"
-#include "Observer.hpp"
+#include "LocatableInterface.hpp"
+#include "Libraries/ObserverTrait.hpp"
+#include "Libraries/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
+#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libraries/Math/Cuboid.hpp"
+#include "Libraries/Math/Sphere.hpp"
+#include "Audio/SoundResource.hpp"
+#include "Graphics/Renderable/MeshResource.hpp"
+#include "Graphics/Renderable/SpriteResource.hpp"
+#include "Graphics/Material/BasicResource.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"
-#include "OctreeSector.hpp"
-/* Components lists */
-#include "AbstractComponent.hpp"
-#include "Camera.hpp"
-#include "Microphone.hpp"
-#include "DirectionalLight.hpp"
-#include "PointLight.hpp"
-#include "SpotLight.hpp"
-#include "SoundEmitter.hpp"
-#include "VisualComponent.hpp"
-#include "MultipleVisualsComponent.hpp"
-#include "ParticlesEmitter.hpp"
-#include "DirectionalPushModifier.hpp"
-#include "SphericalPushModifier.hpp"
-#include "Weight.hpp"
+#include "Component/Camera.hpp"
+#include "Component/DirectionalLight.hpp"
+#include "Component/DirectionalPushModifier.hpp"
+#include "Component/Microphone.hpp"
+#include "Component/MultipleVisuals.hpp"
+#include "Component/ParticlesEmitter.hpp"
+#include "Component/PointLight.hpp"
+#include "Component/SoundEmitter.hpp"
+#include "Component/SphericalPushModifier.hpp"
+#include "Component/SpotLight.hpp"
+#include "Component/Visual.hpp"
+#include "Component/Weight.hpp"
+
+/* Forward declarations. */
+namespace Emeraude::Physics
+{
+	class MovableTrait;
+}
 
 namespace Emeraude::Scenes
 {
-	/**
-	 * @brief Defines the base of something in the 3D world composed with components.
-	 * @extends std::enable_shared_from_this< AbstractEntity > To self replicate with smart pointer.
-	 * @extends Emeraude::Scenes::AbstractOctreeElement An entity is insertable to the octree system.
-	 * @extends Emeraude::Physics::PhysicalInterface A movable entity has physical properties to interact with other entities from the 3D world.
-	 * @extends Libraries::Observer An entity listen to its components.
-	 * @extends Libraries::Observable An entity is observable to notify its content modification easily.
-	 */
-	class AbstractEntity : public std::enable_shared_from_this< AbstractEntity >, public AbstractOctreeElement, virtual public Physics::PhysicalInterface, public Libraries::Observer, public Libraries::Observable
+	enum class VisualDebugType
 	{
-		friend class OctreeSector;
+		Axis,
+		Velocity,
+		BoundingBox,
+		BoundingSphere,
+		Camera,
+	};
 
+	/**
+	 * @brief Defines the base of an entity in the 3D world composed with components.
+	 * @extends Libraries::FlagArrayTrait Each component has 8 flags, 2 are used by this base class.
+	 * @extends Libraries::NameableTrait An entity is nameable.
+	 * @extends Emeraude::Scenes::LocatableInterface An entity is insertable to an octree system.
+	 * @extends Libraries::ObserverTrait An entity listen to its components.
+	 * @extends Libraries::ObservableTrait An entity is observable to notify its content modification easily.
+	 */
+	class AbstractEntity : public Libraries::FlagArrayTrait< 8 >, public Libraries::NameableTrait, public LocatableInterface, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	{
 		public:
 
 			/** @brief Observable notification codes. */
 			enum NotificationCode
 			{
 				/* Main notifications */
-				ContentModified,
+				EntityContentModified,
 				ComponentCreated,
 				ComponentDestroyed,
 				ModifierCreated,
@@ -116,11 +134,6 @@ namespace Emeraude::Scenes
 			};
 
 			/**
-			 * @brief Destructs the abstract entity.
-			 */
-			~AbstractEntity () override = default;
-
-			/**
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
@@ -135,40 +148,57 @@ namespace Emeraude::Scenes
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return AbstractEntity &
 			 */
 			AbstractEntity & operator= (const AbstractEntity & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return AbstractEntity &
 			 */
 			AbstractEntity & operator= (AbstractEntity && copy) noexcept = delete;
 
+			/**
+			 * @brief Destructs the abstract entity.
+			 */
+			~AbstractEntity () override = default;
+
 			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & localBoundingBox () const noexcept override;
+			const Libraries::Math::Cuboid< float > &
+			localBoundingBox () const noexcept final
+			{
+				return m_boundingBox;
+			}
 
 			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & localBoundingSphere () const noexcept override;
-
-			/** @copydoc Emeraude::Physics::PhysicalInterface::physicalObjectProperties() const */
-			const Physics::PhysicalObjectProperties & physicalObjectProperties () const noexcept override;
-
-			/** @copydoc Emeraude::Physics::PhysicalInterface::physicalObjectProperties() */
-			Physics::PhysicalObjectProperties & physicalObjectProperties () noexcept override;
+			const Libraries::Math::Sphere< float > &
+			localBoundingSphere () const noexcept final
+			{
+				return m_boundingSphere;
+			}
 
 			/**
-			 * @brief Updates components when the holder is moving.
+			 * @brief Returns the physical properties.
+			 * @return const PhysicalObjectProperties &
 			 */
-			virtual void move () noexcept final;
+			const Physics::PhysicalObjectProperties &
+			physicalObjectProperties () const noexcept
+			{
+				return m_physicalObjectProperties;
+			}
 
 			/**
-			 * @brief Returns the holding scene.
-			 * @return Scene *
+			 * @brief Returns the writable physical properties.
+			 * @return PhysicalObjectProperties &
 			 */
-			[[nodiscard]]
-			virtual Scene * parentScene () const noexcept final;
+			Physics::PhysicalObjectProperties &
+			physicalObjectProperties () noexcept
+			{
+				return m_physicalObjectProperties;
+			}
 
 			/**
 			 * @brief Returns whether a named component exists in the entity.
@@ -176,7 +206,7 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool containsComponent (const std::string & name) const noexcept final;
+			bool containsComponent (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Returns whether a component is part of this entity.
@@ -184,271 +214,508 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool containsComponent (const std::shared_ptr< AbstractComponent > & component) const noexcept final;
+			bool containsComponent (const std::shared_ptr< Component::Abstract > & component) const noexcept;
 
 			/**
 			 * @brief Returns the component list of this entity.
-			 * @return const std::map< std::string, std::shared_ptr< AbstractComponent > > &
+			 * @return const std::map< std::string, std::shared_ptr< Component::Abstract > > &
 			 */
 			[[nodiscard]]
-			virtual const std::map< std::string, std::shared_ptr< AbstractComponent > > & components () const noexcept final;
+			const std::map< std::string, std::shared_ptr< Component::Abstract > > &
+			components () const noexcept
+			{
+				return m_components;
+			}
 
 			/**
 			 * @brief Returns the component list of this entity.
-			 * @return std::map< std::string, std::shared_ptr< AbstractComponent > > &
+			 * @return std::map< std::string, std::shared_ptr< Component::Abstract > > &
 			 */
 			[[nodiscard]]
-			virtual std::map< std::string, std::shared_ptr< AbstractComponent > > & components () noexcept final;
+			std::map< std::string, std::shared_ptr< Component::Abstract > > &
+			components () noexcept
+			{
+				return m_components;
+			}
 
 			/**
 			 * @brief Returns a possible named component from the entity.
 			 * @param name The name of the component.
-			 * @return std::shared_ptr< AbstractComponent >
+			 * @return std::shared_ptr< Component::Abstract >
 			 */
 			[[nodiscard]]
-			virtual std::shared_ptr< AbstractComponent > getComponent (const std::string & name) const noexcept final;
+			std::shared_ptr< Component::Abstract > getComponent (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Removes a component by his name from this entity. Returns true whether the component existed.
 			 * @param name The name of the component.
 			 * @return bool
 			 */
-			virtual bool removeComponent (const std::string & name) noexcept final;
+			bool removeComponent (const std::string & name) noexcept;
 
 			/**
 			 * @brief Removes a component by its pointer from this entity. Returns true whether the component existed.
-			 * @param name The name of the component.
+			 * @param component The name of the component.
 			 * @return bool
 			 */
-			virtual bool removeComponent (const std::shared_ptr< AbstractComponent > & component) noexcept final;
+			bool removeComponent (const std::shared_ptr< Component::Abstract > & component) noexcept;
 
 			/**
 			 * @brief Removes all components.
 			 * @return void
 			 */
-			virtual void clearComponents () noexcept final;
+			void clearComponents () noexcept;
 
 			/**
 			 * @brief Reads something on each component of the entity.
-			 * @param lambda A reference to a function using the signature "bool method (const AbstractComponent & component)".
+			 * @param lambda A reference to a function using the signature "bool method (const Component::Abstract & component)".
 			 * @return void
 			 */
-			virtual void forEachComponent (const std::function< bool (const AbstractComponent & component) > & lambda) const noexcept final;
+			void forEachComponent (const std::function< bool (const Component::Abstract & component) > & lambda) const noexcept;
 
 			/**
 			 * @brief Reads something on each component of the entity.
-			 * @param lambda A reference to a function using the signature "bool method (const AbstractComponent & component, int index)".
+			 * @param lambda A reference to a function using the signature "bool method (const Component::Abstract & component, int index)".
 			 * @return void
 			 */
-			virtual void forEachComponent (const std::function< bool (const AbstractComponent & component, size_t index) > & lambda) const noexcept final;
+			void forEachComponent (const std::function< bool (const Component::Abstract & component, size_t index) > & lambda) const noexcept;
 
 			/**
 			 * @brief Modifies something on each component of the entity.
-			 * @param lambda A reference to a function using the signature "bool method (const AbstractComponent & component)".
+			 * @param lambda A reference to a function using the signature "bool method (const Component::Abstract & component)".
 			 * @return void
 			 */
-			virtual void forEachComponent (const std::function< bool (AbstractComponent & component) > & lambda) noexcept final;
+			void forEachComponent (const std::function< bool (Component::Abstract & component) > & lambda) noexcept;
 
 			/**
 			 * @brief Modifies something on each component of the entity.
-			 * @param lambda A reference to a function using the signature "bool method (const AbstractComponent & component, int index)".
+			 * @param lambda A reference to a function using the signature "bool method (const Component::Abstract & component, int index)".
 			 * @return void
 			 */
-			virtual void forEachComponent (const std::function< bool (AbstractComponent & component, size_t index) > & lambda) noexcept final;
+			void forEachComponent (const std::function< bool (Component::Abstract & component, size_t index) > & lambda) noexcept;
 
 			/**
 			 * @brief Creates a camera.
+			 * @param perspective Set up a perspective projection to the camera. Default true.
+			 * @param primaryDevice Declare this device as a primary one. Default false.
 			 * @param componentName The name of the component. Default "Camera".
-			 * @param primaryDevice Set this device as primary one. Default false.
-			 * @param enableModel Enables a model to visualize the camera. Default false.
-			 * @return std::shared_ptr< Camera >
+			 * @return std::shared_ptr< Component::Camera >
 			 */
-			virtual std::shared_ptr< Camera > newCamera (const std::string & componentName = "Camera", bool primaryDevice = false, bool enableModel = false) noexcept final;
+			std::shared_ptr< Component::Camera > newCamera (bool perspective = true, bool primaryDevice = false, const std::string & componentName = "Camera") noexcept;
 
 			/**
-			 * @brief Creates an orthographic camera.
-			 * @param componentName The name of the component. Default "OrthographicCamera".
-			 * @param primaryDevice Set this device as primary one. Default false.
-			 * @param enableModel Enables a model to visualize the camera. Default false.
-			 * @return std::shared_ptr< Camera >
+			 * @brief Creates a camera as primary device, using a perspective projection [SHORTCUT].
+			 * @param componentName The name of the component. Default "PrimaryPerspectiveCamera".
+			 * @return std::shared_ptr< Component::Camera >
 			 */
-			virtual std::shared_ptr< Camera > newOrthographicCamera (const std::string & componentName = "OrthographicCamera", bool primaryDevice = false, bool enableModel = false) noexcept final;
+			std::shared_ptr< Component::Camera >
+			newPrimaryPerspectiveCamera (const std::string & componentName = "PrimaryPerspectiveCamera") noexcept
+			{
+				return this->newCamera(true, true, componentName);
+			}
+
+			/**
+			 * @brief Creates a camera as primary device, using an orthographic projection [SHORTCUT].
+			 * @param componentName The name of the component. Default "PrimaryOrthographicCamera".
+			 * @return std::shared_ptr< Component::Camera >
+			 */
+			std::shared_ptr< Component::Camera >
+			newPrimaryOrthographicCamera (const std::string & componentName = "PrimaryOrthographicCamera") noexcept
+			{
+				return this->newCamera(false, true, componentName);
+			}
+
+			/**
+			 * @brief Creates a camera using a perspective projection [SHORTCUT].
+			 * @param componentName The name of the component. Default "PerspectiveCamera".
+			 * @return std::shared_ptr< Component::Camera >
+			 */
+			std::shared_ptr< Component::Camera >
+			newPerspectiveCamera (const std::string & componentName = "PerspectiveCamera") noexcept
+			{
+				return this->newCamera(true, false, componentName);
+			}
+
+			/**
+			 * @brief Creates a camera using an orthographic projection [SHORTCUT].
+			 * @param componentName The name of the component. Default "OrthographicCamera".
+			 * @return std::shared_ptr< Component::Camera >
+			 */
+			std::shared_ptr< Component::Camera >
+			newOrthographicCamera (const std::string & componentName = "OrthographicCamera") noexcept
+			{
+				return this->newCamera(false, false, componentName);
+			}
 
 			/**
 			 * @brief Creates a microphone.
 			 * @param componentName The name of the component. Default "Microphone".
 			 * @param primaryDevice Set this device as primary one. Default false.
-			 * @return std::shared_ptr< Microphone >
+			 * @return std::shared_ptr< Component::Microphone >
 			 */
-			virtual std::shared_ptr< Microphone > newMicrophone (const std::string & componentName = "Microphone", bool primaryDevice = false) noexcept final;
+			std::shared_ptr< Component::Microphone > newMicrophone (bool primaryDevice = false, const std::string & componentName = "Microphone") noexcept;
+
+			/**
+			 * @brief Creates a microphone as primary device [SHORTCUT].
+			 * @param componentName The name of the component. Default "PrimaryMicrophone".
+			 * @return std::shared_ptr< Component::Microphone >
+			 */
+			std::shared_ptr< Component::Camera >
+			newPrimaryMicrophone (const std::string & componentName = "PrimaryMicrophone") noexcept
+			{
+				return this->newCamera(true, true, componentName);
+			}
 
 			/**
 			 * @brief Creates a directional light emitter.
+			 * @param shadowMapResolution The shadow map resolution. Default, no shadow map.
 			 * @param componentName The name of the component. Default "DirectionalLight".
-			 * @return std::shared_ptr< DirectionalLight >
+			 * @return std::shared_ptr< Component::DirectionalLight >
 			 */
-			virtual std::shared_ptr< DirectionalLight > newDirectionalLight (const std::string & componentName = "DirectionalLight") noexcept final;
+			std::shared_ptr< Component::DirectionalLight > newDirectionalLight (uint32_t shadowMapResolution = 0, const std::string & componentName = "DirectionalLight") noexcept;
 
 			/**
 			 * @brief Creates a point light emitter.
+			 * @param shadowMapResolution The shadow map resolution. Default, no shadow map.
 			 * @param componentName The name of the component. Default "PointLight".
-			 * @return std::shared_ptr< PointLight >
+			 * @return std::shared_ptr< Component::PointLight >
 			 */
-			virtual std::shared_ptr< PointLight > newPointLight (const std::string & componentName = "PointLight") noexcept final;
+			std::shared_ptr< Component::PointLight > newPointLight (uint32_t shadowMapResolution = 0, const std::string & componentName = "PointLight") noexcept;
 
 			/**
-			 * @brief Creates a spot light emitter.
+			 * @brief Creates a spotlight emitter.
+			 * @param shadowMapResolution The shadow map resolution. Default, no shadow map.
 			 * @param componentName The name of the component. Default "SpotLight".
-			 * @return std::shared_ptr< SpotLight >
+			 * @return std::shared_ptr< Component::SpotLight >
 			 */
-			virtual std::shared_ptr< SpotLight > newSpotLight (const std::string & componentName = "SpotLight") noexcept final;
+			std::shared_ptr< Component::SpotLight > newSpotLight (uint32_t shadowMapResolution = 0, const std::string & componentName = "SpotLight") noexcept;
 
 			/**
 			 * @brief Creates a sound emitter.
 			 * @param componentName The name of the component. Default "SoundEmitter".
-			 * @return std::shared_ptr< SoundEmitter >
+			 * @return std::shared_ptr< Component::SoundEmitter >
 			 */
-			virtual std::shared_ptr< SoundEmitter > newSoundEmitter (const std::string & componentName = "SoundEmitter") noexcept final;
+			std::shared_ptr< Component::SoundEmitter > newSoundEmitter (const std::string & componentName = "SoundEmitter") noexcept;
 
 			/**
 			 * @brief Creates a sound emitter and provide a sound.
 			 * @param resource A reference to a sound resource smart pointer to play.
-			 * @param loop Set the loop state. Default true.
+			 * @param gain Set the playback volume.
+			 * @param loop Set the loop state.
 			 * @param componentName The name of the component. Default "SoundEmitter".
-			 * @return std::shared_ptr< SoundEmitter >
+			 * @return std::shared_ptr< Component::SoundEmitter >
 			 */
-			virtual std::shared_ptr< SoundEmitter > newSoundEmitter (const std::shared_ptr< Audio::SoundResource > & resource, bool loop = true, const std::string & componentName = "SoundEmitter") noexcept final;
+			std::shared_ptr< Component::SoundEmitter > newSoundEmitter (const std::shared_ptr< Audio::SoundResource > & resource, float gain, bool loop, const std::string & componentName = "SoundEmitter") noexcept;
 
 			/**
-			 * @brief Creates a mesh instance.
-			 * @param resource a reference to a mesh resource smart pointer.
-			 * @param componentName The name of the component. Default "VisualComponent".
-			 * @return std::shared_ptr< VisualComponent >
+			 * @brief Creates a visual instance.
+			 * @param resource A reference to a renderable interface smart pointer.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting on the visual. Default true.
+			 * @param componentName A reference to a string for the name of the component. Default "Visual".
+			 * @return std::shared_ptr< Component::Visual >
 			 */
-			virtual std::shared_ptr< VisualComponent > newMeshInstance (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, const std::string & componentName = "VisualComponent") noexcept final;
+			std::shared_ptr< Component::Visual > newVisual (const std::shared_ptr< Graphics::Renderable::Interface > & resource, bool enablePhysicalProperties = true, bool enableLighting = true, const std::string & componentName = "Visual") noexcept;
 
 			/**
-			 * @brief Creates a sprite instance.
-			 * @param resource a reference to a sprite resource smart pointer.
-			 * @param componentName The name of the component. Default "VisualComponent".
-			 * @return std::shared_ptr< VisualComponent >
-			 */
-			virtual std::shared_ptr< VisualComponent > newSpriteInstance (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, const std::string & componentName = "VisualComponent") noexcept final;
-
-			/**
-			 * @brief Creates a multiple mesh instances.
-			 * @param resource A reference to a mesh resource smart pointer.
+			 * @brief Creates a visual instances.
+			 * @note Version for multiple underlying renderable object instances.
+			 * @param resource A reference to a renderable interface smart pointer.
 			 * @param coordinates An array of coordinates to place instances.
-			 * @param componentName The name of the component. Default "MultipleVisualsComponent".
-			 * @return std::shared_ptr< MultipleVisualsComponent >
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting on the visual. Default true.
+			 * @param componentName The name of the component. Default "MultipleVisuals".
+			 * @return std::shared_ptr< Component::MultipleVisuals >
 			 */
-			virtual std::shared_ptr< MultipleVisualsComponent > newMeshInstance (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, const std::vector< Libraries::Math::Coordinates< float > > & coordinates, const std::string & componentName = "MultipleVisualsComponent") noexcept final;
-
-			/**
-			 * @brief Creates a multiple sprite instances.
-			 * @param resource A reference to a sprite resource smart pointer.
-			 * @param coordinates An array of coordinates to place instances.
-			 * @param componentName The name of the component. Default "MultipleVisualsComponent".
-			 * @return std::shared_ptr< MultipleVisualsComponent >
-			 */
-			virtual std::shared_ptr< MultipleVisualsComponent > newSpriteInstance (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, const std::vector< Libraries::Math::Coordinates< float > > & coordinates, const std::string & componentName = "MultipleVisualsComponent") noexcept final;
+			std::shared_ptr< Component::MultipleVisuals > newVisual (const std::shared_ptr< Graphics::Renderable::Interface > & resource, const std::vector< Libraries::Math::CartesianFrame< float > > & coordinates, bool enablePhysicalProperties = true, bool enableLighting = true, const std::string & componentName = "MultipleVisuals") noexcept;
 
 			/**
 			 * @brief Creates a particles emitter using a sprite resource.
 			 * @param resource a reference to a sprite resource smart pointer.
 			 * @param maxParticleCount The limit of particles allowed to be generated at once.
 			 * @param componentName The name of the component. Default "ParticlesEmitter".
-			 * @return std::shared_ptr< ParticlesEmitter >
+			 * @return std::shared_ptr< Component::ParticlesEmitter >
 			 */
-			virtual std::shared_ptr< ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept final;
+			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
 
 			/**
 			 * @brief Creates a particles emitter using a mesh resource.
 			 * @param resource a reference to a mesh resource smart pointer.
 			 * @param maxParticleCount The limit of particles allowed to be generated at once.
 			 * @param componentName The name of the component. Default "ParticlesEmitter".
-			 * @return std::shared_ptr< ParticlesEmitter >
+			 * @return std::shared_ptr< Component::ParticlesEmitter >
 			 */
-			virtual std::shared_ptr< ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept final;
+			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
 
 			/**
 			 * @brief Creates a directional push modifier.
 			 * @param componentName The name of the component. Default "DirectionalPushModifier".
-			 * @return std::shared_ptr< DirectionalPushModifier >
+			 * @return std::shared_ptr< Component::DirectionalPushModifier >
 			 */
-			virtual std::shared_ptr< DirectionalPushModifier > newDirectionalPushModifier (const std::string & componentName = "DirectionalPushModifier") noexcept final;
+			std::shared_ptr< Component::DirectionalPushModifier > newDirectionalPushModifier (const std::string & componentName = "DirectionalPushModifier") noexcept;
 
 			/**
 			 * @brief Creates a spherical push modifier.
 			 * @param componentName The name of the component. Default "SphericalPushModifier".
-			 * @return std::shared_ptr< SphericalPushModifier >
+			 * @return std::shared_ptr< Component::SphericalPushModifier >
 			 */
-			virtual std::shared_ptr< SphericalPushModifier > newSphericalPushModifier (const std::string & componentName = "SphericalPushModifier") noexcept final;
-
-			/**
-			 * @brief Creates a weight with default properties.
-			 * @param componentName The name of the component. Default "Weight".
-			 * @return std::shared_ptr< Weight >
-			 */
-			virtual std::shared_ptr< Weight > newWeight (const std::string & componentName = "Weight") noexcept final;
+			std::shared_ptr< Component::SphericalPushModifier > newSphericalPushModifier (const std::string & componentName = "SphericalPushModifier") noexcept;
 
 			/**
 			 * @brief Creates a weight with customized properties.
+			 * @note This component will automatically enable the physical properties.
 			 * @param initialProperties A reference to a physical object properties.
 			 * @param componentName The name of the component. Default "Weight".
-			 * @return std::shared_ptr< Weight >
+			 * @return std::shared_ptr< Component::Weight >
 			 */
-			virtual std::shared_ptr< Weight > newWeight (const Physics::PhysicalObjectProperties & initialProperties, const std::string & componentName = "Weight") noexcept final;
+			std::shared_ptr< Component::Weight > newWeight (const Physics::PhysicalObjectProperties & initialProperties, const std::string & componentName = "Weight") noexcept;
 
 			/**
-			 * @brief Updates components logics from engine cycle.
-			 * @param scene A reference to the scene.
-			 * @param cycle The engine cycle loop.
+			 * @brief This will override the computation of bounding primitives.
+			 * @param box A reference to a box.
+			 * @param sphere A reference to a sphere.
+			 * @return void
+			 */
+			void overrideBoundingPrimitives (const Libraries::Math::Cuboid< float > & box, const Libraries::Math::Sphere< float > & sphere) noexcept;
+
+			/**
+			 * @brief Enables a visual debug for this entity.
+			 * @param type The type of visual debug.
+			 * @return void
+			 */
+			void enableVisualDebug (VisualDebugType type) noexcept;
+
+			/**
+			 * @brief Disable a visual debug for this entity.
+			 * @param type The type of visual debug.
+			 * @return void
+			 */
+			void disableVisualDebug (VisualDebugType type) noexcept;
+
+			/**
+			 * @brief Toggle the visibility of a debug and returns the current state.
+			 * @param type The type of visual debug.
 			 * @return bool
 			 */
-			virtual bool processLogics (const Scene & scene, size_t cycle) noexcept = 0;
+			bool toggleVisualDebug (VisualDebugType type) noexcept;
+
+			/**
+			 * @brief Returns whether a visual debug is displayed.
+			 * @param type The type of visual debug.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool isVisualDebugEnabled (VisualDebugType type) const noexcept;
+
+			/**
+			 * @brief Updates components logics from engine cycle and returns if the entity has moved in the scene.
+			 * @param scene A reference to the scene.
+			 * @param engineCycle The current engine cycle number.
+			 * @return bool
+			 */
+			bool processLogics (const Scene & scene, size_t engineCycle) noexcept;
+
+			/**
+			 * @brief Returns if the entity has moved since the last cycle.
+			 * @param engineCycle The current engine cycle number.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			hasMoved (size_t engineCycle) const noexcept
+			{
+				return m_lastUpdatedMoveCycle >= engineCycle - 1;
+			}
+
+			/**
+			 * @brief Returns when the entity is born in the time scene (ms).
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			birthTime () const noexcept
+			{
+				return m_birthTime;
+			}
+
+			/**
+			* @brief Returns whether the entity is collide-able.
+			* @note This means the entity has bounding shapes.
+			* @return bool
+			*/
+			[[nodiscard]]
+			bool
+			isDeflector () const noexcept
+			{
+				return this->isFlagEnabled(IsDeflector);
+			}
+
+			/**
+			 * @brief Returns whether the entity is renderable.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isRenderable () const noexcept
+			{
+				return this->isFlagEnabled(IsRenderable);
+			}
+
+			/**
+			 * @brief Returns whether the entity has physical properties.
+			 * @todo [PHYSICS] Should question present var to determine if there are valid properties. No more flag.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			hasPhysicalObjectProperties () const noexcept
+			{
+				return this->isFlagEnabled(HasPhysicalObjectProperties);
+			}
+
+			/**
+			 * @brief Pauses the simulation on this entity. The object will not receive gravity and drag force.
+			 * @note The simulation will restart automatically after adding a custom force.
+			 * @param state The state.
+			 */
+			void
+			pauseSimulation (bool state) noexcept
+			{
+				this->setFlag(IsSimulationPaused, state);
+			}
+
+			/**
+			 * @brief Returns whether the physics simulation is paused on this entity.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isSimulationPaused () const noexcept
+			{
+				return this->isFlagEnabled(IsSimulationPaused);
+			}
+
+			/**
+			 * @brief Disables the collisions test.
+			 * @return void
+			 */
+			void
+			disableCollision () noexcept
+			{
+				this->enableFlag(IsCollisionDisabled);
+			}
+
+			/**
+			 * @brief Returns whether the collision test is disabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isCollisionDisabled () const noexcept
+			{
+				return this->isFlagEnabled(IsCollisionDisabled);
+			}
+
+			/**
+			 * @brief Returns whether the entity is able to move.
+			 * @note If true, this should give access to a MovableTrait with AbstractEntity::getMovableTrait().
+			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			virtual bool hasMovableAbility () const noexcept = 0;
+
+			/**
+			 * @brief Returns whether the entity is moving.
+			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
+			 * @return Physics::MovableTrait *
+			 */
+			[[nodiscard]]
+			virtual Physics::MovableTrait * getMovableTrait () noexcept = 0;
+
+			/**
+			 * @brief Returns whether the entity is currently moving. This denotes the entity has a velocity.
+			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			virtual bool isMoving () const noexcept = 0;
 
 		protected:
+
+			/* Flag names */
+			static constexpr auto BoundingPrimitivesOverridden{0UL};
+			static constexpr auto IsDeflector{1UL};
+			static constexpr auto IsRenderable{2UL};
+			static constexpr auto HasPhysicalObjectProperties{3UL};
+			static constexpr auto SphereCollisionEnabled{4UL};
+			static constexpr auto IsSimulationPaused{5UL};
+			static constexpr auto IsCollisionDisabled{6UL};
+			static constexpr auto NextFlag{7UL};
 
 			/**
 			 * @brief Constructs an abstract entity.
 			 * @param name The name of the entity.
-			 * @param parentScene A point of the scene holding this entity.
+			 * @param sceneTimeMS The scene current time in milliseconds.
 			 */
-			AbstractEntity (const std::string & name, Scene * parentScene) noexcept;
+			AbstractEntity (const std::string & name, uint32_t sceneTimeMS) noexcept;
+
+			/**
+			 * @brief Updates components when the holder is moving.
+			 * @param worldCoordinates A reference to the container world coordinates.
+			 * @return void
+			 */
+			void onContainerMove (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept;
 
 			/**
 			 * @brief Sets whether the entity is renderable.
 			 * @param state The state of rendering ability.
 			 * @return void
 			 */
-			virtual void setRenderingAbilityState (bool state) noexcept = 0;
+			void
+			setRenderingAbilityState (bool state) noexcept
+			{
+				this->setFlag(IsRenderable, state);
+			}
 
 			/**
 			 * @brief Sets whether the entity has physical properties.
 			 * @param state The state of physical ability.
 			 * @return void
 			 */
-			virtual void setPhysicalObjectPropertiesState (bool state) noexcept = 0;
+			void
+			setPhysicalObjectPropertiesState (bool state) noexcept
+			{
+				this->setFlag(HasPhysicalObjectProperties, state);
+			}
+
+			/**
+			 * @brief Updates components logics from engine cycle for child class and returns if the entity has moved in the scene.
+			 * @todo [PHYSICS] Should use is own method.
+			 * @param scene A reference to the scene.
+			 * @return bool
+			 */
+			virtual bool onProcessLogics (const Scene & scene) noexcept = 0;
 
 		private:
 
-			/** @copydoc Libraries::Observer::onNotification() */
+			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Observable * observable, int notificationCode, const std::any & data) noexcept final;
+			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept final;
 
 			/**
-			 * @brief Called when a notification is not handled by the entity abstract level.
-			 * @note If this function return false, the observer will be automatically detached.
-			 * @return bool
-			 */
-			virtual bool onUnhandledNotification (const Libraries::Observable * observable, int notificationCode, const std::any & data) noexcept = 0;
-
-			/**
-			 * @brief This function is called to update entity properties with attached components.
+			 * @brief Updates the entity properties when content is modified.
+			 * @note This includes the physical properties, bounding primitives and states.
 			 * @return void
 			 */
-			virtual void updateGlobalPhysicalObjectProperties () noexcept final;
+			void updateEntityProperties () noexcept;
+
+			/**
+			 * @brief Updates only the entity states.
+			 * @note This is useful when adding a non-physical component.
+			 * @return void
+			 */
+			void updateEntityStates () noexcept;
 
 			/**
 			 * @brief Before creating a new component, this function is called to know if the component name is available.
@@ -456,7 +723,7 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool checkComponentNameAvailability (const std::string & name) const noexcept final;
+			bool checkComponentNameAvailability (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Adds a component in the entity.
@@ -464,19 +731,109 @@ namespace Emeraude::Scenes
 			 * @param component A reference to the component smart pointer.
 			 * @return bool
 			 */
-			virtual bool addComponent (const std::string & name, const std::shared_ptr< AbstractComponent > & component) noexcept final;
+			bool addComponent (const std::string & name, const std::shared_ptr< Component::Abstract > & component) noexcept;
 
 			/**
-			 * @brief Removes a component from the entity.
-			 * @param componentIt An iterator from the component map.
-			 * @return map< string, shared_ptr< AbstractComponent > >::iterator
+			 * @brief Prepares to remove a component from the entity.
+			 * @param component A reference to a component smart pointer.
+			 * @return void
 			 */
-			std::map< std::string, std::shared_ptr< AbstractComponent > >::iterator removeComponent (const std::map< std::string, std::shared_ptr< AbstractComponent > >::iterator & componentIt) noexcept;
+			void unlinkComponent (const std::shared_ptr< Component::Abstract > & component) noexcept;
 
-			Scene * m_parentScene = nullptr;
-			std::map< std::string, std::shared_ptr< AbstractComponent > > m_components{};
-			Libraries::Math::Cuboid< float > m_boundingBox{};
-			Libraries::Math::Sphere< float > m_boundingSphere{};
-			Physics::PhysicalObjectProperties m_physicalObjectProperties{};
+			/**
+			 * @brief Updates enabled visual debug on physical properties changes on the entity.
+			 * @return void
+			 */
+			void updateVisualDebug () noexcept;
+
+			/**
+			 * @brief Returns a material for plain visual debug objects.
+			 * @todo This should be moved to a general place for all debug objects.
+			 * @return std::shared_ptr< Graphics::Material::BasicResource >
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Material::BasicResource > getPlainVisualDebugMaterial (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Returns a material for translucent visual debug objects.
+			 * @todo This should be moved to a general place for all debug objects.
+			 * @return std::shared_ptr< Graphics::Material::BasicResource >
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Material::BasicResource > getTranslucentVisualDebugMaterial (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Gets or creates the axis visual debug.
+			 * @param resources A reference to the resource manager.
+			 * @return std::shared_ptr< Graphics::Renderable::MeshResource
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Renderable::MeshResource > getAxisVisualDebug (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Gets or creates the velocity visual debug.
+			 * @param resources A reference to the resource manager.
+			 * @return std::shared_ptr< Graphics::Renderable::MeshResource
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Renderable::MeshResource > getVelocityVisualDebug (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Gets or creates the bounding box visual debug.
+			 * @param resources A reference to the resource manager.
+			 * @return std::shared_ptr< Graphics::Renderable::MeshResource
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Renderable::MeshResource > getBoundingBoxVisualDebug (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Gets or creates the bounding sphere visual debug.
+			 * @param resources A reference to the resource manager.
+			 * @return std::shared_ptr< Graphics::Renderable::MeshResource
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Renderable::MeshResource > getBoundingSphereVisualDebug (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Gets or creates the camera visual debug.
+			 * @param resources A reference to the resource manager.
+			 * @return std::shared_ptr< Graphics::Renderable::MeshResource
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< Graphics::Renderable::MeshResource > getCameraVisualDebug (Resources::Manager & resources) noexcept;
+
+			/**
+			 * @brief Enables the deflector state.
+			 * @param state The state of the effect.
+			 * @return void
+			 */
+			void
+			setDeflectorState (bool state) noexcept
+			{
+				this->setFlag(IsDeflector, state);
+			}
+
+			/**
+			 * @brief Called when a notification is not handled by the entity abstract level.
+			 * @todo [GENERAL] Should use is own method. Rethink the purpose.
+			 * @note If this function return false, the observer will be automatically detached.
+			 * @return bool
+			 */
+			virtual bool onUnhandledNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept = 0;
+
+			/**
+			 * @brief Called when the entity has moved.
+			 * @todo [PHYSICS] Should use is own method.
+			 * @return void
+			 */
+			virtual void onLocationDataUpdate () noexcept = 0;
+
+			std::map< std::string, std::shared_ptr< Component::Abstract > > m_components;
+			Libraries::Math::Cuboid< float > m_boundingBox;
+			Libraries::Math::Sphere< float > m_boundingSphere;
+			Physics::PhysicalObjectProperties m_physicalObjectProperties;
+			uint32_t m_birthTime{0};
+			size_t m_lastUpdatedMoveCycle{0};
+			mutable std::mutex m_componentsAccess;
 	};
 }

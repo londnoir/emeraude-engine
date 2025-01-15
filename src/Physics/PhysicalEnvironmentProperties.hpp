@@ -1,27 +1,27 @@
 /*
- * Emeraude/Physics/PhysicalEnvironmentProperties.hpp
- * This file is part of Emeraude
+ * src/Physics/PhysicalEnvironmentProperties.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
@@ -51,12 +51,53 @@ namespace Emeraude::Physics
 			PhysicalEnvironmentProperties (float surfaceGravity, float atmosphericDensity, float planetRadius) noexcept;
 
 			/**
-			 * @brief Returns the gravity in m/s².
-			 * @brief altitude The altitude in meters. Default at surface.
+			 * @brief Returns the surface gravity in m/s².
 			 * @return float
 			 */
 			[[nodiscard]]
-			float gravity (float altitude = 0.0F) const noexcept;
+			float
+			surfaceGravity () const noexcept
+			{
+				return m_surfaceGravity;
+			}
+
+			/**
+			 * @brief Returns the surface gravity in m/s² per engine update cycle.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			steppedSurfaceGravity () const noexcept
+			{
+				return m_steppedSurfaceGravity;
+			}
+
+			/**
+			 * @brief Returns the gravity in m/s² according to an altitude.
+			 * @brief altitude The altitude in meters.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			gravity (float altitude) const noexcept
+			{
+				// FIXME: TODO ...
+
+				// gh = g (1 + h/R)–2
+				// R is your distance from the center of the Earth
+				return m_surfaceGravity;
+			}
+
+			/**
+			 * @brief Returns the gravity in m/s² according to an altitude per engine update cycle.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			steppedGravity (float altitude) const noexcept
+			{
+				return this->gravity(altitude) * EngineUpdateCycleDurationS< float >;
+			}
 
 			/**
 			 * @brief Returns the atmospheric density expressed in kg/m³.
@@ -65,20 +106,29 @@ namespace Emeraude::Physics
 			 * @return float
 			 */
 			[[nodiscard]]
-			float atmosphericDensity (float altitude = 0.0F, float temperature = 20.0F) const noexcept; // NOLINT(*-magic-numbers)
+			float
+			atmosphericDensity (/*float altitude = 0.0F, float temperature = 20.0F*/) const noexcept
+			{
+				// FIXME: TODO ...
+
+				return m_atmosphericDensity;
+			}
 
 			/**
 			 * @brief Returns the planet radius in m.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float planetRadius () const noexcept;
+			float
+			planetRadius () const noexcept
+			{
+				return m_planetRadius;
+			}
 
 			/**
 			 * @brief Returns earth environment properties.
 			 * @return PhysicalEnvironmentProperties
 			 */
-			inline
 			static
 			PhysicalEnvironmentProperties
 			Earth () noexcept
@@ -90,7 +140,6 @@ namespace Emeraude::Physics
 			 * @brief Returns moon environment properties.
 			 * @return PhysicalEnvironmentProperties
 			 */
-			inline
 			static
 			PhysicalEnvironmentProperties
 			Moon () noexcept
@@ -102,31 +151,28 @@ namespace Emeraude::Physics
 			 * @brief Returns mars environment properties.
 			 * @return PhysicalEnvironmentProperties
 			 */
-			inline
 			static
 			PhysicalEnvironmentProperties
 			Mars () noexcept
 			{
-				return {Gravity::Mars< float >, 0.020F, Radius::Mars< float >}; // NOLINT(*-magic-numbers)
+				return {Gravity::Mars< float >, 0.020F, Radius::Mars< float >};
 			}
 
 			/**
 			 * @brief Returns jupiter environment properties.
 			 * @return PhysicalEnvironmentProperties
 			 */
-			inline
 			static
 			PhysicalEnvironmentProperties
 			Jupiter () noexcept
 			{
-				return {Gravity::Jupiter< float >, 1.326F, Radius::Jupiter< float >}; // NOLINT(*-magic-numbers)
+				return {Gravity::Jupiter< float >, 1.326F, Radius::Jupiter< float >};
 			}
 
 			/**
 			 * @brief Returns space environment properties.
 			 * @return PhysicalEnvironmentProperties
 			 */
-			inline
 			static
 			PhysicalEnvironmentProperties
 			Void () noexcept
@@ -134,9 +180,25 @@ namespace Emeraude::Physics
 				return {0.0F, 0.0F, 0.0F};
 			}
 
+			/**
+			 * @brief STL streams printable object.
+			 * @param out A reference to the stream output.
+			 * @param obj A reference to the object to print.
+			 * @return std::ostream &
+			 */
+			friend std::ostream & operator<< (std::ostream & out, const PhysicalEnvironmentProperties & obj);
+
+			/**
+			 * @brief Stringifies the object.
+			 * @param obj A reference to the object to print.
+			 * @return std::string
+			 */
+			friend std::string to_string (const PhysicalEnvironmentProperties & obj) noexcept;
+
 		private:
 
 			float m_surfaceGravity;
+			float m_steppedSurfaceGravity;
 			float m_atmosphericDensity;
 			float m_planetRadius;
 	};

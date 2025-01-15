@@ -1,0 +1,174 @@
+/*
+ * src/UserDialogs/Types.hpp
+ * This file is part of Emeraude-Engine
+ *
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude-Engine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#pragma once
+
+/* STL inclusions. */
+#include <cstdint>
+#include <string>
+
+namespace Emeraude::PlatformSpecific::Desktop::Dialog
+{
+	/**
+	 * @brief The button layout enumeration.
+	 */
+	enum class ButtonLayout : uint8_t
+	{
+		NoButton,
+		OK,
+		OKCancel,
+		YesNo,
+		Quit
+	};
+
+	static constexpr auto NoButtonString{"NoButton"};
+	static constexpr auto OKString{"OK"};
+	static constexpr auto OKCancelString{"OKCancel"};
+	static constexpr auto YesNoString{"YesNo"};
+	static constexpr auto QuitString{"Quit"};
+
+	/**
+	 * @brief Returns a C-String version of the enum value.
+	 * @param value The enum value.
+	 * @return const char *
+	 */
+	[[nodiscard]]
+	const char * to_cstring (ButtonLayout value) noexcept;
+
+	/**
+	 * @brief Returns a string version of the enum value.
+	 * @param value The enum value.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	inline
+	std::string
+	to_string (ButtonLayout value) noexcept
+	{
+		return {to_cstring(value)};
+	}
+
+	/**
+	 * @brief Converts a string to an enumeration value.
+	 * @param value A reference to a string.
+	 * @return ButtonLayout
+	 */
+	[[nodiscard]]
+	ButtonLayout to_ButtonLayout (const std::string & value) noexcept;
+
+	/**
+	 * @brief The type of message.
+	 */
+	enum class MessageType : uint8_t
+	{
+		Info,
+		Warning,
+		Error,
+		Question
+	};
+
+	static constexpr auto InfoString{"Info"};
+	static constexpr auto WarningString{"Warning"};
+	static constexpr auto ErrorString{"Error"};
+	static constexpr auto QuestionString{"Question"};
+
+	/**
+	 * @brief Returns a C-String version of the enum value.
+	 * @param value The enum value.
+	 * @return const char *
+	 */
+	[[nodiscard]]
+	const char * to_cstring (MessageType value) noexcept;
+
+	/**
+	 * @brief Returns a string version of the enum value.
+	 * @param value The enum value.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	inline
+	std::string
+	to_string (MessageType value) noexcept
+	{
+		return {to_cstring(value)};
+	}
+
+	/**
+	 * @brief Converts a string to an enumeration value.
+	 * @param value A reference to a string.
+	 * @return MessageType
+	 */
+	[[nodiscard]]
+	MessageType to_MessageType (const std::string & value) noexcept;
+
+	/**
+	 * @brief The user answer to dialog enumeration.
+	 */
+	enum class Answer : uint8_t
+	{
+		None,
+		OK,
+		Cancel,
+		Yes,
+		No
+	};
+
+	static constexpr auto NoneString{"None"};
+	//static constexpr auto OKString{"OK"};
+	static constexpr auto CancelString{"Cancel"};
+	static constexpr auto YesString{"Yes"};
+	static constexpr auto NoString{"No"};
+
+	/**
+	 * @brief Returns a C-String version of the enum value.
+	 * @param value The enum value.
+	 * @return const char *
+	 */
+	[[nodiscard]]
+	const char * to_cstring (Answer value) noexcept;
+
+	/**
+	 * @brief Returns a string version of the enum value.
+	 * @param value The enum value.
+	 * @return std::string
+	 */
+	[[nodiscard]]
+	inline
+	std::string
+	to_string (Answer value) noexcept
+	{
+		return {to_cstring(value)};
+	}
+
+	/**
+	 * @brief Converts a string to an enumeration value.
+	 * @param value A reference to a string.
+	 * @return Answer
+	 */
+	[[nodiscard]]
+	Answer to_Answer (const std::string & value) noexcept;
+}

@@ -1,37 +1,57 @@
 /*
- * Emeraude/Graphics/MovieResource.cpp
- * This file is part of Emeraude
+ * src/Graphics/MovieResource.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "MovieResource.hpp"
 
-/* Local inclusions */
-#include "Tracer.hpp"
-#include "String.hpp"
+/* STL inclusions. */
+#include <cstdint>
+#include <cstddef>
+#include <vector>
+#include <array>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <numeric>
+#include <ranges>
+
+/* Third-Party inclusions. */
+#include "json/json.h"
+
+/* Local inclusions. */
+#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libraries/PixelFactory/Types.hpp"
+#include "Libraries/PixelFactory/Color.hpp"
+#include "Libraries/ObservableTrait.hpp"
+#include "Libraries/FastJSON.hpp"
+#include "Libraries/String.hpp"
+#include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
-#include "PixelFactory/FileIO.hpp"
+#include "Resources/ResourceTrait.hpp"
+#include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
@@ -39,13 +59,24 @@ const char * const Emeraude::Resources::Container< Emeraude::Graphics::MovieReso
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::MovieResource >::ClassUID{Observable::getClassUID()};
+const size_t Emeraude::Resources::Container< Emeraude::Graphics::MovieResource >::ClassUID{getClassUID(ClassId)};
 
 namespace Emeraude::Graphics
 {
 	using namespace Libraries;
 
-	const size_t MovieResource::ClassUID{Observable::getClassUID()};
+	const size_t MovieResource::ClassUID{getClassUID(ClassId)};
+
+	/* JSON key. */
+	constexpr auto JKBaseFrameName{"BaseFrameName"};
+	constexpr auto JKFrameCount{"FrameCount"};
+	constexpr auto JKFrameRate{"FrameRate"};
+	constexpr auto JKFrameDuration{"FrameDuration"};
+	constexpr auto JKIsLooping{"IsLooping"};
+	constexpr auto JKAnimationDuration{"AnimationDuration"};
+	constexpr auto JKFrames{"Frames"};
+	constexpr auto JKDuration{"Duration"};
+	constexpr auto JKImage{"Image"};
 
 	MovieResource::MovieResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -54,75 +85,62 @@ namespace Emeraude::Graphics
 	}
 
 	bool
-	MovieResource::is (size_t classUID) const noexcept
-	{
-		if ( ClassUID == 0UL )
-		{
-			Tracer::error(ClassId, "The unique class identifier has not been set !");
-
-			return false;
-		}
-
-		return classUID == ClassUID;
-	}
-
-	const char *
-	MovieResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
-	bool
 	MovieResource::load () noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
-		constexpr size_t imageCount = 3;
-		constexpr size_t size = 32;
+		constexpr size_t imageCount{3};
+		constexpr size_t size{32};
 
-		const std::array< PixelFactory::Color< float >, imageCount > colors{
+		constexpr std::array< PixelFactory::Color< float >, imageCount > colors{
 			PixelFactory::Red,
 			PixelFactory::Green,
 			PixelFactory::Blue
 		};
 
-		m_data.resize(3);
+		m_frames.resize(3);
 
 		for ( size_t frameIndex = 0; frameIndex < imageCount; frameIndex++ )
 		{
-			if ( !m_data[frameIndex].first.initialize(size, size, PixelFactory::ChannelMode::RGB) )
+			if ( !m_frames[frameIndex].first.initialize(size, size, PixelFactory::ChannelMode::RGB) )
 			{
 				TraceError{ClassId} << "Unable to load the default pixmap for frame #" << frameIndex << " !";
 
 				return this->setLoadSuccess(false);
 			}
 
-			if ( !m_data[frameIndex].first.fill(colors[frameIndex]) )
+			if ( !m_frames[frameIndex].first.fill(colors.at(frameIndex)) )
 			{
 				TraceError{ClassId} << "Unable to fill the default pixmap for frame #" << frameIndex << " !";
 
 				return this->setLoadSuccess(false);
 			}
 
-			m_data[frameIndex].second = 300;
+			m_frames[frameIndex].second = DefaultFrameDuration;
 		}
 
 		return this->setLoadSuccess(true);
 	}
 
 	bool
-	MovieResource::load (const Path::File & filepath) noexcept
+	MovieResource::load (const std::filesystem::path & filepath) noexcept
 	{
 		/* Check for a JSON file. */
-		if ( filepath.hasExtension("json") )
+		if ( IO::getFileExtension(filepath) == "json" )
+		{
 			return Resources::ResourceTrait::load(filepath);
+		}
 
-		/* Tries to read a movie file. */
+		/* Tries to read a movie (mp4, mpg, avi, ...) file. */
+		Tracer::debug(ClassId, "Reading movie file is not available yet !");
+
 		if ( !this->beginLoading() )
+		{
 			return false;
-
-		Tracer::warning(ClassId, "FIXME: This function is not available yet !");
+		}
 
 		return this->setLoadSuccess(false);
 	}
@@ -131,51 +149,81 @@ namespace Emeraude::Graphics
 	MovieResource::load (const Json::Value & data) noexcept
 	{
 		if ( !this->beginLoading() )
+		{
 			return false;
+		}
 
 		/* Checks the load with the parametric way. */
-		if ( data.isMember(BaseFrameNameKey) )
+		if ( data.isMember(JKBaseFrameName) )
 		{
 			if ( !this->loadParametric(data) )
 			{
-				TraceError{ClassId} << "Unable to load the AnimatedTexture with parametric key '" << BaseFrameNameKey << "' !";
+				TraceError{ClassId} << "Unable to load the animated texture with parametric key '" << JKBaseFrameName << "' !";
 
 				return this->setLoadSuccess(false);
 			}
 		}
 		/* Checks the load with the manual way. */
-		else if ( data.isMember(FramesKey) )
+		else if ( data.isMember(JKFrames) )
 		{
 			if ( !this->loadManual(data) )
 			{
-				TraceError{ClassId} << "Unable to load the AnimatedTexture with manual key '" << FramesKey << "' !";
+				TraceError{ClassId} << "Unable to load the animated texture with manual key '" << JKFrames << "' !";
 
 				return this->setLoadSuccess(false);
 			}
 		}
 		else
 		{
-			TraceError{ClassId} << "There is no '" << BaseFrameNameKey << "' or '" << FramesKey << "' key in AnimatedTexture definition !";
+			TraceError{ClassId} << "There is no '" << JKBaseFrameName << "' or '" << JKFrames << "' key in animated texture definition !";
 
 			return this->setLoadSuccess(false);
 		}
 
 		/* Checks if there is at least one frame registered. */
-		if ( m_data.empty() )
+		if ( m_frames.empty() )
 		{
 			TraceError{ClassId} << "There is no valid frame for this movie !";
 
 			return this->setLoadSuccess(false);
 		}
 
-		return this->setLoadSuccess(false);
+		return this->setLoadSuccess(true);
+	}
+
+	size_t
+	MovieResource::extractFrameDuration (const Json::Value & data, size_t frameCount) noexcept
+	{
+		const auto fps = FastJSON::getNumber< uint32_t >(data, JKFrameRate, 0);
+
+		if ( fps > 0 )
+		{
+			/* NOTE: Compute by using an FPS definition. */
+			return BaseTime / fps;
+		}
+
+		const auto animationDuration = FastJSON::getNumber< uint32_t >(data, JKAnimationDuration, 0);
+
+		if ( animationDuration > 0 )
+		{
+			/* NOTE: Using the duration of the whole movie. */
+			return animationDuration / frameCount;
+		}
+
+		/* NOTE: Using a defined frame duration. */
+		return FastJSON::getNumber< uint32_t >(data, JKFrameDuration, DefaultFrameDuration);
 	}
 
 	bool
 	MovieResource::loadParametric (const Json::Value & data) noexcept
 	{
 		/* Checks the base name of animation files. */
-		const auto basename = FastJSON::getString(data, BaseFrameNameKey);
+		const auto basename = FastJSON::getString(data, JKBaseFrameName);
+
+		if ( basename.empty() )
+		{
+			return false;
+		}
 
 		std::string replaceKey{};
 
@@ -189,7 +237,7 @@ namespace Emeraude::Graphics
 		}
 
 		/* Gets the frame count. */
-		const auto frameCount = FastJSON::getUnsignedInteger(data, FrameCountKey);
+		const auto frameCount = FastJSON::getNumber< uint32_t >(data, JKFrameCount, 0);
 
 		if ( frameCount == 0 )
 		{
@@ -198,25 +246,8 @@ namespace Emeraude::Graphics
 			return false;
 		}
 
-		/* Gets the default duration. */
-		size_t frameDuration = 0;
-
-		auto fps = FastJSON::getUnsignedInteger(data, FrameRateKey);
-
-		if ( fps > 0 )
-		{
-			frameDuration = 1000 / fps;
-		}
-		else
-		{
-			/* NOTE: The duration of the whole movie. */
-			auto animationDuration = FastJSON::getUnsignedInteger(data, AnimationDurationKey);
-
-			if ( animationDuration > 0 )
-				frameDuration = animationDuration / frameCount;
-			else
-				frameDuration = FastJSON::getUnsignedInteger(data, FrameDurationKey, DefaultFrameDuration);
-		}
+		/* Gets the frame duration. */
+		const auto frameDuration = MovieResource::extractFrameDuration(data, frameCount);
 
 		if ( frameDuration == 0 )
 		{
@@ -225,15 +256,17 @@ namespace Emeraude::Graphics
 			return false;
 		}
 
+		m_looping = FastJSON::getBoolean(data, JKIsLooping, true);
+
 		/* Gets all frames images. */
 		auto & images = Resources::Manager::instance()->images();
 
 		for ( size_t frameIndex = 0; frameIndex < frameCount; frameIndex++ )
 		{
 			/* Sets the number as a string. */
-			const auto filename = String::replace(replaceKey, String::pad(std::to_string(frameIndex + 1), nWidth, '0', String::Side::Left), basename);
+			const auto filename = String::replace(replaceKey, pad(std::to_string(frameIndex + 1), nWidth, '0', String::Side::Left), basename);
 
-			const auto imageResource = images.getResource(filename, true);
+			const auto imageResource = images.getResource(filename, false);
 
 			if ( imageResource == nullptr )
 			{
@@ -243,7 +276,7 @@ namespace Emeraude::Graphics
 			}
 
 			/* Save frame data. */
-			m_data.emplace_back(imageResource->data(), frameDuration);
+			m_frames.emplace_back(imageResource->data(), frameDuration);
 		}
 
 		return true;
@@ -252,55 +285,32 @@ namespace Emeraude::Graphics
 	bool
 	MovieResource::loadManual (const Json::Value & data) noexcept
 	{
-		if ( !data.isMember(FramesKey) || !data[FramesKey].isArray() )
+		if ( !data.isMember(JKFrames) || !data[JKFrames].isArray() )
 		{
-			TraceError{ClassId} << "The '" << FramesKey << "' key  is not present or not an array in movie definition !";
+			TraceError{ClassId} << "The '" << JKFrames << "' key  is not present or not an array in movie definition !";
 
 			return false;
 		}
 
 		auto & images = Resources::Manager::instance()->images();
 
-		for ( const auto & frame : data[FramesKey] )
+		for ( const auto & frame : data[JKFrames] )
 		{
-			/* Parse the image name. */
-			if ( !frame.isMember(ImageKey) || !frame[ImageKey].isString() )
+			const auto imageName = FastJSON::getString(frame, JKImage);
+
+			if ( imageName.empty() )
 			{
 				TraceError{ClassId} <<
-					"The '" << ImageKey << "' key is not present or not a string in movie frame definition ! "
+					"The '" << JKImage << "' key is not present or not a string in movie frame definition ! "
 					"Skipping that frame...";
 
 				continue;
 			}
 
-			const auto imageName = frame[ImageKey].asString();
+			/* NOTE: The image must be loaded synchronously here. */
+			const auto imageResource = images.getResource(imageName, false);
 
-			/* Retrieve the image from the store. */
-			const auto imageResource = images.getResource(imageName, true);
-
-			if ( imageResource == nullptr )
-			{
-				TraceError{ClassId} << "Unable to get Image '" << imageName << "' or the default one.";
-
-				return false;
-			}
-
-			/* Get the frame duration. */
-			auto frameDuration = DefaultFrameDuration;
-
-			if ( frame.isMember(DurationKey) && frame[DurationKey].isUInt() )
-			{
-				frameDuration = frame[DurationKey].asUInt();
-			}
-			else
-			{
-				TraceWarning{ClassId} <<
-					"The '" << DurationKey << "' key is not present or not a number in movie frame definition ! "
-					"Duration set to " << frameDuration << " ms.";
-			}
-
-			/* Save frame data. */
-			m_data.emplace_back(imageResource->data(), frameDuration);
+			m_frames.emplace_back(imageResource->data(), FastJSON::getNumber< uint32_t >(frame, JKDuration, DefaultFrameDuration));
 		}
 
 		return true;
@@ -317,7 +327,7 @@ namespace Emeraude::Graphics
 	void
 	MovieResource::updateDuration () noexcept
 	{
-		m_duration = std::accumulate(m_data.cbegin(), m_data.cend(), 0, [] (auto duration, const auto & frame) {
+		m_duration = std::accumulate(m_frames.cbegin(), m_frames.cend(), 0, [] (auto duration, const auto & frame) {
 			return duration + frame.second;
 		});
 	}
@@ -325,7 +335,7 @@ namespace Emeraude::Graphics
 	std::shared_ptr< MovieResource >
 	MovieResource::get (const std::string & resourceName, bool directLoad) noexcept
 	{
-		return Resources::Manager::instance()->movies().getResource(resourceName, directLoad);
+		return Resources::Manager::instance()->movies().getResource(resourceName, !directLoad);
 	}
 
 	std::shared_ptr< MovieResource >
@@ -334,49 +344,27 @@ namespace Emeraude::Graphics
 		return Resources::Manager::instance()->movies().getDefaultResource();
 	}
 
-	const Libraries::PixelFactory::Pixmap< uint8_t > &
+	const PixelFactory::Pixmap< uint8_t > &
 	MovieResource::data (size_t frameIndex) const noexcept
 	{
-		if ( frameIndex >= m_data.size() )
+		if ( frameIndex >= m_frames.size() )
 		{
 			Tracer::error(ClassId, "Frame index overflow !");
 
 			frameIndex = 0;
 		}
 
-		return m_data[frameIndex].first;
-	}
-
-	const std::vector< MovieResource::Frame > &
-	MovieResource::frames () const noexcept
-	{
-		return m_data;
-	}
-
-	size_t
-	MovieResource::width () const noexcept
-	{
-		if ( m_data.empty() )
-			return 0;
-
-		return m_data[0].first.width();
-	}
-
-	size_t
-	MovieResource::height () const noexcept
-	{
-		if ( m_data.empty() )
-			return 0;
-
-		return m_data[0].first.height();
+		return m_frames[frameIndex].first;
 	}
 
 	bool
 	MovieResource::isGrayScale () const noexcept
 	{
-		return std::all_of(m_data.cbegin(), m_data.cend(), [] (const auto & frame) {
+		return std::ranges::all_of(m_frames, [] (const auto & frame) {
 			if ( !frame.first.isValid() )
+			{
 				return false;
+			}
 
 			return frame.first.isGrayScale();
 		});
@@ -386,17 +374,19 @@ namespace Emeraude::Graphics
 	MovieResource::averageColor () const noexcept
 	{
 		if ( !this->isLoaded() )
+		{
 			return {};
+		}
 
-		const auto ratio = 1.0F / m_data.size();
+		const auto ratio = 1.0F / static_cast< float >(m_frames.size());
 
 		auto red = 0.0F;
 		auto green = 0.0F;
 		auto blue = 0.0F;
 
-		for ( const auto & frame : m_data )
+		for ( const auto & frame : std::ranges::views::keys(m_frames) )
 		{
-			const auto average = frame.first.averageColor();
+			const auto average = frame.averageColor();
 
 			red += average.red() * ratio;
 			green += average.green() * ratio;
@@ -407,30 +397,25 @@ namespace Emeraude::Graphics
 	}
 
 	size_t
-	MovieResource::duration () const noexcept
+	MovieResource::frameIndexAt (uint32_t timePoint) const noexcept
 	{
-		return m_duration;
-	}
-
-	size_t
-	MovieResource::frameCount () const noexcept
-	{
-		return m_data.size();
-	}
-
-	size_t
-	MovieResource::frameIndexAt (size_t timepoint) const noexcept
-	{
-		if ( m_duration )
+		if ( m_duration > 0 )
 		{
-			auto time = timepoint % m_duration;
+			auto time = timePoint % m_duration;
 
-			for ( size_t index = 0; index < m_data.size(); index++ )
+			if ( !m_looping && timePoint >= m_duration )
 			{
-				if ( m_data[index].second >= time )
-					return index;
+				return m_frames.size() - 1;
+			}
 
-				time -= m_data[index].second;
+			for ( size_t index = 0; index < m_frames.size(); index++ )
+			{
+				if ( m_frames[index].second >= time )
+				{
+					return index;
+				}
+
+				time -= static_cast< uint32_t >(m_frames[index].second);
 			}
 		}
 
@@ -440,10 +425,12 @@ namespace Emeraude::Graphics
 	size_t
 	MovieResource::extractCountWidth (const std::string & basename, std::string & replaceKey) noexcept
 	{
-		auto params = String::extractTags(basename, {'{', '}'});
+		const auto params = String::extractTags(basename, {'{', '}'}, true);
 
 		if ( params.empty() )
-			return 0U;
+		{
+			return 0;
+		}
 
 		replaceKey = '{' + params[0] + '}';
 

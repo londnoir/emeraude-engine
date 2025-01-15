@@ -1,33 +1,33 @@
 /*
- * Emeraude/Audio/Effects/Equalizer.cpp
- * This file is part of Emeraude
+ * src/Audio/Effects/Equalizer.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "Equalizer.hpp"
 
-/* Local inclusions */
+/* Local inclusions. */
 #include "Tracer.hpp"
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
@@ -74,7 +74,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_LOW_GAIN || value > AL_EQUALIZER_MAX_LOW_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Low gain must be between " << AL_EQUALIZER_MIN_LOW_GAIN << " and " << AL_EQUALIZER_MAX_LOW_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Low gain must be between " << AL_EQUALIZER_MIN_LOW_GAIN << " and " << AL_EQUALIZER_MAX_LOW_GAIN << ".");
 
 			return;
 		}
@@ -90,7 +90,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_LOW_CUTOFF || value > AL_EQUALIZER_MAX_LOW_CUTOFF )
 		{
-			Tracer::warning(ClassId, Blob() << "Low cut-off must be between " << AL_EQUALIZER_MIN_LOW_CUTOFF << " and " << AL_EQUALIZER_MAX_LOW_CUTOFF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Low cut-off must be between " << AL_EQUALIZER_MIN_LOW_CUTOFF << " and " << AL_EQUALIZER_MAX_LOW_CUTOFF << ".");
 
 			return;
 		}
@@ -106,7 +106,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID1_GAIN || value > AL_EQUALIZER_MAX_MID1_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid1 gain must be between " << AL_EQUALIZER_MIN_MID1_GAIN << " and " << AL_EQUALIZER_MAX_MID1_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid1 gain must be between " << AL_EQUALIZER_MIN_MID1_GAIN << " and " << AL_EQUALIZER_MAX_MID1_GAIN << ".");
 
 			return;
 		}
@@ -122,7 +122,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID1_CENTER || value > AL_EQUALIZER_MAX_MID1_CENTER )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid1 center must be between " << AL_EQUALIZER_MIN_MID1_CENTER << " and " << AL_EQUALIZER_MAX_MID1_CENTER << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid1 center must be between " << AL_EQUALIZER_MIN_MID1_CENTER << " and " << AL_EQUALIZER_MAX_MID1_CENTER << ".");
 
 			return;
 		}
@@ -138,7 +138,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID1_WIDTH || value > AL_EQUALIZER_MAX_MID1_WIDTH )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid1 width must be between " << AL_EQUALIZER_MIN_MID1_WIDTH << " and " << AL_EQUALIZER_MAX_MID1_WIDTH << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid1 width must be between " << AL_EQUALIZER_MIN_MID1_WIDTH << " and " << AL_EQUALIZER_MAX_MID1_WIDTH << ".");
 
 			return;
 		}
@@ -154,7 +154,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID2_GAIN || value > AL_EQUALIZER_MAX_MID2_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid2 gain must be between " << AL_EQUALIZER_MIN_MID2_GAIN << " and " << AL_EQUALIZER_MAX_MID2_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid2 gain must be between " << AL_EQUALIZER_MIN_MID2_GAIN << " and " << AL_EQUALIZER_MAX_MID2_GAIN << ".");
 
 			return;
 		}
@@ -170,7 +170,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID2_CENTER || value > AL_EQUALIZER_MAX_MID2_CENTER )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid2 center must be between " << AL_EQUALIZER_MIN_MID2_CENTER << " and " << AL_EQUALIZER_MAX_MID2_CENTER << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid2 center must be between " << AL_EQUALIZER_MIN_MID2_CENTER << " and " << AL_EQUALIZER_MAX_MID2_CENTER << ".");
 
 			return;
 		}
@@ -186,7 +186,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_MID2_WIDTH || value > AL_EQUALIZER_MAX_MID2_WIDTH )
 		{
-			Tracer::warning(ClassId, Blob() << "Mid2 width must be between " << AL_EQUALIZER_MIN_MID2_WIDTH << " and " << AL_EQUALIZER_MAX_MID2_WIDTH << ".");
+			Tracer::warning(ClassId, BlobTrait() << "Mid2 width must be between " << AL_EQUALIZER_MIN_MID2_WIDTH << " and " << AL_EQUALIZER_MAX_MID2_WIDTH << ".");
 
 			return;
 		}
@@ -202,7 +202,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_HIGH_GAIN || value > AL_EQUALIZER_MAX_HIGH_GAIN )
 		{
-			Tracer::warning(ClassId, Blob() << "High gain must be between " << AL_EQUALIZER_MIN_HIGH_GAIN << " and " << AL_EQUALIZER_MAX_HIGH_GAIN << ".");
+			Tracer::warning(ClassId, BlobTrait() << "High gain must be between " << AL_EQUALIZER_MIN_HIGH_GAIN << " and " << AL_EQUALIZER_MAX_HIGH_GAIN << ".");
 
 			return;
 		}
@@ -218,7 +218,7 @@ namespace Emeraude::Audio::Effects
 
 		if ( value < AL_EQUALIZER_MIN_HIGH_CUTOFF || value > AL_EQUALIZER_MAX_HIGH_CUTOFF )
 		{
-			Tracer::warning(ClassId, Blob() << "High cut-off must be between " << AL_EQUALIZER_MIN_HIGH_CUTOFF << " and " << AL_EQUALIZER_MAX_HIGH_CUTOFF << ".");
+			Tracer::warning(ClassId, BlobTrait() << "High cut-off must be between " << AL_EQUALIZER_MIN_HIGH_CUTOFF << " and " << AL_EQUALIZER_MAX_HIGH_CUTOFF << ".");
 
 			return;
 		}

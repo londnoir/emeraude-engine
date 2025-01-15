@@ -1,45 +1,46 @@
 /*
- * Emeraude/ConsoleControllable.cpp
- * This file is part of Emeraude
+ * src/ConsoleControllable.cpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #include "ConsoleControllable.hpp"
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
 #include <iostream>
 
-/* Local inclusions */
+/* Local inclusions. */
+#include "Libraries/BlobTrait.hpp"
+#include "Libraries/String.hpp"
 #include "Console.hpp"
-#include "String.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude
 {
 	using namespace Libraries;
 
-	constexpr auto TracerTag{"ConsoleControllable"};
+	static constexpr auto TracerTag{"ConsoleControllable"};
 
 	ConsoleControllable::ConsoleControllable (std::string consoleIdentifier) noexcept
 		: m_identifier(std::move(consoleIdentifier))
@@ -160,20 +161,14 @@ namespace Emeraude
 		}
 	}
 
-	const std::string &
-	ConsoleControllable::identifier () const noexcept
-	{
-		return m_identifier;
-	}
-
 	void
 	ConsoleControllable::bindCommand (const std::string & commandNames, const ConsoleCommand & command, const std::string & help) noexcept
 	{
-		auto commandNamesList = String::explode(commandNames, ',', false);
+		const auto commandNamesList = String::explode(commandNames, ',', false);
 
-		for ( auto & commandName : commandNamesList )
+		for ( const auto & commandName : commandNamesList )
 		{
-			auto commandIt = m_commands.find(commandName);
+			const auto commandIt = m_commands.find(commandName);
 
 			if ( commandIt != m_commands.cend() )
 			{
@@ -189,11 +184,11 @@ namespace Emeraude
 	void
 	ConsoleControllable::unbindCommand (const std::string & commandNames) noexcept
 	{
-		auto commandNamesList = String::explode(commandNames, ',', false);
+		const auto commandNamesList = String::explode(commandNames, ',', false);
 
-		for ( auto & commandName : commandNamesList )
+		for ( const auto & commandName : commandNamesList )
 		{
-			auto commandIt = m_commands.find(commandName);
+			const auto commandIt = m_commands.find(commandName);
 
 			if ( commandIt != m_commands.end() )
 			{
@@ -243,7 +238,7 @@ namespace Emeraude
 		{
 			for ( const auto & commandIt : m_commands )
 			{
-				this->writeToConsole(Blob() << commandIt.first << " (" << commandIt.second.help() << ')');
+				this->writeToConsole(BlobTrait() << commandIt.first << " (" << commandIt.second.help() << ')');
 			}
 
 			return true;
@@ -253,7 +248,7 @@ namespace Emeraude
 		{
 			for ( const auto & objectIt : m_consoleObjects )
 			{
-				this->writeToConsole(Blob() << "'" << objectIt.first << "'");
+				this->writeToConsole(BlobTrait() << "'" << objectIt.first << "'");
 			}
 
 			return true;

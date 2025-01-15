@@ -1,0 +1,281 @@
+/*
+ * src/Overlay/ComposedSurface.hpp
+ * This file is part of Emeraude-Engine
+ *
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ *
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Emeraude-Engine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * Complete project and additional information can be found at :
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
+ * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
+ */
+
+#pragma once
+
+/* STL inclusions. */
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <string>
+
+/* Local inclusions for inheritances. */
+#include "AbstractSurface.hpp"
+
+/* Local inclusions for usages. */
+#include "Layouts/Main.hpp"
+#include "Libraries/Math/Rectangle.hpp"
+#include "Libraries/Math/Vector.hpp"
+#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Graphics/Geometry/IndexedVertexResource.hpp"
+#include "Vulkan/DescriptorSet.hpp"
+#include "Vulkan/Image.hpp"
+
+/* Forward declarations. */
+namespace Emeraude::Graphics
+{
+	class Renderer;
+	class ImageResource;
+}
+
+namespace Emeraude::Overlay
+{
+	enum class Position : uint8_t
+	{
+		Center,
+		Bottom,
+		Top,
+		Left,
+		Right,
+		BottomLeft,
+		BottomRight,
+		TopLeft,
+		TopRight
+	};
+
+	/**
+	 * @brief The base class of all overlay surfaces.
+	 * @extends Emeraude::Overlay::AbstractSurface This is a surface.
+	 */
+	class ComposedSurface : public AbstractSurface
+	{
+		friend class UIScreen;
+
+		public:
+
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"ComposedSurface"};
+
+			/**
+			 * @brief Constructs a composed surface.
+			 * @param name A reference to a string.
+			 * @param geometry A reference to a rectangle for the sufarce geometry on screen. Default the whole screen.
+			 * @param depth A depth value to order surface on the screen. Default 0.0.
+			 */
+			explicit ComposedSurface (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::descriptorSet() const */
+			[[nodiscard]]
+			const Vulkan::DescriptorSet * descriptorSet () const noexcept final;
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::createOnHardware() */
+			[[nodiscard]]
+			bool createOnHardware (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept final;
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::destroyFromHardware() */
+			bool destroyFromHardware () noexcept final;
+
+			/**
+			 * @brief Sets the dimension of the surface.
+			 * @note This implies a call to Surface::resize().
+			 * @param width
+			 * @param height
+			 * @return void
+			 */
+			void setGeometry (float width, float height) noexcept;
+
+			/**
+			 * @brief Integer version of the function that set the dimensions of the surface in pixels.
+			 * @note This implies a call to Surface::resize().
+			 * @param width
+			 * @param height
+			 * @return void
+			 */
+			void setGeometry (unsigned int width, unsigned int height) noexcept;
+
+			/**
+			 * @brief Sets the lower left point of the surface on screen.
+			 * @param positionX
+			 * @param positionY
+			 * @return void
+			 */
+			void setPosition (float positionX, float positionY) noexcept;
+
+			/**
+			 * @brief Integer version of the function that set the lower left point of the surface on screen in pixels.
+			 * @param positionX
+			 * @param positionY
+			 * @return void
+			 */
+			void setPosition (int positionX, int positionY) noexcept;
+
+			/**
+			 * @brief Sets a predefined position for the surface on the screen.
+			 * @param position
+			 * @return void
+			 */
+			void setPosition (Position position) noexcept;
+
+			/**
+			 * @brief Returns the root layout.
+			 * @return Layouts::Main &
+			 */
+			[[nodiscard]]
+			Layouts::Main & rootLayout () noexcept;
+
+			/**
+			 * @brief Returns the root layout.
+			 * @return const Layouts::Main &
+			 */
+			[[nodiscard]]
+			const Layouts::Main & rootLayout () const noexcept;
+
+			/**
+			 * @brief Marks the surface ready for a video memory processLogics.
+			 * @return void
+			 */
+			void drawFinished () noexcept;
+
+			/**
+			 * @brief Returns the size in graphics API metrics of the surface.
+			 * @return std::array< float, 2 >
+			 */
+			[[nodiscard]]
+			std::array< float, 2 > realSize () const noexcept;
+
+			/**
+			 * @brief Returns the position of the top/left border of the surface in graphics API metrics on the screen.
+			 * @return std::array< float, 2 >
+			 */
+			[[nodiscard]]
+			std::array< float, 2 > offsets () const noexcept;
+
+			/**
+			 * @brief Returns the texture offsets.
+			 * @return const Libraries::Math::Vector< 2, float > &
+			 */
+			[[nodiscard]]
+			const Libraries::Math::Vector< 2, float > & textureOffset () const noexcept;
+
+		protected:
+
+			/**
+			 * @brief setTextureOffsetX
+			 * @param offsetX
+			 * @return void
+			 */
+			void setTextureOffsetX (float offsetX) noexcept;
+
+			/**
+			 * @brief setTextureOffsetY
+			 * @param offsetY
+			 * @return void
+			 */
+			void setTextureOffsetY (float offsetY) noexcept;
+
+			/**
+			 * @brief setTextureOffset
+			 * @param offset
+			 * @return void
+			 */
+			void setTextureOffset (const Libraries::Math::Vector< 2, float > & offset) noexcept;
+
+			/**
+			 * @brief This method it's called on first surface initialization and every time the geometry changes.
+			 * @param pixmap A reference to a pixmap.
+			 * @return bool
+			 */
+			virtual bool onResize (const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+
+			/**
+			 * @brief Callback before Surface::drawFinished() function is executed.
+			 * @note If returns false, the main function will abort.
+			 * @param pixmap A reference to a pixmap.
+			 * @return bool
+			 */
+			virtual bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+
+		private:
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::createDescriptorSet() */
+			[[nodiscard]]
+			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept final;
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
+			[[nodiscard]]
+			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept final;
+
+			/** @copydoc Emeraude::Overlay::AbstractSurface::onVideoMemoryUpdate() */
+			[[nodiscard]]
+			bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept final;
+
+			/**
+			 * @brief Creates or updates the vertex data of the surface.
+			 * @return bool
+			 */
+			bool updateGeometry () noexcept;
+
+			/**
+			 * @brief Creates or updates the texture of the surface.
+			 * @param screenWidth The screen width.
+			 * @param screenHeight The screen height.
+			 * @return bool
+			 */
+			bool updateTexture (float screenWidth, float screenHeight) noexcept;
+
+			/**
+			 * @brief Resizes the surface.
+			 * @return bool
+			 */
+			bool resize () noexcept;
+
+			/* Flag names. */
+			static constexpr auto CapturePointerEvents{0UL};
+			static constexpr auto CaptureKeyboardEvents{1UL};
+			static constexpr auto IsPointerOver{2UL};
+			static constexpr auto IsFocused{3UL};
+
+			Layouts::Main m_rootLayout{};
+			Libraries::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
+			std::unique_ptr< Graphics::Geometry::IndexedVertexResource > m_geometry{};
+			std::shared_ptr< Vulkan::Image > m_texture{};
+			Libraries::PixelFactory::Pixmap< uint8_t > m_data{};
+			Libraries::Math::Vector< 2, float > m_textureProportion{1.0F, 1.0F};
+			Libraries::Math::Vector< 2, float > m_textureOffset{};
+			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet{};
+			std::array< bool, 8 > m_flags{
+				false/*CapturePointerEvents*/,
+				false/*CaptureKeyboardEvents*/,
+				false/*IsPointerOver*/,
+				false/*IsFocused*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
+	};
+}

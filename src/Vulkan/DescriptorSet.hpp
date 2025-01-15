@@ -1,43 +1,56 @@
 /*
- * Emeraude/Vulkan/DescriptorSet.hpp
- * This file is part of Emeraude
+ * src/Vulkan/DescriptorSet.hpp
+ * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2012-2023 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude is free software; you can redistribute it and/or modify
+ * Emeraude-Engine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Emeraude is distributed in the hope that it will be useful,
+ * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Emeraude; if not, write to the Free Software
+ * along with Emeraude-Engine; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude
- * 
+ * https://bitbucket.org/londnoir/emeraude-engine
+ *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
 #pragma once
 
-/* C/C++ standard libraries. */
+/* STL inclusions. */
+#include <cstdint>
 #include <memory>
 
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
 
-/* Local inclusions for usages. */
-#include "DescriptorPool.hpp"
-#include "DescriptorSetLayout.hpp"
-#include "Graphics/TextureResource/Abstract.hpp"
-#include "UniformBufferObject.hpp"
+namespace Emeraude
+{
+	namespace Vulkan
+	{
+		class DescriptorPool;
+		class DescriptorSetLayout;
+		class Image;
+		class ImageView;
+		class Sampler;
+		class UniformBufferObject;
+	}
+
+	namespace Graphics::TextureResource
+	{
+		class Abstract;
+	}
+}
 
 namespace Emeraude::Vulkan
 {
@@ -105,76 +118,81 @@ namespace Emeraude::Vulkan
 			 * @return VkDescriptorSet
 			 */
 			[[nodiscard]]
-			VkDescriptorSet handle () const noexcept;
+			VkDescriptorSet
+			handle () const noexcept
+			{
+				return m_handle;
+			}
 
 			/**
 			 * @brief Returns the responsible descriptor pool smart pointer.
-			 * @return const std::shared_ptr< DescriptorPool > &
+			 * @return std::shared_ptr< DescriptorPool >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< DescriptorPool > & descriptorPool () const noexcept;
+			std::shared_ptr< DescriptorPool >
+			descriptorPool () const noexcept
+			{
+				return m_descriptorPool;
+			}
 
 			/**
 			 * @brief Returns the descriptor layout smart pointer.
-			 * @return const std::shared_ptr< DescriptorSetLayout > &
+			 * @return std::shared_ptr< DescriptorSetLayout >
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< DescriptorSetLayout > & descriptorSetLayout () const noexcept;
+			std::shared_ptr< DescriptorSetLayout >
+			descriptorSetLayout () const noexcept
+			{
+				return m_descriptorSetLayout;
+			}
 
 			/**
 			 * @brief Writes a uniform buffer object to the descriptor set.
-			 * @param UBO A reference to the uniform buffer object smart pointer.
-			 * @param bindingIndex The binding index of the UBO inside the descriptor set layout.
-			 * @param offset The offset to the UBO where to data lies. Default at the beginning.
+			 * @param bindingIndex The binding index of the texture inside the descriptor set layout.
+			 * @param uniformBufferObject A reference to the uniform buffer object smart pointer.
+			 * @param elementOffset The element offset inside the uniform buffer object. Default 0.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool writeUniformBufferObject (UniformBufferObject & UBO, uint32_t bindingIndex, uint32_t offset = 0) const noexcept;
+			bool writeUniformBufferObject (uint32_t bindingIndex, const UniformBufferObject & uniformBufferObject, uint32_t elementOffset = 0) const noexcept;
 
 			/**
-			 * @brief Writes a bunch of uniform buffer objects to the descriptor set.
-			 * @param UBOs A reference to a list of uniform buffer object smart pointers.
-			 * @param bindingIndex The binding index of the first UBO inside the descriptor set layout.
+			 * @brief Writes a uniform buffer object to the descriptor set.
+			 * @param bindingIndex The binding index of the texture inside the descriptor set layout.
+			 * @param uniformBufferObject A reference to the uniform buffer object smart pointer.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool writeUniformBufferObjects (const std::vector< std::shared_ptr< UniformBufferObject > > & UBOs, uint32_t bindingIndex) const noexcept;
+			bool writeUniformBufferObjectDynamic (uint32_t bindingIndex, const UniformBufferObject & uniformBufferObject) const noexcept;
 
 			/**
 			 * @brief Writes a sampled texture to the descriptor set.
-			 * @param image A reference to the texture smart pointer.
 			 * @param bindingIndex The binding index of the texture inside the descriptor set layout.
+			 * @param texture A reference to the texture resource.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool writeSampler (const std::shared_ptr< Graphics::TextureResource::Abstract > & texture, uint32_t bindingIndex) const noexcept;
-
-			/**
-			 * @brief Writes a bunch of sampled texture2Ds to the descriptor set.
-			 * @param image A reference to a list of texture2Ds smart pointer.
-			 * @param bindingIndex The binding index of the first texture inside the descriptor set layout.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool writeSamplers (const std::vector< std::shared_ptr< Graphics::TextureResource::Abstract > > & textures, uint32_t bindingIndex) const noexcept;
+			bool writeSampler (uint32_t bindingIndex, const Graphics::TextureResource::Abstract & texture) const noexcept;
 
 			/**
 			 * @brief Writes a sampled texture to the descriptor set.
-			 * @param image A reference to the texture smart pointer.
-			 * @param bindingIndex The binding index of the texture inside the descriptor set layout.
+			 * @param bindingIndex The binding index of the first texture inside the descriptor set layout.
+			 * @param texture A reference to the texture.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool writeCombinedImageSampler (const std::shared_ptr< Graphics::TextureResource::Abstract > & texture, uint32_t bindingIndex) const noexcept;
+			bool writeCombinedImageSampler (uint32_t bindingIndex, const Graphics::TextureResource::Abstract & texture) const noexcept;
 
 			/**
-			 * @brief Writes a bunch of sampled texture2Ds to the descriptor set.
-			 * @param image A reference to a list of texture2Ds smart pointer.
-			 * @param bindingIndex The binding index of the first texture inside the descriptor set layout.
-			 * @return bool
-			 */
+			* @brief Writes a sampled texture to the descriptor set.
+			* @param bindingIndex The binding index of the first texture inside the descriptor set layout.
+			* @param image A reference to a vulkan image.
+			* @param imageView A reference to a vulkan image view.
+			* @param sampler A reference to a vulkan sampler.
+			* @return bool
+			*/
 			[[nodiscard]]
-			bool writeCombinedImageSamplers (const std::vector< std::shared_ptr< Graphics::TextureResource::Abstract > > & textures, uint32_t bindingIndex) const noexcept;
+			bool writeCombinedImageSampler (uint32_t bindingIndex, const Image & image, const ImageView & imageView, const Sampler & sampler) const noexcept;
 
 		private:
 
