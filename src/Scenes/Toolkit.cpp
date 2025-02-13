@@ -61,7 +61,7 @@ namespace Emeraude::Scenes
 	}
 
 	std::shared_ptr< Node >
-	Toolkit::generateNode (const std::string & entityName, bool movable, GenPolicy genPolicy) noexcept
+	Toolkit::generateNode (const std::string & entityName, GenPolicy genPolicy, bool movable) noexcept
 	{
 		const auto name = String::incrementalLabel(entityName.empty() ? "AutoNode" : entityName, s_autoEntityCount);
 
@@ -130,9 +130,9 @@ namespace Emeraude::Scenes
 	}
 
 	std::shared_ptr< Node >
-	Toolkit::generateNode (const Vector< 3, float > & pointTo, const std::string & entityName, bool movable, GenPolicy genPolicy) noexcept
+	Toolkit::generateNode (const Vector< 3, float > & pointTo, const std::string & entityName, GenPolicy genPolicy, bool movable) noexcept
 	{
-		auto node = this->generateNode(entityName, movable, genPolicy);
+		auto node = this->generateNode(entityName, genPolicy, movable);
 
 		if ( node == nullptr )
 		{

@@ -380,23 +380,23 @@ namespace Emeraude::Scenes
 			void render (const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget, const Vulkan::CommandBuffer & commandBuffer) noexcept;
 
 			/**
-			 * @brief Returns the master control console.
-			 * @return const MasterControl::Console &
+			 * @brief Returns the master control manager.
+			 * @return const MasterControl::Manager &
 			 */
 			[[nodiscard]]
-			const MasterControl::Console &
-			masterControlConsole () const noexcept
+			const MasterControl::Manager &
+			masterControlManager () const noexcept
 			{
 				return m_masterControlConsole;
 			}
 
 			/**
-			 * @brief Returns the master control console.
-			 * @return MasterControl::Console &
+			 * @brief Returns the master control manager.
+			 * @return MasterControl::Manager &
 			 */
 			[[nodiscard]]
-			MasterControl::Console &
-			masterControlConsole () noexcept
+			MasterControl::Manager &
+			masterControlManager () noexcept
 			{
 				return m_masterControlConsole;
 			}
@@ -566,6 +566,26 @@ namespace Emeraude::Scenes
 			staticEntities () const noexcept
 			{
 				return m_staticEntities;
+			}
+
+			/**
+			 * @brief Tries to find a static entity by its name.
+			 * @note Check for a nullptr return !
+			 * @param staticEntityName A reference to a string.
+			 * @return std::shared_ptr< StaticEntity >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< StaticEntity >
+			findStaticEntity (const std::string & staticEntityName) const noexcept
+			{
+				auto staticEntityIt = m_staticEntities.find(staticEntityName);
+
+				if ( staticEntityIt == m_staticEntities.end() )
+				{
+					return nullptr;
+				}
+
+				return staticEntityIt->second;
 			}
 
 			/**
@@ -908,15 +928,6 @@ namespace Emeraude::Scenes
 			[[nodiscard]]
 			bool getRenderableInstanceReadyForRender (const std::shared_ptr< Graphics::RenderableInstance::Abstract > & renderableInstance, const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) const noexcept;
 
-			/**
-			 * @brief Refreshes a renderable instance. This will recreate the graphics pipelines.
-			 * @param renderableInstance A reference to the renderable instance.
-			 * @param renderTarget A reference to a render target smart pointer where the renderable instance must get ready.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool refreshRenderableInstance (Graphics::RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< Graphics::RenderTarget::Abstract > & renderTarget) noexcept;
-
 			static constexpr auto CompassDisplay{"+Compass"};
 			static constexpr auto GroundZeroPlaneDisplay{"+GroundZeroPlane"};
 			static constexpr auto BoundaryPlanesDisplay{"+BoundaryPlane"};
@@ -933,7 +944,7 @@ namespace Emeraude::Scenes
 
 			Graphics::Renderer & m_graphicsRenderer;
 			Audio::Manager & m_audioManager;
-			MasterControl::Console m_masterControlConsole;
+			MasterControl::Manager m_masterControlConsole;
 			std::shared_ptr< Graphics::Renderable::AbstractBackground > m_background;
 			std::shared_ptr< Graphics::Renderable::SceneAreaInterface > m_sceneArea;
 			std::shared_ptr< Graphics::Renderable::SeaLevelInterface > m_seaLevel;

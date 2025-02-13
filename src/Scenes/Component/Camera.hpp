@@ -28,21 +28,16 @@
 #pragma once
 
 /* STL inclusions. */
-#include <memory>
+#include <cstdint>
+#include <cstddef>
 #include <string>
+#include <memory>
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
-#include "Animations/Types.hpp"
 #include "MasterControl/AbstractVirtualVideoDevice.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/Variant.hpp"
-#include "MasterControl/Types.hpp"
 #include "Saphir/FramebufferEffectInterface.hpp"
 #include "SettingKeys.hpp"
 
@@ -63,6 +58,13 @@ namespace Emeraude::Scenes::Component
 				LensEffectsChanged,
 				/* Enumeration boundary. */
 				MaxEnum
+			};
+
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				FieldOfView,
+				Distance
 			};
 
 			/** @brief Class identifier. */
@@ -232,7 +234,7 @@ namespace Emeraude::Scenes::Component
 			void onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept override;
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/* Flag names */
 			static constexpr auto PerspectiveProjection{UnusedFlag + 0UL};

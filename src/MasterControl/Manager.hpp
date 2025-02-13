@@ -1,5 +1,5 @@
 /*
- * src/MasterControl/Console.hpp
+ * src/MasterControl/Manager.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -39,7 +39,7 @@
 
 /* Local inclusions for inheritances. */
 #include "Libraries/NameableTrait.hpp"
-#include "ConsoleControllable.hpp"
+#include "Console/Controllable.hpp"
 #include "Libraries/ObserverTrait.hpp"
 #include "Libraries/ObservableTrait.hpp"
 
@@ -69,11 +69,11 @@ namespace Emeraude::MasterControl
 	/**
 	 * @brief The master control links every virtual audio/video input/output from the scene.
 	 * @extends Libraries::NameableTrait The master control can have a name according to the scene.
-	 * @extends Emeraude::ConsoleControllable The master control is usable from the console.
+	 * @extends Emeraude::Console::Controllable The master control is usable from the console.
 	 * @extends Libraries::ObserverTrait The master control wants to get notifications from devices.
 	 * @extends Libraries::ObserverTrait The master control dispatch device configuration changes.
 	 */
-	class Console final : public Libraries::NameableTrait, public ConsoleControllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class Manager final : public Libraries::NameableTrait, public Console::Controllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
 	{
 		public:
 
@@ -106,7 +106,7 @@ namespace Emeraude::MasterControl
 			 * @brief Constructs the master control console.
 			 * @param name A reference to a string.
 			 */
-			explicit Console (const std::string & name) noexcept;
+			explicit Manager (const std::string & name) noexcept;
 
 			/** @copydoc Libraries::ObservableTrait::classUID() const */
 			[[nodiscard]]
@@ -393,6 +393,9 @@ namespace Emeraude::MasterControl
 			/** @copydoc Libraries:ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
 
 			/**
 			 * @brief Selects automatically a primary input video device.

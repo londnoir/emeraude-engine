@@ -38,15 +38,15 @@ using namespace Libraries::Math;
 using MathTypeList = testing::Types< int, float, double >;
 
 template< typename >
-struct Math
+struct MathVector
 	: testing::Test
 {
 
 };
 
-TYPED_TEST_SUITE(Math, MathTypeList);
+TYPED_TEST_SUITE(MathVector, MathTypeList);
 
-TYPED_TEST(Math, Vector2Default)
+TYPED_TEST(MathVector, Vector2Default)
 {
 	const std::array< TypeParam, 2 > dst{0, 0};
 
@@ -65,7 +65,7 @@ TYPED_TEST(Math, Vector2Default)
 	}
 }
 
-TYPED_TEST(Math, Vector3Default)
+TYPED_TEST(MathVector, Vector3Default)
 {
 	const std::array< TypeParam, 3 > dst{0, 0, 0};
 
@@ -84,7 +84,7 @@ TYPED_TEST(Math, Vector3Default)
 	}
 }
 
-TYPED_TEST(Math, Vector4Default)
+TYPED_TEST(MathVector, Vector4Default)
 {
 	const std::array< TypeParam, 4 > dst{0, 0, 0, 0};
 

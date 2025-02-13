@@ -31,11 +31,11 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <any>
 
 /* Local inclusions for usages. */
 #include "Libraries/Variant.hpp"
 #include "AnimationInterface.hpp"
-#include "Types.hpp"
 
 namespace Emeraude::Animations
 {
@@ -79,23 +79,23 @@ namespace Emeraude::Animations
 
 			/**
 			 * @brief Adds an animatable interfaced object where the animation is modified by an interpolation.
-			 * @param animationID
-			 * @param animation
+			 * @param animationID The animation identifier.
+			 * @param animation A reference to an animation smart pointer.
 			 * @return bool
 			 */
 			bool
-			addAnimation (id_t animationID, const std::shared_ptr< AnimationInterface > & animation) noexcept
+			addAnimation (uint8_t animationID, const std::shared_ptr< AnimationInterface > & animation) noexcept
 			{
 				return m_animations.emplace(animationID, animation).second;
 			}
 
 			/**
 			 * @brief Removes an animatable interfaced object.
-			 * @param animationID The ID of the animation.
+			 * @param animationID The animation identifier.
 			 * @return bool
 			 */
 			bool
-			removeAnimation (id_t animationID) noexcept
+			removeAnimation (uint8_t animationID) noexcept
 			{
 				return m_animations.erase(animationID) > 0;
 			}
@@ -128,13 +128,13 @@ namespace Emeraude::Animations
 
 			/**
 			 * @brief Plays the identified animations.
-			 * @param identifier The animation ID.
-			 * @param value A reference to a variable.
+			 * @param animationID The animation ID.
+			 * @param value A reference to a std::any.
+			 * @param cycle The current engine cycle.
 			 * @return bool
 			 */
-			virtual bool playAnimation (id_t identifier, const Libraries::Variant & value) noexcept = 0;
+			virtual bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept = 0;
 
-			/* FIXME: Use std::any instead maybe, but it implies RTTI ! */
-			std::map< id_t, std::shared_ptr< AnimationInterface > > m_animations;
+			std::map< uint8_t, std::shared_ptr< AnimationInterface > > m_animations;
 	};
 }

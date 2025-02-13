@@ -30,6 +30,8 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <string>
+#include <sstream>
+#include <vector>
 
 namespace Emeraude
 {

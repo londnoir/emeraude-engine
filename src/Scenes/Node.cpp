@@ -1014,9 +1014,9 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	Node::playAnimation (Animations::id_t identifier, const Variant & value) noexcept
+	Node::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		switch ( identifier )
+		switch ( animationID )
 		{
 			case LocalCoordinates :
 				this->setLocalCoordinates(value.asCartesianFrameFloat());

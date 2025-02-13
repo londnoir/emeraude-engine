@@ -34,10 +34,8 @@
 #include <mutex>
 #include <string>
 
-/* Third-party inclusions. */
-#include "json/json.h"
-
 /* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Libraries/String.hpp"
 #include "Stores.hpp"
 #include "Types.hpp"
@@ -403,17 +401,11 @@ namespace Emeraude::Resources
 	bool
 	ResourceTrait::load (const std::filesystem::path & filepath) noexcept
 	{
-		const Json::CharReaderBuilder builder{};
+	    Json::Value root;
 
-		std::ifstream json{filepath, std::ifstream::binary};
-
-		Json::Value root{};
-
-		std::string errors{};
-
-		if ( !Json::parseFromStream(builder, json, &root, &errors) )
+	    if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
-			TraceError{TracerTag} << "Unable to parse JSON file ! Errors :" "\n" << errors;
+			TraceError{TracerTag} << "Unable to parse the resource file " << filepath << " !" "\n";
 
 			/* NOTE: Set status here. */
 			m_status = Status::Failed;

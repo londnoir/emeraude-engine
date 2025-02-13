@@ -34,25 +34,86 @@
 
 namespace Libraries::FastJSON
 {
-	Json::Value
-	getRootFromFile (const std::filesystem::path & filepath) noexcept
+	bool
+	getRootFromFile (const std::filesystem::path & filepath, Json::Value & root, int stackLimit, bool quiet) noexcept
 	{
-		const Json::CharReaderBuilder builder{};
+		Json::CharReaderBuilder builder{};
+		builder["collectComments"] = false;
+		builder["allowComments"] = false;
+		builder["allowTrailingCommas"] = false;
+		builder["strictRoot"] = true;
+		builder["allowDroppedNullPlaceholders"] = false;
+		builder["allowNumericKeys"] = false;
+		builder["allowSingleQuotes"] = false;
+		builder["stackLimit"] = stackLimit;
+		builder["failIfExtra"] = true;
+		builder["rejectDupKeys"] = true;
+		builder["allowSpecialFloats"] = true;
+		builder["skipBom"] = true;
 
 		std::ifstream json{filepath, std::ifstream::binary};
 
-		Json::Value root{};
+		if ( !json.is_open() )
+		{
+			if ( !quiet )
+			{
+				std::cerr << "Unable to open the file " << filepath << " !" "\n";
+			}
 
-		std::string errors{};
+			return false;
+		}
+
+		std::string errors;
 
 		if ( !parseFromStream(builder, json, &root, &errors) )
 		{
-			std::cerr << "Unable to parse JSON file " << filepath << " ! Errors :" "\n" << errors << "\n";
+			if ( !quiet )
+			{
+				std::cerr << "Unable to parse JSON file " << filepath << " ! Errors :" "\n" << errors << "\n";
+			}
 
-			return Json::nullValue;
+			root = Json::nullValue;
+
+			return false;
 		}
 
-		return root;
+		return true;
+	}
+
+	bool
+	getRootFromString (const std::string & json, Json::Value & root, int stackLimit, bool quiet) noexcept
+	{
+		Json::CharReaderBuilder builder{};
+		builder["collectComments"] = false;
+		builder["allowComments"] = false;
+		builder["allowTrailingCommas"] = false;
+		builder["strictRoot"] = true;
+		builder["allowDroppedNullPlaceholders"] = false;
+		builder["allowNumericKeys"] = false;
+		builder["allowSingleQuotes"] = false;
+		builder["stackLimit"] = stackLimit;
+		builder["failIfExtra"] = true;
+		builder["rejectDupKeys"] = true;
+		builder["allowSpecialFloats"] = true;
+		builder["skipBom"] = true;
+
+		Json::CharReader * reader = builder.newCharReader();
+
+		std::string errors;
+
+		if ( !reader->parse(json.data(), json.data() + json.size(), &root, &errors) )
+		{
+			if ( !quiet )
+			{
+				std::cerr << "Unable to parse JSON from a string ! Errors :" "\n" << errors << "\n";
+			}
+
+			root = Json::nullValue;
+
+			return false;
+		}
+
+		return true;
 	}
 
 	bool

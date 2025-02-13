@@ -39,6 +39,7 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
+#include "Console/Controllable.hpp"
 
 /* Local inclusions for usages. */
 #include "DefinitionResource.hpp"
@@ -66,17 +67,90 @@ namespace Emeraude
 namespace Emeraude::Scenes
 {
 	/**
+	 * @brief Keeps scene targets for the console.
+	 */
+	class ConsoleMemory final
+	{
+		public:
+
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"ConsoleMemory"};
+
+			ConsoleMemory () = default;
+
+			void
+			target (const std::shared_ptr< Scene > & scene) noexcept
+			{
+				m_scene = scene;
+			}
+
+			void
+			target (const std::shared_ptr< Node > & sceneNode) noexcept
+			{
+				m_sceneNode = sceneNode;
+			}
+
+			void
+			target (const std::shared_ptr< StaticEntity > & staticEntity) noexcept
+			{
+				m_staticEntity = staticEntity;
+			}
+
+			void
+			target (const std::shared_ptr< Component::Abstract > & entityComponent) noexcept
+			{
+				m_entityComponent = entityComponent;
+			}
+
+			[[nodiscard]]
+			std::shared_ptr< Scene >
+			scene () const noexcept
+			{
+				return m_scene.lock();
+			}
+
+			[[nodiscard]]
+			std::shared_ptr< Node >
+			sceneNode () const noexcept
+			{
+				return m_sceneNode.lock();
+			}
+
+			[[nodiscard]]
+			std::shared_ptr< StaticEntity >
+			staticEntity () const noexcept
+			{
+				return m_staticEntity.lock();
+			}
+
+			[[nodiscard]]
+			std::shared_ptr< Component::Abstract >
+			entityComponent () const noexcept
+			{
+				return m_entityComponent.lock();
+			}
+
+		private:
+
+			std::weak_ptr< Scene > m_scene;
+			std::weak_ptr< Node > m_sceneNode;
+			std::weak_ptr< StaticEntity > m_staticEntity;
+			std::weak_ptr< Component::Abstract > m_entityComponent;
+	};
+
+	/**
 	 * @brief The scene manager service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends Emeraude::Console::Controllable The scene manager service is usable from the console.
 	 */
-	class Manager final : public ServiceInterface
+	class Manager final : public ServiceInterface, public Console::Controllable
 	{
 		public:
 
 			using SceneLoading = std::pair< std::shared_ptr< Scene >, std::shared_ptr< DefinitionResource > >;
 
 			/** @brief Class identifier. */
-			static constexpr auto ClassId{"ScenesManagerService"};
+			static constexpr auto ClassId{"SceneManagerService"};
 
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
@@ -256,7 +330,7 @@ namespace Emeraude::Scenes
 			 * @return std::vector< std::string >
 			 */
 			[[nodiscard]]
-			std::vector< std::string > getSceneNameList () const noexcept;
+			std::vector< std::string > getSceneNames () const noexcept;
 
 			/**
 			 * @brief Returns a scene from its name.
@@ -315,6 +389,9 @@ namespace Emeraude::Scenes
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
+
 			/* Flag names */
 			static constexpr auto ServiceInitialized{0UL};
 
@@ -325,6 +402,7 @@ namespace Emeraude::Scenes
 			std::map< std::string, std::shared_ptr< Scene > > m_scenes;
 			std::shared_ptr< Scene > m_activeScene;
 			std::shared_mutex m_activeSceneAccess;
+			ConsoleMemory m_consoleMemory;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
 				false/*UNUSED*/,

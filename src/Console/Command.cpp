@@ -1,5 +1,5 @@
 /*
- * src/CommandContainer.cpp
+ * src/Console/Command.cpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -25,12 +25,12 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include "CommandContainer.hpp"
+#include "Command.hpp"
 
-namespace Emeraude
+namespace Emeraude::Console
 {
-	CommandContainer::CommandContainer (ConsoleCommand command, std::string help) noexcept
-		: m_command(std::move(command)), m_help(std::move(help))
+	Command::Command (Binding binding, std::string help) noexcept
+		: m_binding(std::move(binding)), m_help(std::move(help))
 	{
 
 	}

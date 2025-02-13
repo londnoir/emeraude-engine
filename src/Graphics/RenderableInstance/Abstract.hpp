@@ -31,7 +31,7 @@
 #include <any>
 #include <cstddef>
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -72,9 +72,14 @@ namespace Emeraude
 		class Program;
 	}
 
-	namespace Scenes::Component
+	namespace Scenes
 	{
-		class AbstractLightEmitter;
+		namespace Component
+		{
+			class AbstractLightEmitter;
+		}
+
+		class Scene;
 	}
 }
 
@@ -87,7 +92,7 @@ namespace Emeraude::Graphics::RenderableInstance
 		 * @brief This flag is set when the renderable instance is ready to be rendered in a 3D scene.
 		 * @warning This is different from the renderable flag "IsReadyForInstantiation" !
 		 */
-		IsReadyToRender_FAILED = 1 << 0,
+		IsReadyToRender = 1 << 0,
 		/**
 		 * @brief This flag is set when all positions (GPU instancing) are up to date.
 		 * @todo Maybe this functionality is useless now, it was an old behavior to control update video memory buffer frequency.
@@ -121,6 +126,13 @@ namespace Emeraude::Graphics::RenderableInstance
 		ApplyTransformationMatrix = 1 << 14,
 		/** @brief This flag tells disable the light distance check. */
 		DisableLightDistanceCheck = 1 << 15
+	};
+
+	/**	@brief Structure to render an instance for a specific render target. */
+	struct RenderTargetPrograms
+	{
+		std::unordered_map< RenderPassType, std::vector< std::shared_ptr< Saphir::Program > > > renderPasses;
+		bool isReadyToRender{false};
 	};
 
 	/**
@@ -456,6 +468,17 @@ namespace Emeraude::Graphics::RenderableInstance
 			}
 
 			/**
+			 * @brief Get the renderable instance ready to render in a scene.
+			 * @param scene A reference to the scene.
+			 * @param renderTarget A reference to the render target smart pointer.
+			 * @param renderPassTypes A reference to a list of requested render pass types.
+			 * @param renderer A writable reference to the graphics renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool getReadyForRender (const Scenes::Scene & scene, const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const std::vector< RenderPassType > & renderPassTypes, Renderer & renderer) noexcept;
+
+			/**
 			 * @brief Sets the renderable instance broken from a child class.
 			 * @note This is the release version.
 			 * @return void
@@ -474,16 +497,6 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return void
 			 */
 			void setBroken (const std::string & errorMessage, const std::source_location & location = std::source_location::current()) noexcept;
-
-			/**
-			 * @brief Sets a program for a combination of layer and render-pass.
-			 * @param renderTarget A reference to the render target smart pointer.
-			 * @param renderPassType The render pass type.
-			 * @param layerIndex The index of the renderable instance layer.
-			 * @param program A reference to a program smart pointer.
-			 * @return void
-			 */
-			void setProgram (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, RenderPassType renderPassType, size_t layerIndex, const std::shared_ptr< Saphir::Program > & program) noexcept;
 
 			/**
 			 * @brief Sets a local transformation matrix to apply just before render.
@@ -684,12 +697,9 @@ namespace Emeraude::Graphics::RenderableInstance
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			std::shared_ptr< Renderable::Interface > m_renderable;
-			std::map<
+			std::unordered_map<
 				std::shared_ptr< RenderTarget::Abstract >,
-				std::map<
-					RenderPassType,
-					std::vector< std::shared_ptr< Saphir::Program > >
-				>
+				RenderTargetPrograms
 			> m_renderTargets;
 			size_t m_frameIndex{0};
 			Libraries::Math::Matrix< 4, float > m_transformationMatrix;

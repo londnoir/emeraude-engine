@@ -63,13 +63,16 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	SphericalPushModifier::playAnimation (id_t identifier, const Variant & value) noexcept
+	SphericalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		switch ( identifier )
+		switch ( animationID )
 		{
+			case State :
+				this->enable(value.asBool());
+				return true;
+
 			case Magnitude :
 				this->setMagnitude(value.asFloat());
-
 				return true;
 
 			default:
@@ -80,6 +83,11 @@ namespace Emeraude::Scenes::Component
 	Vector< 3, float >
 	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Sphere< float > & worldBoundingSphere) const noexcept
 	{
+		if ( !this->isEnabled() )
+		{
+			return {};
+		}
+
 		auto magnitude = m_magnitude;
 
 		if ( this->hasInfluenceArea() )
@@ -100,6 +108,11 @@ namespace Emeraude::Scenes::Component
 	Vector< 3, float >
 	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
 	{
+		if ( !this->isEnabled() )
+		{
+			return {};
+		}
+
 		auto magnitude = m_magnitude;
 
 		if ( this->hasInfluenceArea() )

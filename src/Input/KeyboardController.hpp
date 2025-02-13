@@ -113,6 +113,14 @@ namespace Emeraude::Input
 			bool isKeyReleased (int32_t key) const noexcept;
 
 			/**
+			 * @brief Changes a key state. This is useful for special key.
+			 * @param key The keycode.
+			 * @param pressed The new key state.
+			 * @return bool
+			 */
+			static void changeKeyState (int32_t key, bool pressed) noexcept;
+
+			/**
 			 * @brief This function is called by the input manager to update device state.
 			 * @note This must be called by the main thread.
 			 * @param window A reference to the window.

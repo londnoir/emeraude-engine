@@ -1,5 +1,5 @@
 /*
- * src/ConsoleControllable.cpp
+ * src/Console/Controllable.cpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -25,7 +25,7 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include "ConsoleControllable.hpp"
+#include "Controllable.hpp"
 
 /* STL inclusions. */
 #include <iostream>
@@ -33,24 +33,24 @@
 /* Local inclusions. */
 #include "Libraries/BlobTrait.hpp"
 #include "Libraries/String.hpp"
-#include "Console.hpp"
+#include "Controller.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace Emeraude::Console
 {
 	using namespace Libraries;
 
-	static constexpr auto TracerTag{"ConsoleControllable"};
+	static constexpr auto TracerTag{"Controllable"};
 
-	ConsoleControllable::ConsoleControllable (std::string consoleIdentifier) noexcept
+	Controllable::Controllable (std::string consoleIdentifier) noexcept
 		: m_identifier(std::move(consoleIdentifier))
 	{
 
 	}
 
-	ConsoleControllable::~ConsoleControllable ()
+	Controllable::~Controllable ()
 	{
-		auto * console = Console::instance();
+		auto * console = Controller::instance();
 
 		/* Auto remove from console. */
 		if ( console != nullptr )
@@ -60,7 +60,7 @@ namespace Emeraude
 	}
 
 	bool
-	ConsoleControllable::execute (ConsoleExpression & expression) noexcept
+	Controllable::execute (Expression & expression, Outputs & outputs) noexcept
 	{
 		/* Checks for next identifier. */
 		auto identifier = expression.nextIdentifier();
@@ -69,16 +69,17 @@ namespace Emeraude
 		if ( !identifier.empty() )
 		{
 			/* Checks for sub object */
-			auto objectIt = std::ranges::find_if(m_consoleObjects, [identifier] (const auto & objectIt) {
+			const auto objectIt = std::ranges::find_if(m_consoleObjects, [identifier] (const auto & objectIt) {
 				return objectIt.first == identifier;
 			});
 
 			if ( objectIt != m_consoleObjects.cend() )
 			{
-				return objectIt->second->execute(expression);
+				/* NOTE: Execute the object command bound. */
+				return objectIt->second->execute(expression, outputs);
 			}
 
-			TraceError{TracerTag} << "Identifier '" << identifier << "' not found !";
+			outputs.emplace_back(Severity::Error, std::stringstream{} << "Console object '" << identifier << "' not found !");
 
 			return false;
 		}
@@ -86,30 +87,30 @@ namespace Emeraude
 		/* If empty we are at the right level, and we try to execute the command. */
 
 		/* Checks for built-in function about a level. */
-		if ( this->checkBuiltInCommands(expression) )
+		if ( this->checkBuiltInCommands(expression, outputs) )
 		{
 			return true;
 		}
 
-		/* Checks for object commands */
-		auto commandIt = std::ranges::find_if(m_commands, [expression] (const auto & commandIt) {
+		/* Checks for object commands. */
+		const auto commandIt = std::ranges::find_if(m_commands, [expression] (const auto & commandIt) {
 			return commandIt.first == expression.commandName();
 		});
 
 		if ( commandIt != m_commands.cend() )
 		{
-			const auto & command = commandIt->second.command();
+			const auto & binding = commandIt->second.binding();
 
-			return ( command(expression.parameters()) == 0 );
+			return binding(expression.arguments(), outputs);
 		}
 
-		TraceError{TracerTag} << "Object command '" << expression.commandName() << "()' not found !";
+		outputs.emplace_back(Severity::Error, std::stringstream{} << "Object command '" << expression.commandName() << "()' not found !");
 
 		return false;
 	}
 
 	void
-	ConsoleControllable::complete (ConsoleExpression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept
+	Controllable::complete (Expression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept
 	{
 		identifier = expression.nextIdentifier();
 
@@ -120,7 +121,7 @@ namespace Emeraude
 
 		/* For each register object in the console.
 		 * If we got a perfect match, we stop the search. */
-		if ( Console::loopOverObjectsName(m_consoleObjects, expression, identifier, suggestions) )
+		if ( Controller::loopOverObjectsName(m_consoleObjects, expression, identifier, suggestions) )
 		{
 			return;
 		}
@@ -143,7 +144,7 @@ namespace Emeraude
 			/* Checks for mismatching. */
 			auto mismatch = false;
 
-			for ( auto chr = 0U; chr < identifier.length(); chr++ )
+			for ( size_t chr = 0; chr < identifier.length(); chr++ )
 			{
 				/* Object name mismatch characters from input. */
 				if ( commandIt.first[chr] != identifier[chr] )
@@ -162,7 +163,7 @@ namespace Emeraude
 	}
 
 	void
-	ConsoleControllable::bindCommand (const std::string & commandNames, const ConsoleCommand & command, const std::string & help) noexcept
+	Controllable::bindCommand (const std::string & commandNames, const Binding & binding, const std::string & help) noexcept
 	{
 		const auto commandNamesList = String::explode(commandNames, ',', false);
 
@@ -177,16 +178,16 @@ namespace Emeraude
 				continue;
 			}
 
-			m_commands.emplace(commandName, CommandContainer(command, help));
+			m_commands.emplace(commandName, Command{binding, help});
 		}
 	}
 
 	void
-	ConsoleControllable::unbindCommand (const std::string & commandNames) noexcept
+	Controllable::unbindCommand (const std::string & commandNames) noexcept
 	{
-		const auto commandNamesList = String::explode(commandNames, ',', false);
+		const auto commandNameList = String::explode(commandNames, ',', false);
 
-		for ( const auto & commandName : commandNamesList )
+		for ( const auto & commandName : commandNameList )
 		{
 			const auto commandIt = m_commands.find(commandName);
 
@@ -198,28 +199,24 @@ namespace Emeraude
 	}
 
 	bool
-	ConsoleControllable::registerToConsole () noexcept
+	Controllable::registerToConsole () noexcept
 	{
-		if ( !Console::instance()->add(*this) )
+		if ( !Controller::instance()->add(*this) )
 		{
 			TraceError{TracerTag} << "Unable to register this object to the console.";
 
 			return false;
 		}
 
+		this->onRegisterToConsole();
+
 		return true;
 	}
 
-	void
-	ConsoleControllable::writeToConsole (const std::string & message, Severity severity) noexcept
-	{
-		Console::instance()->write(message, severity);
-	}
-
 	bool
-	ConsoleControllable::registerToObject (ConsoleControllable & object) noexcept
+	Controllable::registerToObject (Controllable & object) noexcept
 	{
-		if ( object.m_consoleObjects.find(m_identifier) != object.m_consoleObjects.cend() )
+		if ( object.m_consoleObjects.contains(m_identifier) )
 		{
 			TraceError{TracerTag} << "Sub object named '" << m_identifier << "' already exists !";
 
@@ -228,28 +225,38 @@ namespace Emeraude
 
 		object.m_consoleObjects.emplace(m_identifier, this);
 
+		this->onRegisterToConsole();
+
 		return true;
 	}
 
 	bool
-	ConsoleControllable::checkBuiltInCommands (const ConsoleExpression & expression) noexcept
+	Controllable::checkBuiltInCommands (const Expression & expression, Outputs & outputs) const noexcept
 	{
 		if ( expression.commandName() == "lsfunc" )
 		{
+			std::stringstream message;
+
 			for ( const auto & commandIt : m_commands )
 			{
-				this->writeToConsole(BlobTrait() << commandIt.first << " (" << commandIt.second.help() << ')');
+				message << commandIt.first << " (" << commandIt.second.help() << ")" "\n";
 			}
+
+			outputs.emplace_back(Severity::Info, message);
 
 			return true;
 		}
 
 		if ( expression.commandName() == "lsobj" )
 		{
+			std::stringstream message;
+
 			for ( const auto & objectIt : m_consoleObjects )
 			{
-				this->writeToConsole(BlobTrait() << "'" << objectIt.first << "'");
+				message << "'" << objectIt.first << "'" "\n";
 			}
+
+			outputs.emplace_back(Severity::Info, message);
 
 			return true;
 		}

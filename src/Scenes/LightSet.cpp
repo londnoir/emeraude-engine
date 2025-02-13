@@ -46,8 +46,8 @@ namespace Emeraude::Scenes
 
 	const size_t LightSet::ClassUID{getClassUID(ClassId)};
 
-	LightSet::LightSet (MasterControl::Console & console) noexcept
-		: m_console(console)
+	LightSet::LightSet (MasterControl::Manager & masterControlManager) noexcept
+		: m_masterControlManager(masterControlManager)
 	{
 
 	}
@@ -106,7 +106,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_directionalLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_console) )
+				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
 				{
 					TraceError{ClassId} << "Unable to create the directional light '" << light->name() << "' !";
 
@@ -131,7 +131,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_pointLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_console) )
+				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
 				{
 					TraceError{ClassId} << "Unable to create the point light '" << light->name() << "' !";
 
@@ -156,7 +156,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_spotLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_console) )
+				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
 				{
 					TraceError{ClassId} << "Unable to create the spot light '" << light->name() << "' !";
 
@@ -229,7 +229,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::DirectionalLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_console) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
 		{
 			TraceError{ClassId} << "Unable to create the directional light '" << light->name() << "' !";
 
@@ -248,7 +248,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::PointLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_console) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
 		{
 			TraceError{ClassId} << "Unable to create the point light '" << light->name() << "' !";
 
@@ -267,7 +267,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::SpotLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_console) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
 		{
 			TraceError{ClassId} << "Unable to create the spot light '" << light->name() << "' !";
 

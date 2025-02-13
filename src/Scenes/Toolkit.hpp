@@ -52,6 +52,7 @@
 #include "Graphics/Geometry/ResourceGenerator.hpp"
 #include "Graphics/Material/Interface.hpp"
 #include "Graphics/Renderable/MeshResource.hpp"
+#include "Graphics/Renderable/SimpleMeshResource.hpp"
 #include "Libraries/Math/Base.hpp"
 #include "Libraries/Math/CartesianFrame.hpp"
 #include "Libraries/Math/Vector.hpp"
@@ -70,12 +71,14 @@ namespace Emeraude::Scenes
 	 */
 	enum class GenPolicy : uint8_t
 	{
-		/* Simple creation of entity. */
+		/** @brief Simple creation of entity. */
 		Simple,
-		/* The entity will be set for further component creation. */
+		/** @brief The entity will be set for further component creation. */
 		Reusable,
-		/* The entity will be set to be the parent of future node creation.
-		 * NOTE: This policy will be ignored for static entity. */
+		/**
+		 * @brief The entity will be set to be the parent of future node creation.
+		 * @note This policy will be ignored for static entity.
+		 */
 		Parent
 	};
 
@@ -202,7 +205,8 @@ namespace Emeraude::Scenes
 			 * @param node A reference to a scene node smart pointer.
 			 * @return Toolkit &
 			 */
-			Toolkit & setParentNode (const std::shared_ptr< Node > & node) noexcept
+			Toolkit &
+			setParentNode (const std::shared_ptr< Node > & node) noexcept
 			{
 				m_nodeGenerationPolicy = GenPolicy::Parent;
 				m_previousNode = node;
@@ -256,29 +260,28 @@ namespace Emeraude::Scenes
 			}
 
 			/**
-			 * @brief Creates a new scene node at cursor and by using the selected parent node or root otherwise.
+			 * @brief Generates a new scene node using the cursor.
 			 * @param entityName A reference to a string for the entity entityName. Default auto-generated.
-			 * @param movable Set the movable property of the node. Default true.
 			 * @param genPolicy Set the entity generation policy. Default simple.
+			 * @param movable Set the movable property of the node. Default true.
 			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > generateNode (const std::string & entityName = {}, bool movable = true, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
+			std::shared_ptr< Node > generateNode (const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple, bool movable = true) noexcept;
 
 			/**
-			 * @brief Creates a new scene node at cursor and by using the selected parent node or root otherwise.
-			 * The new node will point his Z+ vector toward the designed position.
+			 * @brief Generates a new scene node pointing toward a location and using the cursor.
 			 * @param entityName A reference to a string for the entity name. Default auto-generated.
 			 * @param pointTo The position where the node point to.
-			 * @param movable Set the movable property of the node. Default true.
 			 * @param genPolicy Set the entity generation policy. Default simple.
+			 * @param movable Set the movable property of the node. Default true.
 			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > generateNode (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, bool movable = true, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
+			std::shared_ptr< Node > generateNode (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple, bool movable = true) noexcept;
 
 			/**
-			 * @brief Creates a new static entity at cursor.
+			 * @brief Generates a new static entity using the cursor.
 			 * @param entityName A reference to a string for the entity name. Default auto-generated.
 			 * @param genPolicy Set the entity generation policy. Default simple.
 			 * @return std::shared_ptr< StaticEntity >
@@ -287,8 +290,7 @@ namespace Emeraude::Scenes
 			std::shared_ptr< StaticEntity > generateStaticEntity (const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
 
 			/**
-			 * @brief Creates a new scene node at cursor and by using the selected parent node or root otherwise.
-			 * The new node will point his Z+ vector toward the designed position.
+			 * @brief Generates a new static entity pointing toward a location and using the cursor.
 			 * @param entityName A reference to a string for the entity name. Default auto-generated.
 			 * @param pointTo The position where the node point to.
 			 * @param genPolicy Set the entity generation policy. Default simple.
@@ -298,49 +300,53 @@ namespace Emeraude::Scenes
 			std::shared_ptr< StaticEntity > generateStaticEntity (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
 
 			/**
-			 * @brief Creates an entity.
+			 * @brief Generates a new entity using the cursor.
+			 * @note Shortcut to Toolkit::generateNode() and Toolkit:: generateStaticEntity().
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName A reference to a string for the entity name. Default auto-generated.
+			 * @param genPolicy Set the entity generation policy. Default simple.
 			 * @return std::shared_ptr< entity_t >
 			 */
 			template< typename entity_t = StaticEntity >
 			[[nodiscard]]
 			std::shared_ptr< entity_t >
-			generateEntity (const std::string & entityName = {}) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateEntity (const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				if constexpr ( std::is_same_v< entity_t, Node > )
 				{
-					return this->generateNode(entityName);
+					return this->generateNode(entityName, genPolicy);
 				}
 
 				if constexpr ( std::is_same_v< entity_t, StaticEntity > )
 				{
-					return this->generateStaticEntity(entityName);
+					return this->generateStaticEntity(entityName, genPolicy);
 				}
 
 				return nullptr;
 			}
 
 			/**
-			 * @brief Creates an entity which look at a specified position.
+			 * @brief Generates a new entity pointing toward a location and using the cursor.
+			 * @note Shortcut to Toolkit::generateNode() and Toolkit:: generateStaticEntity().
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param pointTo The position where the entity point to.
 			 * @param entityName A reference to a string for the entity name. Default auto-generated.
+			 * @param genPolicy Set the entity generation policy. Default simple.
 			 * @return std::shared_ptr< entity_t >
 			 */
 			template< typename entity_t = StaticEntity >
 			[[nodiscard]]
 			std::shared_ptr< entity_t >
-			generateEntity (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateEntity (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				if constexpr ( std::is_same_v< entity_t, Node > )
 				{
-					return this->generateNode(pointTo, entityName);
+					return this->generateNode(pointTo, entityName, genPolicy);
 				}
 
 				if constexpr ( std::is_same_v< entity_t, StaticEntity > )
 				{
-					return this->generateStaticEntity(pointTo, entityName);
+					return this->generateStaticEntity(pointTo, entityName, genPolicy);
 				}
 
 				return nullptr;
@@ -450,15 +456,15 @@ namespace Emeraude::Scenes
 			 * @brief Generates a directional light. Like the sun.
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName The used for the node and the light emitter component.
-			 * @param pointTo Set where the ray should point.
-			 * @param color The color of the light. White by default.
+			 * @param pointTo Set where the ray should point. Default, world origin.
+			 * @param color The color of the light. Default, white.
 			 * @param intensity The light intensity. Default 1.
 			 * @param shadowMapResolution The shadow map resolution. Default disabled.
 			 * @return BuiltEntity< entity_t, Component::DirectionalLight >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::DirectionalLight >
-			generateDirectionalLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateDirectionalLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo = {}, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -480,8 +486,8 @@ namespace Emeraude::Scenes
 			 * @brief Generates a point light. Like a bulb.
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName The used for the node and the light emitter component.
-			 * @param color The color of the light. White by default.
-			 * @param radius The radius of the light. Infinite by default.
+			 * @param color The color of the light. Default, white.
+			 * @param radius The radius of the light. Default, infinite.
 			 * @param intensity The light intensity. Default 1.
 			 * @param shadowMapResolution The shadow map resolution. Default disabled.
 			 * @return BuiltEntity< entity_t, Component::PointLight >
@@ -511,7 +517,7 @@ namespace Emeraude::Scenes
 			 * @brief Generates a spotlight. Like a ... spotlight ;).
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName The used for the node and the light emitter component.
-			 * @param pointTo Set where the light should point.
+			 * @param pointTo Set where the ray should point. Default, world origin.
 			 * @param innerAngle Define the inner border of the light cone where the light will be emitted at 100% inside. Default 35°.
 			 * @param outerAngle Define the outer border of the light cone where no more light will be emitted outside this range. Default 40°.
 			 * @param color The color of the light. White by default.
@@ -522,7 +528,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::SpotLight >
-			generateSpotLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo, float innerAngle = Component::AbstractLightEmitter::DefaultInnerAngle, float outerAngle = Component::AbstractLightEmitter::DefaultOuterAngle, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateSpotLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo = {}, float innerAngle = Component::AbstractLightEmitter::DefaultInnerAngle, float outerAngle = Component::AbstractLightEmitter::DefaultOuterAngle, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -543,19 +549,18 @@ namespace Emeraude::Scenes
 			}
 
 			/**
-			 * @brief Generates a mesh instance in the scene.
+			 * @brief Generates a mesh instance in the scene from a mesh resource.
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName A reference to a string.
-			 * @param geometryResource A geometry smart pointer. Default nullptr.
-			 * @param materialResource A material smart pointer. Default nullptr.
-			 * @param enableLighting Enable the lighting. Default false.
+			 * @param meshResource A mesh resource smart pointer. Default mesh resource.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
 			 * @return BuiltEntity< entity_t, Component::Visual >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateMeshInstance (const std::string & entityName, std::shared_ptr< Graphics::Geometry::Interface > geometryResource = nullptr, std::shared_ptr< Graphics::Material::Interface > materialResource = nullptr, bool enableLighting = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateMeshInstance (const std::string & entityName, std::shared_ptr< Graphics::Renderable::MeshResource > meshResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
-				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(entityName);
 
 				if ( entity == nullptr )
@@ -563,45 +568,92 @@ namespace Emeraude::Scenes
 					return {};
 				}
 
-				/* Check geometry. */
+				if ( meshResource == nullptr )
+				{
+					meshResource = Resources::Manager::instance()->meshes().getDefaultResource();
+				}
+
+				return {entity, entity->newVisual(meshResource, enablePhysicalProperties, enableLighting, entityName)};
+			}
+
+			/**
+			 * @brief Generates a mesh instance in the scene from a simple mesh resource.
+			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
+			 * @param entityName A reference to a string.
+			 * @param simpleMeshResource A simple mesh resource smart pointer. Default simple mesh resource.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
+			 * @return BuiltEntity< entity_t, Component::Visual >
+			 */
+			template< typename entity_t = StaticEntity >
+			BuiltEntity< entity_t, Component::Visual >
+			generateMeshInstance (const std::string & entityName, std::shared_ptr< Graphics::Renderable::SimpleMeshResource > simpleMeshResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			{
+				auto entity = this->generateEntity< entity_t >(entityName);
+
+				if ( entity == nullptr )
+				{
+					return {};
+				}
+
+				if ( simpleMeshResource == nullptr )
+				{
+					simpleMeshResource = Resources::Manager::instance()->simpleMeshes().getDefaultResource();
+				}
+
+				return {entity, entity->newVisual(simpleMeshResource, enablePhysicalProperties, enableLighting, entityName)};
+			}
+
+			/**
+			 * @brief Generates a simple mesh instance in the scene from a geometry resource and a material resource.
+			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
+			 * @param entityName A reference to a string.
+			 * @param geometryResource A geometry smart pointer. Default geometry resource.
+			 * @param materialResource A material smart pointer. Default material resource.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
+			 * @return BuiltEntity< entity_t, Component::Visual >
+			 */
+			template< typename entity_t = StaticEntity >
+			BuiltEntity< entity_t, Component::Visual >
+			generateMeshInstance (const std::string & entityName, std::shared_ptr< Graphics::Geometry::Interface > geometryResource = nullptr, std::shared_ptr< Graphics::Material::Interface > materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			{
 				if ( geometryResource == nullptr )
 				{
 					geometryResource = Resources::Manager::instance()->indexedVertexGeometries().getDefaultResource();
 				}
 
-				/* Get the default basic material resource. */
 				if ( materialResource == nullptr )
 				{
 					materialResource = Resources::Manager::instance()->basicMaterials().getDefaultResource();
 				}
 
-				/* Create a mesh resource by assembling the geometry and the material resource. */
-				const auto meshResource = Graphics::Renderable::MeshResource::getOrCreate(geometryResource, materialResource);
-
-				if ( meshResource == nullptr )
+				if ( geometryResource->subGeometryCount() > 1 )
 				{
-					return {};
+					const auto meshResource = Graphics::Renderable::MeshResource::getOrCreate(geometryResource, materialResource);
+
+					return generateMeshInstance< entity_t >(entityName, meshResource, enablePhysicalProperties, enableLighting);
 				}
 
-				/* Create the visual component. */
-				auto component = entity->newVisual(meshResource, true, enableLighting, entityName);
+				const auto simpleMeshResource = Graphics::Renderable::SimpleMeshResource::getOrCreate(geometryResource, materialResource);
 
-				return {entity, component};
+				return generateMeshInstance< entity_t >(entityName, simpleMeshResource, enablePhysicalProperties, enableLighting);
 			}
 
 			/**
-			 * @brief Generates a mesh instance in the scene from a shape.
+			 * @brief Generates a mesh instance in the scene from a shape and a material resource.
 			 * @note Shortcut to Toolkit::generateMeshInstance().
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName A reference to a string.
 			 * @param shape A reference to a vertex factory shape.
-			 * @param materialResource A reference to a material smart pointer. Default nullptr.
-			 * @param enableLighting Enable the lighting. Default false.
+			 * @param materialResource A reference to a material smart pointer. Default material resource.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
 			 * @return BuiltEntity< entity_t, Component::Visual >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateShapeInstance (const std::string & entityName, const Libraries::VertexFactory::Shape< float > & shape, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enableLighting = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateMeshInstance (const std::string & entityName, const Libraries::VertexFactory::Shape< float > & shape, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				using namespace Graphics;
 
@@ -614,7 +666,35 @@ namespace Emeraude::Scenes
 					return {};
 				}
 
-				return this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enableLighting);
+				return this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enablePhysicalProperties, enableLighting);
+			}
+
+			/**
+			 * @brief Generates a sprite instance in the scene.
+			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
+			 * @param entityName A reference to a string.
+			 * @param spriteResource A sprite resource smart pointer. Default sprite resource.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
+			 * @return BuiltEntity< entity_t, Component::Visual >
+			 */
+			template< typename entity_t = StaticEntity >
+			BuiltEntity< entity_t, Component::Visual >
+			generateSpriteInstance (const std::string & entityName, std::shared_ptr< Graphics::Renderable::SpriteResource > spriteResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			{
+				auto entity = this->generateEntity< entity_t >(entityName);
+
+				if ( entity == nullptr )
+				{
+					return {};
+				}
+
+				if ( spriteResource == nullptr )
+				{
+					spriteResource = Resources::Manager::instance()->sprites().getDefaultResource();
+				}
+
+				return {entity, entity->newVisual(spriteResource, enablePhysicalProperties, enableLighting, entityName)};
 			}
 
 			/**
@@ -624,13 +704,13 @@ namespace Emeraude::Scenes
 			 * @param entityName A reference to a string.
 			 * @param size The dimension of the cuboid.
 			 * @param materialResource A material resource. Default random.
-			 * @param enableLighting Enable the lighting. Default false.
-			 * @param generatePhysicsProperties Set physical properties based on shade a material. Default false.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
 			 * @return BuiltEntity< entity_t, Component::Visual >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateCuboidInstance (const std::string & entityName, const Libraries::Math::Vector< 3, float > & size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enableLighting = false, bool generatePhysicsProperties = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateCuboidInstance (const std::string & entityName, const Libraries::Math::Vector< 3, float > & size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				using namespace Libraries;
 				using namespace Libraries::Math;
@@ -646,9 +726,9 @@ namespace Emeraude::Scenes
 					return {};
 				}
 
-				const auto entity = this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enableLighting);
+				const auto entity = this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enablePhysicalProperties, enableLighting);
 
-				if ( entity.isValid() && generatePhysicsProperties )
+				if ( entity.isValid() && enablePhysicalProperties )
 				{
 					entity.component()->physicalObjectProperties().setProperties(
 						size[X] * size[Y] * size[Z] * materialResource->physicalSurfaceProperties().density() * SI::Kilogram< float >,
@@ -669,15 +749,15 @@ namespace Emeraude::Scenes
 			 * @param entityName A reference to a string.
 			 * @param size The uniform size of the cube.
 			 * @param materialResource A material resource. Default random.
-			 * @param enableLighting Enable the lighting. Default false.
-			 * @param generatePhysicsProperties Set physical properties based on shade a material. Default false.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
 			 * @return BuiltEntity< entity_t, Component::Visual >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateCuboidInstance (const std::string & entityName, float size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enableLighting = false, bool generatePhysicsProperties = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateCuboidInstance (const std::string & entityName, float size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
-				return generateCuboidInstance< entity_t >(entityName, {size, size, size}, materialResource, enableLighting, generatePhysicsProperties);
+				return generateCuboidInstance< entity_t >(entityName, {size, size, size}, materialResource, enablePhysicalProperties, enableLighting);
 			}
 
 			/**
@@ -688,13 +768,13 @@ namespace Emeraude::Scenes
 			 * @param radius The radius of the sphere.
 			 * @param materialResource A reference to a material smart pointer. Default nullptr.
 			 * @param useGeodesic Use geodesic sphere instead classical. Default false.
-			 * @param enableLighting Enable the lighting. Default false.
-			 * @param generatePhysicsProperties Set physical properties based on shade a material. Default false.
+			 * @param enablePhysicalProperties Enable physicals properties on the new component. Default true.
+			 * @param enableLighting Enable the lighting. Default true.
 			 * @return BuiltEntity< entity_t, Component::Visual >
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateSphereInstance (const std::string & entityName, float radius, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool useGeodesic = false, bool enableLighting = false, bool generatePhysicsProperties = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateSphereInstance (const std::string & entityName, float radius, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool useGeodesic = false, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				using namespace Libraries;
 				using namespace Libraries::Math;
@@ -712,9 +792,9 @@ namespace Emeraude::Scenes
 					return {};
 				}
 
-				auto entity = this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enableLighting);
+				auto entity = this->generateMeshInstance< entity_t >(entityName, geometryResource, materialResource, enablePhysicalProperties, enableLighting);
 
-				if ( entity.isValid() && generatePhysicsProperties )
+				if ( entity.isValid() && enablePhysicalProperties )
 				{
 					entity.entity()->enableSphereCollision(true);
 
@@ -734,6 +814,7 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Generates a spherical push modifier in the scene.
+			 * @todo Add influence area to be really useful.
 			 * @tparam entity_t The type of entity, a scene node or a static entity. Default StaticEntity.
 			 * @param entityName A reference to a string.
 			 * @param magnitude The push magnitude.

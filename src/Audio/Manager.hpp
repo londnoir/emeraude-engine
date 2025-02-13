@@ -38,7 +38,7 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "ConsoleControllable.hpp"
+#include "Console/Controllable.hpp"
 
 /* Local inclusions for usages. */
 #include "Libraries/WaveFactory/Types.hpp"
@@ -70,9 +70,9 @@ namespace Emeraude::Audio
 	/**
 	 * @brief The audio manager service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::ConsoleControllable
+	 * @extends Emeraude::Console::Controllable The audio manager can be controlled by the console.
 	 */
-	class Manager final : public ServiceInterface, public ConsoleControllable
+	class Manager final : public ServiceInterface, public Console::Controllable
 	{
 		public:
 
@@ -306,6 +306,9 @@ namespace Emeraude::Audio
 
 			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
+
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
 
 			/**
 			 * @brief Sets the doppler effect factor.

@@ -235,6 +235,24 @@ namespace Emeraude::Input
 			"Keyboard modifiers: " << getModifierListString(modifiers) << "\n";
 #endif
 
+		switch ( key )
+		{
+			case GLFW_KEY_LEFT_SHIFT :
+			case GLFW_KEY_LEFT_CONTROL :
+			case GLFW_KEY_LEFT_ALT :
+			case GLFW_KEY_LEFT_SUPER :
+			case GLFW_KEY_RIGHT_SHIFT :
+			case GLFW_KEY_RIGHT_CONTROL :
+			case GLFW_KEY_RIGHT_ALT :
+			case GLFW_KEY_RIGHT_SUPER :
+			case GLFW_KEY_MENU :
+				KeyboardController::changeKeyState(key, action == GLFW_PRESS);
+				break;
+
+			default:
+				break;
+		}
+
 		for ( const auto & listener : s_instance->m_keyboardListeners )
 		{
 			if ( !listener->isListeningKeyboard() )

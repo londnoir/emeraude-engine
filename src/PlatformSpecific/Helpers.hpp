@@ -48,12 +48,15 @@ namespace Emeraude::PlatformSpecific
 
 /* STL inclusions. */
 #include <string>
+#include <map>
+#include <vector>
 
 /* Third-party inclusions. */
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <Windows.h>
+#include <shtypes.h>
 
 namespace Emeraude::PlatformSpecific
 {
@@ -112,6 +115,15 @@ namespace Emeraude::PlatformSpecific
 	 */
 	[[nodiscard]]
 	int getParentProcessId (DWORD pid) noexcept;
+
+	/**
+	 * @brief Returns a filter list for windows using std::wstring instead of std::string.
+	 * @param filters A reference to a vector.
+	 * @param dataHolder A writable reference to a map.
+	 * @return std::vector< COMDLG_FILTERSPEC >
+	 */
+	[[nodiscard]]
+	std::vector< COMDLG_FILTERSPEC > createExtensionFilter (const std::vector< std::pair< std::string, std::vector< std::string > > > & filters, std::map< std::wstring, std::wstring > & dataHolder);
 }
 
 #endif

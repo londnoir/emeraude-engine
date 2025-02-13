@@ -112,7 +112,7 @@ namespace Emeraude::Scenes::Component
 
 			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::createOnHardware() */
 			[[nodiscard]]
-			bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Console & console) noexcept override;
+			bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept override;
 
 			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::destroyFromHardware() */
 			void destroyFromHardware () noexcept override;
@@ -180,7 +180,7 @@ namespace Emeraude::Scenes::Component
 			void onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept override;
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::onVideoMemoryUpdate() */
 			[[nodiscard]]

@@ -151,14 +151,25 @@ namespace Emeraude
 			}
 
 			/**
-			 * @brief Prevents config file creation.
-			 * @warning This must be called after Settings::initialize() to prevent auto file creation.
+			 * @brief Sets if the settings must be written in file at the end of the application.
+			 * @param state The state.
 			 * @return void
 			 */
 			void
-			doNotCreateConfigFile () noexcept
+			saveAtExit (bool state) noexcept
 			{
-				m_flags[SaveAtExit] = false;
+				m_flags[SaveAtExit] = state;
+			}
+
+			/**
+			 * @brief Returns whether the settings will be saved at application shutdown.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isSaveAtExitEnabled () const noexcept
+			{
+				return m_flags[SaveAtExit];
 			}
 
 			/**

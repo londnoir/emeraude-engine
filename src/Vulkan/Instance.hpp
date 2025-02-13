@@ -126,14 +126,27 @@ namespace Emeraude::Vulkan
 			}
 
 			/**
-			 * @brief Returns a reference to the device smart pointer list.
-			 * @return const std::vector< std::shared_ptr< Device > > &
+			 * @brief Returns a reference to the selected graphics device smart pointer.
+			 * @warning This can be nullptr !
+			 * @return const std::shared_ptr< Device > &
 			 */
 			[[nodiscard]]
-			const std::vector< std::shared_ptr< Device > > &
-			devices () const noexcept
+			const std::shared_ptr< Device > &
+			graphicsDevice () const noexcept
 			{
-				return m_devices;
+				return m_graphicsDevice;
+			}
+
+			/**
+			 * @brief Returns a reference to the selected compute device smart pointer.
+			 * @warning This can be nullptr !
+			 * @return const std::shared_ptr< Device > &
+			 */
+			[[nodiscard]]
+			const std::shared_ptr< Device > &
+			computeDevice () const noexcept
+			{
+				return m_computeDevice;
 			}
 
 			/**
@@ -380,7 +393,8 @@ namespace Emeraude::Vulkan
 			VkDebugUtilsMessengerCreateInfoEXT m_debugCreateInfo{};
 			std::unique_ptr< DebugMessenger > m_debugMessenger;
 			std::vector< std::shared_ptr< PhysicalDevice > > m_physicalDevices;
-			std::vector< std::shared_ptr< Device > > m_devices;
+			std::shared_ptr< Device > m_graphicsDevice;
+			std::shared_ptr< Device > m_computeDevice;
 			std::vector< std::string > m_requestedValidationLayers;
 			std::vector< const char * > m_requiredValidationLayers;
 			std::vector< const char * > m_requiredInstanceExtensions;

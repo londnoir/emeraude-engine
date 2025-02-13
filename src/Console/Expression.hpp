@@ -1,5 +1,5 @@
 /*
- * src/ConsoleExpression.hpp
+ * src/Console/Expression.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -32,39 +32,66 @@
 #include <string>
 #include <vector>
 
-namespace Emeraude
+/* Local inclusions. */
+#include "Argument.hpp"
+
+namespace Emeraude::Console
 {
 	/**
-	 * @brief The ConsoleExpression class
+	 * @brief The console expression class.
 	 */
-	class ConsoleExpression
+	class Expression final
 	{
 		public:
+
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"Expression"};
 
 			/**
 			 * @brief Constructs a console expression.
 			 * @param command A reference to a string for the command.
 			 */
-			explicit ConsoleExpression (const std::string & command = {}) noexcept;
+			explicit Expression (const std::string & command = {}) noexcept;
 
 			/**
 			 * @brief Returns whether the expression is valid.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isValid () const noexcept;
+			bool
+			isValid () const noexcept
+			{
+				/* NOTE: It should be at least one identifier. */
+				if ( m_identifiers.empty() )
+				{
+					return false;
+				}
+
+				/* NOTE: If there is no function name found, the command is pointless. */
+				if ( m_commandName.empty() )
+				{
+					return false;
+				}
+
+				return true;
+			}
 
 			/**
 			 * @brief Returns whether the expression has parameter.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasParameter () const noexcept;
+			bool
+			hasParameter () const noexcept
+			{
+				return !m_arguments.empty();
+			}
 
 			/**
 			 * @brief Returns the next identifier.
 			 * @return std::string
 			 */
+			[[nodiscard]]
 			std::string nextIdentifier () noexcept;
 
 			/**
@@ -72,28 +99,33 @@ namespace Emeraude
 			 * @return const std::vector< std::string > &
 			 */
 			[[nodiscard]]
-			const std::vector< std::string > & identifiers () const noexcept;
+			const std::vector< std::string > &
+			identifiers () const noexcept
+			{
+				return m_identifiers;
+			}
 
 			/**
 			 * @brief Returns the command name.
 			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			const std::string & commandName () const noexcept;
+			const std::string &
+			commandName () const noexcept
+			{
+				return m_commandName;
+			}
 
 			/**
-			 * @brief Returns the first parameter.
-			 * @return std::string
+			 * @brief Returns a reference to the list of arguments.
+			 * @return const std::vector< Argument > &
 			 */
 			[[nodiscard]]
-			std::string firstParameter () const noexcept;
-
-			/**
-			 * @brief Returns a reference to the list of parameters.
-			 * @return const std::vector< std::string > &
-			 */
-			[[nodiscard]]
-			const std::vector< std::string > & parameters () const noexcept;
+			const std::vector< Argument > &
+			arguments () const noexcept
+			{
+				return m_arguments;
+			}
 
 			/**
 			 * @brief STL streams printable object.
@@ -101,34 +133,36 @@ namespace Emeraude
 			 * @param obj A reference to the object to print.
 			 * @return std::ostream &
 			 */
-			friend std::ostream & operator<< (std::ostream & out, const ConsoleExpression & obj);
+			friend std::ostream & operator<< (std::ostream & out, const Expression & obj);
 
 			/**
 			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
 			 * @return std::string
 			 */
-			friend std::string to_string (const ConsoleExpression & obj) noexcept;
+			friend std::string to_string (const Expression & obj) noexcept;
 
 		private:
 
 			/**
-			 * @brief complete
-			 * @param buffer
-			 * @param where
+			 * @brief Extracts the command name.
+			 * @param buffer A writable reference to a string.
+			 * @param where A writable reference to a string.
+			 * @return void
 			 */
-			static void complete (std::string & buffer, std::vector< std::string > & where) noexcept;
+			static void extract (std::string & buffer, std::string & where) noexcept;
 
 			/**
-			 * @brief complete
-			 * @param buffer
-			 * @param where
+			 * @brief Extracts the command arguments.
+			 * @param buffer A writable reference to a string.
+			 * @param where A writable reference to a vector of string.
+			 * @return void
 			 */
-			static void complete (std::string & buffer, std::string & where) noexcept;
+			static void extract (std::string & buffer, std::vector< std::string > & where) noexcept;
 
-			std::vector< std::string > m_identifiers{};
-			std::string m_functionName{};
-			std::vector< std::string > m_parameters{};
-			size_t m_identifierLevel = 0;
+			std::vector< std::string > m_identifiers;
+			std::string m_commandName;
+			Arguments m_arguments;
+			size_t m_identifierLevel{0};
 	};
 }

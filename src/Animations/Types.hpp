@@ -29,6 +29,5 @@
 
 namespace Emeraude::Animations
 {
-	using id_t = int;
-	using real_t = double;
+
 }

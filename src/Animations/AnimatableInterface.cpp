@@ -37,9 +37,9 @@ namespace Emeraude::Animations
 	static constexpr auto TracerTag{"AnimatableInterface"};
 
 	void
-	AnimatableInterface::updateAnimations (size_t /*cycle*/) noexcept
+	AnimatableInterface::updateAnimations (size_t cycle) noexcept
 	{
-		for ( const auto & [identifier, animation] : m_animations )
+		for ( const auto & [animationID, animation] : m_animations )
 		{
 			if ( animation->isPaused() || animation->isFinished() )
 			{
@@ -53,9 +53,9 @@ namespace Emeraude::Animations
 				continue;
 			}
 
-			if ( !this->playAnimation(identifier, value) )
+			if ( !this->playAnimation(animationID, value, cycle) )
 			{
-				TraceError{TracerTag} << "Unable to play animation '" << identifier << "' !";
+				TraceError{TracerTag} << "Unable to play animation '" << animationID << "' !";
 			}
 		}
 	}

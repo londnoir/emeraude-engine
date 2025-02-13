@@ -169,55 +169,45 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	ParticlesEmitter::playAnimation (Animations::id_t identifier, const Variant & value) noexcept
+	ParticlesEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		switch ( identifier )
+		switch ( animationID )
 		{
 			case EmittingState :
 				this->setFlag(IsEmitting, value.asBool());
-				break;
+				return true;
 
-			case MaxParticlesGeneratePerUpdate :
+			case ParticlesGeneratePerCycle :
+				this->setParticleGeneratedPerCycle(value.asUnsignedInteger32());
+				return true;
+
+			case ParticlesGenerateRate :
 				this->setParticleGenerationRate(value.asFloat());
-				break;
+				return true;
 
-			case ParticlesLimit :
-				m_particleLimit = value.asUnsignedInteger64();
-				break;
+			case ParticleLifetime :
+				this->setParticleLifetime(value.asUnsignedInteger32());
+				return true;
 
-			case MinimumParticlesLife :
-				m_minimumParticleLifetime = value.asUnsignedInteger32();
-				break;
+			case ParticleSize :
+				this->setParticleSize(value.asFloat());
+				return true;
 
-			case MaximumParticlesLife :
-				m_maximumParticleLifetime = value.asUnsignedInteger32();
-				break;
-
-			case MinimumParticlesSize :
-				m_minimumParticleSize = value.asFloat();
-				break;
-
-			case MaximumParticlesSize :
-				m_maximumParticleSize = value.asFloat();
-				break;
-
-			case ParticlesSizeUpdateFactor :
+			case ParticleSizeDeltaPerCycle :
 				this->setParticleSizeDeltaPerCycle(value.asFloat());
-				break;
+				return true;
 
-			case Spreading :
+			case SpreadingRadius :
 				this->setSpreadingRadius(value.asFloat());
-				break;
+				return true;
 
 			case ChaosMagnitude :
 				this->setChaos(value.asFloat());
-				break;
+				return true;
 
 			default:
 				return false;
 		}
-
-		return true;
 	}
 
 	bool

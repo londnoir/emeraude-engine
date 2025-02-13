@@ -106,7 +106,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	Microphone::playAnimation (Animations::id_t /*identifier*/, const Variant & /*value*/) noexcept
+	Microphone::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
 		return false;
 	}

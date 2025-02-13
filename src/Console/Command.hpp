@@ -1,5 +1,5 @@
 /*
- * src/CommandContainer.hpp
+ * src/Console/Command.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -30,35 +30,40 @@
 /* STL inclusions. */
 #include <functional>
 #include <string>
+#include <vector>
 
-namespace Emeraude
+/* Local inclusions. */
+#include "Argument.hpp"
+#include "Output.hpp"
+
+namespace Emeraude::Console
 {
 	/** @brief Typedef of a function used by the console. */
-	using ConsoleCommand = std::function< int (const std::vector< std::string > &) >;
+	using Binding = std::function< bool (const Arguments &, Outputs &) >;
 
 	/**
 	 * @brief Container for a specific command.
 	 */
-	class CommandContainer final
+	class Command final
 	{
 		public:
 
 			/**
-			 * @brief Constructs a command container.
-			 * @param command The command to execute in the container [std::move].
+			 * @brief Constructs a console command.
+			 * @param binding The command to execute in the container [std::move].
 			 * @param help A way to explain that command [std::move].
 			 */
-			CommandContainer (ConsoleCommand command, std::string help) noexcept;
+			Command (Binding binding, std::string help) noexcept;
 
 			/**
-			 * @brief Returns the command to type.
-			 * @return const ConsoleCommand &
+			 * @brief Returns the binding.
+			 * @return const Binding &
 			 */
 			[[nodiscard]]
-			const ConsoleCommand &
-			command () const noexcept
+			const Binding &
+			binding () const noexcept
 			{
-				return m_command;
+				return m_binding;
 			}
 
 			/**
@@ -74,7 +79,7 @@ namespace Emeraude
 
 		private:
 
-			ConsoleCommand m_command;
+			Binding m_binding;
 			std::string m_help;
 	};
 }

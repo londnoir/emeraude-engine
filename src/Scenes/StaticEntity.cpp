@@ -161,8 +161,114 @@ namespace Emeraude::Scenes
 	}
 
 	bool
-	StaticEntity::playAnimation (Animations::id_t /*identifier*/, const Libraries::Variant & /*value*/) noexcept
+	StaticEntity::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
+		switch ( animationID )
+		{
+			case LocalCoordinates :
+				this->setLocalCoordinates(value.asCartesianFrameFloat());
+				return true;
+
+			case LocalPosition :
+				this->setPosition(value.asVector3Float(), TransformSpace::Local);
+				return true;
+
+			case LocalXPosition :
+				this->setXPosition(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalYPosition :
+				this->setYPosition(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalZPosition :
+				this->setZPosition(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalTranslation :
+				this->move(value.asVector3Float(), TransformSpace::Local);
+				return true;
+
+			case LocalXTranslation :
+				this->moveX(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalYTranslation :
+				this->moveY(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalZTranslation :
+				this->moveZ(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalRotation :
+				// ...
+				return true;
+
+			case LocalXRotation :
+				this->pitch(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalYRotation :
+				this->yaw(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case LocalZRotation :
+				this->roll(value.asFloat(), TransformSpace::Local);
+				return true;
+
+			case WorldPosition :
+				this->setPosition(value.asVector3Float(), TransformSpace::World);
+				return true;
+
+			case WorldXPosition :
+				this->setXPosition(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldYPosition :
+				this->setYPosition(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldZPosition :
+				this->setZPosition(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldTranslation :
+				this->move(value.asVector3Float(), TransformSpace::World);
+				return true;
+
+			case WorldXTranslation :
+				this->moveX(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldYTranslation :
+				this->moveY(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldZTranslation :
+				this->moveZ(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldRotation :
+				// ...
+				return true;
+
+			case WorldXRotation :
+				this->pitch(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldYRotation :
+				this->yaw(value.asFloat(), TransformSpace::World);
+				return true;
+
+			case WorldZRotation :
+				this->roll(value.asFloat(), TransformSpace::World);
+				return true;
+
+			default:
+				break;
+		}
+
 		return false;
 	}
 }

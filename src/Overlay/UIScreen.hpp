@@ -34,14 +34,13 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "Graphics/TextureResource/Abstract.hpp"
 #include "Libraries/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "AbstractSurface.hpp"
 #include "FramebufferProperties.hpp"
-#include "Tracer.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Tracer.hpp"
 
 namespace Emeraude::Overlay
 {

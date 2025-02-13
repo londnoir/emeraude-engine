@@ -43,9 +43,6 @@ namespace Emeraude::Scenes::Component
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"DirectionalPushModifier"};
 
-			/** @brief Animatable Interface key */
-			static constexpr auto Magnitude = 0UL;
-
 			/**
 			 * @brief Constructs a directional push modifier.
 			 * @param name The name of the modifier.
@@ -55,15 +52,27 @@ namespace Emeraude::Scenes::Component
 
 			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
-			const char * getComponentType () const noexcept override;
+			const char *
+			getComponentType () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libraries::Math::Cuboid< float > &
+			boundingBox () const noexcept override
+			{
+				return NullBoundingBox;
+			}
 
 			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libraries::Math::Sphere< float > &
+			boundingSphere () const noexcept override
+			{
+				return NullBoundingSphere;
+			}
 
 			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
@@ -81,45 +90,60 @@ namespace Emeraude::Scenes::Component
 			Libraries::Math::Vector< 3, float > getForceAppliedToEntity (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
 
 			/**
-			 * @brief setMagnitude
-			 * @param magnitude
+			 * @brief Sets the push magnitude.
+			 * @param magnitude A arbitrary value.
+			 * @return void
 			 */
-			void setMagnitude (float magnitude) noexcept;
+			void
+			setMagnitude (float magnitude) noexcept
+			{
+				m_magnitude = magnitude;
+			}
 
 			/**
-			 * @brief magnitude
+			 * @brief Returns the push magnitude.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float magnitude () const noexcept;
+			float
+			magnitude () const noexcept
+			{
+				return m_magnitude;
+			}
 
 			/**
-			 * @brief setCustomDirection
-			 * @param direction
+			 * @brief Sets a custom push direction.
+			 * @param direction A reference to a vector.
+			 * @return void
 			 */
 			void setCustomDirection (const Libraries::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
-			 * @brief disableCustomDirection
+			 * @brief Disables the custom push direction.
+			 * @return void
 			 */
 			void disableCustomDirection () noexcept;
 
 			/**
-			 * @brief direction
+			 * @brief Returns the push direction.
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > & direction () const noexcept;
+			const Libraries::Math::Vector< 3, float > &
+			direction () const noexcept
+			{
+				return m_direction;
+			}
 
 		private:
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/* Flag names */
 			static constexpr auto UseCoordinatesDirection{UnusedFlag + 0UL};
 
 			float m_magnitude{1.0F};
-			Libraries::Math::Vector< 3, float > m_direction{};
+			Libraries::Math::Vector< 3, float > m_direction;
 	};
 }

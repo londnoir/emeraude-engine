@@ -86,7 +86,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	MultipleVisuals::playAnimation (Animations::id_t /*identifier*/, const Variant & /*value*/) noexcept
+	MultipleVisuals::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
 		return false;
 	}

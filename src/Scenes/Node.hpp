@@ -75,47 +75,50 @@ namespace Emeraude::Scenes
 				MaxEnum
 			};
 
-			/* Animatable Interface key */
-			static constexpr auto LocalCoordinates = 0;
-			static constexpr auto LocalPosition = 1;
-			static constexpr auto LocalXPosition = 2;
-			static constexpr auto LocalYPosition = 3;
-			static constexpr auto LocalZPosition = 4;
-			static constexpr auto LocalTranslation = 5;
-			static constexpr auto LocalXTranslation = 6;
-			static constexpr auto LocalYTranslation = 7;
-			static constexpr auto LocalZTranslation = 8;
-			static constexpr auto LocalRotation = 9;
-			static constexpr auto LocalXRotation = 10;
-			static constexpr auto LocalYRotation = 11;
-			static constexpr auto LocalZRotation = 12;
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				LocalCoordinates,
+				LocalPosition,
+				LocalXPosition,
+				LocalYPosition,
+				LocalZPosition,
+				LocalTranslation,
+				LocalXTranslation,
+				LocalYTranslation,
+				LocalZTranslation,
+				LocalRotation,
+				LocalXRotation,
+				LocalYRotation,
+				LocalZRotation,
 
-			static constexpr auto ParentPosition = 13;
-			static constexpr auto ParentXPosition = 14;
-			static constexpr auto ParentYPosition = 15;
-			static constexpr auto ParentZPosition = 16;
-			static constexpr auto ParentTranslation = 17;
-			static constexpr auto ParentXTranslation = 18;
-			static constexpr auto ParentYTranslation = 19;
-			static constexpr auto ParentZTranslation = 20;
-			static constexpr auto ParentRotation = 21;
-			static constexpr auto ParentXRotation = 22;
-			static constexpr auto ParentYRotation = 23;
-			static constexpr auto ParentZRotation = 24;
+				ParentPosition,
+				ParentXPosition,
+				ParentYPosition,
+				ParentZPosition,
+				ParentTranslation,
+				ParentXTranslation,
+				ParentYTranslation,
+				ParentZTranslation,
+				ParentRotation,
+				ParentXRotation,
+				ParentYRotation,
+				ParentZRotation,
 
-			static constexpr auto WorldPosition = 25;
-			static constexpr auto WorldXPosition = 26;
-			static constexpr auto WorldYPosition = 27;
-			static constexpr auto WorldZPosition = 28;
-			static constexpr auto WorldTranslation = 29;
-			static constexpr auto WorldXTranslation = 30;
-			static constexpr auto WorldYTranslation = 31;
-			static constexpr auto WorldZTranslation = 32;
-			static constexpr auto WorldRotation = 33;
-			static constexpr auto WorldXRotation = 34;
-			static constexpr auto WorldYRotation = 35;
-			static constexpr auto WorldZRotation = 36;
-
+				WorldPosition,
+				WorldXPosition,
+				WorldYPosition,
+				WorldZPosition,
+				WorldTranslation,
+				WorldXTranslation,
+				WorldYTranslation,
+				WorldZTranslation,
+				WorldRotation,
+				WorldXRotation,
+				WorldYRotation,
+				WorldZRotation
+			};
+		
 			static constexpr auto Root{"root"};
 
 			/**
@@ -614,7 +617,7 @@ namespace Emeraude::Scenes
 			bool onUnhandledNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Emeraude::Scenes::AbstractEntity::onLocationDataUpdate() */
 			void onLocationDataUpdate () noexcept override;

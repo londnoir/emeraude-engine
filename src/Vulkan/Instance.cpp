@@ -194,17 +194,26 @@ namespace Emeraude::Vulkan
 	Instance::onTerminate () noexcept
 	{
 		/* Checking device usage to print out some closing resources bugs. */
-		for ( const auto & device : m_devices )
+		if ( m_computeDevice != nullptr )
 		{
-			device->destroy();
+			m_computeDevice->destroy();
 
-			if ( device.use_count() > 1 )
+			if ( m_computeDevice.use_count() > 1 )
 			{
-				TraceError{ClassId} << "The Vulkan device '" << device->identifier() << "' smart pointer still have " << device.use_count() << " uses !";
+				TraceError{ClassId} << "The Vulkan selected compute device '" << m_computeDevice->identifier() << "' smart pointer still have " << m_computeDevice.use_count() << " uses !";
 			}
 		}
 
-		m_devices.clear();
+		if ( m_graphicsDevice != nullptr )
+		{
+			m_graphicsDevice->destroy();
+
+			if ( m_graphicsDevice.use_count() > 1 )
+			{
+				TraceError{ClassId} << "The Vulkan selected graphics device '" << m_graphicsDevice->identifier() << "' smart pointer still have " << m_graphicsDevice.use_count() << " uses !";
+			}
+		}
+
 		m_physicalDevices.clear();
 		m_debugMessenger.reset();
 
@@ -607,6 +616,11 @@ namespace Emeraude::Vulkan
 	std::shared_ptr< Device >
 	Instance::getGraphicsDevice (Window * window) noexcept
 	{
+		if ( m_graphicsDevice != nullptr )
+		{
+			return m_graphicsDevice;
+		}
+
 		const auto scoredDevices = this->getScoredGraphicsDevices(window);
 
 		/* NOTE: Returns the device with the highest score. */
@@ -647,8 +661,8 @@ namespace Emeraude::Vulkan
 			"Graphics capable physical device '" << selectedPhysicalDevice->properties().deviceName << "' selected ! "
 			"Creating the logical graphics device ...";
 
-		auto device = std::make_shared< Device >(selectedPhysicalDevice);
-		device->setIdentifier((std::stringstream{} << "VulkanInstance-" << selectedPhysicalDevice->properties().deviceName << "(Graphics)-Device").str());
+		auto logicalDevice = std::make_shared< Device >(selectedPhysicalDevice);
+		logicalDevice->setIdentifier((std::stringstream{} << "VulkanInstance-" << selectedPhysicalDevice->properties().deviceName << "(Graphics)-Device").str());
 
 		DeviceRequirements requirements{DeviceJobHint::Graphics};
 		requirements.features().fillModeNonSolid = VK_TRUE; // Required for wireframe mode !
@@ -662,24 +676,29 @@ namespace Emeraude::Vulkan
 		if ( window != nullptr && window->usable() )
 		{
 			/* NOTE: Be sure the selected device is the one that processLogics the surface. */
-			window->surface()->update(device);
+			window->surface()->update(logicalDevice);
 
 			requirements.requirePresentationQueues({1.0F}, window->surface()->handle(), false);
 		}
 
-		if ( !device->create(requirements, m_requiredGraphicsDeviceExtensions) )
+		if ( !logicalDevice->create(requirements, m_requiredGraphicsDeviceExtensions) )
 		{
 			return {};
 		}
 
-		m_devices.emplace_back(device);
+		m_graphicsDevice = logicalDevice;
 
-		return device;
+		return logicalDevice;
 	}
 
 	std::shared_ptr< Device >
 	Instance::getComputeDevice () noexcept
 	{
+		if ( m_computeDevice != nullptr )
+		{
+			return m_computeDevice;
+		}
+
 		std::vector< const char * > requiredExtensions{};
 
 		std::map< size_t, std::shared_ptr< PhysicalDevice > > scoredDevices{};
@@ -735,7 +754,7 @@ namespace Emeraude::Vulkan
 			return {};
 		}
 
-		m_devices.emplace_back(logicalDevice);
+		m_computeDevice = logicalDevice;
 
 		return logicalDevice;
 	}

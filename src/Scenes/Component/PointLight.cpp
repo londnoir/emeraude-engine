@@ -64,10 +64,14 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	PointLight::playAnimation (Animations::id_t identifier, const Variant & value) noexcept
+	PointLight::playAnimation (uint8_t identifier, const Variant & value, size_t cycle) noexcept
 	{
 		switch ( identifier )
 		{
+			case EmittingState :
+				this->enable(value.asBool());
+				return true;
+
 			case Color :
 				this->setColor(value.asColor());
 				return true;
@@ -147,7 +151,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	PointLight::createOnHardware (LightSet & lightSet, Renderer & renderer, MasterControl::Console & console) noexcept
+	PointLight::createOnHardware (LightSet & lightSet, Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept
 	{
 		if ( this->isCreated() )
 		{
@@ -179,26 +183,27 @@ namespace Emeraude::Scenes::Component
 
 		if ( resolution > 0 )
 		{
-			m_shadowMap = console.createRenderToCubicShadowMap(renderer, this->name() + ShadowMapName, resolution);
+			/* [VULKAN-SHADOW] TODO: Reuse shadow maps + remove it from console on failure */
+			m_shadowMap = masterControlManager.createRenderToCubicShadowMap(renderer, this->name() + ShadowMapName, resolution);
 
-			if ( m_shadowMap == nullptr )
+			if ( m_shadowMap != nullptr )
 			{
-				TraceError{ClassId} << "Unable to create a cubic shadow map for point light '" << this->name() << "' !";
+				if ( this->connect(m_shadowMap) )
+				{
+					TraceSuccess{ClassId} << "Cubic shadow map successfully created for point light '" << this->name() << "'.";
 
-				return false;
-			}
+					this->enableShadow(true);
+				}
+				else
+				{
+					TraceError{ClassId} << "Unable to connect the cubic shadow map to point light '" << this->name() << "' !";
 
-			if ( !this->connect(m_shadowMap) )
-			{
-				TraceError{ClassId} << "Unable to connect the cubic shadow map to point light '" << this->name() << "' !";
-
-				m_shadowMap.reset();
+					m_shadowMap.reset();
+				}
 			}
 			else
 			{
-				TraceSuccess{ClassId} << "Cubic shadow map successfully created for point light '" << this->name() << "'.";
-
-				this->enableShadow(true);
+				TraceError{ClassId} << "Unable to create a cubic shadow map for point light '" << this->name() << "' !";
 			}
 		}
 

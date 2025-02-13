@@ -202,17 +202,11 @@ namespace Emeraude::Graphics::Renderable
 	bool
 	BasicFloorResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		const Json::CharReaderBuilder builder{};
+		Json::Value root;
 
-		std::ifstream json(filepath, std::ifstream::binary);
-
-		Json::Value root{};
-
-		std::string errors{};
-
-		if ( !Json::parseFromStream(builder, json, &root, &errors) )
+	    if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
-			TraceError{ClassId} << "Unable to parse JSON file ! Errors :\n" << errors;
+		    TraceError{ClassId} << "Unable to parse the resource file " << filepath << " !" "\n";
 
 			return this->setLoadSuccess(false);
 		}

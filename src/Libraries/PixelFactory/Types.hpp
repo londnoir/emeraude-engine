@@ -66,11 +66,11 @@ namespace Libraries::PixelFactory
 		Cubic
 	};
 
-	/** @brief Enumerate drawing mode when copying image or a color onto an other. */
+	/** @brief Enumerate drawing mode when copying image or a color onto another. */
 	enum class DrawPixelMode : uint8_t
 	{
 		Replace,
-		Normal,
+		Normal, /* (Alpha blending) */
 		Addition,
 		Subtract,
 		Multiply,

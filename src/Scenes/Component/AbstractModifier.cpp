@@ -37,6 +37,6 @@ namespace Emeraude::Scenes::Component
 	AbstractModifier::AbstractModifier (const std::string & name, const AbstractEntity & parentEntity) noexcept
 		: Abstract(name, parentEntity)
 	{
-
+		this->enable(true);
 	}
 }

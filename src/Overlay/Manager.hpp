@@ -46,6 +46,10 @@
 #include "Input/Manager.hpp"
 #include "FramebufferProperties.hpp"
 #include "UIScreen.hpp"
+#ifdef IMGUI_ENABLED
+#include "imgui.h"
+#include "ImGUIScreen.hpp"
+#endif
 
 /* Forward declarations. */
 namespace Emeraude::Graphics::Geometry
@@ -199,10 +203,21 @@ namespace Emeraude::Overlay
 			 * @param name A reference to a string.
 			 * @param enableKeyboardListener Enables the keyboard listener at creation.
 			 * @param enablePointerListener Enables the pointer listener at creation.
-			 * @return std::shared_ptr< Screen >
+			 * @return std::shared_ptr< UIScreen >
 			 */
 			[[nodiscard]]
 			std::shared_ptr< UIScreen > createScreen (const std::string & name, bool enableKeyboardListener, bool enablePointerListener) noexcept;
+
+#ifdef IMGUI_ENABLED
+			/**
+			 * @brief Creates an ImGUI screen.
+			 * @param name A reference to a string.
+			 * @param drawFunction A reference to a function.
+			 * @return std::shared_ptr< ImGUIScreen >
+			 */
+			[[nodiscard]]
+			std::shared_ptr< ImGUIScreen > createImGUIScreen (const std::string & name, const std::function< void () > & drawFunction) noexcept;
+#endif
 
 			/**
 			 * @brief Destroys a named screen.
@@ -394,6 +409,23 @@ namespace Emeraude::Overlay
 			[[nodiscard]]
 			bool updateProgram () const noexcept;
 
+#ifdef IMGUI_ENABLED
+
+			/**
+			* @brief Initializes the ImGUI library.
+			* @return bool
+			*/
+			[[nodiscard]]
+			bool initImGUI () noexcept;
+
+			/**
+			* @brief Releases the ImGUI library.
+			* @return void
+			*/
+			void releaseImGUI () noexcept;
+
+#endif
+
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
 			static constexpr auto Enabled{1UL};
@@ -406,6 +438,12 @@ namespace Emeraude::Overlay
 			std::unordered_map< std::string, std::shared_ptr< UIScreen > > m_screens;
 			std::shared_ptr< UIScreen > m_inputExclusiveScreen;
 			FramebufferProperties m_framebufferProperties;
+#ifdef IMGUI_ENABLED
+			std::string m_iniFilepath;
+			std::string m_logFilepath;
+			std::shared_ptr< Vulkan::DescriptorPool > m_ImGUIDescriptorPool;
+			std::unordered_map< std::string, std::shared_ptr< ImGUIScreen > > m_ImGUIScreens;
+#endif
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
 				false/*Enabled*/,

@@ -33,7 +33,7 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "ConsoleControllable.hpp"
+#include "Console/Controllable.hpp"
 #include "Libraries/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
@@ -61,10 +61,10 @@ namespace Emeraude::Audio
 	/**
 	 * @brief The track mixer service class.
 	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::ConsoleControllable This can be controlled by the console.
+	 * @extends Emeraude::Console::Controllable The track mixer can be controlled by the console.
 	 * @extends Libraries::ObserverTrait
 	 */
-	class TrackMixer final : public ServiceInterface, public ConsoleControllable, public Libraries::ObserverTrait
+	class TrackMixer final : public ServiceInterface, public Console::Controllable, public Libraries::ObserverTrait
 	{
 		public:
 
@@ -192,6 +192,9 @@ namespace Emeraude::Audio
 			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
 
 			/**
 			 * @brief Fades a track.

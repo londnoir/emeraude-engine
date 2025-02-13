@@ -3,26 +3,23 @@
 #if IS_LINUX
 
 /* STL inclusions. */
-#include <iostream>
+#include <cstdlib>
+#include <sstream>
 
 namespace Emeraude::PlatformSpecific::Desktop
 {
 	void
-	openURL (const std::string & url) noexcept
+	runDesktopApplication (const std::string & argument) noexcept
 	{
-		std::cout << "TODO: Should open the URL " << url << " externally." << "\n";
-	}
+		if ( argument.empty() )
+		{
+			return;
+		}
 
-	void
-	openPath (const std::filesystem::path & filepath) noexcept
-	{
-		std::cout << "TODO: Should open the file " << filepath << " externally." << "\n";
-	}
+		std::stringstream commandStream;
+		commandStream << "xdg-open \"" << argument << "\"";
 
-	void
-	showInFolder (const std::filesystem::path & filepath) noexcept
-	{
-		std::cout << "TODO: Should open the directory of the file " << filepath << " in an external file browser." << "\n";
+		system(commandStream.str().c_str());
 	}
 }
 

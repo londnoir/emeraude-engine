@@ -111,7 +111,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	Visual::playAnimation (id_t /*identifier*/, const Variant & /*value*/) noexcept
+	Visual::playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept
 	{
 		return false;
 	}

@@ -61,10 +61,14 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	DirectionalLight::playAnimation (Animations::id_t identifier, const Variant & value) noexcept
+	DirectionalLight::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		switch ( identifier )
+		switch ( animationID )
 		{
+			case EmittingState :
+				this->enable(value.asBool());
+				return true;
+
 			case Color :
 				this->setColor(value.asColor());
 
@@ -134,7 +138,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	DirectionalLight::createOnHardware (LightSet & lightSet, Renderer & renderer, MasterControl::Console & console) noexcept
+	DirectionalLight::createOnHardware (LightSet & lightSet, Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept
 	{
 		if ( this->isCreated() )
 		{
@@ -166,26 +170,27 @@ namespace Emeraude::Scenes::Component
 
 		if ( resolution > 0 )
 		{
-			m_shadowMap = console.createRenderToShadowMap(renderer, this->name() + ShadowMapName, resolution);
+			/* [VULKAN-SHADOW] TODO: Reuse shadow maps + remove it from console on failure */
+			m_shadowMap = masterControlManager.createRenderToShadowMap(renderer, this->name() + ShadowMapName, resolution);
 
-			if ( m_shadowMap == nullptr )
+			if ( m_shadowMap != nullptr )
 			{
-				TraceError{ClassId} << "Unable to create a 2D shadow map for directional light '" << this->name() << "' !";
+				if ( this->connect(m_shadowMap) )
+				{
+					TraceSuccess{ClassId} << "2D shadow map successfully created for directional light '" << this->name() << "'.";
 
-				return false;
-			}
+					this->enableShadow(true);
+				}
+				else
+				{
+					TraceError{ClassId} << "Unable to connect the 2D shadow map to directional light '" << this->name() << "' !";
 
-			if ( !this->connect(m_shadowMap) )
-			{
-				TraceError{ClassId} << "Unable to connect the 2D shadow map to directional light '" << this->name() << "' !";
-
-				m_shadowMap.reset();
+					m_shadowMap.reset();
+				}
 			}
 			else
 			{
-				TraceSuccess{ClassId} << "2D shadow map successfully created for directional light '" << this->name() << "'.";
-
-				this->enableShadow(true);
+				TraceError{ClassId} << "Unable to create a 2D shadow map for directional light '" << this->name() << "' !";
 			}
 		}
 

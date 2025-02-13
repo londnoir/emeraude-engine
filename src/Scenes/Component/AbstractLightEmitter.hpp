@@ -37,10 +37,9 @@
 #include "MasterControl/AbstractVirtualVideoDevice.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
 #include "Libraries/PixelFactory/Color.hpp"
 #include "MasterControl/Types.hpp"
-#include "MasterControl/Console.hpp"
+#include "MasterControl/Manager.hpp"
 #include "Vulkan/SharedUniformBuffer.hpp"
 
 /* Forward declarations. */
@@ -85,12 +84,16 @@ namespace Emeraude::Scenes::Component
 
 			static constexpr auto TracerTag{"LightEmitter"};
 
-			/** @brief Animatable Interface keys */
-			static constexpr auto Color{0UL};
-			static constexpr auto Intensity{1UL};
-			static constexpr auto Radius{2UL};
-			static constexpr auto InnerAngle{3UL};
-			static constexpr auto OuterAngle{4UL};
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				EmittingState,
+				Color,
+				Intensity,
+				Radius,
+				InnerAngle,
+				OuterAngle
+			};
 
 			/* Default variables. */
 			static constexpr auto DefaultColor{Libraries::PixelFactory::White};
@@ -260,13 +263,14 @@ namespace Emeraude::Scenes::Component
 
 			/**
 			 * @brief Returns whether the light is casting shadow.
+			 * @note This will return true if the shadow map resolution has been set and the flag is enabled.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
 			isShadowEnabled () const noexcept
 			{
-				if ( m_shadowMapResolution == 0 )
+				if ( this->shadowMapResolution() == 0 )
 				{
 					return false;
 				}
@@ -342,11 +346,11 @@ namespace Emeraude::Scenes::Component
 			 * @brief Creates the light on the GPU with the shadow map if requested.
 			 * @param lightSet A reference to the light set.
 			 * @param renderer A reference to the graphic renderer.
-			 * @param console A reference to the console.
+			 * @param masterControlManager A reference to master control manager.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Console & console) noexcept = 0;
+			virtual bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept = 0;
 
 			/**
 			 * @brief Removes the light from the GPU.

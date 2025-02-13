@@ -311,6 +311,12 @@ namespace Emeraude::Input
 			case ModKeySuper :
 				return ModKeySuperString;
 
+            case ModKeyCapsLock :
+                return ModKeyCapsLockString;
+
+            case ModKeyNumLock :
+                return ModKeyNumLockString;
+
 			default:
 				return nullptr;
 		}
@@ -319,10 +325,12 @@ namespace Emeraude::Input
 	ModKey
 	convertModKey (const std::string & type) noexcept
 	{
-		if ( type == ModKeyShiftString ) { return ModKeyShift; }
-		if ( type == ModKeyControlString ) { return ModKeyControl; }
-		if ( type == ModKeyAltString ) { return ModKeyAlt; }
-		if ( type == ModKeySuperString ) { return ModKeySuper; }
+		if ( type == ModKeyShiftString ) {return ModKeyShift;}
+		if ( type == ModKeyControlString ) {return ModKeyControl;}
+		if ( type == ModKeyAltString ) {return ModKeyAlt;}
+		if ( type == ModKeySuperString ) {return ModKeySuper;}
+        if ( type == ModKeyCapsLockString ) {return ModKeyCapsLock;}
+        if ( type == ModKeyNumLockString ) {return ModKeyNumLock;}
 
 		return ModKeyUnknown;
 	}
@@ -469,6 +477,16 @@ namespace Emeraude::Input
 		{
 			modifierString << " SUPER ";
 		}
+
+        if ( isKeyboardModifierPressed(ModKeyCapsLock, modifiers) )
+        {
+            modifierString << " CAPSLOCK ";
+        }
+
+        if ( isKeyboardModifierPressed(ModKeyNumLock, modifiers) )
+        {
+            modifierString << " NUMLOCK ";
+        }
 
 		return modifierString.str();
 	}

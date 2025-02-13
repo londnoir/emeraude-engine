@@ -38,12 +38,7 @@
 #include "Libraries/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Variant.hpp"
 #include "Graphics/RenderableInstance/Multiple.hpp"
-#include "Animations/Types.hpp"
 
 namespace Emeraude::Scenes::Component
 {
@@ -112,7 +107,7 @@ namespace Emeraude::Scenes::Component
 		private:
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]

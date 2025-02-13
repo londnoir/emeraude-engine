@@ -42,7 +42,6 @@
 #include "Animations/AnimatableInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
 #include "Libraries/Math/Cuboid.hpp"
 #include "Libraries/Math/Sphere.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"

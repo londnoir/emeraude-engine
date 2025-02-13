@@ -49,15 +49,15 @@ namespace Emeraude::PlatformSpecific
 	bool
 	getAccountName (std::string & accountName) noexcept
 	{
-		std::array< wchar_t, UNLEN + 1 > buffer;
-		DWORD size = buffer.size();
+		std::array< wchar_t, UNLEN + 1 > buffer{};
+		auto size = static_cast< DWORD >(buffer.size());
 
 		if ( GetUserNameW(buffer.data(), &size) == 0 )
 		{
 			return false;
 		}
 
-		accountName = convertWideToUTF8({buffer.data(), size-1});
+		accountName = convertWideToUTF8({buffer.data(), size - 1});
 
 		return true;
 	}

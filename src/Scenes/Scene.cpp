@@ -35,7 +35,6 @@
 /* Local inclusions. */
 #include "Input/Manager.hpp"
 #include "Graphics/Renderer.hpp"
-#include "Saphir/Generator/SceneRendering.hpp"
 #include "Vulkan/SwapChain.hpp" // FIXME: Should not be there
 #include "NodeCrawler.hpp"
 #include "Tracer.hpp"
@@ -53,14 +52,14 @@ namespace Emeraude::Scenes
 
 	Scene::Scene (Renderer & graphicsRenderer, Audio::Manager & audioManager, const std::string & name, float boundary, const std::shared_ptr< Renderable::AbstractBackground > & background, const std::shared_ptr< Renderable::SceneAreaInterface > & sceneArea, const std::shared_ptr< Renderable::SeaLevelInterface > & seaLevel, const SceneOctreeOptions & octreeOptions) noexcept
 		: NameableTrait(name),
-		  m_graphicsRenderer(graphicsRenderer),
-		  m_audioManager(audioManager),
-		  m_masterControlConsole(name),
-		  m_rootNode(std::make_shared< Node >()),
-		  m_background(background),
-		  m_sceneArea(sceneArea),
-		  m_seaLevel(seaLevel),
-		  m_boundary(boundary)
+		m_graphicsRenderer(graphicsRenderer),
+		m_audioManager(audioManager),
+		m_masterControlConsole(name),
+		m_background(background),
+		m_sceneArea(sceneArea),
+		m_seaLevel(seaLevel),
+		m_rootNode(std::make_shared<Node>()),
+		m_boundary(boundary)
 	{
 		this->observe(&m_masterControlConsole);
 		this->observe(m_rootNode.get());
@@ -1245,26 +1244,26 @@ namespace Emeraude::Scenes
 	{
 		switch ( notificationCode )
 		{
-			case MasterControl::Console::VideoDeviceAdded :
+			case MasterControl::Manager::VideoDeviceAdded :
 				TraceDebug{ClassId} << "A new video device is available.";
 
 				break;
 
-			case MasterControl::Console::VideoDeviceRemoved :
+			case MasterControl::Manager::VideoDeviceRemoved :
 				TraceDebug{ClassId} << "A video device has been removed.";
 
 				break;
 
-			case MasterControl::Console::AudioDeviceAdded :
+			case MasterControl::Manager::AudioDeviceAdded :
 				TraceDebug{ClassId} << "A new audio device is available.";
 				break;
 
-			case MasterControl::Console::AudioDeviceRemoved :
+			case MasterControl::Manager::AudioDeviceRemoved :
 				TraceDebug{ClassId} << "An audio device has been removed.";
 
 				break;
 
-			case MasterControl::Console::RenderToShadowMapAdded :
+			case MasterControl::Manager::RenderToShadowMapAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to shadow map is available ! "
@@ -1277,7 +1276,7 @@ namespace Emeraude::Scenes
 			}
 				break;
 
-			case MasterControl::Console::RenderToTextureAdded :
+			case MasterControl::Manager::RenderToTextureAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to texture is available ! "
@@ -1290,7 +1289,7 @@ namespace Emeraude::Scenes
 			}
 				break;
 
-			case MasterControl::Console::RenderToViewAdded :
+			case MasterControl::Manager::RenderToViewAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to view is available ! "
@@ -1858,8 +1857,6 @@ namespace Emeraude::Scenes
 	bool
 	Scene::getRenderableInstanceReadyForRender (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
-		//TraceDebug{ClassId} << "Preparing renderable instance '" << renderableInstance->renderable()->name() << "' for render target '" << renderTarget->id() << "' ...";
-
 		/* If the object is ready to render, there is nothing more to do ! */
 		if ( renderableInstance->isReadyToRender(renderTarget) )
 		{
@@ -1872,185 +1869,18 @@ namespace Emeraude::Scenes
 			return false;
 		}
 
-		/* NOTE : Checking the renderable interface.
-		 * This is the shared part between all renderable instances. */
-		/* TODO: Check for renderable interface already in video memory to reduce renderable instance preparation time. */
-		const auto * renderable = renderableInstance->renderable();
-
-		if ( renderable == nullptr )
-		{
-#ifdef DEBUG
-			renderableInstance->setBroken("The renderable instance has no renderable interface !");
-#else
-			renderableInstance->setBroken();
-#endif
-
-			return false;
-		}
-
-		/* NOTE : Check whether the renderable interface is ready for instantiation.
-		 * If not, this is no big deal, a loading event exists to relaunch the whole process. */
-		if ( !renderable->isReadyForInstantiation() )
-		{
-			return true;
-		}
-
 		/* NOTE : Check how many render pass this renderable instance needs. */
 		const auto renderPassTypes = this->prepareRenderPassTypes(*renderableInstance);
 
 		if ( renderPassTypes.empty() )
 		{
-			renderableInstance->setBroken((std::stringstream{} <<
-				"No render pass type requested ! "
-				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
-			).str());
+			renderableInstance->setBroken();
 
 			return false;
 		}
 
-		const auto layerCount = renderable->layerCount();
-
-#ifdef DEBUG
-		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
-		if ( layerCount == 0 )
-		{
-			renderableInstance->setBroken((std::stringstream{} <<
-				"The renderable interface has no layer ! It must have at least one. "
-				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
-			).str());
-
-			return false;
-		}
-#endif
-
-		/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
-		const auto * geometry = renderable->geometry();
-
-
-#ifdef DEBUG
-		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
-		if ( geometry == nullptr )
-		{
-			renderableInstance->setBroken((std::stringstream{} <<
-				"The renderable interface has no geometry interface ! "
-				"Unable to setup the renderable instance '" << renderable->name() << "' for rendering."
-			).str());
-
-			return false;
-		}
-#endif
-
-		for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
-		{
-			for ( const auto renderPassType : renderPassTypes )
-			{
-				/* FIXME: Try to identify earlier a shader is already ok. */
-				//TraceInfo{ClassId} << "Generating shader program for '" << renderable->name() << "' (RenderPass:'" << to_string(renderPassType) << "', layer:" << layerIndex << ") ...";
-
-				/* The first step is to generate the shaders source code from every resource involved. */
-				Generator::SceneRendering generator{
-					m_graphicsRenderer.primaryServices().settings(),
-					(std::stringstream{} << "RenderableInstance" << to_string(renderPassType)).str(),
-					renderTarget,
-					renderableInstance,
-					layerIndex,
-					renderPassType,
-					*this
-				};
-
-				if ( m_graphicsRenderer.shaderManager().showGeneratedSourceCode() )
-				{
-					generator.enableDebugging();
-				}
-
-				/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
-				if ( !generator.generateProgram(m_graphicsRenderer.vertexBufferFormatManager()) )
-				{
-#ifdef DEBUG
-					renderableInstance->setBroken((std::stringstream{} <<
-						"Unable to generate the renderable instance '" << renderable->name() << "' (RenderPass:'" << to_string(renderPassType) << "', layer:" << layerIndex << ") program !"
-					).str());
-#else
-					renderableInstance->setBroken();
-#endif
-
-					return false;
-				}
-
-				/* The second step is to check every resource needed by shaders (UBO, Samples, etc.).
-				 * NOTE: VBO is an exception done before. */
-				if ( !generator.generateProgramLayout(m_graphicsRenderer) )
-				{
-#ifdef DEBUG
-					renderableInstance->setBroken((std::stringstream{} <<
-						"Unable to get the program layout for layer #" << layerIndex << " "
-						"of the renderable instance '" << renderable->name() << "' "
-						"and the render pass type '" << to_string(renderPassType) << "' !"
-					).str());
-#else
-					renderableInstance->setBroken();
-#endif
-					return false;
-				}
-
-				/* The third step is to check if separate shaders already exists to avoid an extra compilation.
-				 * Retrieve the graphics pipeline for the combination of the current renderable instance layer and the render pass. */
-				if ( !generator.createGraphicsPipeline(m_graphicsRenderer) )
-				{
-#ifdef DEBUG
-					renderableInstance->setBroken((std::stringstream{} <<
-						"Unable to get a program for layer #" << layerIndex << " "
-						"of the renderable instance '" << renderable->name() << "' "
-						"and the render pass type '" << to_string(renderPassType) << "' !"
-					).str());
-#else
-					renderableInstance->setBroken();
-#endif
-
-					return false;
-				}
-
-				renderableInstance->setProgram(renderTarget, renderPassType, layerIndex, generator.program());
-			}
-		}
-
-		/* FIXME: Bad idea ! */
-		//renderableInstance->setShadowProgram(m_graphicsRenderer.getShadowProgram(renderTarget, renderableInstance));
-
-		if ( renderableInstance->isDisplayTBNSpaceEnabled() )
-		{
-			renderableInstance->setTBNSpaceProgram(m_graphicsRenderer.getTBNSpaceProgram(renderTarget, renderableInstance));
-		}
-
-		return renderableInstance->validate(renderTarget);
+		return renderableInstance->getReadyForRender(*this, renderTarget, renderPassTypes, m_graphicsRenderer);
 	}
-
-	bool
-	Scene::refreshRenderableInstance (RenderableInstance::Abstract & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) noexcept
-	{
-		renderableInstance.disableForRender(renderTarget);
-
-		/* A previous try to set up the renderable instance for rendering has failed ... */
-		if ( renderableInstance.isBroken() )
-		{
-			return false;
-		}
-
-		/*const auto renderable = renderableInstance.renderable();
-		const auto layerCount = renderable->layerCount();
-
-		std::vector< RenderPassType > renderPassTypes{
-			RenderPassType::SimplePass
-		};
-
-		for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
-		{
-
-		}*/
-
-		return renderableInstance.validate(renderTarget);
-	}
-
 
 	std::string
 	Scene::getNodeSystemStatistics (bool showTree) const noexcept

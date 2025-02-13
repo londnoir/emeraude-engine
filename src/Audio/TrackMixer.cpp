@@ -40,10 +40,11 @@ namespace Emeraude::Audio
 	const size_t TrackMixer::ClassUID{getClassUID(ClassId)};
 
 	TrackMixer::TrackMixer (PrimaryServices & primaryServices, Resources::Manager & resourceManager, Manager & audioManager) noexcept
-		: ServiceInterface(ClassId), ConsoleControllable(ClassId),
-		  m_primaryServices(primaryServices),
-		  m_resourceManager(resourceManager),
-		  m_audioManager(audioManager)
+		: ServiceInterface(ClassId),
+		Controllable(ClassId),
+		m_primaryServices(primaryServices),
+		m_resourceManager(resourceManager),
+		m_audioManager(audioManager)
 	{
 
 	}
@@ -75,131 +76,7 @@ namespace Emeraude::Audio
 			track->setGain(0.0F);
 		}
 
-		/* Console commands bindings. */
-		this->bindCommand("play", [this] (const std::vector< std::string > & parameters) {
-			if ( !this->usable() )
-			{
-				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-				return 0;
-			}
-
-			/* Checks if we need to resume. */
-			if ( parameters.empty() )
-			{
-				switch ( m_playingTrack )
-				{
-					case PlayingTrack::None :
-						this->writeToConsole("There is no soundtrack !", Severity::Error);
-						break;
-
-					case PlayingTrack::TrackA :
-						if ( m_trackA->isPaused() )
-						{
-							m_trackA->resume();
-
-							this->writeToConsole("Resuming track A.", Severity::Info);
-
-							return 0;
-						}
-						break;
-
-					case PlayingTrack::TrackB :
-						if ( m_trackB->isPaused() )
-						{
-							m_trackB->resume();
-
-							this->writeToConsole("Resuming track B.", Severity::Info);
-
-							return 0;
-						}
-						break;
-				}
-
-				return 1;
-			}
-
-			/* Search the song. */
-			auto soundtrack = m_resourceManager.musics().getResource(parameters[0]);
-
-			if ( soundtrack == nullptr )
-			{
-				this->writeToConsole(BlobTrait() << "Soundtrack '" << parameters[0] << "' doesn't exist !", Severity::Error);
-
-				return 2;
-			}
-
-			this->setSoundTrack(soundtrack);
-
-			this->writeToConsole(BlobTrait() << "Playing '" << parameters[0] << "' ...", Severity::Info);
-
-			return 0;
-		}, "Play or resume a music. There is no need of parameter to resume.");
-
-		this->bindCommand("pause", [this] (const std::vector< std::string > & /*parameters*/) {
-			if ( !this->usable() )
-			{
-				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-				return 1;
-			}
-
-			switch ( m_playingTrack )
-			{
-				case PlayingTrack::None :
-					this->writeToConsole("There is no track playing !", Severity::Info);
-					break;
-
-				case PlayingTrack::TrackA :
-					m_trackA->pause();
-
-					this->writeToConsole("Track A paused.", Severity::Info);
-					break;
-
-				case PlayingTrack::TrackB :
-					m_trackB->pause();
-
-					this->writeToConsole("Track B paused.", Severity::Info);
-					break;
-			}
-
-			return 0;
-		}, "Pause music playback.");
-
-		this->bindCommand("stop", [this] (const std::vector< std::string > & /*parameters*/) {
-			if ( !this->usable() )
-			{
-				this->writeToConsole("The track mixer is unavailable !", Severity::Info);
-
-				return 1;
-			}
-
-			switch ( m_playingTrack )
-			{
-				case PlayingTrack::None:
-					this->writeToConsole("There is no track playing !", Severity::Info);
-					break;
-
-				case PlayingTrack::TrackA :
-					m_trackA->stop();
-					m_playingTrack = PlayingTrack::None;
-
-					this->writeToConsole("Track A stopped.", Severity::Info);
-					break;
-
-				case PlayingTrack::TrackB :
-					m_trackB->stop();
-					m_playingTrack = PlayingTrack::None;
-
-					this->writeToConsole("Track B stopped.", Severity::Info);
-					break;
-			}
-
-			return 0;
-		}, "Stop music.");
-
-		/* FIXME: Why commented ? */
-		//this->registerToConsole();
+		this->registerToConsole();
 
 		m_flags[ServiceInitialized] = true;
 
@@ -491,6 +368,133 @@ namespace Emeraude::Audio
 #endif
 
 		return false;
+	}
+
+	void
+	TrackMixer::onRegisterToConsole () noexcept
+	{
+		this->bindCommand("play", [this] (const Console::Arguments & arguments, Console::Outputs & outputs) {
+			if ( !this->usable() )
+			{
+				outputs.emplace_back(Severity::Warning, "The track mixer is unavailable !");
+
+				return 0;
+			}
+
+			/* Checks if we need to resume. */
+			if ( arguments.empty() )
+			{
+				switch ( m_playingTrack )
+				{
+					case PlayingTrack::None :
+						outputs.emplace_back(Severity::Warning, "There is no soundtrack !");
+						break;
+
+					case PlayingTrack::TrackA :
+						if ( m_trackA->isPaused() )
+						{
+							m_trackA->resume();
+
+							outputs.emplace_back(Severity::Info, "Resuming track A.");
+
+							return 0;
+						}
+						break;
+
+					case PlayingTrack::TrackB :
+						if ( m_trackB->isPaused() )
+						{
+							m_trackB->resume();
+
+							outputs.emplace_back(Severity::Info, "Resuming track B.");;
+
+							return 0;
+						}
+						break;
+				}
+
+				return 1;
+			}
+
+			/* Search the song. */
+			const auto soundTrackName = arguments[0].asString();
+			const auto soundtrack = m_resourceManager.musics().getResource(soundTrackName);
+
+			if ( soundtrack == nullptr )
+			{
+				outputs.emplace_back(Severity::Error, std::stringstream{} << "Soundtrack '" << soundTrackName << "' doesn't exist !");
+
+				return 2;
+			}
+
+			this->setSoundTrack(soundtrack);
+
+			outputs.emplace_back(Severity::Success, std::stringstream{} << "Playing '" << soundTrackName << "' ...");
+
+			return 0;
+		}, "Play or resume a music. There is no need of parameter to resume.");
+
+		this->bindCommand("pause", [this] (const Console::Arguments & /*arguments*/, Console::Outputs & outputs) {
+			if ( !this->usable() )
+			{
+				outputs.emplace_back(Severity::Warning, "The track mixer is unavailable !");
+
+				return 1;
+			}
+
+			switch ( m_playingTrack )
+			{
+				case PlayingTrack::None :
+					outputs.emplace_back(Severity::Warning, "There is no track playing !");
+					break;
+
+				case PlayingTrack::TrackA :
+					m_trackA->pause();
+
+					outputs.emplace_back(Severity::Info, "Track A paused.");
+					break;
+
+				case PlayingTrack::TrackB :
+					m_trackB->pause();
+
+					outputs.emplace_back(Severity::Info, "Track B paused.");
+					break;
+			}
+
+			return 0;
+		}, "Pause music playback.");
+
+		this->bindCommand("stop", [this] (const Console::Arguments & /*arguments*/, Console::Outputs & outputs) {
+			if ( !this->usable() )
+			{
+				outputs.emplace_back(Severity::Warning, "The track mixer is unavailable !");
+
+				return 1;
+			}
+
+			switch ( m_playingTrack )
+			{
+				case PlayingTrack::None:
+					outputs.emplace_back(Severity::Warning, "There is no track playing !");
+					break;
+
+				case PlayingTrack::TrackA :
+					m_trackA->stop();
+					m_playingTrack = PlayingTrack::None;
+
+					outputs.emplace_back(Severity::Info, "Track A stopped.");
+					break;
+
+				case PlayingTrack::TrackB :
+					m_trackB->stop();
+					m_playingTrack = PlayingTrack::None;
+
+					outputs.emplace_back(Severity::Info, "Track B stopped.");
+					break;
+			}
+
+			return 0;
+		}, "Stop music.");
 	}
 
 	bool

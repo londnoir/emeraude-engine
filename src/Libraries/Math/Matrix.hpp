@@ -144,10 +144,10 @@ namespace Libraries::Math
 	 *		Eye Coordinates * Projection Matrix -> Clip CartesianFrame
 	 *
 	 *	Transformation 4x4 Matrix layout
-	 *		[Sx+R][R][R][Tx]
-	 *		[R][Sy+R][R][Ty]
-	 *		[R][R][Sz+R][Tz]
-	 *		[ 0][ 0 ][ 0][ 1]
+	 *		[Sx+R][   R][   R][  Tx]
+	 *		[   R][Sy+R][   R][  Ty]
+	 *		[   R][   R][Sz+R][  Tz]
+	 *		[   0][   0][   0][   1]
 	 */
 	template< size_t dim_t, typename precision_t = float >
 	requires (dim_t == 2 || dim_t == 3 || dim_t == 4) && std::is_arithmetic_v< precision_t >
@@ -163,24 +163,81 @@ namespace Libraries::Math
 			{
 				if constexpr ( dim_t == 2 )
 				{
-					m_data[0] = 1;
-					m_data[3]  = 1;
+					m_data[M2x2Col0Row0] = 1;
+					m_data[M2x2Col1Row1]  = 1;
 				}
 
 				if constexpr ( dim_t == 3 )
 				{
-					m_data[0] = 1;
-					m_data[4] = 1;
-					m_data[8] = 1;
+					m_data[M3x3Col0Row0] = 1;
+					m_data[M3x3Col1Row1] = 1;
+					m_data[M3x3Col2Row2] = 1;
 				}
 
 				if constexpr ( dim_t == 4 )
 				{
-					m_data[0] = 1;
-					m_data[5] = 1;
-					m_data[10] = 1;
-					m_data[15] = 1;
+					m_data[M4x4Col0Row0] = 1;
+					m_data[M4x4Col1Row1] = 1;
+					m_data[M4x4Col2Row2] = 1;
+					m_data[M4x4Col3Row3] = 1;
 				}
+			}
+
+			/**
+			 * @brief Constructs a matrix 2x2 with row major entries.
+			 * @note This help the matrix notation.
+			 */
+			constexpr
+			Matrix (
+				precision_t r0c0, precision_t r0c1,
+				precision_t r1c0, precision_t r1c1
+			) noexcept requires (dim_t == 2)
+				: m_data({
+					r0c0, r1c0,
+					r0c1, r1c1
+				})
+			{
+
+			}
+
+			/**
+			 * @brief Constructs a matrix 3x3 with row major entries.
+			 * @note This help the matrix notation.
+			 */
+			constexpr
+			Matrix (
+				precision_t r0c0, precision_t r0c1, precision_t r0c2,
+				precision_t r1c0, precision_t r1c1, precision_t r1c2,
+				precision_t r2c0, precision_t r2c1, precision_t r2c2
+			) noexcept requires (dim_t == 3)
+				: m_data({
+					r0c0, r1c0, r2c0,
+					r0c1, r1c1, r2c1,
+					r0c2, r1c2, r2c2
+				})
+			{
+
+			}
+
+			/**
+			 * @brief Constructs a matrix 4x4 with row major entries.
+			 * @note This help the matrix notation.
+			 */
+			constexpr
+			Matrix (
+				precision_t r0c0, precision_t r0c1, precision_t r0c2, precision_t r0c3,
+				precision_t r1c0, precision_t r1c1, precision_t r1c2, precision_t r1c3,
+				precision_t r2c0, precision_t r2c1, precision_t r2c2, precision_t r2c3,
+				precision_t r3c0, precision_t r3c1, precision_t r3c2, precision_t r3c3
+			) noexcept requires (dim_t == 4)
+				: m_data({
+					r0c0, r1c0, r2c0, r3c0,
+					r0c1, r1c1, r2c1, r3c1,
+					r0c2, r1c2, r2c2, r3c2,
+					r0c3, r1c3, r2c3, r3c3
+				})
+			{
+
 			}
 
 			/**
@@ -337,7 +394,7 @@ namespace Libraries::Math
 			}
 
 			/**
-			 * @brief Constructs a matrix from STL array.
+			 * @brief Constructs a matrix from STL array (Column major).
 			 * @param data Array of dim_t * dim_t value.
 			 */
 			explicit
@@ -1895,33 +1952,151 @@ namespace Libraries::Math
 			}
 
 			/**
-			 * @brief Returns a rotation 2x2 matrix.
+			 * @brief Returns a rotation matrix around X.
+			 * @note Only usable in 3D.
+			 * Layout 4x4 :
+			 *        c0    c1    c2    c3
+			 *   r0 [  1 ][  0 ][  0 ][  0 ]
+			 *   r1 [  0 ][ cos][-sin][  0 ]
+			 *   r2 [  0 ][ sin][ cos][  0 ]
+			 *   r3 [  0 ][  0 ][  0 ][  1 ]
 			 * @param radian Angle of rotation in radian.
-			 * @param x Around X axis.
-			 * @param y Around Y axis.
-			 * @return Matrix< 2, precision_t >
+			 * @return Matrix< dim_t, precision_t >
 			 */
 			[[nodiscard]]
 			static
 			Matrix
-			rotation (precision_t radian, precision_t x, precision_t y) noexcept requires (dim_t == 2 && std::floating_point< precision_t >)
+			rotationX (precision_t radian) noexcept requires ((dim_t == 3 || dim_t == 4) && std::floating_point< precision_t >)
 			{
-				Matrix matrix;
-
 				const auto sine = std::sin(radian);
 				const auto cosine = std::cos(radian);
 
-				matrix[M2x2Col0Row0] = x * cosine;
-				matrix[M2x2Col0Row1] = x * sine;
+				Matrix matrix;
 
-				matrix[M2x2Col1Row0] = y * -sine;
-				matrix[M2x2Col1Row1] = y * cosine;
+				if constexpr ( dim_t == 3 )
+				{
+					matrix[M3x3Col1Row1] = cosine;
+					matrix[M3x3Col1Row2] = sine;
+
+					matrix[M3x3Col2Row1] = -sine;
+					matrix[M3x3Col2Row2] = cosine;
+				}
+
+				if constexpr ( dim_t == 4 )
+				{
+					matrix[M4x4Col1Row1] = cosine;
+					matrix[M4x4Col1Row2] = sine;
+
+					matrix[M4x4Col2Row1] = -sine;
+					matrix[M4x4Col2Row2] = cosine;
+				}
 
 				return matrix;
 			}
 
 			/**
-			 * @brief Returns a rotation matrix 3x3|4x4.
+			 * @brief Returns a rotation matrix around Y.
+			 * @note Only usable in 3D.
+			 * Layout 4x4 :
+			 *        c0    c1    c2    c3
+			 *   r0 [ cos][  0 ][ sin][  0 ]
+			 *   r1 [  0 ][  1 ][  0 ][  0 ]
+			 *   r2 [-sin][  0 ][ cos][  0 ]
+			 *   r3 [  0 ][  0 ][  0 ][  1 ]
+			 * @param radian Angle of rotation in radian.
+			 * @return Matrix< dim_t, precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Matrix
+			rotationY (precision_t radian) noexcept requires ((dim_t == 3 || dim_t == 4) && std::floating_point< precision_t >)
+			{
+				const auto sine = std::sin(radian);
+				const auto cosine = std::cos(radian);
+
+				Matrix matrix;
+
+				if constexpr ( dim_t == 3 )
+				{
+					matrix[M3x3Col0Row0] = cosine;
+					matrix[M3x3Col0Row2] = -sine;
+
+					matrix[M3x3Col2Row0] = sine;
+					matrix[M3x3Col2Row2] = cosine;
+				}
+
+				if constexpr ( dim_t == 4 )
+				{
+					matrix[M4x4Col0Row0] = cosine;
+					matrix[M4x4Col0Row2] = -sine;
+
+					matrix[M4x4Col2Row0] = sine;
+					matrix[M4x4Col2Row2] = cosine;
+				}
+
+				return matrix;
+			}
+
+			/**
+			 * @brief Returns a rotation matrix around Z.
+			 * @note Use this version to perform a simple 2D rotation.
+			 * Layout 4x4 :
+			 *        c0    c1    c2    c3
+			 *   r0 [ cos][-sin][  0 ][  0 ]
+			 *   r1 [ sin][ cos][  0 ][  0 ]
+			 *   r2 [  0 ][  0 ][  1 ][  0 ]
+			 *   r3 [  0 ][  0 ][  0 ][  1 ]
+			 * @param radian Angle of rotation in radian.
+			 * @return Matrix< dim_t, precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Matrix
+			rotationZ (precision_t radian) noexcept requires ((dim_t == 2 || dim_t == 3 || dim_t == 4) && std::floating_point< precision_t >)
+			{
+				const auto sine = std::sin(radian);
+				const auto cosine = std::cos(radian);
+
+				Matrix matrix;
+
+				if constexpr ( dim_t == 2 )
+				{
+					/* First column */
+					matrix[M2x2Col0Row0] = cosine;
+					matrix[M2x2Col0Row1] = sine;
+
+					/* Second column */
+					matrix[M2x2Col1Row0] = -sine;
+					matrix[M2x2Col1Row1] = cosine;
+				}
+
+				if constexpr ( dim_t == 3 )
+				{
+					/* First column */
+					matrix[M3x3Col0Row0] = cosine;
+					matrix[M3x3Col0Row1] = sine;
+
+					/* Second column */
+					matrix[M3x3Col1Row0] = -sine;
+					matrix[M3x3Col1Row1] = cosine;
+				}
+
+				if constexpr ( dim_t == 4 )
+				{
+					/* First column */
+					matrix[M4x4Col0Row0] = cosine;
+					matrix[M4x4Col0Row1] = sine;
+
+					/* Second column */
+					matrix[M4x4Col1Row0] = -sine;
+					matrix[M4x4Col1Row1] = cosine;
+				}
+
+				return matrix;
+			}
+
+			/**
+			 * @brief Returns a rotation matrix 3x3|4x4 around a custom axis.
 			 * @param radian Angle of rotation in radian.
 			 * @param x Around X axis.
 			 * @param y Around Y axis.
@@ -1973,26 +2148,9 @@ namespace Libraries::Math
 			}
 
 			/**
-			 * @brief Returns a rotation matrix 2x2 from any vector.
-			 * @tparam vec_dim_t The vector dimension.
+			 * @brief Returns a rotation matrix 3x3|4x4 from vector 3|4 around a custom axis.
 			 * @param radian Angle of rotation in radian.
-			 * @param rotationVector A reference to a vector.
-			 * @return Matrix< 2, precision_t >
-			 */
-			template< size_t vec_dim_t >
-			requires (vec_dim_t == 2 || vec_dim_t == 3 || vec_dim_t == 4)
-			[[nodiscard]]
-			static
-			Matrix
-			rotation (precision_t radian, const Vector< vec_dim_t, precision_t > & rotationVector) noexcept requires (dim_t == 2 && std::floating_point< precision_t >)
-			{
-				return Matrix::rotation(radian, rotationVector[X], rotationVector[Y]);
-			}
-
-			/**
-			 * @brief Returns a rotation matrix 3x3|4x4 from vector 3|4.
-			 * @param radian Angle of rotation in radian.
-			 * @param rotationVector A reference to a vector.
+			 * @param axis A reference to a vector.
 			 * @return Matrix< dim_t, precision_t >
 			 */
 			template< size_t vec_dim_t >
@@ -2000,17 +2158,18 @@ namespace Libraries::Math
 			[[nodiscard]]
 			static
 			Matrix
-			rotation (precision_t radian, const Vector< vec_dim_t, precision_t > & rotationVector) noexcept requires ((dim_t == 3 || dim_t == 4) && std::floating_point< precision_t >)
+			rotation (precision_t radian, const Vector< vec_dim_t, precision_t > & axis) noexcept requires ((dim_t == 3 || dim_t == 4) && std::floating_point< precision_t >)
 			{
-				return Matrix::rotation(radian, rotationVector[X], rotationVector[Y], rotationVector[Z]);
+				return Matrix::rotation(radian, axis[X], axis[Y], axis[Z]);
 			}
 
 			/**
-			 * @brief Returns a rotation matrix 3x3|4x4 from vector 3|4.
+			 * @brief Returns a rotation matrix 3x3|4x4 built from a coordinate system.
+			 * @warning The tree axes must form a valid coordinate system.
 			 * @tparam vec_dim_t The vector dimension.
-			 * @param xVector A reference to a vector.
-			 * @param yVector A reference to a vector.
-			 * @param zVector A reference to a vector.
+			 * @param xVector A reference to a vector X axis.
+			 * @param yVector A reference to a vector Y axis.
+			 * @param zVector A reference to a vector Z axis.
 			 * @return Matrix
 			 */
 			template< size_t vec_dim_t >
@@ -2378,6 +2537,7 @@ namespace Libraries::Math
 
 			/**
 			 * @brief STL streams printable object.
+			 * @note This will print the matrix in row-major notation.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
 			 * @return std::ostream &
@@ -2405,6 +2565,7 @@ namespace Libraries::Math
 
 			/**
 			 * @brief Stringifies the object.
+			 * @note This will print the matrix in row-major notation.
 			 * @param obj A reference to the object to print.
 			 * @return std::string
 			 */

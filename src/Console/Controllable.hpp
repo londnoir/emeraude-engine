@@ -1,5 +1,5 @@
 /*
- * src/ConsoleControllable.hpp
+ * src/Controllable.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -32,17 +32,15 @@
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Libraries/BlobTrait.hpp"
-#include "CommandContainer.hpp"
-#include "ConsoleExpression.hpp"
-#include "Types.hpp"
+#include "Command.hpp"
+#include "Expression.hpp"
 
-namespace Emeraude
+namespace Emeraude::Console
 {
 	/**
 	 * @brief Interface to register an object controllable with the console.
 	 */
-	class ConsoleControllable
+	class Controllable
 	{
 		public:
 
@@ -50,32 +48,32 @@ namespace Emeraude
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			ConsoleControllable (const ConsoleControllable & copy) noexcept = default;
+			Controllable (const Controllable & copy) noexcept = default;
 
 			/**
 			 * @brief Move constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			ConsoleControllable (ConsoleControllable && copy) noexcept = default;
+			Controllable (Controllable && copy) noexcept = default;
 
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
-			 * @return ConsoleControllable &
+			 * @return Controllable &
 			 */
-			ConsoleControllable & operator= (const ConsoleControllable & copy) noexcept = default;
+			Controllable & operator= (const Controllable & copy) noexcept = default;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
-			 * @return ConsoleControllable &
+			 * @return Controllable &
 			 */
-			ConsoleControllable & operator= (ConsoleControllable && copy) noexcept = default;
+			Controllable & operator= (Controllable && copy) noexcept = default;
 
 			/**
 			 * @brief The destructor auto remove this object from the console.
 			 */
-			virtual ~ConsoleControllable ();
+			virtual ~Controllable ();
 
 			/**
 			 * @brief Returns the identifier of this object in the console.
@@ -89,27 +87,29 @@ namespace Emeraude
 			}
 
 			/**
-			 * @brief Register this controllable object below an other one.
+			 * @brief Register this controllable object below another one.
 			 * @param object A reference to the parent object.
 			 * @return bool
 			 */
-			bool registerToObject (ConsoleControllable & object) noexcept;
+			bool registerToObject (Controllable & object) noexcept;
 
 			/**
 			 * @brief Executes an expression from the console.
 			 * @note This is a recursive method.
 			 * @param expression An expression object from the console.
+			 * @param outputs A writable reference to a vector of console outputs.
 			 * @return bool
 			 */
-			bool execute (ConsoleExpression & expression) noexcept;
+			bool execute (Expression & expression, Outputs & outputs) noexcept;
 
 			/**
-			 * @brief Tries to complete a expression from the console.
+			 * @brief Tries to complete an expression from the console.
 			 * @param expression An expression object from the console.
 			 * @param identifier The identifier of the controlled object.
 			 * @param suggestions List of suggestions to complete the expression.
+			 * @return void
 			 */
-			void complete (ConsoleExpression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept;
+			void complete (Expression & expression, std::string & identifier, std::vector< std::string > & suggestions) const noexcept;
 
 		protected:
 
@@ -117,15 +117,15 @@ namespace Emeraude
 			 * @brief Constructor that identifies by a name the new controllable object.
 			 * @param consoleIdentifier A string to for the name of the object [std::move].
 			 */
-			explicit ConsoleControllable (std::string consoleIdentifier) noexcept;
+			explicit Controllable (std::string consoleIdentifier) noexcept;
 
 			/**
 			 * @brief Register a command for this console controllable object.
 			 * @param commandNames The way of calling the command inside the console.
-			 * @param command The command to execute in the container.
-			 * @param help A way to explain that command. By default "NoHelp" will be display.
+			 * @param binding The binding to execute in the command.
+			 * @param help A way to explain that command. By default, "NoHelp" will be display.
 			 */
-			void bindCommand (const std::string & commandNames, const ConsoleCommand & command, const std::string & help = {"No help"}) noexcept;
+			void bindCommand (const std::string & commandNames, const Binding & binding, const std::string & help = {"No help"}) noexcept;
 
 			/**
 			 * @brief Removes a command from the console.
@@ -139,39 +139,25 @@ namespace Emeraude
 			 */
 			bool registerToConsole () noexcept;
 
-			/**
-			 * @brief Writes a message directly to the console.
-			 * @param message The message to display in the console.
-			 * @param severity The severity is used to color or emphasis the message. Default info.
-			 * @return void
-			 */
-			void writeToConsole (const std::string & message, Severity severity = Severity::Info) noexcept;
-
-			/**
-			 * @brief Writes a message directly to the console.
-			 * @note This is a shortcut to user the Libraries::Blob() utility.
-			 * @param message The message to display in the console.
-			 * @param severity The severity is used to color or emphasis the message. Default info.
-			 * @return void
-			 */
-			void
-			writeToConsole (const Libraries::BlobTrait & message, Severity severity = Severity::Info) noexcept
-			{
-				this->writeToConsole(message.get(), severity);
-			}
-
 		private:
 
 			/**
 			 * @brief checkBuiltInCommands
-			 * @param expression
+			 * @param expression A reference to a console expression.
+			 * @param outputs A writable reference to a vector of console outputs.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool checkBuiltInCommands (const ConsoleExpression & expression) noexcept;
+			bool checkBuiltInCommands (const Expression & expression, Outputs & outputs) const noexcept;
+
+			/**
+			 * @brief Method to override to bind commands.
+			 * @return void
+			 */
+			virtual void onRegisterToConsole () noexcept = 0;
 
 			std::string m_identifier;
-			std::map< std::string, CommandContainer > m_commands;
-			std::map< std::string, ConsoleControllable * > m_consoleObjects;
+			std::map< std::string, Command > m_commands;
+			std::map< std::string, Controllable * > m_consoleObjects;
 	};
 }

@@ -32,17 +32,29 @@
 #include <iterator>
 #include <ranges>
 
+/* Third-party inclusions */
+#ifdef IMGUI_ENABLED
+#include "imgui.h"
+#include "backends/imgui_impl_vulkan.h"
+#include "backends/imgui_impl_glfw.h"
+
+#include "Vulkan/Instance.hpp"
+#include "Vulkan/PhysicalDevice.hpp"
+#include "Vulkan/Queue.hpp"
+#include "Vulkan/DescriptorPool.hpp"
+#include "Vulkan/Framebuffer.hpp"
+#endif
+
 /* Local inclusions. */
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
 #include "Graphics/Renderer.hpp"
-#include "Saphir/Generator/OverlayRendering.hpp"
+#include "Libraries/VertexFactory/ShapeGenerator.hpp"
+#include "PrimaryServices.hpp"
 #include "Resources/Manager.hpp"
-#include "Vulkan/PipelineLayout.hpp"
-#include "Vulkan/CommandBuffer.hpp"
+#include "Saphir/Generator/OverlayRendering.hpp"
+#include "UIScreen.hpp"
 #include "Vulkan/SwapChain.hpp"
 #include "Vulkan/GraphicsPipeline.hpp"
-#include "UIScreen.hpp"
-#include "PrimaryServices.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 #include "Window.hpp"
 
 namespace Emeraude::Overlay
@@ -370,6 +382,19 @@ namespace Emeraude::Overlay
 			return false;
 		}
 
+#ifdef IMGUI_ENABLED
+		if ( this->initImGUI() )
+		{
+			TraceSuccess{ClassId} << "ImGUI library initialized !";
+		}
+		else
+		{
+			TraceError{ClassId} << "Unable to initialize ImGUI library !";
+
+			return false;
+		}
+#endif
+
 		m_flags[ServiceInitialized] = true;
 
 		return true;
@@ -379,6 +404,12 @@ namespace Emeraude::Overlay
 	Manager::onTerminate () noexcept
 	{
 		m_flags[ServiceInitialized] = false;
+
+#ifdef IMGUI_ENABLED
+		TraceInfo{ClassId} << "Releasing ImGUI library ...";
+
+		this->releaseImGUI();
+#endif
 
 		this->forget(&m_window);
 
@@ -417,6 +448,25 @@ namespace Emeraude::Overlay
 
 		return screen;
 	}
+
+#ifdef IMGUI_ENABLED
+	std::shared_ptr< ImGUIScreen >
+	Manager::createImGUIScreen (const std::string & name, const std::function< void () > & drawFunction) noexcept
+	{
+		if ( m_ImGUIScreens.contains(name) )
+		{
+			TraceError{ClassId} << "An ImGUI screen named '" << name << "' already exists !";
+
+			return nullptr;
+		}
+
+		auto screen = std::make_shared< ImGUIScreen >(name, drawFunction);
+
+		m_ImGUIScreens[name] = screen;
+
+		return screen;
+	}
+#endif
 
 	bool
 	Manager::destroyScreen (const std::string & name) noexcept
@@ -635,7 +685,7 @@ namespace Emeraude::Overlay
 				continue;
 			}
 
-			for ( const auto & surface : std::views::values(screen->surfaces()) )
+			for ( const auto & surface : screen->surfaces() | std::views::values )
 			{
 				if ( surface->descriptorSet() == nullptr || !surface->descriptorSet()->isCreated() )
 				{
@@ -666,6 +716,18 @@ namespace Emeraude::Overlay
 				commandBuffer.draw(*m_surfaceGeometry);
 			}
 		}
+
+#ifdef IMGUI_ENABLED
+		for ( const auto screen : m_ImGUIScreens | std::views::values )
+		{
+			if ( !screen->isVisible() )
+			{
+				continue;
+			}
+
+			screen->render(commandBuffer);
+		}
+#endif
 	}
 
 	void
@@ -776,4 +838,131 @@ namespace Emeraude::Overlay
 
 		return true;
 	}
+
+#ifdef IMGUI_ENABLED
+
+	bool
+	Manager::initImGUI () noexcept
+	{
+		if ( !m_graphicsRenderer.usable() )
+		{
+			TraceError{ClassId} << "No Vulkan graphics layer !";
+
+			return false;
+		}
+
+		const auto & filesystem = m_primaryServices.fileSystem();
+
+		m_iniFilepath = filesystem.configDirectory("imgui.ini");
+		m_logFilepath = filesystem.cacheDirectory("imgui_log.txt");
+
+		/* NOTE: Initialize ImGUI library. */
+		{
+			// this initializes the core structures of imgui
+			// Setup Dear ImGui context
+			IMGUI_CHECKVERSION();
+
+			ImGui::CreateContext();
+
+			ImGuiIO & io = ImGui::GetIO(); (void)io;
+			io.IniFilename = m_iniFilepath.c_str();
+			io.LogFilename = m_logFilepath.c_str();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+			// Setup Dear ImGui style
+			ImGui::StyleColorsDark();
+			//ImGui::StyleColorsClassic();
+		}
+
+		/* NOTE: Initialize ImGUI with GLFW. */
+		if ( !ImGui_ImplGlfw_InitForVulkan(m_window.handle(), true) )
+		{
+			Tracer::error(ClassId, "Unable to initialize ImGUI with GLFW !");
+
+			return false;
+		}
+
+		/* NOTE: Initialize ImGUI with Vulkan. */
+		{
+			const auto swapChain = m_graphicsRenderer.swapChain();
+			const auto device = swapChain->device();
+
+			/* Create a descriptor pool */
+			/* FIXME: These are fancy numbers ! */
+			const auto sizes = std::vector< VkDescriptorPoolSize >{
+				{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+				{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+				{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+				{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+				{VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+				{VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+				{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+				{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+				{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+				{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+				{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
+			};
+
+			m_ImGUIDescriptorPool = std::make_shared< DescriptorPool >(device, sizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+			m_ImGUIDescriptorPool->setIdentifier(ClassId, "ImGUI", "DescriptorPool");
+
+			if ( !m_ImGUIDescriptorPool->createOnHardware() )
+			{
+				Tracer::fatal(ClassId, "Unable to create the ImGUI descriptor pool !");
+
+				return false;
+			}
+
+			// Setup Platform/Renderer backends
+			ImGui_ImplVulkan_InitInfo info{};
+			info.Instance = m_graphicsRenderer.vulkanInstance().handle();
+			info.PhysicalDevice = device->physicalDevice()->handle();
+			info.Device = device->handle();
+			info.QueueFamily = device->getGraphicsFamilyIndex();
+			info.Queue = device->getQueue(QueueJob::Graphics, QueuePriority::High)->handle();
+			info.PipelineCache = VK_NULL_HANDLE;
+			info.DescriptorPool = m_ImGUIDescriptorPool->handle();
+			info.RenderPass = swapChain->framebuffer()->renderPass()->handle();
+			info.Subpass = 0;
+			info.MinImageCount = swapChain->createInfo().minImageCount;
+			info.ImageCount = swapChain->imageCount();
+			info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+			info.Allocator = VK_NULL_HANDLE;
+			info.CheckVkResultFn = nullptr;
+
+			if ( !ImGui_ImplVulkan_Init(&info) )
+			{
+				Tracer::error(ClassId, "Unable to initialize ImGUI with Vulkan !");
+
+				return false;
+			}
+
+			if ( !ImGui_ImplVulkan_CreateFontsTexture() )
+			{
+				Tracer::error(ClassId, "Unable to create ImGUI fonts texture !");
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void
+	Manager::releaseImGUI () noexcept
+	{
+		ImGui_ImplVulkan_DestroyFontsTexture();
+
+		ImGui_ImplVulkan_Shutdown();
+
+		ImGui_ImplGlfw_Shutdown();
+
+		ImGui::DestroyContext();
+
+		m_ImGUIDescriptorPool->destroyFromHardware();
+		m_ImGUIDescriptorPool.reset();
+	}
+
+#endif
 }

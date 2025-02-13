@@ -127,9 +127,28 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	SoundEmitter::playAnimation (id_t /*identifier*/, const Variant & /*value*/) noexcept
+	SoundEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		return false;
+		switch ( animationID )
+		{
+			case EmittingState :
+				if ( value.asBool() )
+				{
+					this->resume();
+				}
+				else
+				{
+					this->pause();
+				}
+				return true;
+
+			case Gain :
+				this->setGain(value.asFloat());
+				return true;
+
+			default:
+				return false;
+		}
 	}
 
 	bool

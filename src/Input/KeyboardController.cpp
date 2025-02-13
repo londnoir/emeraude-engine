@@ -78,6 +78,15 @@ namespace Emeraude::Input
 		return !s_deviceState[static_cast< size_t >(key)];
 	}
 
+	void
+	KeyboardController::changeKeyState (int32_t key, bool pressed) noexcept
+	{
+		if ( key != KeyUnknown )
+		{
+			s_deviceState[static_cast< size_t >(key)] = pressed;
+		}
+	}
+
 	std::string
 	KeyboardController::getRawState () const noexcept
 	{

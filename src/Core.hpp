@@ -40,7 +40,7 @@
 
 /* Local inclusions for inheritances. */
 #include "Input/KeyboardListenerInterface.hpp"
-#include "ConsoleControllable.hpp"
+#include "Console/Controllable.hpp"
 #include "Libraries/ObserverTrait.hpp"
 #include "Libraries/ObservableTrait.hpp"
 
@@ -48,7 +48,7 @@
 #include "Identification.hpp"
 #include "Help.hpp"
 #include "PrimaryServices.hpp"
-#include "Console.hpp"
+#include "Console/Controller.hpp"
 #include "NetworkManager.hpp"
 #include "User.hpp"
 #include "Resources/Manager.hpp"
@@ -72,11 +72,11 @@ namespace Emeraude
 	 * @brief Core object of Emeraude-Engine. One of his main role is to hold all services.
 	 * @note This class act as a singleton. So you can call from everywhere with Core::instance().
 	 * @extends Emeraude::Input::KeyboardListenerInterface The core need to get events from the keyboard for low level interaction.
-	 * @extends Emeraude::ConsoleControllable The core can be controlled by the console.
+	 * @extends Emeraude::Console::Controllable The core can be controlled by the console.
 	 * @extends Libraries::ObserverTrait The core is an observer.
 	 * @extends Libraries::ObservableTrait The core is observable.
 	 */
-	class Core : private Input::KeyboardListenerInterface, private ConsoleControllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class Core : private Input::KeyboardListenerInterface, private Console::Controllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
 	{
 		public:
 
@@ -125,13 +125,13 @@ namespace Emeraude
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
 			 */
-			Core &operator= (const Core & copy) noexcept = delete;
+			Core & operator= (const Core & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
 			 */
-			Core &operator= (Core && copy) noexcept = delete;
+			Core & operator= (Core && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the engine core.
@@ -273,25 +273,25 @@ namespace Emeraude
 			}
 
 			/**
-			 * @brief Returns the reference to the console service.
-			 * @return Console &
+			 * @brief Returns the reference to the console controller service.
+			 * @return Console::Controller &
 			 */
 			[[nodiscard]]
-			Console &
-			console () noexcept
+			Console::Controller &
+			consoleController () noexcept
 			{
-				return m_console;
+				return m_consoleController;
 			}
 
 			/**
-			 * @brief Returns the reference to the console service.
-			 * @return const Console &
+			 * @brief Returns the reference to the console controller service.
+			 * @return const Console::Controller &
 			 */
 			[[nodiscard]]
-			const Console &
-			console () const noexcept
+			const Console::Controller &
+			consoleController () const noexcept
 			{
-				return m_console;
+				return m_consoleController;
 			}
 
 			/**
@@ -767,6 +767,9 @@ namespace Emeraude
 			[[nodiscard]]
 			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept final;
 
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
+
 			/**
 			 * @brief Called in every main loop cycle.
 			 * @return void
@@ -942,7 +945,7 @@ namespace Emeraude
 			Identification m_identification;
 			Help m_coreHelp{"Core engine"};
 			PrimaryServices m_primaryServices;
-			Console m_console{m_primaryServices, m_inputManager, m_overlayManager};
+			Console::Controller m_consoleController{m_primaryServices};
 			NetworkManager m_networkManager{m_primaryServices};
 			Resources::Manager m_resourceManager{m_primaryServices, m_networkManager};
 			User m_user{m_primaryServices};

@@ -37,15 +37,16 @@
 #include "GLFW/glfw3.h"
 
 /* Local inclusions. */
+#include "Constants.hpp"
+#include "Input/Types.hpp"
+#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Libraries/Time/Time.hpp"
 #include "Libraries/Version.hpp"
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Input/Types.hpp"
+#include "PlatformSpecific/Desktop/Dialog/Message.hpp"
+#include "PlatformSpecific/Desktop/Dialog/OpenFile.hpp"
+#include "PlatformSpecific/Desktop/Commands.hpp"
 #include "Tool/GeometryDataPrinter.hpp"
 #include "Tool/ShowVulkanInformation.hpp"
-#include "Constants.hpp"
-#include "PlatformSpecific/Desktop/Dialog/Message.hpp"
-#include "PlatformSpecific/Desktop/Dialog/OpenFiles.hpp"
 
 namespace Emeraude
 {
@@ -60,12 +61,14 @@ namespace Emeraude
 
 #if IS_WINDOWS
     Core::Core (int argc, wchar_t * * wargv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
-        : KeyboardListenerInterface(false, false), ConsoleControllable(ClassId),
+        : KeyboardListenerInterface(false, false),
+		Controllable(ClassId),
         m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
         m_primaryServices(argc, wargv, m_identification, false)
 #else
 	Core::Core (int argc, char * * argv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
-        : KeyboardListenerInterface(false, false), ConsoleControllable(ClassId),
+        : KeyboardListenerInterface(false, false),
+		Controllable(ClassId),
         m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
         m_primaryServices(argc, argv, m_identification, false)
 #endif
@@ -99,18 +102,19 @@ namespace Emeraude
 			m_coreHelp.registerArgument("Force the use of a data directory overriding every others.", "data-directory", 0, {"DIRECTORY_PATH"});
 			m_coreHelp.registerArgument("Execute a specific tool.", "tools-mode", 't');
 
+			m_coreHelp.registerShortcut("Quit the application.", KeyEscape, ModKeyShift);
 			m_coreHelp.registerShortcut("Print the active scene content in console.", KeyF1, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF2, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF3, ModKeyShift);
+			m_coreHelp.registerShortcut("Refreshes scenes (Experimental).", KeyF2, ModKeyShift);
+			m_coreHelp.registerShortcut("Test dialog (Experimental).", KeyF3, ModKeyShift);
 			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF4, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF5, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF6, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF7, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF8, ModKeyShift);
+			m_coreHelp.registerShortcut("Open settings file in text editor.", KeyF5, ModKeyShift);
+			m_coreHelp.registerShortcut("Open file explorer to application configuration directory.", KeyF6, ModKeyShift);
+			m_coreHelp.registerShortcut("Open file explorer to application cache directory.", KeyF7, ModKeyShift);
+			m_coreHelp.registerShortcut("Open file explorer to application user data directory.", KeyF8, ModKeyShift);
 			m_coreHelp.registerShortcut("Clean up unused resources from managers.", KeyF9, ModKeyShift);
 			m_coreHelp.registerShortcut("Suspend core thread execution for 3 seconds.", KeyF10, ModKeyShift);
 			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF11, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF12, ModKeyShift);
+			m_coreHelp.registerShortcut("Toggle the window fullscreen mode.", KeyF12, ModKeyShift);
 		}
 
 		if ( m_primaryServices.initialize() )
@@ -134,24 +138,15 @@ namespace Emeraude
 		}
 
 		/* Initialize the console. */
-		if ( m_console.initialize(m_primaryServicesEnabled) )
+		if ( m_consoleController.initialize(m_primaryServicesEnabled) )
 		{
-			TraceSuccess{ClassId} << m_console.name() << " service up !";
-
-			/* Console commands bindings. */
-			this->bindCommand("exit,quit,shutdown", [this] (const std::vector< std::string > &) {
-				Tracer::info(ClassId, "Shutdown procedure called from console ...");
-
-				this->stop();
-
-				return 0;
-			}, "Quit the application.");
+			TraceSuccess{ClassId} << m_consoleController.name() << " service up !";
 
 			this->registerToConsole();
 		}
 		else
 		{
-			TraceFatal{ClassId} << m_console.name() << " service failed to execute !";
+			TraceFatal{ClassId} << m_consoleController.name() << " service failed to execute !";
 
 			m_startupMode = StartupMode::Error;
 
@@ -599,8 +594,6 @@ namespace Emeraude
 				TraceSuccess{ClassId} << m_trackMixer.name() << " service up !";
 
 				this->observe(&m_trackMixer);
-
-				m_trackMixer.registerToObject(*this);
 			}
 			else
 			{
@@ -645,12 +638,6 @@ namespace Emeraude
 				TraceError{ClassId} << m_notifier.name() << " service failed to execute !";
 			}
 
-			/* Call the console to build the graphical display. */
-			/*if ( !m_console.buildGUI() )
-			{
-				Tracer::error(ClassId, "Unable to create the graphical console !");
-			}*/
-
 			/* Initialization of the core screen. */
 			if ( !this->initializeCoreScreen() )
 			{
@@ -683,10 +670,31 @@ namespace Emeraude
 		return true;
 	}
 
+	void
+	Core::onRegisterToConsole () noexcept
+    {
+    	this->bindCommand("exit,quit,shutdown", [this] (const Console::Arguments & /*arguments*/, Console::Outputs & outputs) {
+			outputs.emplace_back(Severity::Info, "Shutdown procedure called from console ...");
+
+			this->stop();
+
+			return 0;
+		}, "Quit the application.");
+    }
+
 	bool
 	Core::initializeCoreScreen () noexcept
 	{
-		const auto screen = m_overlayManager.createScreen("CoreScreen", false, false);
+#ifdef IMGUI_ENABLED
+    	const auto screen = m_overlayManager.createImGUIScreen("CoreScreen", [] () {
+			bool show = true;
+			ImGui::ShowDemoWindow(&show);
+		});
+
+    	screen->setVisibility(false);
+#else
+    	const auto screen = m_overlayManager.createScreen("CoreScreen", false, false);
+#endif
 
 		return screen != nullptr;
 	}
@@ -918,13 +926,59 @@ namespace Emeraude
 
 					if ( Message::createConfirmation("Test dialog !", "Do you want to open Text files !", &m_window) == Answer::Yes )
 					{
-						const auto filePaths = OpenFiles::create("Loading text files", {{"Text", {"txt", "doc", "rtf"}}}, &m_window);
+						const auto filePaths = OpenFile::create(
+							"Loading text files",
+							{{"Text", {"txt", "doc", "rtf"}}},
+							false, true,
+							&m_window
+						);
 
 						for ( const auto & filePath : filePaths )
 						{
 							Message::create("You choose", filePath, ButtonLayout::OK, MessageType::Info, &m_window);
 						}
 					}
+				}
+					return true;
+
+				case KeyF4 :
+					Tracer::info(ClassId, "Core reserved SHIFT+F4 shortcut hit.");
+
+					return true;
+
+				case KeyF5 :
+				{
+					Tracer::info(ClassId, "Opening settings file ...");
+
+					auto & settings = this->primaryServices().settings();
+
+					settings.saveAtExit(false);
+
+					PlatformSpecific::Desktop::openFile(settings.filepath());
+				}
+					return true;
+
+				case KeyF6 :
+				{
+					Tracer::info(ClassId, "Showing application configuration directory ...");
+
+					PlatformSpecific::Desktop::openFolder(this->primaryServices().fileSystem().configDirectory());
+				}
+					return true;
+
+				case KeyF7 :
+				{
+					Tracer::info(ClassId, "Showing application cache directory ...");
+
+					PlatformSpecific::Desktop::openFolder(this->primaryServices().fileSystem().cacheDirectory());
+				}
+					return true;
+
+				case KeyF8 :
+				{
+					Tracer::info(ClassId, "Showing application user data directory ...");
+
+					PlatformSpecific::Desktop::openFolder(this->primaryServices().fileSystem().userDataDirectory());
 
 					return true;
 				}
@@ -951,22 +1005,16 @@ namespace Emeraude
 				}
 					return true;
 
+				case KeyF11 :
+					Tracer::info(ClassId, "Core reserved SHIFT+F11 shortcut hit.");
+
+					return true;
+
 				case KeyF12 :
 				{
 					Tracer::info(ClassId, "Toggling fullscreen mode ...");
 
 					m_window.setFullscreenMode(!m_window.isFullscreenMode());
-				}
-					return true;
-
-				case KeyF4 :
-				case KeyF5 :
-				case KeyF6 :
-				case KeyF7 :
-				case KeyF8 :
-				case KeyF11 :
-				{
-					Tracer::info(ClassId, "Core reserved SHIFT+Fn shortcut hit.");
 				}
 					return true;
 
@@ -985,7 +1033,7 @@ namespace Emeraude
 		switch ( key )
 		{
 			case KeyGraveAccent :
-				m_console.enable();
+				//m_console.enable();
 
 				return true;
 

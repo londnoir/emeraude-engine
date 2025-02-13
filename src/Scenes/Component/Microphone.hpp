@@ -101,6 +101,6 @@ namespace Emeraude::Scenes::Component
 			void onTargetConnected (AbstractVirtualAudioDevice * targetDevice) noexcept override;
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 	};
 }

@@ -318,11 +318,13 @@ namespace Emeraude::Input
 	/** @brief A convenient mapping to GLFW_MOD_xxx modifier key macros. */
 	enum ModKey: uint8_t
 	{
-		ModKeyUnknown = 0x0000,
-		ModKeyShift = 0x0001, // GLFW_MOD_SHIFT
-		ModKeyControl = 0x0002, // GLFW_MOD_CONTROL
-		ModKeyAlt = 0x0004, // GLFW_MOD_ALT
-		ModKeySuper = 0x0008 // GLFW_MOD_SUPER
+        ModKeyUnknown = 0x0000,
+        ModKeyShift = 0x0001, // GLFW_MOD_SHIFT
+        ModKeyControl = 0x0002, // GLFW_MOD_CONTROL
+        ModKeyAlt = 0x0004, // GLFW_MOD_ALT
+        ModKeySuper = 0x0008, // GLFW_MOD_SUPER
+        ModKeyCapsLock = 0x0010, // GLFW_MOD_CAPS_LOCK
+        ModKeyNumLock = 0x0020 // GLFW_MOD_NUM_LOCK
 	};
 
 	static constexpr auto ModKeyUnknownString{"ModKeyUnknown"};
@@ -330,6 +332,8 @@ namespace Emeraude::Input
 	static constexpr auto ModKeyControlString{"ModKeyControl"};
 	static constexpr auto ModKeyAltString{"ModKeyAlt"};
 	static constexpr auto ModKeySuperString{"ModKeySuper"};
+    static constexpr auto ModKeyCapsLockString{"ModKeyCapsLock"};
+    static constexpr auto ModKeyNumLockString{"ModKeyNumLock"};
 
 	/**
 	 * @brief Returns a C-String version of the enum value.

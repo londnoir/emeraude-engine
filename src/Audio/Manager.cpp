@@ -47,7 +47,8 @@ namespace Emeraude::Audio
 	Manager * Manager::s_instance{nullptr};
 
 	Manager::Manager (PrimaryServices & primaryServices, Resources::Manager & resourceManager) noexcept
-		: ServiceInterface(ClassId), ConsoleControllable(ClassId),
+		: ServiceInterface(ClassId),
+		Controllable(ClassId),
 		m_primaryServices(primaryServices), 
 		m_resourceManager(resourceManager)
 	{
@@ -210,6 +211,8 @@ namespace Emeraude::Audio
 			Tracer::warning(ClassId, "There was unread problem with AL during initialization !");
 		}
 
+		this->registerToConsole();
+
 		if ( m_flags[ShowInformation] )
 		{
 			Tracer::info(ClassId, this->getAPIInformation());
@@ -258,6 +261,12 @@ namespace Emeraude::Audio
 		}
 
 		return true;
+	}
+
+	void
+	Manager::onRegisterToConsole () noexcept
+	{
+
 	}
 
 	void

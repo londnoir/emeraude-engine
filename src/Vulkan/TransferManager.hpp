@@ -160,6 +160,16 @@ namespace Emeraude::Vulkan
 			}
 
 			/**
+			 * @brief Returns the command pool.
+			 * @return std::shared_ptr< CommandPool >
+			 */
+			std::shared_ptr< CommandPool >
+			commandPool () const noexcept
+			{
+				return m_specificCommandPool;
+			}
+
+			/**
 			 * @brief Returns a string with the allocated staging buffers.
 			 * @return std::string
 			 */

@@ -34,7 +34,9 @@ namespace Emeraude::Scenes::Component
 	using namespace Graphics;
 
 	AbstractLightEmitter::AbstractLightEmitter (const std::string & name, const AbstractEntity & parentEntity, uint32_t shadowMapResolution) noexcept
-		: Abstract(name, parentEntity), AbstractVirtualVideoDevice(name, MasterControl::ConnexionType::Output), m_shadowMapResolution(shadowMapResolution)
+		: Abstract(name, parentEntity),
+		AbstractVirtualVideoDevice(name, MasterControl::ConnexionType::Output),
+		m_shadowMapResolution(shadowMapResolution)
 	{
 		this->enableFlag(Enabled);
 	}
@@ -135,7 +137,7 @@ namespace Emeraude::Scenes::Component
 	void
 	AbstractLightEmitter::enableShadow (bool state) noexcept
 	{
-		if ( m_shadowMapResolution == 0 )
+		if ( this->shadowMapResolution() == 0 )
 		{
 			TraceInfo{TracerTag} << "The shadow map texture wasn't requested at light creation ! Cancelling ...";
 

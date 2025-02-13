@@ -1,4 +1,4 @@
-#include "OpenFiles.hpp"
+#include "SaveFile.hpp"
 
 #if IS_MACOS
 
@@ -13,9 +13,9 @@
 namespace Emeraude::PlatformSpecific::Desktop::Dialog
 {
 	bool
-	OpenFiles::execute (Window * /*window*/) noexcept
+	SaveFile::execute (Window * /*window*/) noexcept
 	{
-        @autoreleasepool
+		@autoreleasepool
         {
             [NSApplication sharedApplication];
             [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
@@ -23,12 +23,9 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
             NSString * title = [NSString stringWithCString:this->title().c_str()
             encoding:[NSString defaultCStringEncoding]];
 
-            NSOpenPanel * openPanel = [NSOpenPanel openPanel];
+            NSSavePanel * panel = [NSSavePanel savePanel];
 
-            [openPanel setCanChooseFiles:YES];
-            [openPanel setCanChooseDirectories:NO];
-            [openPanel setAllowsMultipleSelection:YES];
-            [openPanel setTitle:title];
+            [panel setTitle:title];
 
             NSMutableArray * file_types_list = [NSMutableArray array];
             NSMutableArray * filter_names = [NSMutableArray array];
@@ -40,11 +37,6 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
 
                 for ( std::string & ext : filter.second )
                 {
-                    // From electron :
-                    // macOS is incapable of understanding multiple file extensions,
-                    // so we need to tokenize the extension that's been passed in.
-                    // We want to err on the side of allowing files, so we pass
-                    // along only the final extension ('tar.gz' => 'gz').
                     auto pos = ext.rfind('.');
 
                     if ( pos != std::string::npos )
@@ -72,22 +64,19 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
                     file_types = nil;
                 }
             }
-            [openPanel setAllowedFileTypes:file_types];
+            [panel setAllowedFileTypes:file_types];
 
             // TODO: Format picker not yet implemented, macOS doesnt support it natively.
             // To create it like electron see : https://github.com/electron/electron/blob/main/shell/browser/ui/file_dialog_mac.mm#L133
-            [openPanel setLevel:CGShieldingWindowLevel()];
-            NSInteger result = [openPanel runModal];
+            [panel setLevel:CGShieldingWindowLevel()];
+            NSInteger result = [panel runModal];
 
             if ( result == NSModalResponseOK )
             {
-                NSArray * URLs = [openPanel URLs];
+                NSURL * url = [panel URL];
+                NSString * filepath = [url path];
 
-                for ( NSURL * url in URLs )
-                {
-                    NSString * filePath = [url path];
-                    m_filePaths.emplace_back([filePath UTF8String]);
-                }
+				m_filepath = [filepath UTF8String];
             }
             else
             {

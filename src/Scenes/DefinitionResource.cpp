@@ -85,17 +85,11 @@ namespace Emeraude::Scenes
 	bool
 	DefinitionResource::load (const std::filesystem::path & filepath) noexcept
 	{
-		const Json::CharReaderBuilder builder;
+	    Json::Value root;
 
-		std::ifstream file{filepath, std::ifstream::binary};
-
-		Json::Value root;
-
-		std::string errors;
-
-		if ( !Json::parseFromStream(builder, file, &root, &errors) )
+	    if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
-			Tracer::error(ClassId, BlobTrait() << "Unable to parse JSON file ! Errors :\n" << errors);
+			TraceError{ClassId} << "Unable to parse the resource file " << filepath << " !" "\n";
 
 			return false;
 		}

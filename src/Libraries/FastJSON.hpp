@@ -63,10 +63,24 @@ namespace Libraries::FastJSON
 	/**
 	 * @brief Gets the root json node from a filepath.
 	 * @param filepath A reference to a filesystem path.
-	 * @return Json::Value
+	 * @param root A writable reference to a Json::Value.
+	 * @param stackLimit The depth of JSON parsing. Default 16.
+	 * @param quiet Do not print console message. Default false.
+	 * @return bool
 	 */
 	[[nodiscard]]
-	Json::Value getRootFromFile (const std::filesystem::path & filepath) noexcept;
+	bool getRootFromFile (const std::filesystem::path & filepath, Json::Value & root, int stackLimit = 16, bool quiet = false) noexcept;
+
+	/**
+	 * @brief Gets the root json node from a string.
+	 * @param json A reference to a string.
+	 * @param root A writable reference to a Json::Value.
+	 * @param stackLimit The depth of JSON parsing. Default 16.
+	 * @param quiet Do not print console message. Default false.
+	 * @return bool
+	 */
+	[[nodiscard]]
+	bool getRootFromString (const std::string & json, Json::Value & root, int stackLimit = 16, bool quiet = false) noexcept;
 
 	/**
 	 * @brief Gets a JSON array node.

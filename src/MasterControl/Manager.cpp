@@ -1,5 +1,5 @@
 /*
- * src/MasterControl/Console.cpp
+ * src/MasterControl/Manager.cpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
@@ -25,10 +25,9 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include "Console.hpp"
+#include "Manager.hpp"
 
 /* Local inclusions. */
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -54,7 +53,6 @@
 #include "Graphics/Renderer.hpp"
 #include "Audio/Manager.hpp"
 #include "Audio/HardwareOutput.hpp"
-#include "Physics/Physics.hpp"
 #include "Settings.hpp"
 #include "Tracer.hpp"
 #include "Types.hpp"
@@ -65,90 +63,95 @@ namespace Emeraude::MasterControl
 	using namespace Libraries;
 	using namespace Graphics;
 
-	const size_t Console::ClassUID{getClassUID(ClassId)};
-	const std::string Console::DefaultViewName{"DefaultView"};
-	const std::string Console::DefaultSpeakerName{"DefaultSpeaker"};
+	const size_t Manager::ClassUID{getClassUID(ClassId)};
+	const std::string Manager::DefaultViewName{"DefaultView"};
+	const std::string Manager::DefaultSpeakerName{"DefaultSpeaker"};
 
-	Console::Console (const std::string & name) noexcept
-		: NameableTrait(name + ClassId), ConsoleControllable(ClassId)
+	Manager::Manager (const std::string & name) noexcept
+		: NameableTrait(name + ClassId),
+		Controllable(ClassId)
 	{
 		/* Console commands bindings. */
-		this->bindCommand("listDevices", [this] (const std::vector< std::string > & parameters) {
+		this->bindCommand("listDevices", [this] (const Console::Arguments & arguments, Console::Outputs & outputs) {
 			DeviceType deviceType{DeviceType::Both};
 			ConnexionType directionType{ConnexionType::Both};
 
-			if ( !parameters.empty() )
+			if ( !arguments.empty() )
 			{
 				{
-					const auto & param = parameters[0];
+					const auto argument = arguments[0].asString();
 
-					if ( param == "video" )
+					if ( argument == "video" )
 					{
 						deviceType = DeviceType::Video;
 					}
-					else if ( param == "audio" )
+					else if ( argument == "audio" )
 					{
 						deviceType = DeviceType::Audio;
 					}
-					else if ( param == "both" )
+					else if ( argument == "both" )
 					{
 						deviceType = DeviceType::Both;
 					}
 				}
 
-				if ( parameters.size() > 1 )
+				if ( arguments.size() > 1 )
 				{
-					const auto & param = parameters[1];
+					const auto argument = std::any_cast< std::string >(arguments[1]);
 
-					if ( param == "input" )
+					if ( argument == "input" )
 					{
 						directionType = ConnexionType::Input;
 					}
-					else if ( param == "output" )
+					else if ( argument == "output" )
 					{
 						directionType = ConnexionType::Output;
 					}
-					else if ( param == "both" )
+					else if ( argument == "both" )
 					{
 						directionType = ConnexionType::Both;
 					}
 				}
 			}
 
-			this->writeToConsole(this->getDeviceList(deviceType, directionType), Severity::Info);
+			outputs.emplace_back(Severity::Info, this->getDeviceList(deviceType, directionType));
 
 			return 0;
 		}, "Get a list of input/output audio/video devices.");
 
-		this->bindCommand("registerRoute", [this] (const std::vector< std::string > & parameters) {
-			if ( parameters.size() != 3 )
+		this->bindCommand("registerRoute", [this] (const Console::Arguments & arguments, Console::Outputs & outputs) {
+			if ( arguments.size() != 3 )
 			{
-				this->writeToConsole("This method need 3 parameters.", Severity::Error);
+				outputs.emplace_back(Severity::Error, "This method need 3 parameters.");
 
 				return 1;
 			}
 
-			if ( parameters[0] == "video" )
+			const auto type = arguments[0].asString();
+			const auto source = arguments[1].asString();
+			const auto target = arguments[2].asString();
+
+			if ( type == "video" )
 			{
-				if ( !this->connectVideoDevices(parameters[1], parameters[2]) )
+				if ( !this->connectVideoDevices(source, target) )
 				{
-					this->writeToConsole("Unable to connect the video device.", Severity::Error);
+					outputs.emplace_back(Severity::Error, "Unable to connect the video device.");
 
 					return 3;
 				}
 			}
-			else if ( parameters[0] == "audio" )
+			else if ( type == "audio" )
 			{
-				if ( !this->connectAudioDevices(parameters[1], parameters[2]) )
+				if ( !this->connectAudioDevices(source, target) )
 				{
-					this->writeToConsole("Unable to connect the audio device.", Severity::Error);
+					outputs.emplace_back(Severity::Error, "Unable to connect the audio device.");
 
 					return 3;
 				}
 			}
 			else
 			{
-				this->writeToConsole("First parameter must be 'video' or 'audio'.", Severity::Error);
+				outputs.emplace_back(Severity::Error, "First parameter must be 'video' or 'audio'.");
 
 				return 2;
 			}
@@ -158,7 +161,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::addVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device, bool primaryDevice) noexcept
+	Manager::addVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device, bool primaryDevice) noexcept
 	{
 		if ( !m_virtualVideoDevices.contains(device->id()) )
 		{
@@ -255,7 +258,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::addAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device, bool primaryDevice) noexcept
+	Manager::addAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device, bool primaryDevice) noexcept
 	{
 		if ( !m_virtualAudioDevices.contains(device->id()) )
 		{
@@ -299,7 +302,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::removeVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device) noexcept
+	Manager::removeVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device) noexcept
 	{
 		/* FIXME: This is clearly shit ! */
 		{
@@ -344,7 +347,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::removeAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device) noexcept
+	Manager::removeAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device) noexcept
 	{
 		if ( m_virtualAudioDevices.erase(device->id()) <= 0 )
 		{
@@ -361,7 +364,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< RenderTarget::View::Texture2D >
-	Console::createRenderToView (Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, const FramebufferPrecisions & precisions, bool primaryDevice) noexcept
+	Manager::createRenderToView (Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, const FramebufferPrecisions & precisions, bool primaryDevice) noexcept
 	{
 		if ( m_virtualVideoDevices.contains(name) )
 		{
@@ -391,7 +394,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< RenderTarget::View::Cubemap >
-	Console::createRenderToCubicView (Renderer & renderer, const std::string & name, uint32_t size, const FramebufferPrecisions & precisions, bool primaryDevice) noexcept
+	Manager::createRenderToCubicView (Renderer & renderer, const std::string & name, uint32_t size, const FramebufferPrecisions & precisions, bool primaryDevice) noexcept
 	{
 		/* Checks name availability. */
 		if ( m_virtualVideoDevices.contains(name) )
@@ -422,7 +425,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< RenderTarget::Texture::Texture2D >
-	Console::createRenderToTexture2D (Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, uint32_t colorCount) noexcept
+	Manager::createRenderToTexture2D (Renderer & renderer, const std::string & name, uint32_t width, uint32_t height, uint32_t colorCount) noexcept
 	{
 		if ( m_virtualVideoDevices.contains(name) )
 		{
@@ -459,7 +462,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< RenderTarget::Texture::Cubemap >
-	Console::createRenderToCubemap (Renderer & renderer, const std::string & name, uint32_t size, uint32_t colorCount) noexcept
+	Manager::createRenderToCubemap (Renderer & renderer, const std::string & name, uint32_t size, uint32_t colorCount) noexcept
 	{
 		if ( m_virtualVideoDevices.contains(name) )
 		{
@@ -491,7 +494,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< RenderTarget::ShadowMap::Texture2D >
-	Console::createRenderToShadowMap (Renderer & renderer, const std::string & name, uint32_t resolution) noexcept
+	Manager::createRenderToShadowMap (Renderer & renderer, const std::string & name, uint32_t resolution) noexcept
 	{
 		if ( m_virtualVideoDevices.contains(name) )
 		{
@@ -505,25 +508,25 @@ namespace Emeraude::MasterControl
 		/* Create the render target. */
 		auto renderTarget = std::make_shared< RenderTarget::ShadowMap::Texture2D >(name, resolution);
 
-		if ( !renderTarget->create(renderer) )
+		/*if ( !renderTarget->create(renderer) )
 		{
 			TraceError{ClassId} << "Unable to create the render to shadow map '" << name << "' !";
 
 			return {};
-		}
+		}*/
 
-		if ( !this->addVideoDevice(renderTarget) )
+		/*if ( !this->addVideoDevice(renderTarget) )
 		{
 			TraceError{ClassId} << "Unable to add the render to shadow map '" << name << "' as a virtual video device !";
 
 			return {};
-		}
+		}*/
 
 		return renderTarget;
 	}
 
 	std::shared_ptr< RenderTarget::ShadowMap::Cubemap >
-	Console::createRenderToCubicShadowMap (Renderer & renderer, const std::string & name, uint32_t resolution) noexcept
+	Manager::createRenderToCubicShadowMap (Renderer & renderer, const std::string & name, uint32_t resolution) noexcept
 	{
 		if ( m_virtualVideoDevices.contains(name) )
 		{
@@ -555,7 +558,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< AbstractVirtualVideoDevice >
-	Console::getVideoDevice (const std::string & deviceId) const noexcept
+	Manager::getVideoDevice (const std::string & deviceId) const noexcept
 	{
 		const auto deviceIt = m_virtualVideoDevices.find(deviceId);
 
@@ -568,7 +571,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::shared_ptr< AbstractVirtualAudioDevice >
-	Console::getAudioDevice (const std::string & deviceId) const noexcept
+	Manager::getAudioDevice (const std::string & deviceId) const noexcept
 	{
 		const auto deviceIt = m_virtualAudioDevices.find(deviceId);
 
@@ -581,7 +584,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::vector< std::shared_ptr< AbstractVirtualVideoDevice > >
-	Console::getVideoDeviceSources () const noexcept
+	Manager::getVideoDeviceSources () const noexcept
 	{
 		std::vector< std::shared_ptr< AbstractVirtualVideoDevice > > list{};
 		list.reserve(m_virtualVideoDevices.size());
@@ -598,7 +601,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::vector< std::shared_ptr< AbstractVirtualAudioDevice > >
-	Console::getAudioDeviceSources () const noexcept
+	Manager::getAudioDeviceSources () const noexcept
 	{
 		std::vector< std::shared_ptr< AbstractVirtualAudioDevice > > list{};
 		list.reserve(m_virtualAudioDevices.size());
@@ -615,7 +618,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::connectVideoDevices (const std::string & sourceDeviceId, const std::string & targetDeviceId) const noexcept
+	Manager::connectVideoDevices (const std::string & sourceDeviceId, const std::string & targetDeviceId) const noexcept
 	{
 		const auto sourceDevice = this->getVideoDevice(sourceDeviceId);
 
@@ -644,7 +647,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::connectAudioDevices (const std::string & sourceDeviceId, const std::string & targetDeviceId) const noexcept
+	Manager::connectAudioDevices (const std::string & sourceDeviceId, const std::string & targetDeviceId) const noexcept
 	{
 		const auto sourceDevice = this->getAudioDevice(sourceDeviceId);
 
@@ -673,7 +676,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::createDefaultView (Renderer & graphicsRenderer, Settings & settings) noexcept
+	Manager::createDefaultView (Renderer & graphicsRenderer, Settings & settings) noexcept
 	{
 		const auto deviceIt = m_virtualVideoDevices.find(DefaultViewName);
 
@@ -700,7 +703,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::createDefaultSpeaker (Audio::Manager & audioManager, Settings & settings) noexcept
+	Manager::createDefaultSpeaker (Audio::Manager & audioManager, Settings & settings) noexcept
 	{
 		const auto deviceIt = m_virtualAudioDevices.find(DefaultSpeakerName);
 
@@ -718,7 +721,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::autoConnectPrimaryVideoDevices (Renderer & renderer, Settings & settings) noexcept
+	Manager::autoConnectPrimaryVideoDevices (Renderer & renderer, Settings & settings) noexcept
 	{
 		if ( !this->autoSelectPrimaryInputVideoDevice() )
 		{
@@ -743,7 +746,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::autoConnectPrimaryAudioDevices (Audio::Manager & audioManager, Settings & settings) noexcept
+	Manager::autoConnectPrimaryAudioDevices (Audio::Manager & audioManager, Settings & settings) noexcept
 	{
 		if ( !this->autoSelectPrimaryInputAudioDevice() )
 		{
@@ -768,7 +771,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::string
-	Console::getConnexionStates () const noexcept
+	Manager::getConnexionStates () const noexcept
 	{
 		std::stringstream string{};
 
@@ -790,7 +793,7 @@ namespace Emeraude::MasterControl
 	}
 
 	std::string
-	Console::getDeviceList (DeviceType deviceType, ConnexionType directionType) const noexcept
+	Manager::getDeviceList (DeviceType deviceType, ConnexionType directionType) const noexcept
 	{
 		std::stringstream string{};
 
@@ -900,7 +903,7 @@ namespace Emeraude::MasterControl
 	}
 
 	void
-	Console::clear () noexcept
+	Manager::clear () noexcept
 	{
 		/* NOTE: Clearing the primary device names. */
 		m_primaryOutputAudioDeviceId.clear();
@@ -929,7 +932,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
+	Manager::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
 #ifdef DEBUG
 		/* NOTE: Don't know what is it, goodbye ! */
@@ -941,8 +944,14 @@ namespace Emeraude::MasterControl
 		return false;
 	}
 
+	void
+	Manager::onRegisterToConsole () noexcept
+	{
+
+	}
+
 	bool
-	Console::autoSelectPrimaryInputVideoDevice () noexcept
+	Manager::autoSelectPrimaryInputVideoDevice () noexcept
 	{
 		if ( m_primaryInputVideoDeviceId.empty() )
 		{
@@ -962,7 +971,7 @@ namespace Emeraude::MasterControl
 	}
 
 	bool
-	Console::autoSelectPrimaryInputAudioDevice () noexcept
+	Manager::autoSelectPrimaryInputAudioDevice () noexcept
 	{
 		if ( m_primaryInputAudioDeviceId.empty() )
 		{

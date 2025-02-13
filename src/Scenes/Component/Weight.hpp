@@ -35,12 +35,7 @@
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "Animations/Types.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"
-#include "Libraries/Variant.hpp"
 
 namespace Emeraude::Scenes::Component
 {
@@ -54,6 +49,16 @@ namespace Emeraude::Scenes::Component
 
 			/** @brief Class identifier */
 			static constexpr auto ClassId{"Weight"};
+
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				Mass,
+				Surface,
+				DragCoefficient,
+				Bounciness,
+				Stickiness
+			};
 
 			/**
 			 * @brief Constructs a weight component to artificially physical properties to a scene node.
@@ -117,7 +122,7 @@ namespace Emeraude::Scenes::Component
 		private:
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			Libraries::Math::Cuboid< float > m_boundingBox;
 			Libraries::Math::Sphere< float > m_boundingSphere;

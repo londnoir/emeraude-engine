@@ -32,6 +32,7 @@
 #include "Libraries/Math/OrientedCuboid.hpp"
 #include "Libraries/Math/Sphere.hpp"
 #include "Scenes/AbstractEntity.hpp"
+#include "Physics/MovableTrait.hpp"
 
 namespace Emeraude::Physics
 {

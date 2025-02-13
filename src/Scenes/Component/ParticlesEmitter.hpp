@@ -52,17 +52,18 @@ namespace Emeraude::Scenes::Component
 	{
 		public:
 
-			/** @brief Animatable Interface key */
-			static constexpr auto EmittingState{0};
-			static constexpr auto MaxParticlesGeneratePerUpdate{1};
-			static constexpr auto ParticlesLimit{2};
-			static constexpr auto MinimumParticlesLife{3};
-			static constexpr auto MaximumParticlesLife{4};
-			static constexpr auto MinimumParticlesSize{5};
-			static constexpr auto MaximumParticlesSize{6};
-			static constexpr auto ParticlesSizeUpdateFactor{7};
-			static constexpr auto Spreading{8};
-			static constexpr auto ChaosMagnitude{9};
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				EmittingState,
+				ParticlesGeneratePerCycle,
+				ParticlesGenerateRate,
+				ParticleLifetime,
+				ParticleSize,
+				ParticleSizeDeltaPerCycle,
+				SpreadingRadius,
+				ChaosMagnitude
+			};
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"ParticlesEmitter"};
@@ -407,7 +408,7 @@ namespace Emeraude::Scenes::Component
 		private:
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]

@@ -38,15 +38,15 @@ using namespace Libraries::Math;
 using MathTypeList = testing::Types< int, float, double >;
 
 template< typename >
-struct Math
+struct MathMatrix
 	: testing::Test
 {
 
 };
 
-TYPED_TEST_SUITE(Math, MathTypeList);
+TYPED_TEST_SUITE(MathMatrix, MathTypeList);
 
-TYPED_TEST(Math, Matrix2Default)
+TYPED_TEST(MathMatrix, Matrix2Default)
 {
 	const std::array< TypeParam, 4 > identity{
 		1, 0,
@@ -75,7 +75,7 @@ TYPED_TEST(Math, Matrix2Default)
 	}
 }
 
-TYPED_TEST(Math, Matrix3Default)
+TYPED_TEST(MathMatrix, Matrix3Default)
 {
 	const std::array< TypeParam, 9 > identity{
 		1, 0, 0,
@@ -105,7 +105,7 @@ TYPED_TEST(Math, Matrix3Default)
 	}
 }
 
-TYPED_TEST(Math, Matrix4Default)
+TYPED_TEST(MathMatrix, Matrix4Default)
 {
 	const std::array< TypeParam, 16 > identity{
 		1, 0, 0, 0,
@@ -136,7 +136,167 @@ TYPED_TEST(Math, Matrix4Default)
 	}
 }
 
-TYPED_TEST(Math, DeterminantInverse2)
+TYPED_TEST(MathMatrix, Constructors2)
+{
+	const Matrix< 2, TypeParam > columnMajor{{
+		0, 2,
+		1, 3
+	}};
+
+	const Matrix< 2, TypeParam > rowMajor{
+		0, 1,
+		2, 3
+	};
+
+	for ( size_t i = 0; i < 4; ++i )
+	{
+		ASSERT_EQ(columnMajor[i], rowMajor[i]);
+	}
+}
+
+TYPED_TEST(MathMatrix, Constructors3)
+{
+	const Matrix< 3, TypeParam > columnMajor{{
+		0, 3, 6,
+		1, 4, 7,
+		2, 5, 8
+	}};
+
+	const Matrix< 3, TypeParam > rowMajor{
+		0, 1, 2,
+		3, 4, 5,
+		6, 7, 8
+	};
+
+	for ( size_t i = 0; i < 9; ++i )
+	{
+		ASSERT_EQ(columnMajor[i], rowMajor[i]);
+	}
+}
+
+TYPED_TEST(MathMatrix, Constructors4)
+{
+	const Matrix< 4, TypeParam > columnMajor{{
+		0, 4,  8, 12,
+		1, 5,  9, 13,
+		2, 6, 10, 14,
+		3, 7, 11, 15
+	}};
+
+	const Matrix< 4, TypeParam > rowMajor{
+		 0,  1,  2,  3,
+		 4,  5,  6,  7,
+		 8,  9, 10, 11,
+		12, 13, 14, 15
+	};
+
+	for ( size_t i = 0; i < 16; ++i )
+	{
+		ASSERT_EQ(columnMajor[i], rowMajor[i]);
+	}
+}
+
+TYPED_TEST(MathMatrix, Rotation2)
+{
+	if constexpr ( !std::is_integral_v< TypeParam > )
+	{
+		/* NOTE: 2D rotation (or around Z axis) */
+		constexpr auto Angle = Pi< TypeParam > / 6; // 30°
+		const auto rotation = Matrix< 2, TypeParam >::rotationZ(Angle);
+		const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 0, 1).toMatrix2();
+
+		for ( size_t i = 0; i < 4; ++i )
+		{
+			ASSERT_EQ(rotation[i], rotationCustom[i]);
+		}
+	}
+}
+
+TYPED_TEST(MathMatrix, Rotation3)
+{
+	if constexpr ( !std::is_integral_v< TypeParam > )
+	{
+		/* NOTE: 3D rotation around X axis. */
+		{
+			constexpr auto Angle = Pi< TypeParam > / 4; // 45°
+			const auto rotation = Matrix< 3, TypeParam >::rotationX(Angle);
+			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 1, 0, 0);
+
+			for ( size_t i = 0; i < 9; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+
+		/* NOTE: 3D rotation around Y axis. */
+		{
+			constexpr auto Angle = 3 * Pi< TypeParam > / 4; // 135°
+			const auto rotation = Matrix< 3, TypeParam >::rotationY(Angle);
+			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 1, 0);
+
+			for ( size_t i = 0; i < 9; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+
+		/* NOTE: 3D rotation around Z axis. */
+		{
+			constexpr auto Angle = 7 * Pi< TypeParam > / 4; // 315°
+			const auto rotation = Matrix< 3, TypeParam >::rotationZ(Angle);
+			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 0, 1);
+
+			for ( size_t i = 0; i < 9; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+	}
+}
+
+TYPED_TEST(MathMatrix, Rotation4)
+{
+	if constexpr ( !std::is_integral_v< TypeParam > )
+	{
+		/* NOTE: 3D rotation around X axis. */
+		{
+			constexpr auto Angle = Pi< TypeParam > / 4; // 120°
+			const auto rotation = Matrix< 4, TypeParam >::rotationX(Angle);
+			const auto rotationCustom = Matrix< 4, TypeParam >::rotation(Angle, 1, 0, 0);
+
+			for ( size_t i = 0; i < 16; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+
+		/* NOTE: 3D rotation around Y axis. */
+		{
+			constexpr auto Angle = Pi< TypeParam > / 4; // 225°
+			const auto rotation = Matrix< 4, TypeParam >::rotationY(Angle);
+			const auto rotationCustom = Matrix< 4, TypeParam >::rotation(Angle, 0, 1, 0);
+
+			for ( size_t i = 0; i < 16; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+
+		/* NOTE: 3D rotation around Z axis. */
+		{
+			constexpr auto Angle = 1; // 57,17°
+			const auto rotation = Matrix< 4, TypeParam >::rotationZ(Angle);
+			const auto rotationCustom = Matrix< 4, TypeParam >::rotation(Angle, 0, 0, 1);
+
+			for ( size_t i = 0; i < 16; ++i )
+			{
+				ASSERT_EQ(rotation[i], rotationCustom[i]);
+			}
+		}
+	}
+}
+
+TYPED_TEST(MathMatrix, DeterminantInverse2)
 {
 	if constexpr ( !std::is_integral_v< TypeParam > )
 	{
@@ -157,7 +317,7 @@ TYPED_TEST(Math, DeterminantInverse2)
 	}
 }
 
-TYPED_TEST(Math, DeterminantInverse3)
+TYPED_TEST(MathMatrix, DeterminantInverse3)
 {
 	if constexpr ( !std::is_integral_v< TypeParam > )
 	{
@@ -179,7 +339,7 @@ TYPED_TEST(Math, DeterminantInverse3)
 	}
 }
 
-TYPED_TEST(Math, DeterminantInverse4)
+TYPED_TEST(MathMatrix, DeterminantInverse4)
 {
 	if constexpr ( !std::is_integral_v< TypeParam > )
 	{

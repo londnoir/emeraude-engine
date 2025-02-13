@@ -359,9 +359,9 @@ namespace Emeraude::Audio
 	bool
 	Ambience::loadSoundSet (const std::filesystem::path & filepath) noexcept
 	{
-		const auto root = FastJSON::getRootFromFile(filepath);
+		Json::Value root;
 
-		if ( root.isNull() )
+		if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
 			TraceError{ClassId} << "Unable to read file " << filepath << " !";
 

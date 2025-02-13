@@ -68,10 +68,14 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	DirectionalPushModifier::playAnimation (id_t identifier, const Variant & value) noexcept
+	DirectionalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		switch ( identifier )
+		switch ( animationID )
 		{
+			case State :
+				this->enable(value.asBool());
+				return true;
+
 			case Magnitude :
 				this->setMagnitude(value.asFloat());
 				return true;
@@ -84,6 +88,11 @@ namespace Emeraude::Scenes::Component
 	Vector< 3, float >
 	DirectionalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Sphere< float > & worldBoundingSphere) const noexcept
 	{
+		if ( !this->isEnabled() )
+		{
+			return {};
+		}
+
 		auto magnitudeValue = m_magnitude;
 
 		if ( this->hasInfluenceArea() )
@@ -104,6 +113,11 @@ namespace Emeraude::Scenes::Component
 	Vector< 3, float >
 	DirectionalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
 	{
+		if ( !this->isEnabled() )
+		{
+			return {};
+		}
+
 		auto magnitudeValue = m_magnitude;
 
 		if ( this->hasInfluenceArea() )
@@ -121,36 +135,6 @@ namespace Emeraude::Scenes::Component
 		return m_direction.scaled(magnitudeValue);
 	}
 
-	const char *
-	DirectionalPushModifier::getComponentType () const noexcept
-	{
-		return ClassId;
-	}
-
-	const Cuboid< float > &
-	DirectionalPushModifier::boundingBox () const noexcept
-	{
-		return NullBoundingBox;
-	}
-
-	const Sphere< float > &
-	DirectionalPushModifier::boundingSphere () const noexcept
-	{
-		return NullBoundingSphere;
-	}
-
-	void
-	DirectionalPushModifier::setMagnitude (float magnitude) noexcept
-	{
-		m_magnitude = magnitude;
-	}
-
-	float
-	DirectionalPushModifier::magnitude () const noexcept
-	{
-		return m_magnitude;
-	}
-
 	void
 	DirectionalPushModifier::setCustomDirection (const Vector< 3, float > & direction) noexcept
 	{
@@ -165,11 +149,5 @@ namespace Emeraude::Scenes::Component
 		m_direction = this->parentEntity().getWorldCoordinates().backwardVector();
 
 		this->disableFlag(UseCoordinatesDirection);
-	}
-
-	const Vector< 3, float > &
-	DirectionalPushModifier::direction () const noexcept
-	{
-		return m_direction;
 	}
 }

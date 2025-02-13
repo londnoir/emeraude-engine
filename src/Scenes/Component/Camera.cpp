@@ -28,26 +28,7 @@
 #include "Camera.hpp"
 
 /* STL inclusions. */
-#include <algorithm>
 #include <cmath>
-#include <memory>
-#include <ostream>
-#include <string>
-
-/* Local inclusions. */
-#include "Scenes/AbstractEntity.hpp"
-#include "Abstract.hpp"
-#include "Animations/Types.hpp"
-#include "Graphics/RenderTarget/View/Texture2D.hpp"
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
-#include "MasterControl/Types.hpp"
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Saphir/FramebufferEffectInterface.hpp"
-#include "Libraries/Variant.hpp"
 
 namespace Emeraude::Scenes::Component
 {
@@ -281,9 +262,21 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	Camera::playAnimation (id_t /*identifier*/, const Variant & /*value*/) noexcept
+	Camera::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		return false;
+		switch ( animationID )
+		{
+			case FieldOfView :
+				this->setFieldOfView(value.asFloat());
+				return true;
+
+			case Distance  :
+				this->setDistance(value.asFloat());
+				return true;
+
+			default:
+				return false;
+		}
 	}
 
 	std::ostream &

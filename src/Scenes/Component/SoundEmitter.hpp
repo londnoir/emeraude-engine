@@ -38,13 +38,8 @@
 #include "Libraries/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Animations/Types.hpp"
 #include "Audio/SoundResource.hpp"
 #include "Audio/Source.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Variant.hpp"
 
 namespace Emeraude::Scenes::Component
 {
@@ -60,6 +55,13 @@ namespace Emeraude::Scenes::Component
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"SoundEmitter"};
+
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				EmittingState,
+				Gain
+			};
 
 			/**
 			 * @brief Constructs a sound emitter.
@@ -218,7 +220,7 @@ namespace Emeraude::Scenes::Component
 		private:
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]

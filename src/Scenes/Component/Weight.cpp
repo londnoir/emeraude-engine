@@ -32,13 +32,7 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Abstract.hpp"
-#include "Animations/Types.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"
-#include "Libraries/Variant.hpp"
 #include "Scenes/Scene.hpp"
 
 namespace Emeraude::Scenes::Component
@@ -95,9 +89,33 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	Weight::playAnimation (Animations::id_t /*identifier*/, const Variant & /*value*/) noexcept
+	Weight::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
 	{
-		return false;
+		switch ( animationID )
+		{
+			case Mass :
+				this->physicalObjectProperties().setMass(value.asFloat());
+				return true;
+
+			case Surface :
+				this->physicalObjectProperties().setSurface(value.asFloat());
+				return true;
+
+			case DragCoefficient :
+				this->physicalObjectProperties().setDragCoefficient(value.asFloat());
+				return true;
+
+			case Bounciness :
+				this->physicalObjectProperties().setBounciness(value.asFloat());
+				return true;
+
+			case Stickiness :
+				this->physicalObjectProperties().setStickiness(value.asFloat());
+				return true;
+
+			default :
+				return false;
+		}
 	}
 
 	void

@@ -37,7 +37,6 @@
 /* Local inclusions for usages. */
 #include "Scenes/CubicInfluenceArea.hpp"
 #include "Scenes/SphericalInfluenceArea.hpp"
-#include "Scenes/InfluenceAreaInterface.hpp"
 
 namespace Emeraude::Scenes::Component
 {
@@ -48,6 +47,13 @@ namespace Emeraude::Scenes::Component
 	class AbstractModifier : public Abstract
 	{
 		public:
+
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				State,
+				Magnitude
+			};
 
 			/**
 			 * @brief Copy constructor.
@@ -79,6 +85,47 @@ namespace Emeraude::Scenes::Component
 			 * @brief Defaulted virtual destructor.
 			 */
 			~AbstractModifier () override = default;
+
+			/**
+			 * @brief Sets the state of the modifier.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			enable (bool state) noexcept
+			{
+				this->setFlag(Enabled, state);
+			}
+
+			/**
+			 * @brief Toggles the state of the modifier.
+			 * @return bool
+			 */
+			bool
+			toggle () noexcept
+			{
+				if ( this->isFlagEnabled(Enabled) )
+				{
+					this->disableFlag(Enabled);
+
+					return false;
+				}
+
+				this->enableFlag(Enabled);
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns whether the modifier is emitting.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isEnabled () const noexcept
+			{
+				return this->isFlagEnabled(Enabled);
+			}
 
 			/**
 			 * @brief Creates a cubic influence area and attaches it to the modifier.
@@ -197,6 +244,9 @@ namespace Emeraude::Scenes::Component
 			}
 
 		private:
+
+			/* Flag names */
+			static constexpr auto Enabled{UnusedFlag + 0UL};
 
 			std::shared_ptr< InfluenceAreaInterface > m_influenceArea;
 	};

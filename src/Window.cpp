@@ -323,10 +323,19 @@ namespace Emeraude
 			}
 			else
 			{
-				m_primaryServices.settings().set(VideoWindowXPositionKey, m_state.windowXPosition);
-				m_primaryServices.settings().set(VideoWindowYPositionKey, m_state.windowYPosition);
+#if IS_MACOS
+				const auto scaledWidth = static_cast< float >(m_state.framebufferWidth) / m_state.contentXScale;
+				const auto scaledHeight = static_cast< float >(m_state.framebufferHeight) / m_state.contentYScale;
+
+				m_primaryServices.settings().set(VideoWindowWidthKey, static_cast< uint32_t >(scaledWidth));
+				m_primaryServices.settings().set(VideoWindowHeightKey, static_cast< uint32_t >(scaledHeight));
+#else
 				m_primaryServices.settings().set(VideoWindowWidthKey, m_state.framebufferWidth);
 				m_primaryServices.settings().set(VideoWindowHeightKey, m_state.framebufferHeight);
+#endif
+
+				m_primaryServices.settings().set(VideoWindowXPositionKey, m_state.windowXPosition);
+				m_primaryServices.settings().set(VideoWindowYPositionKey, m_state.windowYPosition);
 			}
 		}
 

@@ -37,8 +37,13 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 
+/* Local inclusions. */
+#include "Tracer.hpp"
+
 namespace Emeraude::PlatformSpecific
 {
+	static constexpr auto TracerTag{"Helpers"};
+
 	std::wstring
 	getStringValueFromHKLM (const std::wstring & regSubKey, const std::wstring & regValue)
 	{
@@ -264,6 +269,33 @@ namespace Emeraude::PlatformSpecific
 		CloseHandle(h);
 
 		return static_cast< int >(ppid);
+	}
+
+	std::vector< COMDLG_FILTERSPEC >
+	createExtensionFilter (const std::vector< std::pair< std::string, std::vector< std::string > > > & filters, std::map< std::wstring, std::wstring > & dataHolder)
+	{
+		std::vector< COMDLG_FILTERSPEC > filterPointers;
+		filterPointers.reserve(filters.size());
+
+		for ( const auto &[name, extensions] : filters )
+		{
+			std::wstringstream extensionsRule;
+
+			for ( const auto & extension : extensions )
+			{
+				extensionsRule << "*." << convertUTF8ToWide(extension) << ";";
+			}
+
+			auto [item, success] = dataHolder.emplace(convertUTF8ToWide(name), extensionsRule.str());
+
+			COMDLG_FILTERSPEC type;
+			type.pszName = item->first.data();
+			type.pszSpec = item->second.data();
+
+			filterPointers.emplace_back(type);
+		}
+
+		return filterPointers;
 	}
 }
 

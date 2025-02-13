@@ -34,13 +34,8 @@
 #include <iostream>
 #include <stack>
 
-/* Third-party inclusions. */
-#ifndef JSON_USE_EXCEPTION
-#define JSON_USE_EXCEPTION 0
-#endif
-#include "json/json.h"
-
 /* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Libraries/IO.hpp"
 #include "Libraries/String.hpp"
 #include "Arguments.hpp"
@@ -149,24 +144,11 @@ namespace Emeraude
 	bool
 	Settings::readFile (const std::filesystem::path & filepath) noexcept
 	{
-		const Json::CharReaderBuilder builder{};
+		Json::Value root;
 
-		std::ifstream json{filepath, std::ifstream::binary};
-
-		if ( !json.is_open() )
+	    if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
-			return false;
-		}
-
-		Json::Value root{};
-
-		std::string errors{};
-
-		if ( !parseFromStream(builder, json, &root, &errors) )
-		{
-			TraceError{ClassId} <<
-				"Unable to parse JSON file ! "
-				"Errors :\n" << errors;
+		    TraceError{ClassId} << "Unable to parse the settings file " << filepath << " !" "\n";
 
 			return false;
 		}
@@ -287,11 +269,17 @@ namespace Emeraude
 
 		/* 3. File writing. */
 		{
-			Json::StreamWriterBuilder writer{};
-			writer["indentation"] = "\t";
-			writer["dropNullPlaceholders"] = true;
+			Json::StreamWriterBuilder builder{};
+			builder["commentStyle"] = "None";
+			builder["indentation"] =  "\t";
+			builder["enableYAMLCompatibility"] = false;
+			builder["dropNullPlaceholders"] = true;
+			builder["useSpecialFloats"] = true;
+			builder["precision"] = 8;
+			builder["precisionType"] = "significant";
+			builder["emitUTF8"] = true;
 
-			const auto jsonString = writeString(writer, root);
+			const auto jsonString = Json::writeString(builder, root);
 
 			if ( jsonString.empty() )
 			{
@@ -485,7 +473,7 @@ namespace Emeraude
 		{
 			TraceWarning{ClassId} << "Settings file '" << m_filepath.string() << "' doesn't exist. Writing a new one ...";
 
-			m_flags[SaveAtExit] = true;
+			this->saveAtExit(true);
 
 			return true;
 		}
@@ -495,14 +483,14 @@ namespace Emeraude
 		{
 			TraceError{ClassId} << "Unable to read settings file from '" << m_filepath.string() << "' path !";
 
-			m_flags[SaveAtExit] = false;
+			this->saveAtExit(false);
 
 			return false;
 		}
 
 		if ( m_arguments.get("--disable-settings-autosave").isPresent() )
 		{
-			m_flags[SaveAtExit] = false;
+			this->saveAtExit(false);
 		}
 
 		if ( m_arguments.get("--verbose").isPresent() )
@@ -520,7 +508,7 @@ namespace Emeraude
 	{
 		m_flags[ServiceInitialized] = false;
 
-		if ( m_flags[SaveAtExit] )
+		if ( this->isSaveAtExitEnabled() )
 		{
 			if ( m_filepath.empty() )
 			{

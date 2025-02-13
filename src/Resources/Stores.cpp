@@ -35,6 +35,7 @@
 #include <regex>
 
 /* Local inclusions. */
+#include "Libraries/FastJSON.hpp"
 #include "Libraries/Utility.hpp"
 #include "Libraries/IO.hpp"
 #include "PrimaryServices.hpp"
@@ -125,22 +126,16 @@ namespace Emeraude::Resources
 
 		m_registeredResources = 0;
 
-		for ( const auto & indexFilepath : indexes )
+		for ( const auto & filepath : indexes )
 		{
-			TraceInfo{ClassId} << "Loading resource index from file '" << indexFilepath << "' ...";
+			TraceInfo{ClassId} << "Loading resource index from file '" << filepath << "' ...";
 
 			/* 1. Get raw JSON data from file */
-			const Json::CharReaderBuilder builder{};
-
-			std::ifstream json(indexFilepath, std::ifstream::binary);
-
 			Json::Value root;
 
-			std::string errors;
-
-			if ( !Json::parseFromStream(builder, json, &root, &errors) )
-			{
-				TraceError{ClassId} << "Unable to parse JSON file ! Errors :\n" << errors;
+            if ( !FastJSON::getRootFromFile(filepath, root) )
+            {
+                TraceError{ClassId} << "Unable to parse the index file " << filepath << " !" "\n";
 
 				continue;
 			}

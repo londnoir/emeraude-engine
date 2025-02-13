@@ -19,7 +19,7 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.1 DESCRIPTION "Emeraude Engine is an open-source 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.11 DESCRIPTION "Emeraude Engine is an open-source 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
@@ -50,6 +50,7 @@ set(EMERAUDE_ENABLE_HWLOC On CACHE BOOL "Enable 'HWLOC' library. Adds the cpu co
 set(EMERAUDE_ENABLE_OPENAL On CACHE BOOL "Enable 'libopenal' library. Adds the audio to the engine [LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_TAGLIB On CACHE BOOL "Enable 'libtaglib' library. Adds the ability to read media file tags [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_IMGUI Off CACHE BOOL "Enable 'libimgui' library. Adds a GUI to the engine [LOCAL] (Default Off).")
+set(EMERAUDE_ENABLE_BULLET Off CACHE BOOL "Enable 'libBullet' library. Adds a Bullet to the engine [SYSTEM] (Default Off).")
 set(EMERAUDE_ENABLE_NATIVE_DIALOGS On CACHE BOOL "Enable platform native dialog boxes (Default Off).")
 # Debug preprocessor macros control (Ignored in Release).
 option(EMERAUDE_DEBUG_OBSERVER_PATTERN "Enable the debug output of observer pattern (Default Off)." Off)
@@ -166,7 +167,7 @@ set(
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Libraries
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Animations
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Audio
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Dev
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Console
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Graphics
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Input
 	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterControl
@@ -201,7 +202,8 @@ list(APPEND EMERAUDE_SOURCE_FILES ${JSONCPP_SOURCE_FILES})
 if ( APPLE )
 	list(APPEND EMERAUDE_SOURCE_FILES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/Message.mac.mm
-		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/OpenFiles.mac.mm
+		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/OpenFile.mac.mm
+		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/SaveFile.mac.mm
 	)
 endif ()
 
@@ -371,6 +373,10 @@ endif ()
 if ( EMERAUDE_ENABLE_IMGUI )
 	include(SetupPostSourcesImGui)
 endif ()
+
+if ( EMERAUDE_ENABLE_BULLET )
+	include(SetupBullet)
+endif()
 
 include(SetupThreads)
 

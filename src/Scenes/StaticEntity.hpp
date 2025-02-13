@@ -59,6 +59,37 @@ namespace Emeraude::Scenes
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
+			/** @brief Animatable Interface key. */
+			enum AnimationID : uint8_t
+			{
+				LocalCoordinates,
+				LocalPosition,
+				LocalXPosition,
+				LocalYPosition,
+				LocalZPosition,
+				LocalTranslation,
+				LocalXTranslation,
+				LocalYTranslation,
+				LocalZTranslation,
+				LocalRotation,
+				LocalXRotation,
+				LocalYRotation,
+				LocalZRotation,
+
+				WorldPosition,
+				WorldXPosition,
+				WorldYPosition,
+				WorldZPosition,
+				WorldTranslation,
+				WorldXTranslation,
+				WorldYTranslation,
+				WorldZTranslation,
+				WorldRotation,
+				WorldXRotation,
+				WorldYRotation,
+				WorldZRotation
+			};
+
 			/**
 			 * @brief Constructs a static entity.
 			 * @param name A reference to a string to name the entity in the scene.
@@ -410,7 +441,7 @@ namespace Emeraude::Scenes
 			}
 
 			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (Animations::id_t identifier, const Libraries::Variant & value) noexcept override;
+			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
 
 			/** @copydoc Emeraude::Scenes::AbstractEntity::onProcessLogics() */
 			bool onProcessLogics (const Scene & scene) noexcept override;

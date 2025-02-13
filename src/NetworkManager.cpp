@@ -151,11 +151,17 @@ namespace Emeraude
 			}
 		}
 
-		Json::StreamWriterBuilder writer{};
-		writer["indentation"] = "\t";
-		writer["dropNullPlaceholders"] = true;
+		Json::StreamWriterBuilder builder{};
+		builder["commentStyle"] = "None";
+		builder["indentation"] =  "\t";
+		builder["enableYAMLCompatibility"] = false;
+		builder["dropNullPlaceholders"] = true;
+		builder["useSpecialFloats"] = true;
+		builder["precision"] = 8;
+		builder["precisionType"] = "significant";
+		builder["emitUTF8"] = true;
 
-		const auto jsonString = Json::writeString(writer, root);
+		const auto jsonString = Json::writeString(builder, root);
 
 		if ( jsonString.empty() )
 		{
@@ -179,9 +185,9 @@ namespace Emeraude
 		}
 
 		/* Read the JSON content. */
-		const auto root = FastJSON::getRootFromFile(filepath);
+		Json::Value root;
 
-		if ( root == Json::nullValue )
+		if ( !FastJSON::getRootFromFile(filepath, root) )
 		{
 			TraceError{ClassId} << "Unable to read the download cache db file '" << filepath << "' !";
 

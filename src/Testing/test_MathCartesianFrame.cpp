@@ -35,15 +35,15 @@ using namespace Libraries::Math;
 using MathTypeList = testing::Types< int, float, double >;
 
 template< typename >
-struct Math
+struct MathCartesianFrame
 	: testing::Test
 {
 
 };
 
-TYPED_TEST_SUITE(Math, MathTypeList);
+TYPED_TEST_SUITE(MathCartesianFrame, MathTypeList);
 
-TYPED_TEST(Math, CartesianFrameDefault)
+TYPED_TEST(MathCartesianFrame, CartesianFrameDefault)
 {
 	const auto cartesianFrame = CartesianFrame< TypeParam >{};
 
@@ -108,7 +108,7 @@ TYPED_TEST(Math, CartesianFrameDefault)
 	}
 }
 
-TYPED_TEST(Math, CartesianFrameYaw90)
+TYPED_TEST(MathCartesianFrame, CartesianFrameYaw90)
 {
 	if constexpr ( std::is_integral_v< TypeParam > )
 	{
@@ -160,7 +160,7 @@ TYPED_TEST(Math, CartesianFrameYaw90)
 	}
 }
 
-TYPED_TEST(Math, CartesianFrameTransformation)
+TYPED_TEST(MathCartesianFrame, CartesianFrameTransformation)
 {
 	if constexpr ( std::is_integral_v< TypeParam > )
 	{

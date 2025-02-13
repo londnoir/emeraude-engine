@@ -72,7 +72,8 @@ namespace Emeraude::Graphics
 	Renderer * Renderer::s_instance{nullptr};
 
 	Renderer::Renderer (PrimaryServices & primaryServices, Instance & instance, Window & window) noexcept
-		: ServiceInterface(ClassId), ConsoleControllable(ClassId),
+		: ServiceInterface(ClassId),
+		Controllable(ClassId),
 		m_primaryServices(primaryServices),
 		m_vulkanInstance(instance),
 		m_window(window),
@@ -182,11 +183,43 @@ namespace Emeraude::Graphics
 			return false;
 		}
 
-		/* Create a descriptor pool (FIXME: maybe not the right place !) */
+		/* Create the main descriptor pool.
+		 * FIXME: maybe not the right place ! */
 		const auto sizes = std::vector< VkDescriptorPoolSize >{
+			/* NOTE: Texture filtering alone. */
+			{VK_DESCRIPTOR_TYPE_SAMPLER, 16},
+			/* NOTE: Texture (than can be sampled). */
+			{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64},
+			/* NOTE: Texture associated to a filter (VK_DESCRIPTOR_TYPE_SAMPLER+VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE). */
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 0},
+			/* NOTE: UBO (Uniform Buffer Object) */
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 512},
+			/* NOTE: SSBO (Shader Storage Buffer Object) */
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64},
+			/* NOTE: Dynamic UBO */
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 512},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 256}
+			/* NOTE: Dynamic SSBO */
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 64},
+			/* NOTE:  */
+			{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 32},
+			/* NOTE: Special UBO. */
+			{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM, 0},
+			/* NOTE:  */
+			//{VK_DESCRIPTOR_TYPE_MUTABLE_EXT, 0}
 		};
 
 		m_descriptorPool = std::make_shared< DescriptorPool >(m_device, sizes, 4096, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
@@ -221,6 +254,8 @@ namespace Emeraude::Graphics
 
 			return false;
 		}
+
+		this->registerToConsole();
 
 		m_flags[ServiceInitialized] = true;
 
@@ -290,6 +325,12 @@ namespace Emeraude::Graphics
 		m_device.reset();
 
 		return error == 0;
+	}
+
+	void
+	Renderer::onRegisterToConsole () noexcept
+	{
+
 	}
 
 	std::shared_ptr< RenderPass >
@@ -450,15 +491,16 @@ namespace Emeraude::Graphics
 
 		if ( scene != nullptr )
 		{
-			if ( m_flags[ShadowMapsEnabled] )
+			/* [VULKAN-SHADOW] */
+			/*if ( m_flags[ShadowMapsEnabled] )
 			{
 				this->renderShadowMaps(*scene);
-			}
+			}*/
 
-			if ( m_flags[RenderToTexturesEnabled] )
+			/*if ( m_flags[RenderToTexturesEnabled] )
 			{
 				this->renderRenderToTextures(*scene);
-			}
+			}*/
 
 			//this->renderViews(*scene);
 		}
@@ -535,7 +577,7 @@ namespace Emeraude::Graphics
 	{
 		const auto * queue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & shadowMap : scene.masterControlConsole().renderToShadowMaps() )
+		for ( const auto & shadowMap : scene.masterControlManager().renderToShadowMaps() )
 		{
 			const auto commandBuffer = this->getCommandBuffer(shadowMap);
 
@@ -573,7 +615,7 @@ namespace Emeraude::Graphics
 	{
 		const auto * queue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & renderToTexture : scene.masterControlConsole().renderToTextures() )
+		for ( const auto & renderToTexture : scene.masterControlManager().renderToTextures() )
 		{
 			const auto commandBuffer = this->getCommandBuffer(renderToTexture);
 
@@ -611,7 +653,7 @@ namespace Emeraude::Graphics
 	{
 		//const auto * graphicsQueue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & renderToView : scene.masterControlConsole().renderToViews() )
+		for ( const auto & renderToView : scene.masterControlManager().renderToViews() )
 		{
 			TraceDebug{ClassId} << "[DEBUG] Rendering to view '" << renderToView->id() << "' ...";
 		}

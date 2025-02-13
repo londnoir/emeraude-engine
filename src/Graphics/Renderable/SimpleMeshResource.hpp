@@ -120,7 +120,7 @@ namespace Emeraude::Graphics::Renderable
 			bool load (const std::shared_ptr< Geometry::Interface > & geometry, const std::shared_ptr< Material::Interface > & material = nullptr) noexcept;
 
 			/**
-			 * @brief Returns a gizmo resource by its name.
+			 * @brief Returns a simple mesh resource by its name.
 			 * @param resourceName A reference to a string.
 			 * @param directLoad Use the direct loading mode. Default false.
 			 * @return std::shared_ptr< SimpleMeshResource >
@@ -134,6 +134,17 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			[[nodiscard]]
 			static std::shared_ptr< SimpleMeshResource > getDefault () noexcept;
+
+			/**
+			 * @brief Creates a unique simple mesh or returns the existing one with same parameters.
+			 * The resource name will be based on sub-resource names.
+			 * @param geometryResource A reference to a geometry resource smart pointer.
+			 * @param materialResource A reference to a material resource smart pointer.
+			 * @param resourceName A string. Default auto generated name.
+			 * @return std::shared_ptr< SimpleMeshResource >
+			 */
+			[[nodiscard]]
+			static std::shared_ptr< SimpleMeshResource > getOrCreate (const std::shared_ptr< Geometry::Interface > & geometryResource, const std::shared_ptr< Material::Interface > & materialResource, std::string resourceName = {}) noexcept;
 
 		private:
 

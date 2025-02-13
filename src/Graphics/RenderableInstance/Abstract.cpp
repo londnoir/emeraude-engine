@@ -37,13 +37,14 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Resources/ResourceTrait.hpp"
-#include "Vulkan/GraphicsPipeline.hpp"
-#include "Vulkan/CommandBuffer.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Resources/ResourceTrait.hpp"
+#include "Saphir/Generator/SceneRendering.hpp"
 #include "Saphir/Program.hpp"
 #include "Scenes/Component/AbstractLightEmitter.hpp"
 #include "Tracer.hpp"
+#include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/GraphicsPipeline.hpp"
 
 namespace Emeraude::Graphics::RenderableInstance
 {
@@ -57,7 +58,8 @@ namespace Emeraude::Graphics::RenderableInstance
 	const size_t Abstract::ClassUID{getClassUID("AbstractRenderableInstance")};
 
 	Abstract::Abstract (const std::shared_ptr< Renderable::Interface > & renderable, uint32_t flagBits) noexcept
-		: FlagTrait(flagBits), m_renderable(renderable)
+		: FlagTrait(flagBits),
+		m_renderable(renderable)
 	{
 
 	}
@@ -72,7 +74,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			return false;
 		}
 
-		return !renderTargetIt->second.empty();
+		return renderTargetIt->second.isReadyToRender;
 	}
 
 	void
@@ -82,8 +84,164 @@ namespace Emeraude::Graphics::RenderableInstance
 
 		if ( renderTargetIt != m_renderTargets.cend() )
 		{
-			renderTargetIt->second.clear();
+			renderTargetIt->second.isReadyToRender = false;
+			renderTargetIt->second.renderPasses.clear();
 		}
+	}
+
+	bool
+	Abstract::getReadyForRender (const Scenes::Scene & scene, const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const std::vector< RenderPassType > & renderPassTypes, Renderer & renderer) noexcept
+	{
+		/* NOTE : Checking the renderable interface.
+		 * This is the shared part between all renderable instances. */
+		/* TODO: Check for renderable interface already in video memory to reduce renderable instance preparation time. */
+		if ( m_renderable == nullptr )
+		{
+			this->setBroken("The renderable instance has no renderable associated !");
+
+			return false;
+		}
+
+		/* NOTE : Check whether the renderable interface is ready for instantiation.
+		 * If not, this is no big deal, a loading event exists to relaunch the whole process. */
+		if ( !m_renderable->isReadyForInstantiation() )
+		{
+			return true;
+		}
+
+		const auto layerCount = m_renderable->layerCount();
+
+#ifdef DEBUG
+		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+		if ( layerCount == 0 )
+		{
+			std::stringstream errorMessage;
+			errorMessage <<
+				"The renderable interface has no layer ! It must have at least one. "
+				"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
+
+			this->setBroken(errorMessage.str());
+
+			return false;
+		}
+#endif
+
+		/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
+		const auto * geometry = m_renderable->geometry();
+
+#ifdef DEBUG
+		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+		if ( geometry == nullptr )
+		{
+			std::stringstream errorMessage;
+			errorMessage <<
+				"The renderable interface has no geometry interface ! "
+				"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
+
+			this->setBroken(errorMessage.str());
+
+			return false;
+		}
+#endif
+
+		auto renderTargetIt = m_renderTargets.find(renderTarget);
+
+		if ( renderTargetIt == m_renderTargets.end() )
+		{
+			renderTargetIt = m_renderTargets.try_emplace(renderTarget).first;
+		}
+
+		for ( const auto renderPassType : renderPassTypes )
+		{
+			auto & renderTargets = renderTargetIt->second;
+
+			auto renderPassIt = renderTargets.renderPasses.find(renderPassType);
+
+			if ( renderPassIt == renderTargets.renderPasses.end() )
+			{
+				renderPassIt = renderTargets.renderPasses.try_emplace(renderPassType).first;
+				renderPassIt->second.resize(layerCount);
+			}
+
+			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+			{
+				std::stringstream name;
+				name << "RenderableInstance" << to_string(renderPassType);
+
+				/* The first step is to generate the shaders source code from every resource involved. */
+				Generator::SceneRendering generator{
+					renderer.primaryServices().settings(),
+					name.str(),
+					renderTarget,
+					this->shared_from_this(),
+					layerIndex,
+					renderPassType,
+					scene
+				};
+
+				if ( renderer.shaderManager().showGeneratedSourceCode() )
+				{
+					generator.enableDebugging();
+				}
+
+				/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
+				if ( !generator.generateProgram(renderer.vertexBufferFormatManager()) )
+				{
+					std::stringstream errorMessage;
+					errorMessage <<
+						"Unable to generate the renderable instance '" << m_renderable->name() << "' "
+						"(RenderPass:'" << to_string(renderPassType) << "', layer:" << layerIndex << ") program !";
+
+					this->setBroken(errorMessage.str());
+
+					return false;
+				}
+
+				/* The second step is to check every resource needed by shaders (UBO, Samples, etc.).
+				 * NOTE: VBO is an exception done before. */
+				if ( !generator.generateProgramLayout(renderer) )
+				{
+					std::stringstream errorMessage;
+					errorMessage <<
+						"Unable to get the program layout for layer #" << layerIndex << " "
+						"of the renderable instance '" << m_renderable->name() << "' "
+						"and the render pass type '" << to_string(renderPassType) << "' !";
+
+					this->setBroken(errorMessage.str());
+
+					return false;
+				}
+
+				/* The third step is to check if separate shaders already exists to avoid an extra compilation.
+				 * Retrieve the graphics pipeline for the combination of the current renderable instance layer and the render pass. */
+				if ( !generator.createGraphicsPipeline(renderer) )
+				{
+					std::stringstream errorMessage;
+					errorMessage <<
+						"Unable to get a program for layer #" << layerIndex << " "
+						"of the renderable instance '" << m_renderable->name() << "' "
+						"and the render pass type '" << to_string(renderPassType) << "' !";
+
+					this->setBroken(errorMessage.str());
+
+					return false;
+				}
+
+				renderPassIt->second[layerIndex] = generator.program();
+			}
+		}
+
+		renderTargetIt->second.isReadyToRender = true;
+
+		/* FIXME: Bad idea ! */
+		//this->setShadowProgram(m_graphicsRenderer.getShadowProgram(renderTarget, this->shared_from_this()));
+
+		if ( this->isDisplayTBNSpaceEnabled() )
+		{
+			this->setTBNSpaceProgram(renderer.getTBNSpaceProgram(renderTarget, this->shared_from_this()));
+		}
+
+		return this->validate(renderTarget);
 	}
 
 	void
@@ -92,29 +250,6 @@ namespace Emeraude::Graphics::RenderableInstance
 		this->enableFlag(BrokenState);
 
 		Tracer::error(TracerTag, errorMessage, location);
-	}
-
-	void
-	Abstract::setProgram (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, RenderPassType renderPassType, size_t layerIndex, const std::shared_ptr<  Program > & program) noexcept
-	{
-		auto renderTargetIt = m_renderTargets.find(renderTarget);
-
-		if ( renderTargetIt == m_renderTargets.end() )
-		{
-			renderTargetIt = m_renderTargets.try_emplace(renderTarget).first;
-		}
-
-		auto & renderPasses = renderTargetIt->second;
-
-		auto renderPassIt = renderPasses.find(renderPassType);
-
-		if ( renderPassIt == renderPasses.end() )
-		{
-			renderPassIt = renderPasses.try_emplace(renderPassType).first;
-			renderPassIt->second.resize(m_renderable->layerCount());
-		}
-
-		renderPassIt->second[layerIndex] = program;
 	}
 
 	bool
@@ -131,7 +266,7 @@ namespace Emeraude::Graphics::RenderableInstance
 
 		size_t error = 0;
 
-		for ( const auto & programs : std::ranges::views::values(renderTargetIt->second) )
+		for ( const auto & programs : std::ranges::views::values(renderTargetIt->second.renderPasses) )
 		{
 			for ( const auto & program : programs )
 			{
@@ -163,7 +298,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			return false;
 		}
 
-		const auto & renderPasses = renderTargetIt->second;
+		const auto & renderPasses = renderTargetIt->second.renderPasses;
 
 		if ( renderPasses.empty() )
 		{
@@ -229,8 +364,7 @@ namespace Emeraude::Graphics::RenderableInstance
 	{
 		const std::lock_guard< std::mutex > lock{m_GPUMemoryAccess};
 
-		const auto * geometry = m_renderable->geometry();
-
+		/* NOTE: Select the render target. */
 		const auto renderTargetIt = m_renderTargets.find(renderTarget);
 
 		if ( renderTargetIt == m_renderTargets.cend() )
@@ -240,15 +374,19 @@ namespace Emeraude::Graphics::RenderableInstance
 			return;
 		}
 
-		const auto renderPassTypeIt = renderTargetIt->second.find(renderPassType);
+		/* NOTE: Select the render pass type. */
+		const auto & renderPasses = renderTargetIt->second.renderPasses;
 
-		if ( renderPassTypeIt == renderTargetIt->second.cend() )
+		const auto renderPassTypeIt = renderPasses.find(renderPassType);
+
+		if ( renderPassTypeIt == renderPasses.cend() )
 		{
 			TraceError{TracerTag} << "There is no program for render target '" << renderTarget->id() << "' and the render pass type '" << to_string(renderPassType) << "' registered in the renderable instance (Renderable:" << m_renderable->name() << ") !";
 
 			return;
 		}
 
+		const auto * geometry = m_renderable->geometry();
 		const auto & programs = renderPassTypeIt->second;
 
 		for ( size_t layerIndex = 0; layerIndex < programs.size(); layerIndex++ )
@@ -361,10 +499,14 @@ namespace Emeraude::Graphics::RenderableInstance
 					break;
 
 				case Resources::ResourceTrait::LoadFailed :
-					this->setBroken((std::stringstream{} <<
+				{
+					std::stringstream errorMessage;
+					errorMessage <<
 						"Unable to load the renderable '" << m_renderable->name() << "' ! "
-						"Set the renderable instance as broken."
-					).str());
+						"Set the renderable instance as broken.";
+
+					this->setBroken(errorMessage.str());
+				}
 					break;
 
 				default:

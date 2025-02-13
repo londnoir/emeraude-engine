@@ -38,7 +38,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "ConsoleControllable.hpp"
+#include "Console/Controllable.hpp"
 #include "Libraries/ObserverTrait.hpp"
 #include "ServiceInterface.hpp"
 
@@ -114,10 +114,10 @@ namespace Emeraude::Graphics
 	/**
 	 * @brief The graphics renderer service class.
 	 * @extends Emeraude::ServiceInterface The renderer is a service.
-	 * @extends Emeraude::ConsoleControllable The renderer can be controlled by the console.
+	 * @extends Emeraude::Console::Controllable The renderer can be controlled by the console.
 	 * @extends Libraries::ObserverTrait The renderer needs to observe handle changes for instance.
 	 */
-	class Renderer final : public ServiceInterface, public ConsoleControllable, public Libraries::ObserverTrait
+	class Renderer final : public ServiceInterface, public Console::Controllable, public Libraries::ObserverTrait
 	{
 		public:
 
@@ -206,9 +206,20 @@ namespace Emeraude::Graphics
 			 */
 			[[nodiscard]]
 			PrimaryServices &
-			primaryServices () noexcept
+			primaryServices () const noexcept
 			{
 				return m_primaryServices;
+			}
+
+			/**
+			 * @brief Return the vulkan instance reference.
+			 * @return const Vulkan::Instance &
+			 */
+			[[nodiscard]]
+			const Vulkan::Instance &
+			vulkanInstance () const noexcept
+			{
+				return m_vulkanInstance;
 			}
 
 			/**
@@ -507,6 +518,9 @@ namespace Emeraude::Graphics
 			/** @copydoc Libraries::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+
+			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			void onRegisterToConsole () noexcept override;
 
 			/**
 			 * @brief @brief Returns a command buffer for a specific render target.

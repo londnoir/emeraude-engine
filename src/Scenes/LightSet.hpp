@@ -45,7 +45,7 @@
 #include "Graphics/TextureResource/TextureCubemap.hpp"
 #include "Saphir/StaticLighting.hpp"
 #include "Vulkan/DescriptorSet.hpp"
-#include "MasterControl/Console.hpp"
+#include "MasterControl/Manager.hpp"
 
 /* Forward declarations. */
 namespace Emeraude
@@ -98,8 +98,9 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Constructs a light set.
+			 * @param masterControlManager A reference to master control manager.
 			 */
-			explicit LightSet (MasterControl::Console & console) noexcept;
+			explicit LightSet (MasterControl::Manager & masterControlManager) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -559,7 +560,7 @@ namespace Emeraude::Scenes
 			static constexpr auto CreateAmbientFromLights{3UL};
 			static constexpr auto UseLightDistance{4UL};
 
-			MasterControl::Console & m_console;
+			MasterControl::Manager & m_masterControlManager;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_directionalLightBuffer;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_pointLightBuffer;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_spotLightBuffer;
