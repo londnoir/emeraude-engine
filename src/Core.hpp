@@ -45,26 +45,27 @@
 #include "Libraries/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Identification.hpp"
-#include "Help.hpp"
-#include "PrimaryServices.hpp"
-#include "Console/Controller.hpp"
-#include "NetworkManager.hpp"
-#include "User.hpp"
-#include "Resources/Manager.hpp"
-#include "PlatformManager.hpp"
-#include "Window.hpp"
-#include "Graphics/ExternalInput.hpp"
-#include "Physics/Manager.hpp"
+#include "Audio/ExternalInput.hpp"
 #include "Audio/Manager.hpp"
 #include "Audio/TrackMixer.hpp"
-#include "Audio/ExternalInput.hpp"
-#include "Notifier.hpp"
-#include "Scenes/Manager.hpp"
-#include "Vulkan/Instance.hpp"
-#include "Input/Manager.hpp"
+#include "Console/Controller.hpp"
+#include "CursorAtlas.hpp"
+#include "Graphics/ExternalInput.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Help.hpp"
+#include "Identification.hpp"
+#include "Input/Manager.hpp"
+#include "NetworkManager.hpp"
+#include "Notifier.hpp"
 #include "Overlay/Manager.hpp"
+#include "Physics/Manager.hpp"
+#include "PlatformManager.hpp"
+#include "PrimaryServices.hpp"
+#include "Resources/Manager.hpp"
+#include "Scenes/Manager.hpp"
+#include "User.hpp"
+#include "Vulkan/Instance.hpp"
+#include "Window.hpp"
 
 namespace Emeraude
 {
@@ -124,12 +125,14 @@ namespace Emeraude
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Core &
 			 */
 			Core & operator= (const Core & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
+			 * @return Core &
 			 */
 			Core & operator= (Core && copy) noexcept = delete;
 
@@ -752,6 +755,67 @@ namespace Emeraude
 				return false;
 			}
 
+			/**
+			 * @brief Changes the cursor representation on screen with standard types.
+			 * @param cursorType The type of the cursor.
+			 * @return void
+			 */
+			void
+			setCursor (CursorType cursorType) noexcept
+			{
+				m_cursorAtlas.setCursor(m_window, cursorType);
+			}
+
+			/**
+			 * @brief Changes the cursor representation on screen with a pixmap.
+			 * @param label A reference to a string.
+			 * @param pixmap A reference to a pixmap.
+			 * @param hotSpot A reference to an array of 2 integers. Default X:0, Y:0.
+			 * @return void
+			 */
+			void
+			setCursor (const std::string & label, const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept
+			{
+				m_cursorAtlas.setCursor(m_window, label, pixmap, hotSpot);
+			}
+
+			/**
+			 * @brief Changes the cursor representation on screen with a pixmap.
+			 * @warning Raw mode to fit the GLFW basic needs. This is not the recommended version.
+			 * @param label A reference to a string.
+			 * @param size A reference to an array of 2 integers.
+			 * @param data A pointer to an uint8_t buffer. It must contain (width X height X 4) elements.
+			 * @param hotSpot A reference to an array of 2 integers. Default X:0, Y:0.
+			 * @return void
+			 */
+			void
+			setCursor (const std::string & label, const std::array< int, 2 > & size, unsigned char * data, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept
+			{
+				m_cursorAtlas.setCursor(m_window, label, size, data, hotSpot);
+			}
+
+			/**
+			 * @brief Changes the cursor representation on screen with a customized image.
+			 * @param imageResource A reference to an image resource smart pointer.
+			 * @param hotSpot A reference to an array of 2 integers. Default X:0, Y:0.
+			 * @return void
+			 */
+			void
+			setCursor (const std::shared_ptr< Graphics::ImageResource > & imageResource, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept
+			{
+				m_cursorAtlas.setCursor(m_window, imageResource, hotSpot);
+			}
+
+			/**
+			 * @brief Reset back the cursor to default representation.
+			 * @return void
+			 */
+			void
+			resetCursor () noexcept
+			{
+				m_cursorAtlas.resetCursor(m_window);
+			}
+
 		private:
 
 			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyPress() */
@@ -964,6 +1028,7 @@ namespace Emeraude
 			Scenes::Manager m_sceneManager{m_primaryServices, m_resourceManager, m_graphicsRenderer, m_audioManager};
 			std::vector< ServiceInterface * > m_primaryServicesEnabled;
 			std::vector< ServiceInterface * > m_secondaryServicesEnabled;
+			CursorAtlas m_cursorAtlas;
 			std::thread m_logicsThread;
 			std::thread m_renderingThread;
 			uint64_t m_lifetime{0};

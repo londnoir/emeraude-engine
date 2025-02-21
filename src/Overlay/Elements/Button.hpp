@@ -29,26 +29,23 @@
 
 /* STL inclusions. */
 #include <cstdint>
-#include <array>
 #include <functional>
 #include <memory>
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "../ComposedSurface.hpp"
+#include "Overlay/ComposedSurface.hpp"
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
 	/**
 	 * @brief The button form element.
 	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
-	 * @extends Emeraude::Overlay::Elements::UIInputInterface The is an user input element.
+	 * @extends Emeraude::Overlay::Elements::UIInputInterface this is a user input element.
 	 */
 	class Button final : public ComposedSurface, public UIInputInterface
 	{
@@ -57,27 +54,28 @@ namespace Emeraude::Overlay::Elements
 			using Function = std::function< int () >;
 
 			/** @brief Class identifier. */
-			static constexpr auto ClassId{"UIButton"};
+			static constexpr auto ClassId{"Button"};
 
 			/**
 			 * @brief Constructs a button.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit Button (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Button (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerEnter() */
-			void onPointerEnter (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept override;
+			void onPointerEnter (float positionX, float positionY) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerLeave() */
-			void onPointerLeave (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept override;
+			void onPointerLeave (float positionX, float positionY) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonPress() */
-			bool onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
+			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonRelease() */
-			bool onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
+			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/**
 			 * @brief Gives access to the TextWriter for configuration.

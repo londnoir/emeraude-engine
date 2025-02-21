@@ -48,20 +48,20 @@ namespace Emeraude::Overlay
 	using namespace Graphics;
 
 	UIScreen::UIScreen (const std::string & name, const FramebufferProperties & framebufferProperties, Renderer & graphicsRenderer, bool enableKeyboardListener, bool enablePointerListener) noexcept
-		: NameableTrait(name), m_graphicsRenderer(graphicsRenderer), m_framebufferProperties(framebufferProperties)
+		: NameableTrait(name),
+		m_graphicsRenderer(graphicsRenderer),
+		m_framebufferProperties(framebufferProperties)
 	{
 		m_flags[IsListeningKeyboard] = enableKeyboardListener;
 		m_flags[IsListeningPointer] = enablePointerListener;
 	}
 
 	bool
-	UIScreen::updatePhysicalRepresentation (Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept
+	UIScreen::updatePhysicalRepresentation (Renderer & renderer) noexcept
 	{
-		m_framebufferProperties = framebufferProperties;
-
 		for ( const auto & [name, surface] : m_surfaces )
 		{
-			if ( !surface->updatePhysicalRepresentation(renderer, framebufferProperties) )
+			if ( !surface->updatePhysicalRepresentation(renderer) )
 			{
 				TraceError{ClassId} << "The surface '" << name << "' physical update failed !";
 
@@ -82,7 +82,7 @@ namespace Emeraude::Overlay
 
 		size_t errors = 0;
 
-		for ( const auto & surface : std::views::values(m_surfaces) )
+		for ( const auto & surface : m_surfaces | std::views::values )
 		{
 			if ( !surface->updateVideoMemory(renderer) )
 			{
@@ -242,12 +242,12 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	UIScreen::onPointerMove (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept
+	UIScreen::onPointerMove (float positionX, float positionY) noexcept
 	{
-		const auto dispatchEvent = [framebufferProperties, positionX, positionY] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY] (const std::shared_ptr< AbstractSurface > & surface) -> bool
 		{
 			/* NOTE: Always check if the pointer is over the surface. */
-			const auto pointerOver = surface->isBelowPoint(framebufferProperties, positionX, positionY);
+			const auto pointerOver = surface->isBelowPoint(positionX, positionY);
 
 			if ( !surface->isListeningPointer() )
 			{
@@ -263,10 +263,10 @@ namespace Emeraude::Overlay
 				{
 					surface->setPointerOverState(true);
 
-					surface->onPointerEnter(framebufferProperties, positionX, positionY);
+					surface->onPointerEnter(positionX, positionY);
 				}
 
-				return surface->onPointerMove(framebufferProperties, positionX, positionY);
+				return surface->onPointerMove(positionX, positionY);
 			}
 
 			/* NOTE: If pointer was over the surface before, generate a leaving event. */
@@ -274,7 +274,7 @@ namespace Emeraude::Overlay
 			{
 				surface->setPointerOverState(false);
 
-				surface->onPointerLeave(framebufferProperties, positionX, positionY);
+				surface->onPointerLeave(positionX, positionY);
 			}
 
 			return false;
@@ -287,7 +287,7 @@ namespace Emeraude::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface: m_surfaces | std::views::values )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -296,15 +296,15 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	UIScreen::onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
 	{
-		const auto dispatchEvent = [framebufferProperties, positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
 		{
-			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{
 				surface->setFocusedState(true);
 
-				return surface->onButtonPress(framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+				return surface->onButtonPress(positionX, positionY, buttonNumber, modifiers);
 			}
 
 			surface->setFocusedState(false);
@@ -319,7 +319,7 @@ namespace Emeraude::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface: m_surfaces | std::views::values )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -328,13 +328,13 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	UIScreen::onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
 	{
-		const auto dispatchEvent = [framebufferProperties, positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
 		{
-			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{
-				return surface->onButtonRelease(framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+				return surface->onButtonRelease(positionX, positionY, buttonNumber, modifiers);
 			}
 
 			return false;
@@ -347,7 +347,7 @@ namespace Emeraude::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface: m_surfaces | std::views::values )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -356,13 +356,13 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	UIScreen::onMouseWheel (const FramebufferProperties & framebufferProperties, float positionX, float positionY, float xOffset, float yOffset) noexcept
+	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
 	{
-		const auto dispatchEvent = [framebufferProperties, positionX, positionY, xOffset, yOffset] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, xOffset, yOffset] (const std::shared_ptr< AbstractSurface > & surface) -> bool
 		{
-			if ( surface->isListeningPointer() && surface->isBelowPoint(framebufferProperties, positionX, positionY) )
+			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{
-				return surface->onMouseWheel(framebufferProperties, positionX, positionY, xOffset, yOffset);
+				return surface->onMouseWheel(positionX, positionY, xOffset, yOffset);
 			}
 
 			return false;
@@ -375,7 +375,7 @@ namespace Emeraude::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface: m_surfaces | std::views::values )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}

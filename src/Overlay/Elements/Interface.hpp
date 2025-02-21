@@ -78,7 +78,7 @@ namespace Emeraude::Overlay::Elements
 		protected:
 
 			/** 
-			 * @brief Constructs an UI input interface.
+			 * @brief Constructs a UI input interface.
 			 */
 			UIInputInterface () noexcept = default;
 	};

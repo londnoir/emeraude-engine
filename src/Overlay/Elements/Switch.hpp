@@ -33,54 +33,65 @@
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "../ComposedSurface.hpp"
+#include "Overlay/ComposedSurface.hpp"
 #include "Interface.hpp"
-#include "Libraries/Math/Rectangle.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
 	/**
 	 * @brief The switch form element.
 	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
-	 * @extends Emeraude::Overlay::Elements::UIInputInterface The is an user input element.
+	 * @extends Emeraude::Overlay::Elements::UIInputInterface this is a user input element.
 	 */
 	class Switch final : public ComposedSurface, public UIInputInterface
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"Switch"};
+
 			/**
 			 * @brief Constructs a switch.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit Switch (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Switch (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerEnter() */
-			void onPointerEnter (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept override;
+			void onPointerEnter (float positionX, float positionY) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerLeave() */
-			void onPointerLeave (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept override;
+			void onPointerLeave (float positionX, float positionY) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonPress() */
-			bool onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
+			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonRelease() */
-			bool onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
+			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/**
 			 * @brief Sets the background image of the switch.
 			 * @param image A reference to an image resource smart pointer.
 			 * @return void
 			 */
-			void setImage (const std::shared_ptr< Graphics::ImageResource > & image) noexcept;
+			void
+			setImage (const std::shared_ptr< Graphics::ImageResource > & image) noexcept
+			{
+				m_image = image;
+			}
 
 			/**
 			 * @brief Returns the background image of the switch.
 			 * @return std::shared_ptr< Graphics::ImageResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Graphics::ImageResource > image () const noexcept;
+			std::shared_ptr< Graphics::ImageResource >
+			image () const noexcept
+			{
+				return m_image;
+			}
 
 			/**
 			 * @brief Toggles the switch state.
@@ -96,11 +107,15 @@ namespace Emeraude::Overlay::Elements
 			void setState (bool state) noexcept;
 
 			/**
-			 * @brief Returs the state of the switch.
+			 * @brief Returns the state of the switch.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool state () const noexcept;
+			bool
+			state () const noexcept
+			{
+				return m_state;
+			}
 
 		private:
 

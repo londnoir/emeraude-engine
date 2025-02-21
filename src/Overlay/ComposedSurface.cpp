@@ -52,8 +52,8 @@ namespace Emeraude::Overlay
 	using namespace Graphics;
 	using namespace Vulkan;
 
-	ComposedSurface::ComposedSurface (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: AbstractSurface(name, geometry, depth)
+	ComposedSurface::ComposedSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: AbstractSurface(framebufferProperties, name, geometry, depth)
 	{
 
 	}
@@ -93,7 +93,7 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	ComposedSurface::onPhysicalRepresentationUpdate (Graphics::Renderer & /*renderer*/, const FramebufferProperties & /*framebufferProperties*/) noexcept
+	ComposedSurface::onPhysicalRepresentationUpdate (Renderer & /*renderer*/) noexcept
 	{
 
 		return true;
@@ -106,7 +106,7 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	ComposedSurface::createOnHardware (Renderer & /*renderer*/, const FramebufferProperties & /*framebufferProperties*/) noexcept
+	ComposedSurface::createOnHardware (Renderer & /*renderer*/) noexcept
 	{
 		return true;
 	}

@@ -291,7 +291,7 @@ namespace Emeraude
 			 * @param height The new height.
 			 * @return bool
 			 */
-			bool resize (int32_t width, int32_t height) noexcept;
+			bool resize (int32_t width, int32_t height) const noexcept;
 
 			/**
 			 * @brief Sets the window position on the desktop.
@@ -302,17 +302,27 @@ namespace Emeraude
 			bool setPosition (int32_t xPosition, int32_t yPosition) noexcept;
 
 			/**
-			 * @brief Set the screen gamma.
-			 * @param value A positive value.
+			 * @brief Center the windows on a specific monitor.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
 			 * @return void
 			 */
-			void setGamma (float value) noexcept;
+			void centerPosition (int32_t desiredMonitor = -1) noexcept;
 
 			/**
-			 * @TODO Finish this method.
+			 * @brief Sets a gamma value to a specific monitor.
+			 * @param value A gamma value.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
 			 * @return void
 			 */
-			void setCustomGamma () noexcept;
+			void setGamma (float value, int32_t desiredMonitor = -1) const noexcept;
+
+			/**
+			 * @brief Sets a gamma ramp to a specific monitor.
+			 * @TODO Finish this method.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
+			 * @return void
+			 */
+			void setCustomGamma (int32_t desiredMonitor = -1) const noexcept;
 
 			/**
 			 * @brief Sets fullscreen mode.
@@ -323,11 +333,15 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the centered position for the window.
-			 * @param monitorNumber The number of the monitor for multiple monitors configuration. Default 0.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
-			std::array< int32_t, 2 > getCenteredPosition (uint32_t monitorNumber = DefaultVideoPreferredMonitor) const noexcept;
+			std::array< int32_t, 2 >
+			getCenteredPosition (int32_t desiredMonitor = -1) const noexcept
+			{
+				return this->getCenteredPosition(this->getSize(), desiredMonitor);
+			}
 
 			/**
 			 * @brief Returns whether the window is visible on the user view.
@@ -610,11 +624,11 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the monitor handles at monitor index.
-			 * @param monitorNumber The monitor index.
+			 * @param monitorIndex The monitor index.
 			 * @return GLFWmonitor *
 			 */
 			[[nodiscard]]
-			static GLFWmonitor * getMonitor (uint32_t monitorNumber) noexcept;
+			static GLFWmonitor * getMonitor (uint32_t monitorIndex) noexcept;
 
 			/**
 			 * @brief Returns a list of available mode for a specified monitor.
@@ -710,13 +724,13 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the centered position for the window.
-			 * @note The window size is forced due to a GLFW bug at startup.
-			 * @param windowSize
-			 * @param monitorNumber The number of the monitor for multiple monitors configuration. Default 0.
+			 * @note The window dimensions are forced due to a GLFW bug at startup.
+			 * @param windowSize A reference to an array of 2 unsigned integer.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default preferred monitor.
 			 * @return std::array< int32_t, 2 >
 			 */
 			[[nodiscard]]
-			static std::array< int32_t, 2 > getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, uint32_t monitorNumber = DefaultVideoPreferredMonitor) noexcept;
+			std::array< int32_t, 2 > getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, int32_t desiredMonitor = -1) const noexcept;
 
 			/* Flag names. */
 			static constexpr auto ShowInformation{0UL};

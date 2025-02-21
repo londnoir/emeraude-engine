@@ -32,9 +32,10 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "../ComposedSurface.hpp"
+#include "Overlay/ComposedSurface.hpp"
+
+/* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
-#include "Libraries/Math/Rectangle.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
@@ -46,34 +47,52 @@ namespace Emeraude::Overlay::Elements
 	{
 		public:
 
-			/**
-			 * @brief Constructs a range.
-			 * @param name A reference to a string.
-			 * @param geometry A reference to a rectangle for the sufarce geometry on screen. Default the whole screen.
-			 * @param depth A depth value to order surface on the screen. Default 0.0.
-			 */
-			explicit Range (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"Range"};
 
 			/**
-			 * @brief Gives acces to the TextWriter for configuration.
+			 * @brief Constructs a range.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
+			 * @param name A reference to a string.
+			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
+			 * @param depth A depth value to order surface on the screen. Default 0.0.
+			 */
+			Range (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+
+			/**
+			 * @brief Gives access to the TextWriter for configuration.
 			 * @warning  Don't use it to write on the surface.
 			 * @return Graphics::TextWriter &
 			 */
-			Graphics::TextWriter & textWriter () noexcept;
+			Graphics::TextWriter &
+			textWriter () noexcept
+			{
+				return m_textWriter;
+			}
 
 			/**
 			 * @brief Sets the range value.
 			 * @param value A float from 0.0 to 1.0
 			 * @return void
 			 */
-			void setValue (float value) noexcept;
+			void
+			setValue (float value) noexcept
+			{
+				m_value = Libraries::Math::clampToUnit(value);
+
+				this->drawFinished();
+			}
 
 			/**
 			 * @brief Returns the range value between 0.0 and 1.0.
 			 * @return float
 			 */
 			[[nodiscard]]
-			float value () const noexcept;
+			float
+			value () const noexcept
+			{
+				return m_value;
+			}
 
 		private:
 		

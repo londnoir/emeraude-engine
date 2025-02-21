@@ -129,7 +129,7 @@ namespace Libraries::Time::Elapsed
 
 				if constexpr  ( precision_t == static_cast< std::uint8_t >(Precision::Nanoseconds) )
 				{
-					std::cout << m_label << " (CPU) : " << nanoseconds << " ns" "\n" "\n";
+					std::cout << m_label << " (CPU) : " << nanoseconds << " ns" "\n";
 				}
 			}
 
@@ -265,7 +265,7 @@ namespace Libraries::Time::Elapsed
 						return;
 					}
 
-					std::cerr << m_label << " (CPU) : " << nanoseconds << " ns" "\n" "\n";
+					std::cerr << m_label << " (CPU) : " << nanoseconds << " ns" "\n";
 				}
 			}
 

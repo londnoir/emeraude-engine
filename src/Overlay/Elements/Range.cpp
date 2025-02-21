@@ -27,16 +27,7 @@
 
 #include "Range.hpp"
 
-/* STL inclusions. */
-#include <cstddef>
-#include <cstdint>
-#include <string>
-
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Overlay/ComposedSurface.hpp"
-#include "Libraries/Math/Rectangle.hpp"
 #include "Libraries/PixelFactory/Processor.hpp"
 
 namespace Emeraude::Overlay::Elements
@@ -45,30 +36,10 @@ namespace Emeraude::Overlay::Elements
 	using namespace Libraries::Math;
 	using namespace Libraries::PixelFactory;
 
-	Range::Range (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
+	Range::Range (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 
-	}
-
-	Graphics::TextWriter &
-	Range::textWriter () noexcept
-	{
-		return m_textWriter;
-	}
-
-	void
-	Range::setValue (float value) noexcept
-	{
-		m_value = clampToUnit(value);
-
-		this->drawFinished();
-	}
-
-	float
-	Range::value () const noexcept
-	{
-		return m_value;
 	}
 
 	bool

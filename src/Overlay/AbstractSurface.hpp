@@ -60,32 +60,43 @@ namespace Emeraude::Overlay
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			AbstractSurface (const AbstractSurface & copy) noexcept = default;
+			AbstractSurface (const AbstractSurface & copy) noexcept = delete;
 
 			/**
 			 * @brief Move constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			AbstractSurface (AbstractSurface && copy) noexcept = default;
+			AbstractSurface (AbstractSurface && copy) noexcept = delete;
 
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return SurfaceInterface &
 			 */
-			AbstractSurface & operator= (const AbstractSurface & copy) noexcept = default;
+			AbstractSurface & operator= (const AbstractSurface & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return SurfaceInterface &
 			 */
-			AbstractSurface & operator= (AbstractSurface && copy) noexcept = default;
+			AbstractSurface & operator= (AbstractSurface && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the surface.
 			 */
 			~AbstractSurface () noexcept override = default;
+
+			/**
+			 * @brief Returns the framebuffer properties from the overlay.
+			 * @return const FramebufferProperties &
+			 */
+			[[nodiscard]]
+			const FramebufferProperties &
+			framebufferProperties () const noexcept
+			{
+				return m_framebufferProperties;
+			}
 
 			/**
 			 * @brief Returns the surface geometry.
@@ -210,22 +221,20 @@ namespace Emeraude::Overlay
 
 			/**
 			 * @brief Checks whether the pointer coordinates intersects with the surface.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer coordinate on X screen axis.
 			 * @param positionY The pointer coordinate on Y screen axis.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isBelowPoint (const FramebufferProperties & framebufferProperties, float positionX, float positionY) const noexcept;
+			bool isBelowPoint (float positionX, float positionY) const noexcept;
 
 			/**
 			 * @brief Updates the physical properties of a surface.
 			 * @note This occurs when the application window is resized.
 			 * @param renderer A reference to the graphics renderer.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @return bool
 			 */
-			bool updatePhysicalRepresentation (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept;
+			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Declares to update surface on the GPU.
@@ -286,12 +295,11 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when pointer is entering the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position.
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual void onPointerEnter (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept
+			virtual void onPointerEnter (float positionX, float positionY) noexcept
 			{
 
 			}
@@ -299,12 +307,11 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when pointer is leaving the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position.
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual void onPointerLeave (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept
+			virtual void onPointerLeave (float positionX, float positionY) noexcept
 			{
 
 			}
@@ -312,12 +319,11 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when pointer is moving on the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position.
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual bool onPointerMove (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept
+			virtual bool onPointerMove (float positionX, float positionY) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -325,14 +331,13 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when a button of the pointer is pressed on the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position.
 			 * @param positionY The pointer Y position.
 			 * @param buttonNumber The pointer button number pressed.
 			 * @param modifiers The keyboard modifiers held when the button has been pressed.
 			 * @return bool
 			 */
-			virtual bool onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+			virtual bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -340,14 +345,13 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when a button of the pointer is released on the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position.
 			 * @param positionY The pointer Y position.
 			 * @param buttonNumber The pointer button number released.
 			 * @param modifiers The keyboard modifiers held when the button has been released.
 			 * @return bool
 			 */
-			virtual bool onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int buttonNumber, int modifiers) noexcept
+			virtual bool onButtonRelease (float positionX, float positionY, int buttonNumber, int modifiers) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -355,14 +359,13 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Method fired when the mouse wheel is activated on the surface.
 			 * @note Override this method to react on the input event.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The pointer X position when the mouse wheel occurred.
 			 * @param positionY The pointer Y modifiers the mouse wheel occurred.
 			 * @param xOffset The scroll distance on the X axis.
 			 * @param yOffset The scroll distance on the Y axis.
 			 * @return bool
 			 */
-			virtual bool onMouseWheel (const FramebufferProperties & framebufferProperties, float positionX, float positionY, float xOffset, float yOffset) noexcept
+			virtual bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -377,11 +380,10 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Creates the surface on the GPU.
 			 * @param renderer A reference to the graphics renderer.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool createOnHardware (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept = 0;
+			virtual bool createOnHardware (Graphics::Renderer & renderer) noexcept = 0;
 
 			/**
 			 * @brief Destroys the surface from the GPU.
@@ -393,11 +395,12 @@ namespace Emeraude::Overlay
 
 			/**
 			 * @brief Constructs a surface.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit AbstractSurface (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
 			 * @brief Updates the transformation matrix to place the surface on screen.
@@ -418,11 +421,10 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Event when the physical data is updating.
 			 * @param renderer A reference to the graphics renderer.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept = 0;
+			virtual bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept = 0;
 
 			/**
 			 * @brief Event when the video memory is updating.
@@ -441,6 +443,7 @@ namespace Emeraude::Overlay
 			static constexpr auto IsFocused{5UL};
 			static constexpr auto IsOpaque{6UL};
 
+			const FramebufferProperties & m_framebufferProperties;
 			Libraries::Math::Rectangle< float > m_rectangle;
 			Libraries::Math::Matrix< 4, float > m_transformationMatrix;
 			float m_depth;

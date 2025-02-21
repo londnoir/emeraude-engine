@@ -27,13 +27,7 @@
 
 #include "Text.hpp"
 
-/* STL inclusions. */
-#include <string>
-
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Overlay/ComposedSurface.hpp"
 #include "Tracer.hpp"
 
 namespace Emeraude::Overlay::Elements
@@ -43,31 +37,12 @@ namespace Emeraude::Overlay::Elements
 	using namespace PixelFactory;
 	using namespace Graphics;
 
-	Text::Text (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
+	Text::Text (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);
 		m_textWriter.enableAutoLineFeed(true);
 		m_textWriter.enableScrollUp(true);
-	}
-
-	TextWriter &
-	Text::textWriter () noexcept
-	{
-		return m_textWriter;
-	}
-
-	void
-	Text::setClearColor (const Color< float > & color) noexcept
-	{
-		m_clearColor = color;
-		m_textWriter.setClearColor(color);
-	}
-
-	const Color< float > &
-	Text::clearColor () const noexcept
-	{
-		return m_clearColor;
 	}
 
 	void
@@ -109,11 +84,5 @@ namespace Emeraude::Overlay::Elements
 
 		/* Tell Renderer there is new data to upload to video memory. */
 		this->drawFinished();
-	}
-
-	const std::string &
-	Text::text () const noexcept
-	{
-		return m_text;
 	}
 }

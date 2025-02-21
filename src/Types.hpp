@@ -30,11 +30,22 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <string>
-#include <sstream>
-#include <vector>
 
 namespace Emeraude
 {
+	/**
+	 * @brief Standard cursor handled automatically by GLFW.
+	 */
+	enum class CursorType : uint8_t
+	{
+		Arrow,
+		TextInput,
+		Crosshair,
+		Hand,
+		HorizontalResize,
+		VerticalResize
+	};
+
 	/**
 	 * @brief The message severity enumeration.
 	 */

@@ -27,9 +27,6 @@
 
 #include "Picture.hpp"
 
-/* STL inclusions. */
-#include <cstdint>
-
 /* Local inclusions. */
 #include "Libraries/PixelFactory/Processor.hpp"
 #include "Graphics/ImageResource.hpp"
@@ -41,14 +38,14 @@ namespace Emeraude::Overlay::Elements
 	using namespace Libraries::PixelFactory;
 	using namespace Graphics;
 
-	Picture::Picture (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)
+	Picture::Picture (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)
 	{
 
 	}
 
 	void
-	Picture::setImage (const std::shared_ptr< Graphics::ImageResource > & image, Alignment alignment) noexcept
+	Picture::setImage (const std::shared_ptr< ImageResource > & image, Alignment alignment) noexcept
 	{
 		m_image = image;
 		m_alignment = alignment;

@@ -32,8 +32,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "../ComposedSurface.hpp"
-#include "Libraries/Math/Rectangle.hpp"
+#include "Overlay/ComposedSurface.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
@@ -45,6 +44,9 @@ namespace Emeraude::Overlay::Elements
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"Picture"};
+
 			enum class Alignment
 			{
 				FitToSurface
@@ -52,11 +54,12 @@ namespace Emeraude::Overlay::Elements
 
 			/**
 			 * @brief Constructs a picture.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
-			 * @param geometry A reference to a rectangle for the sufarce geometry on screen. Default the whole screen.
+			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit Picture (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Picture (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** Sets an image and an alignment as the background of this surface. */
 			void setImage (const std::shared_ptr< Graphics::ImageResource > & image, Alignment alignment = Alignment::FitToSurface) noexcept;

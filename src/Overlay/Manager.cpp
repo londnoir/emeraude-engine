@@ -182,7 +182,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return m_inputExclusiveScreen->onPointerMove(m_framebufferProperties, positionX, positionY);
+			return m_inputExclusiveScreen->onPointerMove(positionX, positionY);
 		}
 
 		return std::ranges::any_of(m_screens, [&] (const auto & pair) {
@@ -193,7 +193,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return screen->onPointerMove(m_framebufferProperties, positionX, positionY);
+			return screen->onPointerMove(positionX, positionY);
 		});
 	}
 
@@ -212,7 +212,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return m_inputExclusiveScreen->onButtonPress(m_framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			return m_inputExclusiveScreen->onButtonPress(positionX, positionY, buttonNumber, modifiers);
 		}
 
 		return std::ranges::any_of(m_screens, [&] (const auto & pair) {
@@ -223,7 +223,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return screen->onButtonPress(m_framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			return screen->onButtonPress(positionX, positionY, buttonNumber, modifiers);
 		});
 	}
 
@@ -242,7 +242,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return m_inputExclusiveScreen->onButtonRelease(m_framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			return m_inputExclusiveScreen->onButtonRelease(positionX, positionY, buttonNumber, modifiers);
 		}
 
 		return std::ranges::any_of(m_screens, [&] (const auto & pair) {
@@ -253,7 +253,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return screen->onButtonRelease(m_framebufferProperties, positionX, positionY, buttonNumber, modifiers);
+			return screen->onButtonRelease(positionX, positionY, buttonNumber, modifiers);
 		});
 	}
 
@@ -272,7 +272,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return m_inputExclusiveScreen->onMouseWheel(m_framebufferProperties, positionX, positionY, xOffset, yOffset);
+			return m_inputExclusiveScreen->onMouseWheel(positionX, positionY, xOffset, yOffset);
 		}
 
 		return std::ranges::any_of(m_screens, [&] (const auto & pair) {
@@ -283,7 +283,7 @@ namespace Emeraude::Overlay
 				return false;
 			}
 
-			return screen->onMouseWheel(m_framebufferProperties, positionX, positionY, xOffset, yOffset);
+			return screen->onMouseWheel(positionX, positionY, xOffset, yOffset);
 		});
 	}
 
@@ -543,7 +543,7 @@ namespace Emeraude::Overlay
 	void
 	Manager::disableAllScreens () noexcept
 	{
-		for ( const auto & screen : std::views::values(m_screens) )
+		for ( const auto & screen : m_screens | std::views::values )
 		{
 			screen->setVisibility(false);
 		}
@@ -636,7 +636,7 @@ namespace Emeraude::Overlay
 
 		size_t errors = 0;
 
-		for ( const auto & screen : std::views::values(m_screens) )
+		for ( const auto & screen : m_screens | std::views::values )
 		{
 			if ( !screen->isVisible() )
 			{
@@ -670,6 +670,13 @@ namespace Emeraude::Overlay
 		}
 #endif
 
+		if ( !m_updateMutex.try_lock() )
+		{
+			TraceDebug{ClassId} << "Overlay rendering skipped ..." "\n";
+
+			return;
+		}
+
 		const auto pipelineLayout = m_program->pipelineLayout();
 
 		/* Bind the graphics pipeline. */
@@ -678,7 +685,7 @@ namespace Emeraude::Overlay
 		/* Bind the geometry VBO and the optional IBO. */
 		commandBuffer.bind(*m_surfaceGeometry, 0);
 
-		for ( const auto & screen : std::views::values(m_screens) )
+		for ( const auto & screen : m_screens | std::views::values )
 		{
 			if ( screen->empty() || !screen->isVisible() )
 			{
@@ -687,6 +694,7 @@ namespace Emeraude::Overlay
 
 			for ( const auto & surface : screen->surfaces() | std::views::values )
 			{
+				// TODO: Surface should have a render() function to use a mutex between surface update and render it.
 				if ( surface->descriptorSet() == nullptr || !surface->descriptorSet()->isCreated() )
 				{
 					TraceWarning{ClassId} << "The surface " << surface->name() << " doesn't have a descriptor set !";
@@ -718,7 +726,7 @@ namespace Emeraude::Overlay
 		}
 
 #ifdef IMGUI_ENABLED
-		for ( const auto screen : m_ImGUIScreens | std::views::values )
+		for ( const auto & screen : m_ImGUIScreens | std::views::values )
 		{
 			if ( !screen->isVisible() )
 			{
@@ -728,27 +736,32 @@ namespace Emeraude::Overlay
 			screen->render(commandBuffer);
 		}
 #endif
+
+		m_updateMutex.unlock();
 	}
 
 	void
 	Manager::updateContent (bool fromResize) noexcept
 	{
-		const auto forceScaleX = m_primaryServices.settings().get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
-		const auto forceScaleY = m_primaryServices.settings().get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
+		const std::lock_guard< std::mutex > lock{m_updateMutex};
+
+		const auto & settings = m_primaryServices.settings();
+		const auto forceScaleX = settings.get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
+		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
 		const auto & windowState = m_window.state();
 
 		m_framebufferProperties.updateProperties(
 			windowState.framebufferWidth,
 			windowState.framebufferHeight,
-			forceScaleX > 0 ? forceScaleX : windowState.contentXScale,
-			forceScaleY > 0 ? forceScaleY : windowState.contentYScale
+			forceScaleX > 0.0F ? forceScaleX : windowState.contentXScale,
+			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
 		);
 
 		if ( this->updateProgram() )
 		{
 			for ( const auto & [name, screen] : m_screens )
 			{
-				if ( !screen->updatePhysicalRepresentation(m_graphicsRenderer, m_framebufferProperties) )
+				if ( !screen->updatePhysicalRepresentation(m_graphicsRenderer) )
 				{
 					TraceError{ClassId} << "The UI screen '" << name << "' physical representation update failed ! Disabling it ...";
 
@@ -761,7 +774,7 @@ namespace Emeraude::Overlay
 				this->notify(OverlayResized, std::array< uint32_t, 2 >{
 				   windowState.framebufferWidth,
 				   windowState.framebufferHeight
-			   });
+				});
 			}
 		}
 	}

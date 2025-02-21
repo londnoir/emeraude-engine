@@ -106,7 +106,7 @@ namespace Emeraude
 			m_coreHelp.registerShortcut("Print the active scene content in console.", KeyF1, ModKeyShift);
 			m_coreHelp.registerShortcut("Refreshes scenes (Experimental).", KeyF2, ModKeyShift);
 			m_coreHelp.registerShortcut("Test dialog (Experimental).", KeyF3, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF4, ModKeyShift);
+			m_coreHelp.registerShortcut("Reset the window size to defaults.", KeyF4, ModKeyShift);
 			m_coreHelp.registerShortcut("Open settings file in text editor.", KeyF5, ModKeyShift);
 			m_coreHelp.registerShortcut("Open file explorer to application configuration directory.", KeyF6, ModKeyShift);
 			m_coreHelp.registerShortcut("Open file explorer to application cache directory.", KeyF7, ModKeyShift);
@@ -942,8 +942,17 @@ namespace Emeraude
 					return true;
 
 				case KeyF4 :
-					Tracer::info(ClassId, "Core reserved SHIFT+F4 shortcut hit.");
+					if ( !m_window.isFullscreenMode() )
+					{
+						Tracer::info(ClassId, "Core reserved SHIFT+F4 shortcut hit.");
 
+						TraceInfo{ClassId} << "Reset window size to default " << DefaultVideoWindowWidth << "X" << DefaultVideoWindowHeight;
+
+						if ( m_window.resize(DefaultVideoWindowWidth, DefaultVideoWindowHeight) )
+						{
+							m_window.centerPosition();
+						}
+					}
 					return true;
 
 				case KeyF5 :
@@ -1016,6 +1025,18 @@ namespace Emeraude
 
 					m_window.setFullscreenMode(!m_window.isFullscreenMode());
 				}
+					return true;
+
+				case KeyPad1 :
+					m_window.setGamma(0.8F);
+					return true;
+
+				case KeyPad2 :
+					m_window.setGamma(1.0F);
+					return true;
+
+				case KeyPad3 :
+					m_window.setGamma(1.2F);
 					return true;
 
 				default:

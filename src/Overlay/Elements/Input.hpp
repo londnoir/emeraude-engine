@@ -32,32 +32,34 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "../ComposedSurface.hpp"
+#include "Overlay/ComposedSurface.hpp"
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
-#include "Libraries/Math/Rectangle.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
 	/**
 	 * @brief The input form element.
-	 * @param name A reference to a string.
 	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
-	 * @extends Emeraude::Overlay::Elements::UIInputInterface The is an user input element.
+	 * @extends Emeraude::Overlay::Elements::UIInputInterface this is a user input element.
 	 */
 	class Input final : public ComposedSurface, public UIInputInterface
 	{
 		public:
 
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"Input"};
+
 			/**
 			 * @brief Constructs an input.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit Input (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onKeyRelease() */
 			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept override;

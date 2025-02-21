@@ -1,5 +1,8 @@
 # Engine TODO-list
 
+## GENERAL CHECKS
+- Check the for-loop-range like "for ( const auto & item : items | std::views::values )" performances.
+
 ## GENERAL BUGS
 - Check for light coherence, create a built-in scene with a fixed directional light and multiple materials.
 - Unloading objets from the scene do not release vulkan memory.

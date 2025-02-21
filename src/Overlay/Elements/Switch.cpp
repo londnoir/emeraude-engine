@@ -27,10 +27,6 @@
 
 #include "Switch.hpp"
 
-/* STL inclusions. */
-#include <array>
-#include <cstdint>
-
 /* Local inclusions. */
 #include "Libraries/PixelFactory/Processor.hpp"
 #include "Graphics/ImageResource.hpp"
@@ -42,14 +38,14 @@ namespace Emeraude::Overlay::Elements
 	using namespace PixelFactory;
 	using namespace Graphics;
 
-	Switch::Switch (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)
+	Switch::Switch (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)
 	{
 		this->enablePointerListening(true);
 	}
 
 	void
-	Switch::onPointerEnter (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
+	Switch::onPointerEnter (float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -62,7 +58,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	void
-	Switch::onPointerLeave (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
+	Switch::onPointerLeave (float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -75,7 +71,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	bool
-	Switch::onButtonPress (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
+	Switch::onButtonPress (float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -88,7 +84,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	bool
-	Switch::onButtonRelease (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
+	Switch::onButtonRelease (float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -100,18 +96,6 @@ namespace Emeraude::Overlay::Elements
 		this->toggle();
 
 		return true;
-	}
-
-	void
-	Switch::setImage (const std::shared_ptr< ImageResource > & image) noexcept
-	{
-		m_image = image;
-	}
-
-	std::shared_ptr< ImageResource >
-	Switch::image () const noexcept
-	{
-		return m_image;
 	}
 
 	void
@@ -133,12 +117,6 @@ namespace Emeraude::Overlay::Elements
 		m_state = state;
 
 		this->setTextureOffsetX(m_state ? 0.5F : 0.0F);
-	}
-
-	bool
-	Switch::state () const noexcept
-	{
-		return m_state;
 	}
 
 	bool

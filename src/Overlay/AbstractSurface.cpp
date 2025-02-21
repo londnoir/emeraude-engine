@@ -47,17 +47,20 @@ namespace Emeraude::Overlay
 
 	static constexpr auto TracerTag{"OverlaySurface"};
 
-	AbstractSurface::AbstractSurface (const std::string & name, const Rectangle< float > & geometry, float depth) noexcept
-		: NameableTrait(name), m_rectangle(geometry), m_depth(depth)
+	AbstractSurface::AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Rectangle< float > & geometry, float depth) noexcept
+		: NameableTrait(name),
+		m_framebufferProperties(framebufferProperties),
+		m_rectangle(geometry),
+		m_depth(depth)
 	{
 		this->setTransformationMatrix();
 	}
 
 	bool
-	AbstractSurface::isBelowPoint (const FramebufferProperties & framebufferProperties, float positionX, float positionY) const noexcept
+	AbstractSurface::isBelowPoint (float positionX, float positionY) const noexcept
 	{
 		{
-			const auto screenWidth = static_cast< float >(framebufferProperties.width());
+			const auto screenWidth = static_cast< float >(m_framebufferProperties.width());
 
 			const auto positionXa = screenWidth * m_rectangle.offsetX();
 
@@ -75,7 +78,7 @@ namespace Emeraude::Overlay
 		}
 
 		{
-			const auto screenHeight = static_cast< float >(framebufferProperties.height());
+			const auto screenHeight = static_cast< float >(m_framebufferProperties.height());
 
 			const auto positionYa = screenHeight * m_rectangle.offsetY();
 
@@ -107,9 +110,9 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	AbstractSurface::updatePhysicalRepresentation (Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept
+	AbstractSurface::updatePhysicalRepresentation (Renderer & renderer) noexcept
 	{
-		if ( !this->onPhysicalRepresentationUpdate(renderer, framebufferProperties) )
+		if ( !this->onPhysicalRepresentationUpdate(renderer) )
 		{
 			TraceError{TracerTag} << "Unable to update the physical representation of surface '" << this->name() << " !";
 

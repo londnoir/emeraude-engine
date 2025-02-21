@@ -411,7 +411,7 @@ namespace Emeraude::Vulkan
 				//VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,
 				//VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME,
 				//VK_KHR_VIDEO_DECODE_H265_EXTENSION_NAME,
-#if IS_MACOS
+#if !IS_LINUX
                 "VK_KHR_portability_subset", // Not found on macOS : VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
 #endif
 			};

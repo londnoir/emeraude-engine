@@ -241,9 +241,9 @@ namespace Emeraude
 
 		if ( this->isFullscreenMode() )
 		{
-			const auto exponent = m_primaryServices.settings().get< float >(VideoFullscreenGammaKey, DefaultVideoFullscreenGamma);
+			const auto gamma = m_primaryServices.settings().get< float >(VideoFullscreenGammaKey, DefaultVideoFullscreenGamma);
 
-			this->setGamma(exponent);
+			this->setGamma(gamma, preferredMonitor);
 		}
 		else
 		{
@@ -251,7 +251,7 @@ namespace Emeraude
 			{
 				const auto windowWidth = m_primaryServices.settings().get< uint32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
 				const auto windowHeight = m_primaryServices.settings().get< uint32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
-				const auto centeredPosition = getCenteredPosition({windowWidth, windowHeight}, preferredMonitor);
+				const auto centeredPosition = Window::getCenteredPosition({windowWidth, windowHeight}, preferredMonitor);
 
 				if ( m_flags[ShowInformation] )
 				{
@@ -272,6 +272,10 @@ namespace Emeraude
 
 				this->setPosition(XPosition, YPosition);
 			}
+
+			const auto gamma = m_primaryServices.settings().get< float >(VideoWindowGammaKey, DefaultVideoWindowGamma);
+
+			this->setGamma(gamma, preferredMonitor);
 		}
 
 		const auto useNativeCode = !m_primaryServices.settings().get< bool >(VkCreateSurfaceWithGLFWKey, DefaultVkCreateSurfaceWithGLFW);
@@ -357,7 +361,7 @@ namespace Emeraude
 	}
 
 	bool
-	Window::resize (int32_t width, int32_t height) noexcept
+	Window::resize (int32_t width, int32_t height) const noexcept
 	{
 		if ( width <= 0 || height <= 0 )
 		{
@@ -431,33 +435,27 @@ namespace Emeraude
 		}
 	}
 
-	std::array< int32_t, 2 >
-	Window::getCenteredPosition (uint32_t monitorNumber) const noexcept
+	void
+	Window::centerPosition (int32_t desiredMonitor) noexcept
 	{
-		const auto monitors = getMonitors();
+		const auto centeredPosition = this->getCenteredPosition(desiredMonitor);
 
-		if ( monitors.empty() )
-		{
-			Tracer::error(ClassId, "There is no monitor on the system !");
+		this->setPosition(centeredPosition[0], centeredPosition[1]);
+	}
 
-			return {0, 0};
-		}
+	std::array< int32_t, 2 >
+	Window::getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, int32_t desiredMonitor) const noexcept
+	{
+		const uint32_t monitorIndex =
+			desiredMonitor < 0 ?
+			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
+			static_cast< uint32_t >(desiredMonitor);
 
-		if ( monitorNumber >= monitors.size() )
-		{
-			TraceError{ClassId} <<
-				"The monitor #" << monitorNumber << " doesn't exists. "
-				"Using the first one.";
-
-			monitorNumber = 0;
-		}
-
-		auto * monitor = monitors[monitorNumber];
+		auto * monitor = Window::getMonitor(monitorIndex);
 
 		/* Get the monitor virtual position and dimensions and the window dimension. */
 		const auto desktopPosition = getDesktopPosition(monitor);
 		const auto desktopSize = getDesktopSize(monitor);
-		const auto windowSize = this->getSize();
 
 #ifdef DEBUG
 		TraceDebug{ClassId} <<
@@ -465,46 +463,6 @@ namespace Emeraude
 			"Desktop dimension (Width: " << desktopSize[0] << ", Height: " << desktopSize[1] << ")" "\n"
 			"Window dimension (Width: " << windowSize[0] << ", Height: " << windowSize[1] << ")" "\n";
 #endif
-
-		/* Get the window position center on the selected monitor. */
-		return {
-			static_cast< int32_t >((desktopSize[0] - windowSize[0]) / 2) + desktopPosition[0],
-			static_cast< int32_t >((desktopSize[1] - windowSize[1]) / 2) + desktopPosition[1]
-		};
-	}
-
-	std::array< int32_t, 2 >
-	Window::getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, uint32_t monitorNumber) noexcept
-	{
-		const auto monitors = getMonitors();
-
-		if ( monitors.empty() )
-		{
-			Tracer::error(ClassId, "There is no monitor connected to the system !");
-
-			return {0, 0};
-		}
-
-		if ( monitorNumber >= monitors.size() )
-		{
-			TraceError{ClassId} <<
-				"The monitor #" << monitorNumber << " doesn't exists. "
-				"Using the first one.";
-
-			monitorNumber = 0;
-		}
-
-		auto * monitor = monitors[monitorNumber];
-
-		/* Get the monitor virtual position and dimensions and the window dimension. */
-		const auto desktopPosition = getDesktopPosition(monitor);
-		const auto desktopSize = getDesktopSize(monitor);
-
-		// FIXME: Fails on weird configuration !
-		/*TraceInfo{ClassId} <<
-			"Desktop size on monitor #" << monitorNumber << " : " << desktopSize[0] << 'x' << desktopSize[1] << "." "\n"
-			"Desktop position in system : " << desktopPosition[0] << ", " << desktopPosition[1] << "\n"
-			"Window requested size : " << windowSize[0] << 'x' << windowSize[1];*/
 
 		/* Get the window position center on the selected monitor. */
 		return {
@@ -639,44 +597,48 @@ namespace Emeraude
 	}
 
 	void
-	Window::setGamma (float value) noexcept
+	Window::setGamma (float value, int32_t desiredMonitor) const noexcept
 	{
-		auto * monitor = glfwGetWindowMonitor(m_handle.get());
+		const uint32_t monitorIndex =
+			desiredMonitor < 0 ?
+			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
+			static_cast< uint32_t >(desiredMonitor);
 
-		if ( monitor == nullptr )
+		auto * monitor = Window::getMonitor(monitorIndex);
+
+		if ( monitor != nullptr )
 		{
-			Tracer::error(ClassId, "Window::setGamma(), There is no available monitor !");
-
-			return;
+			glfwSetGamma(monitor, value);
 		}
-
-		glfwSetGamma(monitor, value);
 	}
 
 	void
-	Window::setCustomGamma () noexcept
+	Window::setCustomGamma (int32_t desiredMonitor) const noexcept
 	{
-		auto * monitor = glfwGetWindowMonitor(m_handle.get());
+		const uint32_t monitorIndex =
+			desiredMonitor < 0 ?
+			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
+			static_cast< uint32_t >(desiredMonitor);
+
+		auto * monitor = Window::getMonitor(monitorIndex);
 
 		if ( monitor == nullptr )
 		{
-			Tracer::error(ClassId, "Window::setCustomGamma(), There is no available monitor !");
-
 			return;
 		}
 
-		constexpr auto colorNumber{256UL};
+		constexpr auto colorCount{256UL};
 
-		std::array< uint16_t, colorNumber > red{};
-		std::array< uint16_t, colorNumber > green{};
-		std::array< uint16_t, colorNumber > blue{};
+		std::array< uint16_t, colorCount > red{};
+		std::array< uint16_t, colorCount > green{};
+		std::array< uint16_t, colorCount > blue{};
 
-		/* FIXME: Check what to pass as value. */
-		for ( size_t i = 0;  i < colorNumber;  i++ )
+		/* TODO: Find a formula to compute a valid gamma ramp. */
+		for ( size_t index = 0;  index < colorCount;  index++ )
 		{
-			red[i] = 0;
-			green[i] = 0;
-			blue[i] = 0;
+			red[index] = 0;
+			green[index] = 0;
+			blue[index] = 0;
 		}
 
 		/* Creates a gamma ramp to pass to monitor. */
@@ -684,7 +646,7 @@ namespace Emeraude
 		ramp.red = red.data();
 		ramp.green = green.data();
 		ramp.blue = blue.data();
-		ramp.size = colorNumber;
+		ramp.size = colorCount;
 
 		glfwSetGammaRamp(monitor, &ramp);
 	}
@@ -1161,7 +1123,7 @@ namespace Emeraude
 	bool
 	Window::checkMonitors () const noexcept
 	{
-		const auto monitors = getMonitors();
+		const auto monitors = Window::getMonitors();
 
 		if ( monitors.empty() )
 		{
@@ -1180,7 +1142,7 @@ namespace Emeraude
 			/* NOTE: Display monitors information. */
 			if ( m_flags[ShowInformation] )
 			{
-				const auto modes = getMonitorModes(monitor);
+				const auto modes = Window::getMonitorModes(monitor);
 
 				TraceInfo info{ClassId};
 
@@ -1203,7 +1165,7 @@ namespace Emeraude
 	std::vector< GLFWmonitor * >
 	Window::getMonitors () noexcept
 	{
-		std::vector< GLFWmonitor * > list{};
+		std::vector< GLFWmonitor * > list;
 
 		int count = 0;
 
@@ -1223,9 +1185,9 @@ namespace Emeraude
 	}
 
 	GLFWmonitor *
-	Window::getMonitor (uint32_t monitorNumber) noexcept
+	Window::getMonitor (uint32_t monitorIndex) noexcept
 	{
-		const auto monitors = getMonitors();
+		const auto monitors = Window::getMonitors();
 
 		if ( monitors.empty() )
 		{
@@ -1234,16 +1196,16 @@ namespace Emeraude
 			return nullptr;
 		}
 
-		if ( monitorNumber >= monitors.size() )
+		if ( monitorIndex >= monitors.size() )
 		{
 			TraceError{ClassId} <<
-				"The monitor #" << monitorNumber << " doesn't exists. "
+				"The monitor #" << monitorIndex << " doesn't exists. "
 				"Using the primary monitor.";
 
 			return glfwGetPrimaryMonitor();
 		}
 
-		return monitors[monitorNumber];
+		return monitors[monitorIndex];
 	}
 
 	std::vector< GLFWvidmode >

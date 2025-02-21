@@ -209,7 +209,7 @@ namespace Emeraude::Graphics
 			/* NOTE:  */
 			{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 32},
 			/* NOTE: Special UBO. */
-			{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512},
+			//{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512}, // TODO: Check to enable this for reusable UBO between render calls
 			/* NOTE:  */
 			//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0},
 			/* NOTE:  */
@@ -271,19 +271,19 @@ namespace Emeraude::Graphics
 
 		/* NOTE: Stacked resources on the runtime. */
 		{
-			for ( const auto & [id, sampler] : m_samplers )
+			for ( const auto &sampler: m_samplers | std::views::values )
 			{
 				sampler->destroyFromHardware();
 			}
 			m_samplers.clear();
 
-			for ( const auto & [id, renderPass] : m_renderPasses )
+			for ( const auto & renderPass: m_renderPasses | std::views::values )
 			{
 				renderPass->destroyFromHardware();
 			}
 			m_renderPasses.clear();
 
-			for ( const auto & [id, pipeline] : m_pipelines )
+			for ( const auto &pipeline: m_pipelines | std::views::values )
 			{
 				pipeline->destroyFromHardware();
 			}
@@ -777,7 +777,7 @@ namespace Emeraude::Graphics
 		//this->destroyCommandSystem();
 
 		/* NOTE: Wait for a valid framebuffer dimensions in case of handle minimisation. */
-		m_window.waitValidWindowSize();
+		//m_window.waitValidWindowSize();
 
 		if ( !m_swapChain->recreateOnHardware(*this) )
 		{

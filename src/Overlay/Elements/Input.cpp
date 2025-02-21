@@ -27,15 +27,7 @@
 
 #include "Input.hpp"
 
-/* STL inclusions. */
-#include <cstdint>
-#include <string>
-
 /* Local inclusions. */
-#include "Overlay/ComposedSurface.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
 #include "Libraries/PixelFactory/Processor.hpp"
 #include "Input/Types.hpp"
 
@@ -45,8 +37,8 @@ namespace Emeraude::Overlay::Elements
 	using namespace Libraries::Math;
 	using namespace Libraries::PixelFactory;
 
-	Input::Input (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
+	Input::Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);
 

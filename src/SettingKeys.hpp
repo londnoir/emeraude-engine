@@ -109,6 +109,8 @@ namespace Emeraude
 			static constexpr auto DefaultVideoWindowWidth{1280U};
 			static constexpr auto VideoWindowHeightKey{"Core/Video/Window/Height"};
 			static constexpr auto DefaultVideoWindowHeight{720U};
+			static constexpr auto VideoWindowGammaKey{"Core/Video/Window/Gamma"};
+			static constexpr auto DefaultVideoWindowGamma{1.0F};
 
 			/* Fullscreen */
 			static constexpr auto VideoFullscreenEnabledKey{"Core/Video/Fullscreen/Enabled"};
@@ -118,7 +120,7 @@ namespace Emeraude
 			static constexpr auto VideoFullscreenHeightKey{"Core/Video/Fullscreen/Height"};
 			static constexpr auto DefaultVideoFullscreenHeight{1080U};
 			static constexpr auto VideoFullscreenGammaKey{"Core/Video/Fullscreen/Gamma"};
-			static constexpr auto DefaultVideoFullscreenGamma{1.0};
+			static constexpr auto DefaultVideoFullscreenGamma{1.0F};
 			static constexpr auto VideoFullscreenRefreshRateKey{"Core/Video/Fullscreen/RefreshRate"};
 			static constexpr auto DefaultVideoFullscreenRefreshRate{-1};
 

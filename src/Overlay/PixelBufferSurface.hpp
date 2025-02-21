@@ -45,7 +45,7 @@
 namespace Emeraude::Overlay
 {
 	/**
-	 * @brief The base class of all overlay surfaces.
+	 * @brief The base class of all overlay surfaces using a pixel buffer.
 	 * @extends Emeraude::Overlay::AbstractSurface This is a surface.
 	 */
 	class PixelBufferSurface : public AbstractSurface
@@ -57,11 +57,12 @@ namespace Emeraude::Overlay
 
 			/** 
 			 * @brief Constructs a default pixel buffer surface.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
 			 * @param name A reference to a string.
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			explicit PixelBufferSurface (const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			PixelBufferSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::descriptorSet() const */
 			[[nodiscard]]
@@ -69,7 +70,7 @@ namespace Emeraude::Overlay
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::createOnHardware() */
 			[[nodiscard]]
-			bool createOnHardware (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept final;
+			bool createOnHardware (Graphics::Renderer & renderer) noexcept final;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::destroyFromHardware() */
 			bool destroyFromHardware () noexcept final;
@@ -89,7 +90,7 @@ namespace Emeraude::Overlay
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
 			[[nodiscard]]
-			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept final;
+			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept final;
 
 			/** @copydoc Emeraude::Overlay::AbstractSurface::onVideoMemoryUpdate() */
 			[[nodiscard]]

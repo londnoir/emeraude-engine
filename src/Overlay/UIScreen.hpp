@@ -145,8 +145,8 @@ namespace Emeraude::Overlay
 
 			/**
 			 * @brief Creates a specialized surface.
-			 * @tparam surface_t The type of screen.
-			 * @tparam ctor_args The type of screen constructor optional arguments.
+			 * @tparam surface_t The type of surface.
+			 * @tparam ctor_args The type of surface constructor optional arguments.
 			 * @param name A reference to a string.
 			 * @param args Additional arguments to pass to specific surface constructor. Default none.
 			 * @return std::shared_ptr< surface_t >
@@ -171,9 +171,9 @@ namespace Emeraude::Overlay
 					return nullptr;
 				}
 
-				const auto surface = std::make_shared< surface_t >(name, std::forward< ctor_args >(args)...);
+				const auto surface = std::make_shared< surface_t >(m_framebufferProperties, name, std::forward< ctor_args >(args)...);
 
-				if ( !surface->createOnHardware(m_graphicsRenderer, m_framebufferProperties) )
+				if ( !surface->createOnHardware(m_graphicsRenderer) )
 				{
 					TraceError{ClassId} << "Unable to create the surface '" << name << "' on the GPU !";
 
@@ -198,11 +198,10 @@ namespace Emeraude::Overlay
 			/**
 			 * @brief Resizes the surface textures resolution according to the new window size.
 			 * @param renderer A reference to the graphics renderer.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool updatePhysicalRepresentation (Graphics::Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept;
+			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Updates necessary data in video memory.
@@ -314,45 +313,41 @@ namespace Emeraude::Overlay
 
 			/**
 			 * @brief Transfers the pointer movement event to surfaces.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The x position of the cursor.
 			 * @param positionY The Y position of the cursor.
 			 * @return bool
 			 */
-			bool onPointerMove (const FramebufferProperties & framebufferProperties, float positionX, float positionY) noexcept;
+			bool onPointerMove (float positionX, float positionY) noexcept;
 
 			/**
 			 * @brief Transfers the pointer press event to surfaces.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The x position of the cursor.
 			 * @param positionY The Y position of the cursor.
 			 * @param buttonNumber The mouse button.
 			 * @param modifiers Modification keys held.
 			 * @return bool
 			 */
-			bool onButtonPress (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
+			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
 
 			/**
 			 * @brief Transfers the pointer release event to surfaces.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The x position of the cursor.
 			 * @param positionY The Y position of the cursor.
 			 * @param buttonNumber The mouse button.
 			 * @param modifiers Modification keys held.
 			 * @return bool
 			 */
-			bool onButtonRelease (const FramebufferProperties & framebufferProperties, float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
+			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
 
 			/**
 			 * @brief Transfers the mouse wheel event to surfaces.
-			 * @param framebufferProperties A reference to the framebuffer properties.
 			 * @param positionX The x position of the cursor.
 			 * @param positionY The Y position of the cursor.
 			 * @param xOffset The mouse wheel x offset.
 			 * @param yOffset The mouse wheel y offset.
 			 * @return bool
 			 */
-			bool onMouseWheel (const FramebufferProperties & framebufferProperties, float positionX, float positionY, float xOffset, float yOffset) noexcept;
+			bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept;
 
 		private:
 
@@ -362,7 +357,7 @@ namespace Emeraude::Overlay
 			static constexpr auto IsListeningPointer{2UL};
 
 			Graphics::Renderer & m_graphicsRenderer;
-			FramebufferProperties m_framebufferProperties;
+			const FramebufferProperties & m_framebufferProperties;
 			std::map< std::string, std::shared_ptr< AbstractSurface > > m_surfaces;
 			std::shared_ptr< AbstractSurface > m_inputExclusiveSurface;
 			std::array< bool, 8 > m_flags{

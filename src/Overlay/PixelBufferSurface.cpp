@@ -56,8 +56,8 @@ namespace Emeraude::Overlay
 	using namespace Graphics;
 	using namespace Vulkan;
 
-	PixelBufferSurface::PixelBufferSurface (const std::string & name, const Rectangle< float > & geometry, float depth) noexcept
-		: AbstractSurface(name, geometry, depth)
+	PixelBufferSurface::PixelBufferSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Rectangle< float > & geometry, float depth) noexcept
+		: AbstractSurface(framebufferProperties, name, geometry, depth)
 	{
 
 	}
@@ -204,9 +204,9 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	PixelBufferSurface::createOnHardware (Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept
+	PixelBufferSurface::createOnHardware (Renderer & renderer) noexcept
 	{
-		const auto sizes = framebufferProperties.getScaledResolution(this->geometry(), false);
+		const auto sizes = this->framebufferProperties().getScaledResolution(this->geometry(), false);
 
 		if ( !m_localData.initialize(sizes[0], sizes[1], ChannelMode::RGBA) )
 		{
@@ -234,9 +234,9 @@ namespace Emeraude::Overlay
 	}
 
 	bool
-	PixelBufferSurface::onPhysicalRepresentationUpdate (Renderer & renderer, const FramebufferProperties & framebufferProperties) noexcept
+	PixelBufferSurface::onPhysicalRepresentationUpdate (Renderer & renderer) noexcept
 	{
-		const auto sizes = framebufferProperties.getScaledResolution(this->geometry(), false);
+		const auto sizes = this->framebufferProperties().getScaledResolution(this->geometry(), false);
 
 		if ( m_localData.width() == sizes[0] && m_localData.height() == sizes[1] )
 		{

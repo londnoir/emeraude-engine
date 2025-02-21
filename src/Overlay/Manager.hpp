@@ -389,7 +389,7 @@ namespace Emeraude::Overlay
 			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
-			 * @brief Resize the overlay.
+			 * @brief Updates the overlay physical content.
 			 * @param fromResize Tells a resize occurred.
 			 * @return void
 			 */
@@ -433,17 +433,18 @@ namespace Emeraude::Overlay
 			PrimaryServices & m_primaryServices;
 			Window & m_window;
 			Graphics::Renderer & m_graphicsRenderer;
+			FramebufferProperties m_framebufferProperties;
 			std::shared_ptr< Graphics::Geometry::IndexedVertexResource > m_surfaceGeometry;
 			std::shared_ptr< Saphir::Program > m_program;
 			std::unordered_map< std::string, std::shared_ptr< UIScreen > > m_screens;
 			std::shared_ptr< UIScreen > m_inputExclusiveScreen;
-			FramebufferProperties m_framebufferProperties;
 #ifdef IMGUI_ENABLED
 			std::string m_iniFilepath;
 			std::string m_logFilepath;
 			std::shared_ptr< Vulkan::DescriptorPool > m_ImGUIDescriptorPool;
 			std::unordered_map< std::string, std::shared_ptr< ImGUIScreen > > m_ImGUIScreens;
 #endif
+			mutable std::mutex m_updateMutex;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
 				false/*Enabled*/,

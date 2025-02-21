@@ -73,6 +73,37 @@ namespace Emeraude
 #endif
 
 			/**
+			 * @brief Copy constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			PrimaryServices (const PrimaryServices & copy) noexcept = delete;
+
+			/**
+			 * @brief Move constructor.
+			 * @param copy A reference to the copied instance.
+			 */
+			PrimaryServices (PrimaryServices && copy) noexcept = delete;
+
+			/**
+			 * @brief Copy assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return PrimaryServices &
+			 */
+			PrimaryServices & operator= (const PrimaryServices & copy) noexcept = delete;
+
+			/**
+			 * @brief Move assignment.
+			 * @param copy A reference to the copied instance.
+			 * @return PrimaryServices &
+			 */
+			PrimaryServices & operator= (PrimaryServices && copy) noexcept = delete;
+
+			/**
+			 * @brief Destructs the primary services.
+			 */
+			~PrimaryServices () = default;
+
+			/**
 			 * @brief Main initialization method for primary services.
 			 * @return bool
 			 */

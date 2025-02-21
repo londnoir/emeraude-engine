@@ -27,21 +27,9 @@
 
 #include "Button.hpp"
 
-/* STL inclusions. */
-#include <cstddef>
-#include <cstdint>
-#include <string>
-#include <memory>
-
 /* Local inclusions. */
-#include "Graphics/ImageResource.hpp"
-#include "Graphics/TextWriter.hpp"
-#include "Overlay/ComposedSurface.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Overlay/FramebufferProperties.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
 #include "Libraries/PixelFactory/Processor.hpp"
-#include "Tracer.hpp"
+#include "Graphics/ImageResource.hpp"
 
 namespace Emeraude::Overlay::Elements
 {
@@ -50,8 +38,8 @@ namespace Emeraude::Overlay::Elements
 	using namespace Libraries::PixelFactory;
 	using namespace Graphics;
 
-	Button::Button (const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: ComposedSurface(name, geometry, depth)//, m_textWriter(this->pixmap())
+	Button::Button (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);
 
@@ -59,7 +47,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	void
-	Button::onPointerEnter (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
+	Button::onPointerEnter (float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -72,7 +60,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	void
-	Button::onPointerLeave (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/) noexcept
+	Button::onPointerLeave (float /*positionX*/, float /*positionY*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -85,7 +73,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	bool
-	Button::onButtonPress (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
+	Button::onButtonPress (float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{
@@ -100,7 +88,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	bool
-	Button::onButtonRelease (const FramebufferProperties & /*framebufferProperties*/, float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
+	Button::onButtonRelease (float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
 	{
 		if ( m_status == Status::Disabled )
 		{

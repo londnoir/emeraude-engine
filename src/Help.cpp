@@ -27,6 +27,9 @@
 
 #include "Help.hpp"
 
+/* STL inclusions. */
+#include <sstream>
+
 namespace Emeraude
 {
 	using namespace Libraries;
