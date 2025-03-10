@@ -2,25 +2,24 @@
  * src/Arguments.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -70,31 +69,31 @@ namespace Emeraude
 	}
 
 #if IS_WINDOWS
-    Arguments::Arguments (int argc, wchar_t * * wargv) noexcept
-        : ServiceInterface(ClassId)
-    {
-        if ( s_instance != nullptr )
-        {
-            std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
+	Arguments::Arguments (int argc, wchar_t * * wargv) noexcept
+		: ServiceInterface(ClassId)
+	{
+		if ( s_instance != nullptr )
+		{
+			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
 
-            std::terminate();
-        }
+			std::terminate();
+		}
 
-        s_instance = this;
+		s_instance = this;
 
-        /* NOTE: Create a copy of main() arguments. */
-        if ( argc > 0 && wargv != nullptr )
-        {
-            m_rawArguments.reserve(argc);
+		/* NOTE: Create a copy of main() arguments. */
+		if ( argc > 0 && wargv != nullptr )
+		{
+			m_rawArguments.reserve(argc);
 
-            for ( int argIndex = 0; argIndex < argc; argIndex++ )
-            {
-                std::wstring tmp{wargv[argIndex]};
+			for ( int argIndex = 0; argIndex < argc; argIndex++ )
+			{
+				std::wstring tmp{wargv[argIndex]};
 
-                m_rawArguments.emplace_back(PlatformSpecific::convertWideToUTF8(tmp));
-            }
-        }
-    }
+				m_rawArguments.emplace_back(PlatformSpecific::convertWideToUTF8(tmp));
+			}
+		}
+	}
 #endif
 
 	Arguments::~Arguments ()

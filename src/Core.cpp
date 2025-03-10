@@ -2,25 +2,24 @@
  * src/Core.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -60,17 +59,17 @@ namespace Emeraude
 	Core * Core::s_instance{nullptr};
 
 #if IS_WINDOWS
-    Core::Core (int argc, wchar_t * * wargv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
-        : KeyboardListenerInterface(false, false),
+	Core::Core (int argc, wchar_t * * wargv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
+		: KeyboardListenerInterface(false, false),
 		Controllable(ClassId),
-        m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
-        m_primaryServices(argc, wargv, m_identification, false)
+		m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
+		m_primaryServices(argc, wargv, m_identification, false)
 #else
 	Core::Core (int argc, char * * argv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
-        : KeyboardListenerInterface(false, false),
+		: KeyboardListenerInterface(false, false),
 		Controllable(ClassId),
-        m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
-        m_primaryServices(argc, argv, m_identification, false)
+		m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
+		m_primaryServices(argc, argv, m_identification, false)
 #endif
 	{
 		/* NOTE: Avoid to double construct the engine. */
@@ -84,9 +83,9 @@ namespace Emeraude
 		s_instance = this;
 
 		TraceInfo{ClassId} << "\n"
-			"Engine       : " << m_identification.engineId() << "\n"
+			"Engine	   : " << m_identification.engineId() << "\n"
 			"Application  : " << m_identification.applicationId() << "\n"
-    		"Reverse ID   : " << m_identification.applicationReverseId() << "\n";
+			"Reverse ID   : " << m_identification.applicationReverseId() << "\n";
 
 		/* Registering core help. */
 		{
@@ -216,7 +215,7 @@ namespace Emeraude
 			}
 		}
 
-    	m_resourceManager.unloadUnusedResources();
+		m_resourceManager.unloadUnusedResources();
 
 		m_primaryServices.terminate();
 
@@ -357,21 +356,21 @@ namespace Emeraude
 			this->renderingTask();
 		}};
 
-    	Tracer::success(ClassId, "Core execution started !");
+		Tracer::success(ClassId, "Core execution started !");
 
-    	/* Launch the application level. */
-    	if ( this->onStart() )
-    	{
-    		Tracer::success(ClassId, "The application successfully started.");
+		/* Launch the application level. */
+		if ( this->onStart() )
+		{
+			Tracer::success(ClassId, "The application successfully started.");
 
-    		this->notify(ExecutionStarted);
-    	}
-    	else
-    	{
-    		Tracer::fatal(ClassId, "The application failed to start ! Exiting ...");
+			this->notify(ExecutionStarted);
+		}
+		else
+		{
+			Tracer::fatal(ClassId, "The application failed to start ! Exiting ...");
 
-    		this->stop();
-    	}
+			this->stop();
+		}
 
 		while ( m_flags[IsMainLoopRunning] )
 		{
@@ -420,48 +419,48 @@ namespace Emeraude
 		}
 
 		/* Stopping the logics and rendering loops. */
-        m_flags[IsLogicsLoopRunning] = false;
-        m_flags[IsRenderingLoopRunning] = false;
+		m_flags[IsLogicsLoopRunning] = false;
+		m_flags[IsRenderingLoopRunning] = false;
 
-    	if ( renderingThread.joinable() )
-    	{
-    		Tracer::info(ClassId, "Waiting for rendering thread to be joined ...");
+		if ( renderingThread.joinable() )
+		{
+			Tracer::info(ClassId, "Waiting for rendering thread to be joined ...");
 
-    		renderingThread.join();
-    	}
+			renderingThread.join();
+		}
 
-        if ( logicsThread.joinable() )
-        {
-        	Tracer::info(ClassId, "Waiting for core logics thread to be joined ...");
+		if ( logicsThread.joinable() )
+		{
+			Tracer::info(ClassId, "Waiting for core logics thread to be joined ...");
 
-            logicsThread.join();
-        }
+			logicsThread.join();
+		}
 
 		return this->terminate() == 0;
 	}
 
 	void
 	Core::checkForDialogMessages () noexcept
-    {
-    	using namespace PlatformSpecific::Desktop::Dialog;
+	{
+		using namespace PlatformSpecific::Desktop::Dialog;
 
-    	const auto error = m_messages.front();
+		const auto error = m_messages.front();
 
-    	Message dialog{
-    		"Internal engine message !",
+		Message dialog{
+			"Internal engine message !",
 			error,
 			ButtonLayout::OK,
 			MessageType::Info
 		};
 
-    	m_messages.pop();
+		m_messages.pop();
 
-    	this->pause();
+		this->pause();
 
-    	dialog.execute(&this->window());
+		dialog.execute(&this->window());
 
-    	this->resume();
-    }
+		this->resume();
+	}
 
 	void
 	Core::onMainLoopCycle () const noexcept
@@ -672,28 +671,28 @@ namespace Emeraude
 
 	void
 	Core::onRegisterToConsole () noexcept
-    {
-    	this->bindCommand("exit,quit,shutdown", [this] (const Console::Arguments & /*arguments*/, Console::Outputs & outputs) {
+	{
+		this->bindCommand("exit,quit,shutdown", [this] (const Console::Arguments & /*arguments*/, Console::Outputs & outputs) {
 			outputs.emplace_back(Severity::Info, "Shutdown procedure called from console ...");
 
 			this->stop();
 
 			return 0;
 		}, "Quit the application.");
-    }
+	}
 
 	bool
 	Core::initializeCoreScreen () noexcept
 	{
 #ifdef IMGUI_ENABLED
-    	const auto screen = m_overlayManager.createImGUIScreen("CoreScreen", [] () {
+		const auto screen = m_overlayManager.createImGUIScreen("CoreScreen", [] () {
 			bool show = true;
 			ImGui::ShowDemoWindow(&show);
 		});
 
-    	screen->setVisibility(false);
+		screen->setVisibility(false);
 #else
-    	const auto screen = m_overlayManager.createScreen("CoreScreen", false, false);
+		const auto screen = m_overlayManager.createScreen("CoreScreen", false, false);
 #endif
 
 		return screen != nullptr;
@@ -714,8 +713,8 @@ namespace Emeraude
 
 		this->onPause();
 
-    	/* Pause the core engine last. */
-    	m_flags[Paused] = true;
+		/* Pause the core engine last. */
+		m_flags[Paused] = true;
 	}
 
 	void
@@ -726,7 +725,7 @@ namespace Emeraude
 			return;
 		}
 
-    	/* Pause the core engine first. */
+		/* Pause the core engine first. */
 		m_flags[Paused] = false;
 
 		/* Dispatch the resume event,
@@ -740,11 +739,11 @@ namespace Emeraude
 	void
 	Core::stop () noexcept
 	{
-    	Tracer::info(ClassId, "\n"
-    		"*******************************" "\n"
-    		"   Engine is about to stop !   " "\n"
-    		"*******************************" "\n"
-    	);
+		Tracer::info(ClassId, "\n"
+			"*******************************" "\n"
+			"   Engine is about to stop !   " "\n"
+			"*******************************" "\n"
+		);
 
 		/* Dispatch the stop event,
 		 * first by sending the event
@@ -753,10 +752,10 @@ namespace Emeraude
 
 		this->onStop();
 
-    	m_sceneManager.deleteAllScenes();
+		m_sceneManager.deleteAllScenes();
 
-    	/* Release the main loop. */
-    	m_flags[IsMainLoopRunning] = false;
+		/* Release the main loop. */
+		m_flags[IsMainLoopRunning] = false;
 	}
 
 	unsigned int
@@ -779,7 +778,7 @@ namespace Emeraude
 			}
 		}
 
-    	m_resourceManager.unloadUnusedResources();
+		m_resourceManager.unloadUnusedResources();
 
 		m_secondaryServicesEnabled.clear();
 
@@ -988,9 +987,8 @@ namespace Emeraude
 					Tracer::info(ClassId, "Showing application user data directory ...");
 
 					PlatformSpecific::Desktop::openFolder(this->primaryServices().fileSystem().userDataDirectory());
-
-					return true;
 				}
+					return true;
 
 				case KeyF9 :
 				{
@@ -1187,28 +1185,28 @@ namespace Emeraude
 			return true;
 		}
 
-    	if ( observable == &m_graphicsRenderer.shaderManager() )
-    	{
-    		switch ( notificationCode )
-    		{
-    			case Saphir::ShaderManager::ShaderCompilationSucceed :
-    				this->notifyUser(BlobTrait{} << "Shader '" << std::any_cast< std::string >(data) << "' compilation succeeded !");
-    				break;
+		if ( observable == &m_graphicsRenderer.shaderManager() )
+		{
+			switch ( notificationCode )
+			{
+				case Saphir::ShaderManager::ShaderCompilationSucceed :
+					this->notifyUser(BlobTrait{} << "Shader '" << std::any_cast< std::string >(data) << "' compilation succeeded !");
+					break;
 
-    			case Saphir::ShaderManager::ShaderCompilationFailed :
-    			{
-    				const auto shaderDetails = std::any_cast< std::pair< std::string, std::string > >(data);
+				case Saphir::ShaderManager::ShaderCompilationFailed :
+				{
+					const auto shaderDetails = std::any_cast< std::pair< std::string, std::string > >(data);
 
-    				this->onShaderCompilationFailed(shaderDetails.first, shaderDetails.second);
-    			}
-    				break;
+					this->onShaderCompilationFailed(shaderDetails.first, shaderDetails.second);
+				}
+					break;
 
-    			default:
-    				break;
-    		}
+				default:
+					break;
+			}
 
-    		return true;
-    	}
+			return true;
+		}
 
 		if ( observable == &m_trackMixer )
 		{

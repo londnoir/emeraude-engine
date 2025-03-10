@@ -2,25 +2,24 @@
  * src/FileSystem.hpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -132,10 +131,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::string &
-            binaryName () const noexcept
-            {
-                return m_binaryName;
-            }
+			binaryName () const noexcept
+			{
+				return m_binaryName;
+			}
 
 			/**
 			 * @brief Returns the parent directory of the binary.
@@ -143,10 +142,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::filesystem::path &
-            binaryDirectory () const noexcept
-            {
-                return m_binaryDirectory;
-            }
+			binaryDirectory () const noexcept
+			{
+				return m_binaryDirectory;
+			}
 
 			/**
 			 * @brief Returns the parent directory of the binary with an append to the path.
@@ -169,10 +168,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::filesystem::path &
-            userDirectory () const noexcept
-            {
-                return m_userDirectory;
-            }
+			userDirectory () const noexcept
+			{
+				return m_userDirectory;
+			}
 
 			/**
 			 * @brief Returns the home directory of the current user with an append to the path.
@@ -195,10 +194,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::filesystem::path &
-            userDataDirectory () const noexcept
-            {
-                return m_userDataDirectory;
-            }
+			userDataDirectory () const noexcept
+			{
+				return m_userDataDirectory;
+			}
 
 			/**
 			 * @brief Returns the user data directory for the application of the current user with an append to the path.
@@ -221,10 +220,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::filesystem::path &
-            configDirectory () const noexcept
-            {
-                return m_configDirectory;
-            }
+			configDirectory () const noexcept
+			{
+				return m_configDirectory;
+			}
 
 			/**
 			 * @brief Returns the config directory of this application with an append to the path.
@@ -247,10 +246,10 @@ namespace Emeraude
 			 */
 			[[nodiscard]]
 			const std::filesystem::path &
-            cacheDirectory () const noexcept
-            {
-                return m_cacheDirectory;
-            }
+			cacheDirectory () const noexcept
+			{
+				return m_cacheDirectory;
+			}
 
 			/**
 			 * @brief Returns the cache directory of this application with an append to the path.
@@ -274,9 +273,9 @@ namespace Emeraude
 			[[nodiscard]]
 			const std::vector< std::filesystem::path > &
 			dataDirectories () const noexcept
-            {
-                return m_dataDirectories;
-            }
+			{
+				return m_dataDirectories;
+			}
 
 			/**
 			 * @brief Returns a possible filepath from data directories.

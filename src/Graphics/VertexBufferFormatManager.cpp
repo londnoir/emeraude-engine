@@ -2,25 +2,24 @@
  * src/Graphics/VertexBufferFormatManager.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -369,57 +368,57 @@ namespace Emeraude::Graphics
 
 				if ( vertexShader.isBillBoardingEnabled() )
 				{
-                    if ( requestedVertexAttributes.contains(VertexAttributeType::ModelPosition) )
-                    {
-                        this->declareAttribute(VertexAttributeType::ModelPosition);
-                    }
-                    else
-                    {
-                        this->declareJump(VertexAttributeType::ModelPosition);
-                    }
+					if ( requestedVertexAttributes.contains(VertexAttributeType::ModelPosition) )
+					{
+						this->declareAttribute(VertexAttributeType::ModelPosition);
+					}
+					else
+					{
+						this->declareJump(VertexAttributeType::ModelPosition);
+					}
 
-                    if ( requestedVertexAttributes.contains(VertexAttributeType::ModelScaling) )
-                    {
-                        this->declareAttribute(VertexAttributeType::ModelScaling);
-                    }
-                    else
-                    {
-                        this->declareJump(VertexAttributeType::ModelScaling);
-                    }
+					if ( requestedVertexAttributes.contains(VertexAttributeType::ModelScaling) )
+					{
+						this->declareAttribute(VertexAttributeType::ModelScaling);
+					}
+					else
+					{
+						this->declareJump(VertexAttributeType::ModelScaling);
+					}
 				}
 				else
 				{
-                    /* NOTE: Matrix 4x4 declaration. */
-                    if ( requestedVertexAttributes.contains(VertexAttributeType::ModelMatrixR0) )
-                    {
-                        this->declareAttribute(VertexAttributeType::ModelMatrixR0);
-                        this->declareAttribute(VertexAttributeType::ModelMatrixR1);
-                        this->declareAttribute(VertexAttributeType::ModelMatrixR2);
-                        this->declareAttribute(VertexAttributeType::ModelMatrixR3);
-                    }
-                    else
-                    {
-                        this->declareJump(VertexAttributeType::ModelMatrixR0);
-                        this->declareJump(VertexAttributeType::ModelMatrixR1);
-                        this->declareJump(VertexAttributeType::ModelMatrixR2);
-                        this->declareJump(VertexAttributeType::ModelMatrixR3);
-                    }
+					/* NOTE: Matrix 4x4 declaration. */
+					if ( requestedVertexAttributes.contains(VertexAttributeType::ModelMatrixR0) )
+					{
+						this->declareAttribute(VertexAttributeType::ModelMatrixR0);
+						this->declareAttribute(VertexAttributeType::ModelMatrixR1);
+						this->declareAttribute(VertexAttributeType::ModelMatrixR2);
+						this->declareAttribute(VertexAttributeType::ModelMatrixR3);
+					}
+					else
+					{
+						this->declareJump(VertexAttributeType::ModelMatrixR0);
+						this->declareJump(VertexAttributeType::ModelMatrixR1);
+						this->declareJump(VertexAttributeType::ModelMatrixR2);
+						this->declareJump(VertexAttributeType::ModelMatrixR3);
+					}
 
-                    /* Check the uses of the full tangent space or normals. */
-                    if ( requestedVertexAttributes.contains(VertexAttributeType::NormalModelMatrixR0) )
-                    {
-                        /* NOTE: Matrix 3x3 declaration. */
-                        this->declareAttribute(VertexAttributeType::NormalModelMatrixR0);
-                        this->declareAttribute(VertexAttributeType::NormalModelMatrixR1);
-                        this->declareAttribute(VertexAttributeType::NormalModelMatrixR2);
-                    }
-                    else
-                    {
-                        /* Check for attribute presence to jump over. */
-                        this->declareJump(VertexAttributeType::NormalModelMatrixR0);
-                        this->declareJump(VertexAttributeType::NormalModelMatrixR1);
-                        this->declareJump(VertexAttributeType::NormalModelMatrixR2);
-                    }
+					/* Check the uses of the full tangent space or normals. */
+					if ( requestedVertexAttributes.contains(VertexAttributeType::NormalModelMatrixR0) )
+					{
+						/* NOTE: Matrix 3x3 declaration. */
+						this->declareAttribute(VertexAttributeType::NormalModelMatrixR0);
+						this->declareAttribute(VertexAttributeType::NormalModelMatrixR1);
+						this->declareAttribute(VertexAttributeType::NormalModelMatrixR2);
+					}
+					else
+					{
+						/* Check for attribute presence to jump over. */
+						this->declareJump(VertexAttributeType::NormalModelMatrixR0);
+						this->declareJump(VertexAttributeType::NormalModelMatrixR1);
+						this->declareJump(VertexAttributeType::NormalModelMatrixR2);
+					}
 				}
 
 				this->endBinding(Graphics::Topology::CustomData, PerInstance | IsDynamicVertexBuffer);

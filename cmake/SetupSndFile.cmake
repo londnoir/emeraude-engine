@@ -30,8 +30,8 @@ message(" - Headers : ${SNDFILE_INCLUDE_DIRS}")
 message(" - Libraries : ${SNDFILE_LIBRARY_DIRS}")
 message(" - Binary : ${SNDFILE_LIBRARIES}")
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${SNDFILE_INCLUDE_DIRS})
-target_link_directories(${PROJECT_NAME} PUBLIC ${SNDFILE_LIBRARY_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${SNDFILE_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${SNDFILE_INCLUDE_DIRS})
+target_link_directories(${PROJECT_NAME} PRIVATE ${SNDFILE_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${SNDFILE_LIBRARIES})
 
 set(SNDFILE_ENABLED On) # Complete the "libraries_config.hpp" file

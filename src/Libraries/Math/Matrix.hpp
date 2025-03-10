@@ -2,25 +2,24 @@
  * src/Libraries/Math/Matrix.hpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -1955,7 +1954,7 @@ namespace Libraries::Math
 			 * @brief Returns a rotation matrix around X.
 			 * @note Only usable in 3D.
 			 * Layout 4x4 :
-			 *        c0    c1    c2    c3
+			 *		c0	c1	c2	c3
 			 *   r0 [  1 ][  0 ][  0 ][  0 ]
 			 *   r1 [  0 ][ cos][-sin][  0 ]
 			 *   r2 [  0 ][ sin][ cos][  0 ]
@@ -1998,7 +1997,7 @@ namespace Libraries::Math
 			 * @brief Returns a rotation matrix around Y.
 			 * @note Only usable in 3D.
 			 * Layout 4x4 :
-			 *        c0    c1    c2    c3
+			 *		c0	c1	c2	c3
 			 *   r0 [ cos][  0 ][ sin][  0 ]
 			 *   r1 [  0 ][  1 ][  0 ][  0 ]
 			 *   r2 [-sin][  0 ][ cos][  0 ]
@@ -2041,7 +2040,7 @@ namespace Libraries::Math
 			 * @brief Returns a rotation matrix around Z.
 			 * @note Use this version to perform a simple 2D rotation.
 			 * Layout 4x4 :
-			 *        c0    c1    c2    c3
+			 *		c0	c1	c2	c3
 			 *   r0 [ cos][-sin][  0 ][  0 ]
 			 *   r1 [ sin][ cos][  0 ][  0 ]
 			 *   r2 [  0 ][  0 ][  1 ][  0 ]

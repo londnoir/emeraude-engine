@@ -2,25 +2,24 @@
  * src/Saphir/ShaderManager.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -36,7 +35,7 @@
 
 /* Local inclusions. */
 #include "Libraries/SourceCodeParser.hpp"
-#include "Libraries/IO.hpp"
+#include "Libraries/IO/IO.hpp"
 #include "Vulkan/ShaderModule.hpp"
 #include "AbstractShader.hpp"
 #include "PrimaryServices.hpp"
@@ -699,8 +698,8 @@ namespace Emeraude::Saphir
 		glslShader.setStrings(&sourceCodeCString, 1);
 		glslShader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, m_defaultVersion);
 #if IS_MACOS
-        glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
-        glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+		glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+		glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 #else
 		glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_3);
 		glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_6);

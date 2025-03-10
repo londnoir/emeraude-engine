@@ -2,25 +2,24 @@
  * src/PlatformSpecific/SystemInfo.mac.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -66,13 +65,13 @@ namespace Emeraude::PlatformSpecific
 		{
 			// macOS 11 and newer
 			m_OSInformation.systemName = (std::stringstream{} << "Apple MacOS " << (major - 9) << '.' << minor).str();
-            m_OSInformation.systemVersion = (std::stringstream{} << major << '.' << minor).str();
+			m_OSInformation.systemVersion = (std::stringstream{} << major << '.' << minor).str();
 		}
 		else
 		{
 			// macOS 10.1.1 and newer
-            m_OSInformation.systemName = (std::stringstream{} << "Apple Mac OS X " << (major - 4) << '.' << minor).str();
-            m_OSInformation.systemVersion = (std::stringstream{} << "10." << major << '.' << minor).str();
+			m_OSInformation.systemName = (std::stringstream{} << "Apple Mac OS X " << (major - 4) << '.' << minor).str();
+			m_OSInformation.systemVersion = (std::stringstream{} << "10." << major << '.' << minor).str();
 		}
 
 		return true;
@@ -130,21 +129,21 @@ namespace Emeraude::PlatformSpecific
 			// resolve symlinks, ... if possible
 			char * canonicalPath = realpath(exePath, nullptr);
 
-            if ( canonicalPath != nullptr )
-            {
+			if ( canonicalPath != nullptr )
+			{
 				strncpy(exePath,canonicalPath,len);
 				free(canonicalPath);
 			}
 		}
 
-        std::string realPath{exePath};
+		std::string realPath{exePath};
 
-        const auto position = realPath.find_last_of('/');
+		const auto position = realPath.find_last_of('/');
 
-        return
-            position == std::string::npos ?
-            realPath :
-            realPath.substr(0, position);
+		return
+			position == std::string::npos ?
+			realPath :
+			realPath.substr(0, position);
 	}
 }
 

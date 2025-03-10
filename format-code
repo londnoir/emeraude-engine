@@ -4,12 +4,10 @@
     require('./tools/tools-lib.php');
 
 	define('PROJECT_NAME', 'Emeraude-Engine');
-	define('PROJECT_PLACE', 'https://bitbucket.org/londnoir/emeraude-engine');
-	define('IDENTITY', '"LondNoir" <londnoir@gmail.com>');
+	define('PROJECT_PLACE', 'https://github.com/londnoir/emeraude-engine');
+	define('IDENTITY', 'Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>');
 
 	$paths = [
-		'./libraries',
-		'./lab',
 		'./src'
 	];
 
@@ -29,7 +27,7 @@
 
 	foreach ( $paths as $path )
 	{
-		$fileCount += crawl_directory($path, $extensions, $exclusions);
+		$fileCount += crawl_directory($path, $extensions, $exclusions, 'lgpl3');
 	}
 
 	echo 
@@ -37,5 +35,3 @@
 		'Code statistics : ' . PHP_EOL;
 
 	system('sloccount ' . implode(' ', $paths));
-
-?>

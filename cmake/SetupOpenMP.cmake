@@ -8,6 +8,6 @@ if ( MSVC )
 else ()
 	find_package(OpenMP REQUIRED)
 
-	target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
-	target_compile_options(${PROJECT_NAME} PUBLIC -fopenmp)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+	target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
 endif ()

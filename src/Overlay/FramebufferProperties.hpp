@@ -2,25 +2,24 @@
  * src/Overlay/FramebufferProperties.hpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -39,7 +38,7 @@
 namespace Emeraude::Overlay
 {
 	/**
-	 * @brief Defines a framebuffer properties for overlay usage.
+	 * @brief Defines the framebuffer properties. This helps to create surfaces of the overlay according to HDPI usage.
 	 */
 	class FramebufferProperties final
 	{
@@ -47,306 +46,272 @@ namespace Emeraude::Overlay
 
 			/** 
 			 * @brief Constructs a default framebuffer properties.
+			 * @warning This will be invalid at this time, be sure to use FramebufferProperties::updateProperties().
 			 */
 			FramebufferProperties () noexcept = default;
 
 			/**
-			 * @brief Constructs a framebuffer properties.
+			 * @brief Constructs a framebuffer properties from the available window framebuffer.
 			 * @param width The framebuffer width in pixel.
 			 * @param height The framebuffer height in pixel.
-			 * @param scaleX The scale in X.
-			 * @param scaleY The scale in Y.
+			 * @param scaleX The scale in X. Default 1.0.
+			 * @param scaleY The scale in Y. Default 1.0.
 			 */
-			FramebufferProperties (uint32_t width, uint32_t height, float scaleX, float scaleY) noexcept;
+			FramebufferProperties (uint32_t width, uint32_t height, float scaleX = 1.0F, float scaleY = 1.0F) noexcept;
 
 			/**
-			 * @brief Constructs a framebuffer properties.
-			 * @param data A reference to an array of unsigned integer.
-			 * @param scaleX The scale in X.
-			 * @param scaleY The scale in Y.
-			 */
-			FramebufferProperties (const std::array< uint32_t, 2 > & data, float scaleX, float scaleY) noexcept;
-
-			/**
-			 * @brief Sets the framebuffer resolution.
-			 * @param width The framebuffer width.
-			 * @param height the framebuffer height.
+			 * @brief Updates the framebuffer properties from the available window framebuffer.
+			 * @note This must be called when the monitor or the OS window is resized.
+			 * @param width The framebuffer width in pixel.
+			 * @param height The framebuffer height in pixel.
 			 * @return void
 			 */
 			void
-			setResolution (uint32_t width, uint32_t height) noexcept
+			updateProperties (uint32_t width, uint32_t height) noexcept
 			{
-				m_resolution[0] = width;
-				m_resolution[1] = height;
+				m_width = width;
+				m_height = height;
 
 				this->updateScaledResolution();
 			}
 
 			/**
-			 * @brief Sets the framebuffer resolution.
-			 * @param data A reference to an array of unsigned integer.
+			 * @brief Updates the framebuffer properties from the available window framebuffer with new scaling.
+			 * @note This must be called when the monitor or the OS window is resized.
+			 * @param width The framebuffer width in pixel.
+			 * @param height The framebuffer height in pixel.
+			 * @param scaleX The screen scale in X. Default 1.0.
+			 * @param scaleY The screen scale in Y. Default 1.0.
 			 * @return void
 			 */
 			void
-			setResolution (const std::array< uint32_t, 2 > & data) noexcept
+			updateProperties (uint32_t width, uint32_t height, float scaleX, float scaleY) noexcept
 			{
-				m_resolution = data;
+				m_width = width;
+				m_height = height;
 
-				this->updateScaledResolution();
+				this->setScreenScale(scaleX, scaleY);
 			}
 
 			/**
-			 * @brief Sets the framebuffer scaling.
-			 * @param scaleX The scale in X.
-			 * @param scaleY The scale in Y.
-			 * @return void
-			 */
-			void
-			setScale (float scaleX, float scaleY) noexcept
-			{
-				m_scaleX = scaleX;
-				m_scaleY = scaleY;
-
-				this->updateScaledResolution();
-			}
-
-			/**
-			 * @brief Sets the framebuffer scaling.
-			 * @param scale The scale uniform on both axis.
-			 * @return void
-			 */
-			void
-			setScale (float scale) noexcept
-			{
-				m_scaleX = scale;
-				m_scaleY = scale;
-
-				this->updateScaledResolution();
-			}
-
-			/**
-			 * @brief Checks whether the framebuffer info are valid.
+			 * @brief Checks whether the framebuffer properties are valid.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
 			isValid () const noexcept
 			{
-				return m_resolution[0] * m_resolution[1] != 0;
+				return m_width * m_height != 0;
 			}
 
 			/**
-			 * @brief Returns the resolution.
-			 * @return const std::array< uint32_t, 2 > &
+			 * @brief Sets the framebuffer scaling factor for HDPI screen.
+			 * @param scaleX The scale in X.
+			 * @param scaleY The scale in Y.
+			 * @return void
 			 */
-			[[nodiscard]]
-			const std::array< uint32_t, 2 > &
-			resolution () const noexcept
+			void
+			setScreenScale (float scaleX, float scaleY) noexcept
 			{
-				return m_resolution;
+				m_screenScaleX = scaleX;
+				m_screenScaleY = scaleY;
+
+				this->updateScaledResolution();
 			}
 
 			/**
-			 * @brief Returns the framebuffer width.
+			 * @brief Sets the framebuffer scaling factor for HDPI screen.
+			 * @param scale The scale uniform on both axis.
+			 * @return void
+			 */
+			void
+			setScreenScale (float scale) noexcept
+			{
+				m_screenScaleX = scale;
+				m_screenScaleY = scale;
+
+				this->updateScaledResolution();
+			}
+
+			/**
+			 * @brief Returns the framebuffer width in pixels.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
 			uint32_t
 			width () const noexcept
 			{
-				return m_resolution[0];
+				return m_width;
 			}
 
 			/**
-			 * @brief Returns the framebuffer height.
+			 * @brief Returns the framebuffer height in pixels.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
 			uint32_t
 			height () const noexcept
 			{
-				return m_resolution[1];
+				return m_height;
 			}
 
 			/**
-			 * @brief Returns the scale to apply in X.
+			 * @brief Returns the scale to apply on X axis when using HDPI screen.
 			 * @return float
 			 */
 			[[nodiscard]]
 			float
-			scaleX () const noexcept
+			screenScaleX () const noexcept
 			{
-				return m_scaleX;
+				return m_screenScaleX;
 			}
 
 			/**
-			 * @brief Returns the scale to apply in Y.
+			 * @brief Returns the scale to apply on Y axis when using HDPI screen.
 			 * @return float
 			 */
 			[[nodiscard]]
 			float
-			scaleY () const noexcept
+			screenScaleY () const noexcept
 			{
-				return m_scaleY;
+				return m_screenScaleY;
 			}
 
 			/**
-			 * @brief Returns the biggest scaling factor.
+			 * @brief Returns the biggest HDPI screen scale factor between X and Y.
 			 * @return float
 			 */
 			[[nodiscard]]
 			float
-			maxScale () const noexcept
+			maxScreenScale () const noexcept
 			{
-				return std::max(m_scaleX, m_scaleY);
+				return std::max(m_screenScaleX, m_screenScaleY);
 			}
 
 			/**
-			 * @brief Returns the inverse scale to apply in X.
+			 * @brief Returns the inverse scale to apply on X axis when using HDPI screen.
 			 * @return float
 			 */
 			[[nodiscard]]
 			float
-			inverseScaleX () const noexcept
+			inverseScreenScaleX () const noexcept
 			{
-				return m_inverseScaleX;
+				return m_inverseScreenScaleX;
 			}
 
 			/**
-			 * @brief Returns the inverse scale to apply in Y.
+			 * @brief Returns the inverse scale to apply on Y axis when using HDPI screen.
 			 * @return float
 			 */
 			[[nodiscard]]
 			float
-			inverseScaleY () const noexcept
+			inverseScreenScaleY () const noexcept
 			{
-				return m_inverseScaleY;
+				return m_inverseScreenScaleY;
 			}
 
 			/**
-			 * @brief Returns the scaled resolution.
-			 * @return const std::array< uint32_t, 2 > &
+			 * @brief Returns the framebuffer width in points.
+			 * @note This is the framebuffer width divided by the scale factor in X.
+			 * @return float
 			 */
 			[[nodiscard]]
-			const std::array< uint32_t, 2 > &
-			scaledResolution () const noexcept
+			float
+			resolutionX () const noexcept
 			{
-				return m_scaledResolution;
+				return m_resolutionX;
 			}
 
 			/**
-			 * @brief Returns the scaled width according to X scale.
+			 * @brief Returns the framebuffer height in points.
+			 * @note This is the framebuffer height divided by the scale factor in Y.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			resolutionY () const noexcept
+			{
+				return m_resolutionY;
+			}
+
+			/**
+			 * @brief Returns the framebuffer width in points rounded to an integer.
+			 * @tparam integer_t The integer type. Default signed int.
+			 * @return integer_t
+			 */
+			template< typename integer_t = int32_t >
+			[[nodiscard]]
+			integer_t
+			getRoundedResolutionX () const noexcept requires (std::is_integral_v< integer_t >)
+			{
+				return static_cast< integer_t >(std::round(m_resolutionX));
+			}
+
+			/**
+			 * @brief Returns the framebuffer height in points rounded to an integer.
+			 * @tparam integer_t The integer type. Default signed int.
+			 * @return integer_t
+			 */
+			template< typename integer_t = int32_t >
+			[[nodiscard]]
+			integer_t
+			getRoundedResolutionY () const noexcept requires (std::is_integral_v< integer_t >)
+			{
+				return static_cast< integer_t >(std::round(m_resolutionY));
+			}
+
+			/**
+			 * @brief Returns a width in points rounded to an integer.
+			 * @tparam integer_t The integer type. Default signed int.
+			 * @param width A scalar value to get a final size in screen space.
+			 * @return integer_t
+			 */
+			template< typename integer_t = int32_t >
+			[[nodiscard]]
+			integer_t
+			getRoundedResolutionX (float width) const noexcept requires (std::is_integral_v< integer_t >)
+			{
+					return static_cast< integer_t >(std::round(m_resolutionX * width));
+			}
+
+			/**
+			 * @brief Returns a height in points rounded to an integer.
+			 * @tparam integer_t The integer type. Default signed int.
+			 * @param height A scalar value to get a final size in screen space.
+			 * @return integer_t
+			 */
+			template< typename integer_t = int32_t >
+			[[nodiscard]]
+			integer_t
+			getRoundedResolutionY (float height) const noexcept requires (std::is_integral_v< integer_t >)
+			{
+					return static_cast< integer_t >(std::round(m_resolutionY * height));
+			}
+
+			/**
+			 * @brief Returns a computed width in pixels for a surface inside the framebuffer.
+			 * @param surfaceWidth A scalar value to get a final size in screen space.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
 			uint32_t
-			scaledWidth () const noexcept
+			getSurfaceWidth (float surfaceWidth) const noexcept
 			{
-				return m_scaledResolution[0];
+				/* NOTE: Do not remove the double round ! */
+				return static_cast< uint32_t >(std::round(std::round(m_resolutionX * surfaceWidth) * m_screenScaleX));
 			}
 
 			/**
-			 * @brief Returns the scaled height according to Y scale.
+			 * @brief Returns a computed width in pixels for a surface inside the framebuffer.
+			 * @param surfaceHeight A scalar value to get a final size in screen space.
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
 			uint32_t
-			scaledHeight () const noexcept
+			getSurfaceHeight (float surfaceHeight) const noexcept
 			{
-				return m_scaledResolution[1];
-			}
-
-			/**
-			 * @brief Returns a scaled version of the framebuffer dimensions.
-			 * @tparam float_t The type of floating number. Default float.
-			 * @param widthFactor The width factor.
-			 * @param heightFactor The height factor.
-			 * @param usePowerOfTwo Takes cares of having the dimensions as a power of two. Default true.
-			 * @return std::array< uint32_t, 2 >
-			 */
-			template< typename float_t = float >
-			[[nodiscard]]
-			std::array< uint32_t, 2 >
-			getScaledResolution (float_t widthFactor, float_t heightFactor, bool usePowerOfTwo = true) const noexcept requires (std::is_floating_point_v< float_t >)
-			{
-				/* NOTE: Do not simplify computation here ! */
-				const auto width = static_cast< float_t >(m_scaledResolution[0]) * m_scaleX * std::abs(widthFactor);
-				const auto height = static_cast< float_t >(m_scaledResolution[1]) * m_scaleY * std::abs(heightFactor);
-
-				if ( usePowerOfTwo )
-				{
-					return {
-						static_cast< uint32_t >(std::pow(static_cast< float_t >(2), std::ceil(std::log(width) / std::log(static_cast< float_t >(2))))),
-						static_cast< uint32_t >(std::pow(static_cast< float_t >(2), std::ceil(std::log(height) / std::log(static_cast< float_t >(2)))))
-					};
-				}
-
-				return {
-					static_cast< uint32_t >(std::round(width)),
-					static_cast< uint32_t >(std::round(height))
-				};
-			}
-
-			/**
-			 * @brief Returns a scaled version of the framebuffer dimensions.
-			 * @tparam float_t The type of floating number. Default float.
-			 * @param factor A reference to an array of floats.
-			 * @param usePowerOfTwo Takes cares of having the dimensions as a power of two. Default true.
-			 * @return std::array< uint32_t, 2 >
-			 */
-			template< typename float_t = float >
-			[[nodiscard]]
-			std::array< uint32_t, 2 >
-			getScaledResolution (const std::array< float_t, 2 > & factor, bool usePowerOfTwo = true) const noexcept requires (std::is_floating_point_v< float_t >)
-			{
-				return this->getScaledResolution(factor[0], factor[1], usePowerOfTwo);
-			}
-
-			/**
-			 * @brief Returns a scaled version of the framebuffer dimensions.
-			 * @tparam float_t The type of floating number. Default float.
-			 * @param rectangle A reference to a rectangle.
-			 * @param usePowerOfTwo Takes cares of having the dimensions as a power of two. Default true.
-			 * @return std::array< uint32_t, 2 >
-			 */
-			template< typename float_t = float >
-			[[nodiscard]]
-			std::array< uint32_t, 2 >
-			getScaledResolution (const Libraries::Math::Rectangle< float_t > & rectangle, bool usePowerOfTwo = true) const noexcept requires (std::is_floating_point_v< float_t >)
-			{
-				return this->getScaledResolution(rectangle.width(), rectangle.height(), usePowerOfTwo);
-			}
-
-			/**
-			 * @brief Updates the framebuffer properties.
-			 * @param width The framebuffer width in pixel.
-			 * @param height The framebuffer height in pixel.
-			 * @param scaleX The scale in X.
-			 * @param scaleY The scale in Y.
-			 * @return void
-			 */
-			void
-			updateProperties (uint32_t width, uint32_t height, float scaleX, float scaleY) noexcept
-			{
-				m_resolution[0] = width;
-				m_resolution[1] = height;
-
-				this->setScale(scaleX, scaleY);
-			}
-
-			/**
-			 * @brief Updates the framebuffer properties.
-			 * @param data A reference to an array of unsigned integer.
-			 * @param scaleX The scale in X.
-			 * @param scaleY The scale in Y.
-			 * @return void
-			 */
-			void
-			updateProperties (const std::array< uint32_t, 2 > & data, float scaleX, float scaleY) noexcept
-			{
-				m_resolution = data;
-
-				this->setScale(scaleX, scaleY);
+				/* NOTE: Do not remove the double round ! */
+				return static_cast< uint32_t >(std::round(std::round(m_resolutionY * surfaceHeight) * m_screenScaleY));
 			}
 
 			/**
@@ -378,11 +343,13 @@ namespace Emeraude::Overlay
 			 */
 			void updateScaledResolution () noexcept;
 
-			std::array< uint32_t, 2 > m_resolution{0, 0};
-			std::array< uint32_t, 2 > m_scaledResolution{0, 0};
-			float m_scaleX{1.0F};
-			float m_scaleY{1.0F};
-			float m_inverseScaleX{1.0F};
-			float m_inverseScaleY{1.0F};
+			uint32_t m_width{0};
+			uint32_t m_height{0};
+			float m_screenScaleX{1.0F};
+			float m_screenScaleY{1.0F};
+			float m_inverseScreenScaleX{1.0F};
+			float m_inverseScreenScaleY{1.0F};
+			float m_resolutionX{0};
+			float m_resolutionY{0};
 	};
 }

@@ -19,7 +19,7 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.12 DESCRIPTION "Emeraude Engine is an open-source 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.2 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
@@ -37,6 +37,7 @@ set(EMERAUDE_USE_SYSTEM_LIBS Off CACHE BOOL "Use the system for common libraries
 set(EMERAUDE_ENABLE_OPENMP On CACHE BOOL "Enable 'libomp' library [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_ZLIB On CACHE BOOL "Enable 'zlib' library [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_LZMA On CACHE BOOL "Enable 'liblzma' library [SYSTEM|LOCAL] (Default On).")
+set(EMERAUDE_ENABLE_LIBZIP On CACHE BOOL "Enable 'libzip' library [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_JPEG On CACHE BOOL "Enable 'libjpeg-turbo' library [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_PNG On CACHE BOOL "Enable 'libpng' library [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_FREETYPE On CACHE BOOL "Enable 'freetype' library. Adds the ability to read font file [SYSTEM|LOCAL] (Default On).")
@@ -86,8 +87,7 @@ if ( UNIX AND NOT APPLE )
 		set(APP_ARCH "x86_64")
 	endif ()
 
-	set(TEMPORARY_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tmp-linux.${APP_ARCH}-builds CACHE STRING "Temporary building directory for local libraries for Linux.")
-	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/lib-linux.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for Linux.")
+	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/linux.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for Linux.")
 
 	set(CMAKE_GEN_EXTRA_FLAGS -G "Ninja" CACHE STRING "Local libraries compilation extra generation flags for Linux.")
 elseif ( APPLE )
@@ -109,8 +109,7 @@ elseif ( APPLE )
 
 	message("macOS target arch ${CMAKE_OSX_ARCHITECTURES} with SDK ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 
-	set(TEMPORARY_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tmp-mac.${APP_ARCH}-builds CACHE STRING "Temporary building directory for local libraries for macOS.")
-	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/lib-mac.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for macOS.")
+	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/mac.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for macOS.")
 
 	set(CMAKE_GEN_EXTRA_FLAGS -DCMAKE_OSX_ARCHITECTURES=${APP_ARCH} -DCMAKE_OSX_DEPLOYMENT_TARGET=${APP_OSX_DEPLOYMENT_TARGET} -G "Ninja" CACHE STRING "Local libraries compilation extra generation flags for macOS.")
 elseif ( MSVC OR MSYS OR MINGW )
@@ -134,8 +133,7 @@ elseif ( MSVC OR MSYS OR MINGW )
 		set(APP_ARCH "x86_64")
 	endif ()
 
-	set(TEMPORARY_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/tmp-windows.${APP_ARCH}-builds CACHE STRING "Temporary building directory for local libraries for Windows.")
-	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/lib-windows.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for Windows.")
+	set(LOCAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/windows.${APP_ARCH}-${CMAKE_BUILD_TYPE} CACHE STRING "Final directory for local libraries for Windows.")
 
 	set(CMAKE_GEN_EXTRA_FLAGS -G "Visual Studio 17 2022" -A x64 CACHE STRING "Local libraries compilation extra generation flags for Windows.")
 endif ()
@@ -324,6 +322,10 @@ endif ()
 
 if ( EMERAUDE_ENABLE_LZMA )
 	include(SetupLZMA)
+endif ()
+
+if ( EMERAUDE_ENABLE_LIBZIP )
+	include(SetupZIP)
 endif ()
 
 if ( EMERAUDE_ENABLE_NATIVE_DIALOGS )

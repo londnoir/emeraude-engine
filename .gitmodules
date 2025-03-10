@@ -22,45 +22,6 @@
 [submodule "dependencies/glslang"]
 	path = dependencies/glslang
 	url = https://github.com/KhronosGroup/glslang.git
-[submodule "dependencies/zlib"]
-	path = dependencies/zlib
-	url = https://github.com/madler/zlib.git
-[submodule "dependencies/libjpeg-turbo"]
-	path = dependencies/libjpeg-turbo
-	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
-[submodule "dependencies/libpng"]
-	path = dependencies/libpng
-	url = https://github.com/glennrp/libpng.git
-[submodule "dependencies/freetype"]
-	path = dependencies/freetype
-	url = https://gitlab.freedesktop.org/freetype/freetype.git
 [submodule "dependencies/asio"]
 	path = dependencies/asio
 	url = https://github.com/chriskohlhoff/asio
-[submodule "dependencies/bzip2"]
-	path = dependencies/bzip2
-	url = https://github.com/libarchive/bzip2.git
-[submodule "dependencies/brotli"]
-	path = dependencies/brotli
-	url = https://github.com/google/brotli.git
-[submodule "dependencies/harfbuzz"]
-	path = dependencies/harfbuzz
-	url = https://github.com/harfbuzz/harfbuzz.git
-[submodule "dependencies/cpu_features"]
-	path = dependencies/cpu_features
-	url = https://github.com/google/cpu_features.git
-[submodule "dependencies/openal-soft"]
-	path = dependencies/openal-soft
-	url = https://github.com/kcat/openal-soft.git
-[submodule "dependencies/libsamplerate"]
-	path = dependencies/libsamplerate
-	url = https://github.com/libsndfile/libsamplerate.git
-[submodule "dependencies/hwloc"]
-	path = dependencies/hwloc
-	url = https://github.com/open-mpi/hwloc
-[submodule "dependencies/xz"]
-	path = dependencies/xz
-	url = https://github.com/tukaani-project/xz.git
-[submodule "dependencies/taglib"]
-	path = dependencies/taglib
-	url = https://github.com/taglib/taglib.git

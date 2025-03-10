@@ -2,25 +2,24 @@
  * src/Overlay/PixelBufferSurface.cpp
  * This file is part of Emeraude-Engine
  *
- * Copyright (C) 2010-2024 - "LondNoir" <londnoir@gmail.com>
+ * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
  *
- * Emeraude-Engine is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Emeraude-Engine is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
  * Emeraude-Engine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Emeraude-Engine; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Emeraude-Engine; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Complete project and additional information can be found at :
- * https://bitbucket.org/londnoir/emeraude-engine
+ * https://github.com/londnoir/emeraude-engine
  *
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
@@ -206,11 +205,15 @@ namespace Emeraude::Overlay
 	bool
 	PixelBufferSurface::createOnHardware (Renderer & renderer) noexcept
 	{
-		const auto sizes = this->framebufferProperties().getScaledResolution(this->geometry(), false);
+		const auto & framebuffer = this->framebufferProperties();
+		const auto & geometry = this->geometry();
 
-		if ( !m_localData.initialize(sizes[0], sizes[1], ChannelMode::RGBA) )
+		const auto textureWidth = framebuffer.getSurfaceWidth(geometry.width());
+		const auto textureHeight = framebuffer.getSurfaceHeight(geometry.height());
+
+		if ( !m_localData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
 		{
-			TraceError{ClassId} << "Unable to initialize a " << sizes[0] << "x" << sizes[1] << "px pixmap for the surface '" << this->name() << "' !";
+			TraceError{ClassId} << "Unable to initialize a " << textureWidth << "x" << textureHeight << "px pixmap for the surface '" << this->name() << "' !";
 
 			return false;
 		}
@@ -236,9 +239,13 @@ namespace Emeraude::Overlay
 	bool
 	PixelBufferSurface::onPhysicalRepresentationUpdate (Renderer & renderer) noexcept
 	{
-		const auto sizes = this->framebufferProperties().getScaledResolution(this->geometry(), false);
+		const auto & framebuffer = this->framebufferProperties();
+		const auto & geometry = this->geometry();
 
-		if ( m_localData.width() == sizes[0] && m_localData.height() == sizes[1] )
+		const auto textureWidth = framebuffer.getSurfaceWidth(geometry.width());
+		const auto textureHeight = framebuffer.getSurfaceHeight(geometry.height());
+
+		if ( m_localData.width() == textureWidth && m_localData.height() == textureHeight )
 		{
 #ifdef DEBUG
 			TraceInfo{ClassId} << "The surface '" << this->name() << "' already had the right dimensions.";
@@ -253,7 +260,7 @@ namespace Emeraude::Overlay
 			"to " << sizes[0] << 'x' << sizes[1] << " for the '" << this->name() << "' surface ...";
 #endif
 
-		if ( !m_localData.initialize(sizes[0], sizes[1], ChannelMode::RGBA) )
+		if ( !m_localData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
 		{
 			TraceError{ClassId} << "Unable to resize the pixmap for the surface '" << this->name() << "' !";
 
