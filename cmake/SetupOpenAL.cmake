@@ -18,14 +18,14 @@ else ()
 		target_link_libraries(${PROJECT_NAME} PRIVATE winmm.lib)
 		target_link_libraries(${PROJECT_NAME} PRIVATE Avrt.lib)
 
-		target_link_libraries(OPENAL_LIBRARY PRIVATE ${LOCAL_LIB_DIR}/lib/OpenAL32.lib)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/OpenAL32.lib)
 	else ()
 		if ( APPLE )
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreAudio")
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-framework AudioToolbox")
 		endif ()
 
-		target_link_libraries(OPENAL_LIBRARY PRIVATE openal)
+		target_link_libraries(${PROJECT_NAME} PRIVATE openal)
 	endif ()
 endif ()
 
