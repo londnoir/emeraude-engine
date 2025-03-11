@@ -34,11 +34,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDoc.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief Class for argument documentation.
-	 * @extends Emeraude::AbstractDoc The base documentation class.
+	 * @extends EmEn::AbstractDoc The base documentation class.
 	 */
 	class ArgumentDoc final : public AbstractDoc
 	{

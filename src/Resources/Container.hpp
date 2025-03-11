@@ -40,12 +40,12 @@
 #include <utility>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/ObservableTrait.hpp"
-#include "Libraries/IO/IO.hpp"
+#include "Libs/ObservableTrait.hpp"
+#include "Libs/IO/IO.hpp"
 #include "BaseInformation.hpp"
 #include "DownloadItem.hpp"
 #include "PrimaryServices.hpp"
@@ -54,16 +54,16 @@
 #include "Stores.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/**
 	 * @brief The resource manager template is responsible for loading asynchronously resources with dependencies and hold their lifetime.
 	 * @tparam resource_t The type of resources (The resource type is checked by LoadingRequest template).
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::ObserverTrait The manager observer resource loading.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Libs::ObserverTrait The manager observer resource loading.
 	 */
 	template< typename resource_t >
-	class Container final : public ServiceInterface, public Libraries::ObserverTrait
+	class Container final : public ServiceInterface, public Libs::ObserverTrait
 	{
 		public:
 
@@ -109,7 +109,7 @@ namespace Emeraude::Resources
 				this->observe(&m_networkManager);
 			}
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -117,7 +117,7 @@ namespace Emeraude::Resources
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -132,7 +132,7 @@ namespace Emeraude::Resources
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -147,7 +147,7 @@ namespace Emeraude::Resources
 			size_t
 			unloadUnusedResources () noexcept
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				size_t unloadedResources = 0;
 
@@ -229,7 +229,7 @@ namespace Emeraude::Resources
 			std::shared_ptr< resource_t >
 			createResource (const std::string & resourceName, uint32_t resourceFlagBits = 0) noexcept
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				if ( resourceName == Default )
 				{
@@ -589,7 +589,7 @@ namespace Emeraude::Resources
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool
 			onInitialize () noexcept override
 			{
@@ -614,7 +614,7 @@ namespace Emeraude::Resources
 				return true;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool
 			onTerminate () noexcept override
 			{
@@ -644,11 +644,11 @@ namespace Emeraude::Resources
 				return true;
 			}
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			bool
-			onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override
+			onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				if ( observable->is(NetworkManager::ClassUID) )
 				{
@@ -754,7 +754,7 @@ namespace Emeraude::Resources
 			std::shared_ptr< resource_t >
 			pushInLoadingQueue (const BaseInformation & baseInformation, bool asyncLoad) noexcept
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				const auto & name = baseInformation.name();
 
@@ -843,7 +843,7 @@ namespace Emeraude::Resources
 			void
 			loadingTask (LoadingRequest< resource_t > request) noexcept
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				/* Notify the beginning of a loading process. */
 				this->notify(LoadingProcessStarted);

@@ -31,9 +31,9 @@
 #include "Vulkan/PhysicalDevice.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Tool
+namespace EmEn::Tool
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	ShowVulkanInformation::ShowVulkanInformation (const Arguments & arguments, const Vulkan::Instance & vulkanInstance) noexcept
 		: m_arguments(arguments), m_vulkanInstance(vulkanInstance)

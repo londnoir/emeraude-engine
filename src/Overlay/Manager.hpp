@@ -39,7 +39,7 @@
 #include "ServiceInterface.hpp"
 #include "Input/KeyboardListenerInterface.hpp"
 #include "Input/PointerListenerInterface.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Input/Manager.hpp"
@@ -51,20 +51,20 @@
 #endif
 
 /* Forward declarations. */
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	class IndexedVertexResource;
 }
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief The overlay manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::Input::KeyboardListenerInterface The manager needs to listen to the keyboard.
-	 * @extends Emeraude::Input::PointerListenerInterface The manager needs to listen to the pointer.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Input::KeyboardListenerInterface The manager needs to listen to the keyboard.
+	 * @extends EmEn::Input::PointerListenerInterface The manager needs to listen to the pointer.
 	 */
-	class Manager final : public ServiceInterface, public Input::KeyboardListenerInterface, public Input::PointerListenerInterface, public Libraries::ObserverTrait
+	class Manager final : public ServiceInterface, public Input::KeyboardListenerInterface, public Input::PointerListenerInterface, public Libs::ObserverTrait
 	{
 		public:
 
@@ -122,7 +122,7 @@ namespace Emeraude::Overlay
 			 */
 			~Manager () override = default;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -130,7 +130,7 @@ namespace Emeraude::Overlay
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -138,7 +138,7 @@ namespace Emeraude::Overlay
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -146,25 +146,25 @@ namespace Emeraude::Overlay
 				return m_flags[ServiceInitialized];
 			}
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyPress() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onKeyPress() */
 			bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept override;
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyRelease() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onKeyRelease() */
 			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept override;
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onCharacterType() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onCharacterType() */
 			bool onCharacterType (uint32_t unicode) noexcept override;
 
-			/** @copydoc Emeraude::Input::PointerListenerInterface::onPointerMove() */
+			/** @copydoc EmEn::Input::PointerListenerInterface::onPointerMove() */
 			bool onPointerMove (float positionX, float positionY) noexcept override;
 
-			/** @copydoc Emeraude::Input::PointerListenerInterface::onButtonPress() */
+			/** @copydoc EmEn::Input::PointerListenerInterface::onButtonPress() */
 			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
-			/** @copydoc Emeraude::Input::PointerListenerInterface::onButtonRelease() */
+			/** @copydoc EmEn::Input::PointerListenerInterface::onButtonRelease() */
 			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
-			/** @copydoc Emeraude::Input::PointerListenerInterface::onMouseWheel() */
+			/** @copydoc EmEn::Input::PointerListenerInterface::onMouseWheel() */
 			bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept override;
 
 			/**
@@ -377,15 +377,15 @@ namespace Emeraude::Overlay
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Updates the overlay physical content.

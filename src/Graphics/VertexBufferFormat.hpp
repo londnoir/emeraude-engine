@@ -40,7 +40,7 @@
 /* Local inclusions for usages. */
 #include "VertexBufferBinding.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief Declares the data format of a vertex buffer object (VBO).

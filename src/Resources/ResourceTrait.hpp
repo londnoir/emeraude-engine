@@ -42,22 +42,22 @@
 #include "json/json.h"
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
-#include "Libraries/FlagTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
+#include "Libs/FlagTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/**
 	 * @brief This class describe a loadable resource with dependencies.
-	 * @extends Libraries::NameableTrait A resource is always named.
-	 * @extends Libraries::FlagTrait A resource needs flags to change behavior of resource construction.
-	 * @extends Libraries::ObservableTrait A resource is observable to keep track of loading states.
+	 * @extends EmEn::Libs::NameableTrait A resource is always named.
+	 * @extends EmEn::Libs::FlagTrait A resource needs flags to change behavior of resource construction.
+	 * @extends EmEn::Libs::ObservableTrait A resource is observable to keep track of loading states.
 	 */
-	class ResourceTrait : public Libraries::NameableTrait, public Libraries::FlagTrait< uint32_t >, public Libraries::ObservableTrait
+	class ResourceTrait : public Libs::NameableTrait, public Libs::FlagTrait< uint32_t >, public Libs::ObservableTrait
 	{
 		public:
 

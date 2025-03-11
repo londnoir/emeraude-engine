@@ -42,7 +42,7 @@
 /* Local inclusions. */
 #include "Helpers.hpp"
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	bool
 	SystemInfo::fetchOSInformation () noexcept

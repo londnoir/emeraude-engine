@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Graphics/Renderer.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	static constexpr auto TracerTag{"ViewMatricesInterface"};
 

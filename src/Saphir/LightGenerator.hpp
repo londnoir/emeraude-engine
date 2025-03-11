@@ -36,7 +36,7 @@
 #include "StaticLighting.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	namespace Generator
 	{
@@ -47,7 +47,7 @@ namespace Emeraude::Saphir
 	class FragmentShader;
 }
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The light model generator is responsible for generating GLSL lighting code independently of a light processor.

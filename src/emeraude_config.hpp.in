@@ -38,6 +38,7 @@
 
 #ifdef DEBUG
 	#define BOOLEAN_FOLLOWING_DEBUG true
+	#define BOOLEAN_FOLLOWING_RELEASE false
 
 	/* Libraries debug controls at compile-time. */
 	#cmakedefine EMERAUDE_DEBUG_OBSERVER_PATTERN
@@ -50,6 +51,7 @@
 	#cmakedefine VK_TRACKING_ENABLED
 #else
 	#define BOOLEAN_FOLLOWING_DEBUG false
+	#define BOOLEAN_FOLLOWING_RELEASE false
 #endif
 
 #ifndef __PRETTY_FUNCTION__
@@ -66,12 +68,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 /* Third-party libraries enabled at compile-time. */
-#cmakedefine ZLIB_ENABLED
-#cmakedefine LZMA_ENABLED
-#cmakedefine ZIP_ENABLED
-#cmakedefine JPEG_ENABLED
-#cmakedefine PNG_ENABLED
-#cmakedefine FREETYPE_ENABLED
+#cmakedefine EMERAUDE_USE_SYSTEM_LIBS
 #cmakedefine SNDFILE_ENABLED
 #cmakedefine SAMPLERATE_ENABLED
 #cmakedefine GLM_ENABLED

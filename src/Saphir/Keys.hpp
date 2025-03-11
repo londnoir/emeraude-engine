@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <string>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	using Key = const char *;
 
@@ -630,8 +630,8 @@ namespace Emeraude::Saphir
 
 		/**
 		 * @brief The name of fixed vertex attributes in Saphir.
-		 * @note See Emeraude::Graphics::VertexAttributeType for predefined vertex attribute in geometry.
-		 * Use Emeraude::Saphir::getVertexAttributeVariableName() to convert a attribute type to one of these variables.
+		 * @note See EmEn::Graphics::VertexAttributeType for predefined vertex attribute in geometry.
+		 * Use EmEn::Saphir::getVertexAttributeVariableName() to convert a attribute type to one of these variables.
 		 */
 		namespace Attribute
 		{

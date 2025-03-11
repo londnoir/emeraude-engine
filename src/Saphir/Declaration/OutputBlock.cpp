@@ -30,7 +30,7 @@
 #include <sstream>
 #include <limits>
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	using namespace Keys;
 

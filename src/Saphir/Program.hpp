@@ -33,7 +33,7 @@
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/VertexBufferFormat.hpp"
@@ -46,14 +46,14 @@
 #include "SetIndexes.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The program class.
 	 * @note This will contain all the necessary shaders in order to build a program like OpenGL.
-	 * @extends Libraries::NameableTrait This is a nameable class.
+	 * @extends EmEn::Libs::NameableTrait This is a nameable class.
 	 */
-	class Program final : public Libraries::NameableTrait
+	class Program final : public Libs::NameableTrait
 	{
 		public:
 

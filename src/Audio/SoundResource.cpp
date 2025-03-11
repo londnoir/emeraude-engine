@@ -27,24 +27,26 @@
 #include "SoundResource.hpp"
 
 /* Local inclusions. */
-#include "Libraries/WaveFactory/Processor.hpp"
+#include "Libs/WaveFactory/Processor.hpp"
 #include "Resources/Manager.hpp"
 #include "Manager.hpp"
 #include "Tracer.hpp"
 
 /* Defining the resource manager ClassId. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Audio::SoundResource >::ClassId{"SoundContainer"};
+const char * const EmEn::Resources::Container< EmEn::Audio::SoundResource >::ClassId{"SoundContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Audio::SoundResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Audio::SoundResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t SoundResource::ClassUID{getClassUID(ClassId)};
+
+	bool SoundResource::s_quietConversion{BOOLEAN_FOLLOWING_DEBUG};
 
 	SoundResource::SoundResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -113,7 +115,10 @@ namespace Emeraude::Audio
 			/* Launch a mix down process... */
 			if ( m_localData.channels() != WaveFactory::Channels::Mono )
 			{
-				TraceInfo{ClassId} << "The sound '" << this->name() << "' is multichannel ! Performing a mix down ...";
+				if ( !s_quietConversion )
+				{
+					TraceWarning{ClassId} << "The sound '" << this->name() << "' is multichannel ! Performing a mix down ...";
+				}
 
 				if ( !processor.mixDown() )
 				{
@@ -126,9 +131,12 @@ namespace Emeraude::Audio
 			/* Launch a resampling process ... */
 			if ( m_localData.frequency() != frequencyPlayback )
 			{
-				TraceWarning{ClassId} <<
-					"Sound '" << this->name() << "' frequency mismatch the system ! "
-					"Resampling the wave from " << static_cast< int >(m_localData.frequency()) << "Hz to " << static_cast< int >(frequencyPlayback) << "Hz ...";
+				if ( !s_quietConversion )
+				{
+					TraceWarning{ClassId} <<
+					   "Sound '" << this->name() << "' frequency mismatch the system ! "
+					   "Resampling the wave from " << static_cast< int >(m_localData.frequency()) << "Hz to " << static_cast< int >(frequencyPlayback) << "Hz ...";
+				}
 
 				if ( !processor.resample(frequencyPlayback) )
 				{

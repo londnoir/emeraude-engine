@@ -34,10 +34,10 @@
 #include "Physics/PhysicalObjectProperties.hpp"
 #include "Scenes/Scene.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Weight::Weight (const std::string & name, const AbstractEntity & parentEntity) noexcept
 		: Abstract(name, parentEntity)

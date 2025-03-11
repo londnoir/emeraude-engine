@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Vulkan/Image.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	ImageMemoryBarrier::ImageMemoryBarrier (const Image & image, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectMask) noexcept
 	{

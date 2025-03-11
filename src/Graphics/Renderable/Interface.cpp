@@ -30,10 +30,10 @@
 #include "Resources/ResourceTrait.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Resources;
 
 	static constexpr auto TracerTag{"RenderableInterface"};

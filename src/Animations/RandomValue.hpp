@@ -30,14 +30,14 @@
 #include "AnimationInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Variant.hpp"
+#include "Libs/Variant.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief Animation using a simple random value.
 	 * @note ie, This can be used to randomize something each logic cycle.
-	 * @extends Emeraude::Animations::AnimationInterface This is an animation.
+	 * @extends EmEn::Animations::AnimationInterface This is an animation.
 	 */
 	class RandomValue final : public AnimationInterface
 	{
@@ -56,12 +56,12 @@ namespace Emeraude::Animations
 			 * @param minimum A reference to a minimum value.
 			 * @param maximum A reference to a maximum value.
 			 */
-			RandomValue (const Libraries::Variant & minimum, const Libraries::Variant & maximum) noexcept;
+			RandomValue (const Libs::Variant & minimum, const Libs::Variant & maximum) noexcept;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::getNextValue() */
-			Libraries::Variant getNextValue () noexcept override;
+			/** @copydoc EmEn::Animations::AnimationInterface::getNextValue() */
+			Libs::Variant getNextValue () noexcept override;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPlaying() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPlaying() */
 			[[nodiscard]]
 			bool
 			isPlaying () const noexcept override
@@ -69,7 +69,7 @@ namespace Emeraude::Animations
 				return true;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPaused() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPaused() */
 			[[nodiscard]]
 			bool
 			isPaused () const noexcept override
@@ -77,7 +77,7 @@ namespace Emeraude::Animations
 				return false;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isFinished() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isFinished() */
 			[[nodiscard]]
 			bool
 			isFinished () const noexcept override
@@ -85,14 +85,14 @@ namespace Emeraude::Animations
 				return false;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::play() */
+			/** @copydoc EmEn::Animations::AnimationInterface::play() */
 			bool
 			play () noexcept override
 			{
 				return true;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::pause() */
+			/** @copydoc EmEn::Animations::AnimationInterface::pause() */
 			bool
 			pause () noexcept override
 			{
@@ -104,11 +104,11 @@ namespace Emeraude::Animations
 			 * @param minimum A reference to a minimum value.
 			 * @param maximum A reference to a maximum value.
 			 */
-			void setValue (const Libraries::Variant & minimum, const Libraries::Variant & maximum) noexcept;
+			void setValue (const Libs::Variant & minimum, const Libs::Variant & maximum) noexcept;
 
 		private:
 
-			Libraries::Variant m_minimumValue{};
-			Libraries::Variant m_maximumValue{};
+			Libs::Variant m_minimumValue{};
+			Libs::Variant m_maximumValue{};
 	};
 }

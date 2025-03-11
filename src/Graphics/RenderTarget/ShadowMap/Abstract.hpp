@@ -35,38 +35,38 @@
 #include "Graphics/RenderTarget/Abstract.hpp"
 
 /* Local inclusions for usages. */
+#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "Graphics/Types.hpp"
-#include "MasterControl/Types.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::ShadowMap
+namespace EmEn::Graphics::RenderTarget::ShadowMap
 {
 	/**
 	 * @brief The base class for shadow maps.
-	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
+	 * @extends EmEn::Graphics::RenderTarget::Abstract This is a render target.
 	 */
 	class Abstract : public RenderTarget::Abstract
 	{
 		public:
 
 			static constexpr auto Bias{0.5F};
-			static constexpr Libraries::Math::Matrix< 4, float > ScaleBiasMatrix{{
+			static constexpr Libs::Math::Matrix< 4, float > ScaleBiasMatrix{{
 				Bias, 0.0F, 0.0F, 0.0F,
 				0.0F, Bias, 0.0F, 0.0F,
 				0.0F, 0.0F, Bias, 0.0F,
 				Bias, Bias, Bias, 1.0F
 			}};
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
 			[[nodiscard]]
-			MasterControl::VideoType
+			AVConsole::VideoType
 			videoType () const noexcept override
 			{
-				return MasterControl::VideoType::ShadowMap;
+				return AVConsole::VideoType::ShadowMap;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::framebuffer() */
 			[[nodiscard]]
 			const Vulkan::Framebuffer *
 			framebuffer () const noexcept final
@@ -74,7 +74,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return m_framebuffer.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::image() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Image >
 			image () const noexcept final
@@ -82,7 +82,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return m_depthImage;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::imageView() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::ImageView >
 			imageView () const noexcept final
@@ -90,7 +90,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return m_depthImageView;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept final;
 
@@ -114,14 +114,14 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onCreate() */
 			[[nodiscard]]
 			bool onCreate (Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onDestroy() */
 			void onDestroy () noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::createRenderPass() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::RenderPass > createRenderPass (Renderer & renderer) const noexcept override;
 

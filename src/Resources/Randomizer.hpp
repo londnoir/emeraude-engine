@@ -37,7 +37,7 @@
 #include "ResourceTrait.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/**
 	 * @brief Resource collection to ease a random pick.
@@ -105,7 +105,7 @@ namespace Emeraude::Resources
 					return m_collection.at(0);
 				}
 
-				const auto index = Libraries::Utility::quickRandom(0UL, m_collection.size() - 1);
+				const auto index = Libs::Utility::quickRandom(0UL, m_collection.size() - 1);
 
 				return m_collection.at(index);
 			}

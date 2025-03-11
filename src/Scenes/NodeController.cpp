@@ -31,16 +31,16 @@
 #include <memory>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Input/KeyboardListenerInterface.hpp"
 #include "Node.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	NodeController::NodeController () noexcept
 		: KeyboardListenerInterface(false, false)

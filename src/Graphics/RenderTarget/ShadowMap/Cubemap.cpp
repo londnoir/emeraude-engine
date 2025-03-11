@@ -29,10 +29,10 @@
 /* Local inclusions. */
 #include "Graphics/Renderer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::ShadowMap
+namespace EmEn::Graphics::RenderTarget::ShadowMap
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Cubemap::Cubemap (const std::string & name, uint32_t resolution) noexcept
 		: Abstract(name, {}, {resolution, resolution, 1}, RenderTargetType::ShadowCubemap)

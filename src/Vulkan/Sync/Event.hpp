@@ -33,7 +33,7 @@
 /* Local inclusions for inheritances. */
 #include "Vulkan/AbstractDeviceDependentObject.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	enum class EventStatus : uint8_t
 	{
@@ -69,7 +69,7 @@ namespace Emeraude::Vulkan::Sync
 
 	/**
 	 * @brief The synchronization event class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
 	 */
 	class Event final : public AbstractDeviceDependentObject
 	{
@@ -121,10 +121,10 @@ namespace Emeraude::Vulkan::Sync
 			 */
 			~Event () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

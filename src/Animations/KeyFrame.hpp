@@ -30,10 +30,10 @@
 #include <map>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Variant.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Variant.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief The Keyframe definition.
@@ -47,14 +47,14 @@ namespace Emeraude::Animations
 			 * @param value The value at this keyframe [std::move].
 			 * @param interpolation The type of interpolation.
 			 */
-			KeyFrame (Libraries::Variant value, Libraries::Math::InterpolationType interpolation) noexcept;
+			KeyFrame (Libs::Variant value, Libs::Math::InterpolationType interpolation) noexcept;
 
 			/**
 			 * @brief Returns the value.
 			 * @return const Libraries::Variant &
 			 */
 			[[nodiscard]]
-			const Libraries::Variant &
+			const Libs::Variant &
 			value () const noexcept
 			{
 				return m_value;
@@ -65,7 +65,7 @@ namespace Emeraude::Animations
 			 * @return const Libraries::Math::InterpolationType &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::InterpolationType &
+			const Libs::Math::InterpolationType &
 			interpolation () const noexcept
 			{
 				return m_interpolation;
@@ -73,8 +73,8 @@ namespace Emeraude::Animations
 
 		private:
 
-			Libraries::Variant m_value;
-			Libraries::Math::InterpolationType m_interpolation;
+			Libs::Variant m_value;
+			Libs::Math::InterpolationType m_interpolation;
 	};
 
 	/**

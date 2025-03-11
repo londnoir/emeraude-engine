@@ -35,9 +35,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DescriptorSetLayout::DescriptorSetLayout (const std::shared_ptr< Device > & device, std::string UUID, VkDescriptorSetLayoutCreateFlags flags) noexcept
 		: AbstractDeviceDependentObject(device), m_UUID(std::move(UUID))

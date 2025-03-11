@@ -26,10 +26,10 @@
 
 #include "Particle.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	void
 	Particle::initialize (uint32_t initialLife, float initialSize, float spreadingRadius, const CartesianFrame< float > & initialLocation) noexcept

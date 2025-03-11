@@ -34,7 +34,7 @@
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/Geometry/Interface.hpp"
@@ -43,7 +43,7 @@
 #include "Saphir/Program.hpp"
 #include "Saphir/SetIndexes.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -64,13 +64,13 @@ namespace Emeraude
 	class Settings;
 }
 
-namespace Emeraude::Saphir::Generator
+namespace EmEn::Saphir::Generator
 {
 	/**
 	 * @brief The base class for every shader program generator.
-	 * @extends Libraries::NameableTrait This will hold the name of the program generated.
+	 * @extends EmEn::Libs::NameableTrait This will hold the name of the program generated.
 	 */
-	class Abstract : public Libraries::NameableTrait
+	class Abstract : public Libs::NameableTrait
 	{
 		public:
 

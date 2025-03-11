@@ -32,11 +32,11 @@
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
-namespace Emeraude::Saphir::Declaration::Member
+namespace EmEn::Saphir::Declaration::Member
 {
 	/**
 	 * @brief The structure member structure.
-	 * @extends Emeraude::Saphir::Declaration::Member::Interface This is a structure member.
+	 * @extends EmEn::Saphir::Declaration::Member::Interface This is a structure member.
 	 */
 	class Structure final : public Interface
 	{
@@ -49,19 +49,19 @@ namespace Emeraude::Saphir::Declaration::Member
 			 */
 			Structure (VariableType type, Key name) noexcept;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Member::Interface::type() */
+			/** @copydoc EmEn::Saphir::Declaration::Member::Interface::type() */
 			[[nodiscard]]
 			VariableType type () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Member::Interface::name() */
+			/** @copydoc EmEn::Saphir::Declaration::Member::Interface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Member::Interface::bytes() */
+			/** @copydoc EmEn::Saphir::Declaration::Member::Interface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Member::Interface::sourceCode() */
+			/** @copydoc EmEn::Saphir::Declaration::Member::Interface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

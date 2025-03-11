@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "Audio/AbstractObject.hpp"
 
-namespace Emeraude::Audio::Filters
+namespace EmEn::Audio::Filters
 {
 	/**
 	 * @brief The base class for all OpenAL filters.
-	 * @extends Emeraude::Audio::AbstractObject This is a base OpenAL object.
+	 * @extends EmEn::Audio::AbstractObject This is a base OpenAL object.
 	 */
 	class Abstract : public AbstractObject
 	{
@@ -68,7 +68,7 @@ namespace Emeraude::Audio::Filters
 			 */
 			Abstract & operator= (Abstract && copy) noexcept = default;
 
-			/** @copydoc Emeraude::Audio::AbstractObject::isCreated() */
+			/** @copydoc EmEn::Audio::AbstractObject::isCreated() */
 			[[nodiscard]]
 			bool isCreated () const noexcept final;
 

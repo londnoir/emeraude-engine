@@ -27,16 +27,16 @@
 #include "Collider.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/OrientedCuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/OrientedCuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 #include "Scenes/AbstractEntity.hpp"
 #include "Physics/MovableTrait.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Scenes;
 
 	bool

@@ -26,7 +26,7 @@
 
 #include "Abstract.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	Abstract::Abstract (std::string title) noexcept
 		: m_title(std::move(title))

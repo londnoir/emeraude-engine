@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	using namespace Keys;
 	using namespace Graphics;

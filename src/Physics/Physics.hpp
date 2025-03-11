@@ -31,9 +31,9 @@
 
 /* Local inclusions for usages. */
 #include "Constants.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	namespace SI
 	{
@@ -1926,7 +1926,7 @@ namespace Emeraude::Physics
 	 */
 	template< typename precision_t = float >
 	precision_t
-	force (precision_t mass, const Libraries::Math::Vector< 3, precision_t > & acceleration) noexcept requires (std::is_floating_point_v< precision_t >)
+	force (precision_t mass, const Libs::Math::Vector< 3, precision_t > & acceleration) noexcept requires (std::is_floating_point_v< precision_t >)
 	{
 		return mass * acceleration;
 	}

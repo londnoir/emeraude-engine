@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "Saphir/FramebufferEffectInterface.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The film grain lens effect class;
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class FilmGrainLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -47,7 +47,7 @@ namespace Emeraude::Scenes
 			 */
 			FilmGrainLensEffect () noexcept = default;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
@@ -57,7 +57,7 @@ namespace Emeraude::Scenes
 			static constexpr auto RandomB{"em_RandomB"};
 			static constexpr auto RandomC{"em_RandomC"};
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::requestScreenSize() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::requestScreenSize() */
 			[[nodiscard]]
 			bool requestScreenSize () const noexcept override;
 	};

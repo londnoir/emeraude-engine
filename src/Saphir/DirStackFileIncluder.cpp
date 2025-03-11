@@ -30,7 +30,7 @@
 #include <fstream>
 #include <algorithm>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	using namespace glslang;
 
@@ -42,7 +42,7 @@ namespace Emeraude::Saphir
 		m_directoryStack.resize(inclusionDepth + m_externalLocalDirectoryCount);
 
 		if ( inclusionDepth == 1 )
-			m_directoryStack.back() = Emeraude::Saphir::DirStackFileIncluder::getDirectory(includerName);
+			m_directoryStack.back() = EmEn::Saphir::DirStackFileIncluder::getDirectory(includerName);
 
 		// Find a directory that works, using a reverse search of the include stack.
 		for ( auto it = m_directoryStack.rbegin(); it != m_directoryStack.rend(); ++it )
@@ -53,10 +53,10 @@ namespace Emeraude::Saphir
 
 			if ( file )
 			{
-				m_directoryStack.push_back(Emeraude::Saphir::DirStackFileIncluder::getDirectory(path));
+				m_directoryStack.push_back(EmEn::Saphir::DirStackFileIncluder::getDirectory(path));
 				m_includedFiles.insert(path);
 
-				return Emeraude::Saphir::DirStackFileIncluder::newIncludeResult(path, file, (int)file.tellg());
+				return EmEn::Saphir::DirStackFileIncluder::newIncludeResult(path, file, (int)file.tellg());
 			}
 		}
 

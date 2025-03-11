@@ -34,16 +34,16 @@
 #include <regex>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/Utility.hpp"
-#include "Libraries/IO/IO.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/Utility.hpp"
+#include "Libs/IO/IO.hpp"
 #include "PrimaryServices.hpp"
 #include "BaseInformation.hpp"
 #include "SettingKeys.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Stores::ClassUID{getClassUID(ClassId)};
 	bool Stores::s_operationVerboseEnabled{BOOLEAN_FOLLOWING_DEBUG};

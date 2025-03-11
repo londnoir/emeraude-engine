@@ -33,11 +33,11 @@
 /* Local inclusions. */
 #include "AbstractDeviceDependentObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The device memory wrapper class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
 	 */
 	class DeviceMemory final : public AbstractDeviceDependentObject
 	{
@@ -83,10 +83,10 @@ namespace Emeraude::Vulkan
 			 */
 			~DeviceMemory () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

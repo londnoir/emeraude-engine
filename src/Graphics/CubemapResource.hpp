@@ -36,16 +36,16 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Resources/Container.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The cubemap resource class.
-	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
+	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class CubemapResource final : public Resources::ResourceTrait
 	{
@@ -66,25 +66,25 @@ namespace Emeraude::Graphics
 			 */
 			explicit CubemapResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -92,7 +92,7 @@ namespace Emeraude::Graphics
 			 * @param pixmap A reference to the pixmap.
 			 * @return bool
 			 */
-			bool load (const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+			bool load (const Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
 
 			/**
 			 * @brief Loads a cubemap from a packed pixmap.
@@ -107,7 +107,7 @@ namespace Emeraude::Graphics
 			 * @return const Libraries::PixelFactory::Pixmap< uint8_t > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Pixmap< uint8_t > & data (size_t faceIndex) const noexcept;
+			const Libs::PixelFactory::Pixmap< uint8_t > & data (size_t faceIndex) const noexcept;
 
 			/**
 			 * @brief Returns faces of the cubemap.
@@ -136,7 +136,7 @@ namespace Emeraude::Graphics
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float > averageColor () const noexcept;
+			Libs::PixelFactory::Color< float > averageColor () const noexcept;
 
 			/**
 			 * @brief Returns a cubemap resource by its name.
@@ -156,7 +156,7 @@ namespace Emeraude::Graphics
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -169,7 +169,7 @@ namespace Emeraude::Graphics
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Cubemaps = Container< Graphics::CubemapResource >;
 }

@@ -44,9 +44,9 @@
 #include "PrimaryServices.hpp"
 #include "SettingKeys.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 	using namespace Vulkan;
 

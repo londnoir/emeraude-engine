@@ -32,9 +32,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DescriptorPool::DescriptorPool (const std::shared_ptr< Device > & device, const std::vector< VkDescriptorPoolSize > & descriptorPoolSizes, uint32_t maxSets, VkDescriptorPoolCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device), m_descriptorPoolSizes(descriptorPoolSizes)

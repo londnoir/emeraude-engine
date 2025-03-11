@@ -38,12 +38,12 @@
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Window;
 }
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/** @brief Structure to copy the joystick state.  */
 	struct JoystickState
@@ -55,7 +55,7 @@ namespace Emeraude::Input
 
 	/**
 	 * @brief The joystick controller class.
-	 * @extends Emeraude::Input::ControllerInterface This is an input controller.
+	 * @extends EmEn::Input::ControllerInterface This is an input controller.
 	 */
 	class JoystickController final : public ControllerInterface
 	{
@@ -69,18 +69,18 @@ namespace Emeraude::Input
 			 */
 			JoystickController () noexcept = default;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disable() */
+			/** @copydoc EmEn::Input::ControllerInterface::disable() */
 			void disable (bool state) noexcept override;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disabled() */
+			/** @copydoc EmEn::Input::ControllerInterface::disabled() */
 			[[nodiscard]]
 			bool disabled () const noexcept override;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::isConnected() */
+			/** @copydoc EmEn::Input::ControllerInterface::isConnected() */
 			[[nodiscard]]
 			bool isConnected () const noexcept override;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::getRawState() */
+			/** @copydoc EmEn::Input::ControllerInterface::getRawState() */
 			[[nodiscard]]
 			std::string getRawState () const noexcept override;
 

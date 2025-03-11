@@ -31,9 +31,9 @@
 #include "Tracer.hpp"
 #include "Utility.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Buffer::Buffer () noexcept
 	{

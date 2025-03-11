@@ -34,11 +34,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceBuffer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines a convenient way to build an index buffer object (IBO).
-	 * @extends Emeraude::Vulkan::AbstractDeviceBuffer This is a device-side buffer.
+	 * @extends EmEn::Vulkan::AbstractDeviceBuffer This is a device-side buffer.
 	 */
 	class IndexBufferObject final : public AbstractDeviceBuffer
 	{

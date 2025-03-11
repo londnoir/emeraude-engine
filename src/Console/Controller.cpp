@@ -27,14 +27,14 @@
 #include "Controller.hpp"
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 #include "PrimaryServices.hpp"
 #include "Controllable.hpp"
 #include "Expression.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Controller::ClassUID{getClassUID(ClassId)};
 	Controller * Controller::s_instance{nullptr};

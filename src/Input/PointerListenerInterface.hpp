@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <array>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/**
 	 * @brief Interface giving the ability to listen to the pointer (like the mouse) events.

@@ -48,9 +48,9 @@
 #include "Core.hpp" // FIXME: Remove this (Access to engine info)
 #include "SettingKeys.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Instance::ClassUID{getClassUID(ClassId)};
 

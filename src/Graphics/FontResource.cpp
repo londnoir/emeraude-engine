@@ -35,18 +35,16 @@
 #include <string>
 
 /* Third-party inclusions. */
-#ifdef FREETYPE_ENABLED
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-#endif
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Area.hpp"
-#include "Libraries/PixelFactory/FileIO.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/Processor.hpp"
-#include "Libraries/PixelFactory/Types.hpp"
+#include "Libs/PixelFactory/Area.hpp"
+#include "Libs/PixelFactory/FileIO.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Types.hpp"
 #include "FontResource.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
@@ -55,16 +53,16 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::FontResource >::ClassId{"FontContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::FontResource >::ClassId{"FontContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::FontResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::FontResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::PixelFactory;
 
 	const size_t FontResource::ClassUID{getClassUID(ClassId)};
 
@@ -348,7 +346,6 @@ namespace Emeraude::Graphics
 	{
 		using namespace PixelFactory;
 
-#ifdef FREETYPE_ENABLED
 		FT_Library library;
 		FT_Face face;
 
@@ -426,11 +423,6 @@ namespace Emeraude::Graphics
 		m_spacing = m_lineHeight / 2;
 
 		return true;
-#else
-		Tracer::debug(ClassId, "LibFreeType is not available !");
-
-		return false;
-#endif
 	}
 
 	bool

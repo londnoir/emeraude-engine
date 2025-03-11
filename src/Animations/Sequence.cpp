@@ -33,15 +33,15 @@
 #include <utility>
 
 /* Local inclusions. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Constants.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Sequence::Sequence (uint32_t duration, int32_t repeat) noexcept
 		: m_duration(duration), m_repeat(repeat)

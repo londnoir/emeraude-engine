@@ -31,7 +31,7 @@
 #include <vector>
 #include <fstream>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/** @brief The set type. */
 	enum class SetType

@@ -37,7 +37,7 @@
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Saphir/Declaration/UniformBlock.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "Graphics/Types.hpp"
@@ -46,17 +46,11 @@
 #include "Resources/Container.hpp"
 #include "Component/Texture.hpp"
 
-/* Forward declarations. */
-namespace Emeraude::Graphics
-{
-	class Renderer;
-}
-
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
 	/**
 	 * @brief The basic material class use only one component.
-	 * @extends Emeraude::Graphics::Material::Interface This is a material.
+	 * @extends EmEn::Graphics::Material::Interface This is a material.
 	 */
 	class BasicResource final : public Interface
 	{
@@ -113,7 +107,7 @@ namespace Emeraude::Graphics::Material
 			 */
 			~BasicResource () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -121,7 +115,7 @@ namespace Emeraude::Graphics::Material
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -129,7 +123,7 @@ namespace Emeraude::Graphics::Material
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -137,19 +131,19 @@ namespace Emeraude::Graphics::Material
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::create() */
+			/** @copydoc EmEn::Graphics::Material::Interface::create() */
 			bool create (Renderer & renderer) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::destroy() */
+			/** @copydoc EmEn::Graphics::Material::Interface::destroy() */
 			void destroy () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Material::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -157,7 +151,7 @@ namespace Emeraude::Graphics::Material
 				return this->isFlagEnabled(Created);
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::isComplex() */
+			/** @copydoc EmEn::Graphics::Material::Interface::isComplex() */
 			[[nodiscard]]
 			bool
 			isComplex () const noexcept override
@@ -165,19 +159,19 @@ namespace Emeraude::Graphics::Material
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::setupLightGenerator() */
+			/** @copydoc EmEn::Graphics::Material::Interface::setupLightGenerator() */
 			[[nodiscard]]
 			bool setupLightGenerator (Saphir::LightGenerator & lightGenerator) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::generateVertexShaderCode() */
+			/** @copydoc EmEn::Graphics::Material::Interface::generateVertexShaderCode() */
 			[[nodiscard]]
 			bool generateVertexShaderCode (Saphir::Generator::Abstract & generator, Saphir::VertexShader & vertexShader) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Graphics::Material::Interface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::LightGenerator & lightGenerator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::physicalSurfaceProperties() const */
+			/** @copydoc EmEn::Graphics::Material::Interface::physicalSurfaceProperties() const */
 			[[nodiscard]]
 			const Physics::PhysicalSurfaceProperties &
 			physicalSurfaceProperties () const noexcept override
@@ -185,7 +179,7 @@ namespace Emeraude::Graphics::Material
 				return m_physicalSurfaceProperties;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::physicalSurfaceProperties() */
+			/** @copydoc EmEn::Graphics::Material::Interface::physicalSurfaceProperties() */
 			[[nodiscard]]
 			Physics::PhysicalSurfaceProperties &
 			physicalSurfaceProperties () noexcept override
@@ -193,30 +187,30 @@ namespace Emeraude::Graphics::Material
 				return m_physicalSurfaceProperties;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::frameCount() */
+			/** @copydoc EmEn::Graphics::Material::Interface::frameCount() */
 			[[nodiscard]]
 			uint32_t frameCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::duration() */
+			/** @copydoc EmEn::Graphics::Material::Interface::duration() */
 			[[nodiscard]]
 			uint32_t duration () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::frameIndexAt() */
+			/** @copydoc EmEn::Graphics::Material::Interface::frameIndexAt() */
 			[[nodiscard]]
 			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::enableBlending() */
+			/** @copydoc EmEn::Graphics::Material::Interface::enableBlending() */
 			void enableBlending (BlendingMode mode) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::blendingMode() */
+			/** @copydoc EmEn::Graphics::Material::Interface::blendingMode() */
 			[[nodiscard]]
 			BlendingMode blendingMode () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::fragmentColor() */
+			/** @copydoc EmEn::Graphics::Material::Interface::fragmentColor() */
 			[[nodiscard]]
 			std::string fragmentColor () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::descriptorSetLayout() */
+			/** @copydoc EmEn::Graphics::Material::Interface::descriptorSetLayout() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::DescriptorSetLayout >
 			descriptorSetLayout () const noexcept override
@@ -224,7 +218,7 @@ namespace Emeraude::Graphics::Material
 				return m_descriptorSetLayout;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::UBOIndex() */
+			/** @copydoc EmEn::Graphics::Material::Interface::UBOIndex() */
 			[[nodiscard]]
 			uint32_t
 			UBOIndex () const noexcept override
@@ -232,7 +226,7 @@ namespace Emeraude::Graphics::Material
 				return m_sharedUBOIndex;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::UBOAlignment() */
+			/** @copydoc EmEn::Graphics::Material::Interface::UBOAlignment() */
 			[[nodiscard]]
 			uint32_t
 			UBOAlignment () const noexcept override
@@ -240,7 +234,7 @@ namespace Emeraude::Graphics::Material
 				return m_sharedUniformBuffer->blockAlignedSize();
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::UBOOffset() */
+			/** @copydoc EmEn::Graphics::Material::Interface::UBOOffset() */
 			[[nodiscard]]
 			uint32_t
 			UBOOffset () const noexcept override
@@ -248,7 +242,7 @@ namespace Emeraude::Graphics::Material
 				return m_sharedUBOIndex * m_sharedUniformBuffer->blockAlignedSize();
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::descriptorSet() */
+			/** @copydoc EmEn::Graphics::Material::Interface::descriptorSet() */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet *
 			descriptorSet () const noexcept override
@@ -257,7 +251,7 @@ namespace Emeraude::Graphics::Material
 				return m_descriptorSet.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::getUniformBlock() */
+			/** @copydoc EmEn::Graphics::Material::Interface::getUniformBlock() */
 			[[nodiscard]]
 			Saphir::Declaration::UniformBlock getUniformBlock (uint32_t set, uint32_t binding) const noexcept override;
 
@@ -273,7 +267,7 @@ namespace Emeraude::Graphics::Material
 			 * @param color A reference to a color.
 			 * @return bool
 			 */
-			bool setColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			bool setColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets a texture as material appearance.
@@ -289,7 +283,7 @@ namespace Emeraude::Graphics::Material
 			 * @param color A reference to a color.
 			 * @return bool
 			 */
-			bool setSpecularComponent (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			bool setSpecularComponent (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets a color for the specular component.
@@ -298,7 +292,7 @@ namespace Emeraude::Graphics::Material
 			 * @param shininess The shininess value.
 			 * @return bool
 			 */
-			bool setSpecularComponent (const Libraries::PixelFactory::Color< float > & color, float shininess) noexcept;
+			bool setSpecularComponent (const Libs::PixelFactory::Color< float > & color, float shininess) noexcept;
 
 			/**
 			 * @brief Sets the global material opacity value.
@@ -330,7 +324,7 @@ namespace Emeraude::Graphics::Material
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float >
+			Libs::PixelFactory::Color< float >
 			diffuseColor () noexcept
 			{
 				return {
@@ -347,7 +341,7 @@ namespace Emeraude::Graphics::Material
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float >
+			Libs::PixelFactory::Color< float >
 			specularColor () noexcept
 			{
 				return {
@@ -412,23 +406,23 @@ namespace Emeraude::Graphics::Material
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::getSharedUniformBufferIdentifier() */
+			/** @copydoc EmEn::Graphics::Material::Interface::getSharedUniformBufferIdentifier() */
 			[[nodiscard]]
 			std::string getSharedUniformBufferIdentifier () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::createElementInSharedBuffer() */
+			/** @copydoc EmEn::Graphics::Material::Interface::createElementInSharedBuffer() */
 			[[nodiscard]]
 			bool createElementInSharedBuffer (Renderer & renderer, const std::string & identifier) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::createDescriptorSetLayout() */
+			/** @copydoc EmEn::Graphics::Material::Interface::createDescriptorSetLayout() */
 			[[nodiscard]]
 			bool createDescriptorSetLayout (Vulkan::LayoutManager & layoutManager, const std::string & identifier) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::createDescriptorSet() */
+			/** @copydoc EmEn::Graphics::Material::Interface::createDescriptorSet() */
 			[[nodiscard]]
 			bool createDescriptorSet (Renderer & renderer, const Vulkan::UniformBufferObject & uniformBufferObject) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Interface::onMaterialLoaded() */
+			/** @copydoc EmEn::Graphics::Material::Interface::onMaterialLoaded() */
 			void onMaterialLoaded () noexcept override;
 
 			/**
@@ -475,8 +469,8 @@ namespace Emeraude::Graphics::Material
 			static constexpr auto AutoIlluminationOffset{10UL};
 
 			/* Default values. */
-			static constexpr auto DefaultDiffuseColor{Libraries::PixelFactory::Grey};
-			static constexpr auto DefaultSpecularColor{Libraries::PixelFactory::White};
+			static constexpr auto DefaultDiffuseColor{Libs::PixelFactory::Grey};
+			static constexpr auto DefaultSpecularColor{Libs::PixelFactory::White};
 			static constexpr auto DefaultShininess{200.0F};
 			static constexpr auto DefaultOpacity{1.0F};
 			static constexpr auto DefaultAutoIllumination{0.0F};
@@ -510,7 +504,7 @@ namespace Emeraude::Graphics::Material
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using BasicMaterials = Container< Graphics::Material::BasicResource >;
 }

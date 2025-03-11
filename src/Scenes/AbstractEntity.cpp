@@ -32,10 +32,10 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 	using namespace Physics;
 

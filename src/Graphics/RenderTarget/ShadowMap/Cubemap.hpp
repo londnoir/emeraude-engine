@@ -32,11 +32,11 @@
 /* Local inclusions for usages. */
 #include "Graphics/ViewMatrices3DUBO.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::ShadowMap
+namespace EmEn::Graphics::RenderTarget::ShadowMap
 {
 	/**
 	 * @brief Render target specialization for cubic shadow mapping (Omnidirectional lights).
-	 * @extends Emeraude::Graphics::RenderTarget::ShadowMap::Abstract This is a shadow map.
+	 * @extends EmEn::Graphics::RenderTarget::ShadowMap::Abstract This is a shadow map.
 	 */
 	class Cubemap final : public Abstract
 	{
@@ -57,7 +57,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 			 */
 			~Cubemap () override;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::getAspectRatio() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::getAspectRatio() */
 			[[nodiscard]]
 			float
 			aspectRatio () const noexcept override
@@ -65,7 +65,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return 1.0F;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isCubemap() */
 			[[nodiscard]]
 			bool
 			isCubemap () const noexcept override
@@ -73,7 +73,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() const */
 			[[nodiscard]]
 			const ViewMatricesInterface &
 			viewMatrices () const noexcept override
@@ -81,7 +81,7 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() */
 			[[nodiscard]]
 			ViewMatricesInterface &
 			viewMatrices () noexcept override
@@ -91,16 +91,16 @@ namespace Emeraude::Graphics::RenderTarget::ShadowMap
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
 			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceDisconnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
 			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
 			ViewMatrices3DUBO m_viewMatrices;

@@ -30,10 +30,10 @@
 #include <vector>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 #include "Collision.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief The Collider class
@@ -75,7 +75,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			addCollision (CollisionType type, Scenes::AbstractEntity * entity, const Libraries::Math::Vector< 3, float > & position, const Libraries::Math::Vector< 3, float > & direction) noexcept
+			addCollision (CollisionType type, Scenes::AbstractEntity * entity, const Libs::Math::Vector< 3, float > & position, const Libs::Math::Vector< 3, float > & direction) noexcept
 			{
 				m_collisions.emplace_back(type, entity, position, direction);
 			}
@@ -133,7 +133,7 @@ namespace Emeraude::Physics
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool isSphereCollisionWith (const Scenes::AbstractEntity & sphereEntityA, const Scenes::AbstractEntity & sphereEntityB, float & overflow, Libraries::Math::Vector< 3, float > & direction) noexcept;
+			static bool isSphereCollisionWith (const Scenes::AbstractEntity & sphereEntityA, const Scenes::AbstractEntity & sphereEntityB, float & overflow, Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
 			 * @brief Returns the possible overflow between two entities using the box collision model.
@@ -144,7 +144,7 @@ namespace Emeraude::Physics
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool isBoxCollisionWith (const Scenes::AbstractEntity & boxEntityA, const Scenes::AbstractEntity & boxEntityB, float & overflow, Libraries::Math::Vector< 3, float > & direction) noexcept;
+			static bool isBoxCollisionWith (const Scenes::AbstractEntity & boxEntityA, const Scenes::AbstractEntity & boxEntityB, float & overflow, Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
 			 * @brief Returns the possible overflow between two entities using the sphere against box collision model.
@@ -155,7 +155,7 @@ namespace Emeraude::Physics
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool isBoxSphereCollisionWith (const Scenes::AbstractEntity & boxEntity, const Scenes::AbstractEntity & sphereEntity, float & overflow, Libraries::Math::Vector< 3, float > & direction) noexcept;
+			static bool isBoxSphereCollisionWith (const Scenes::AbstractEntity & boxEntity, const Scenes::AbstractEntity & sphereEntity, float & overflow, Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			std::vector< Collision > m_collisions;
 	};

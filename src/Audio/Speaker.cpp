@@ -26,13 +26,13 @@
 
 #include "Speaker.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Speaker::Speaker (const std::string & name) noexcept
-		: MasterControl::AbstractVirtualAudioDevice(name, MasterControl::ConnexionType::Input)
+		: AVConsole::AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Input)
 	{
 
 	}

@@ -26,7 +26,7 @@
 
 #include "Code.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	Code::Code (CodeGeneratorInterface & generator, Location type, size_t depth) noexcept
 		: m_generator(generator), m_type(type), m_indent(depth, '\t')

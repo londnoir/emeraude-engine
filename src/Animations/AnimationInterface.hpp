@@ -27,9 +27,9 @@
 #pragma once
 
 /* Local inclusions for usages. */
-#include "Libraries/Variant.hpp"
+#include "Libs/Variant.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief The AnimationInterface class
@@ -74,7 +74,7 @@ namespace Emeraude::Animations
 			 * @note Cannot be const because the method can change the internal value of the object.
 			 * @return Variant
 			 */
-			virtual Libraries::Variant getNextValue () noexcept = 0;
+			virtual Libs::Variant getNextValue () noexcept = 0;
 
 			/**
 			 * @brief Returns whether the animation is running.

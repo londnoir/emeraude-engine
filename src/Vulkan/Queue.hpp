@@ -35,7 +35,7 @@
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	namespace Sync
 	{
@@ -47,11 +47,11 @@ namespace Emeraude::Vulkan
 	class CommandBuffer;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines a device working queue.
-	 * @extends Emeraude::Vulkan::AbstractObject A queue is directly created by the device, so a simple object is perfect.
+	 * @extends EmEn::Vulkan::AbstractObject A queue is directly created by the device, so a simple object is perfect.
 	 */
 	class Queue final : public AbstractObject
 	{

@@ -33,9 +33,9 @@
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Rectangle.hpp"
+#include "Libs/Math/Rectangle.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief Defines the framebuffer properties. This helps to create surfaces of the overlay according to HDPI usage.

@@ -37,15 +37,15 @@
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Resources/Container.hpp"
 #include "Graphics/ImageResource.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief Defines a geometry using a VBO and an IBO to produce a grid with LOD adapted to the point of view.
-	 * @extends Emeraude::Graphics::Geometry::Interface The common base for all geometry types.
+	 * @extends EmEn::Graphics::Geometry::Interface The common base for all geometry types.
 	 */
 	class AdaptiveVertexGridResource final : public Interface
 	{
@@ -64,7 +64,7 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Constructs an adaptive grid geometry resource.
 			 * @param name A reference to a string for the resource name.
-			 * @param geometryFlagBits The geometry resource flag bits, See Emeraude::Graphics::Geometry::GeometryFlagBits. Default EnablePrimitiveRestart.
+			 * @param geometryFlagBits The geometry resource flag bits, See EmEn::Graphics::Geometry::GeometryFlagBits. Default EnablePrimitiveRestart.
 			 */
 			explicit AdaptiveVertexGridResource (const std::string & name, uint32_t geometryFlagBits = EnablePrimitiveRestart) noexcept;
 
@@ -97,7 +97,7 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			~AdaptiveVertexGridResource () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -105,7 +105,7 @@ namespace Emeraude::Graphics::Geometry
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -113,7 +113,7 @@ namespace Emeraude::Graphics::Geometry
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -131,7 +131,7 @@ namespace Emeraude::Graphics::Geometry
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::topology() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::topology() */
 			[[nodiscard]]
 			Topology
 			topology () const noexcept override
@@ -139,7 +139,7 @@ namespace Emeraude::Graphics::Geometry
 				return Topology::TriangleStrip;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryCount() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
 			size_t
 			subGeometryCount () const noexcept override
@@ -147,7 +147,7 @@ namespace Emeraude::Graphics::Geometry
 				return 1;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryRange() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
 			std::array< uint32_t, 2 >
 			subGeometryRange (size_t /*subGeometryIndex*/ = 0) const noexcept override
@@ -155,23 +155,23 @@ namespace Emeraude::Graphics::Geometry
 				return {0, static_cast< uint32_t >(m_indexBufferObject->indexCount())};
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingBox() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return m_boundingBox;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingSphere() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return m_boundingSphere;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::vertexBufferObject() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::vertexBufferObject() */
 			[[nodiscard]]
 			const Vulkan::VertexBufferObject *
 			vertexBufferObject () const noexcept override
@@ -179,7 +179,7 @@ namespace Emeraude::Graphics::Geometry
 				return m_vertexBufferObject.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::indexBufferObject() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::indexBufferObject() */
 			[[nodiscard]]
 			const Vulkan::IndexBufferObject *
 			indexBufferObject () const noexcept override
@@ -187,7 +187,7 @@ namespace Emeraude::Graphics::Geometry
 				return m_indexBufferObject.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::useIndexBuffer() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::useIndexBuffer() */
 			[[nodiscard]]
 			bool
 			useIndexBuffer () const noexcept override
@@ -199,16 +199,16 @@ namespace Emeraude::Graphics::Geometry
 #endif
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::create() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::create() */
 			bool create () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::update() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::update() */
 			bool update () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::destroy() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::destroy() */
 			void destroy (bool clearLocalData) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -216,10 +216,10 @@ namespace Emeraude::Graphics::Geometry
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -229,7 +229,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @param position
 			 * @return bool
 			 */
-			bool load (const Libraries::VertexFactory::Grid< float > & baseGrid, size_t quadCount, const Libraries::Math::Vector< 3, float > & position) noexcept;
+			bool load (const Libs::VertexFactory::Grid< float > & baseGrid, size_t quadCount, const Libs::Math::Vector< 3, float > & position) noexcept;
 
 			/**
 			 * @brief This will rewrite the vertices buffer from the grid and the new position.
@@ -237,13 +237,13 @@ namespace Emeraude::Graphics::Geometry
 			 * @param position
 			 * @return bool
 			 */
-			bool updateLocalData (const Libraries::VertexFactory::Grid< float > & baseGrid, const Libraries::Math::Vector< 3, float > & position) noexcept;
+			bool updateLocalData (const Libs::VertexFactory::Grid< float > & baseGrid, const Libs::Math::Vector< 3, float > & position) noexcept;
 
 			/**
 			 * @brief This will modify the render from the position of the camera using LOD with the existing data.
 			 * @param view
 			 */
-			void updateVisibility (const Libraries::Math::CartesianFrame< float > & view) noexcept;
+			void updateVisibility (const Libs::Math::CartesianFrame< float > & view) noexcept;
 
 			/**
 			 * @brief Gets the minimal distance to fire an processLogics.
@@ -298,7 +298,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t findStartingOffset (const Libraries::VertexFactory::Grid< float > & baseGrid, const Libraries::Math::Vector< 3, float > & position) const noexcept;
+			size_t findStartingOffset (const Libs::VertexFactory::Grid< float > & baseGrid, const Libs::Math::Vector< 3, float > & position) const noexcept;
 
 			/**
 			 * @brief Generates the indices buffer once for all.
@@ -312,7 +312,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @param index The index of the current point in the grid
 			 * @return void
 			 */
-			void addGridPointToVertexAttributes (const Libraries::VertexFactory::Grid< float > & grid, size_t index) noexcept;
+			void addGridPointToVertexAttributes (const Libs::VertexFactory::Grid< float > & grid, size_t index) noexcept;
 
 			static constexpr auto DefaultMinimalUpdateDistance{1024.0F};
 
@@ -320,8 +320,8 @@ namespace Emeraude::Graphics::Geometry
 			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
 			std::vector< float > m_localData;
 			std::vector< unsigned int > m_indices;
-			Libraries::Math::Cuboid< float > m_boundingBox;
-			Libraries::Math::Sphere< float > m_boundingSphere;
+			Libs::Math::Cuboid< float > m_boundingBox;
+			Libs::Math::Sphere< float > m_boundingSphere;
 			float m_minimalUpdateDistance{DefaultMinimalUpdateDistance};
 			/* Contains the number of quads in on dimension. Grids are always square. */
 			size_t m_squareQuadCount{0};
@@ -334,7 +334,7 @@ namespace Emeraude::Graphics::Geometry
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using AdaptiveVertexGridGeometries = Container< Graphics::Geometry::AdaptiveVertexGridResource >;
 }

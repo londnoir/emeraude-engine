@@ -37,9 +37,9 @@
 #include <unordered_map>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/FastJSON.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Saphir/Declaration/StageOutput.hpp"
 #include "Saphir/Declaration/Types.hpp"
 #include "Saphir/Declaration/UniformBlock.hpp"
@@ -64,16 +64,16 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Material::StandardResource >::ClassId{"StandardResourceContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Material::StandardResource >::ClassId{"StandardResourceContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Material::StandardResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Material::StandardResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Saphir;
 	using namespace Keys;
 	using namespace Component;

@@ -26,7 +26,7 @@
 
 #include "SettingStore.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	void
 	SettingStore::setVariableInArray (const std::string & name, const std::any & value) noexcept

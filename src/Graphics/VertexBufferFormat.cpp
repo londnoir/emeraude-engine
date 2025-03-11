@@ -30,9 +30,9 @@
 #include <sstream>
 #include <algorithm>
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	bool
 	VertexBufferFormat::operator== (const VertexBufferFormat & operand) const noexcept

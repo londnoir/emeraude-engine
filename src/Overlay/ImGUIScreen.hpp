@@ -37,15 +37,15 @@
 #include <functional>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class CommandBuffer;
 }
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief The ImGUI screen specific class.

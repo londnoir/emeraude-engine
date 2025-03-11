@@ -26,7 +26,7 @@
 
 #include "FramebufferPrecisions.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	FramebufferPrecisions::FramebufferPrecisions (uint32_t redBits, uint32_t greenBits, uint32_t blueBits, uint32_t alphaBits, uint32_t depthBits, uint32_t stencilBits, uint32_t samples) noexcept
 		: m_redBits(redBits), m_greenBits(greenBits), m_blueBits(blueBits), m_alphaBits(alphaBits), m_depthBits(depthBits), m_stencilBits(stencilBits), m_samples(samples)

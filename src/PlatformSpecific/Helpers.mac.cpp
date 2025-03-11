@@ -28,7 +28,7 @@
 
 #if IS_MACOS
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 
 }

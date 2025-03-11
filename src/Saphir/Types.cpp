@@ -26,7 +26,7 @@
 
 #include "Types.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	const char *
 	to_cstring (ShaderType type) noexcept

@@ -31,14 +31,14 @@
 
 #if IS_LINUX
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 
 }
 
 #elif IS_MACOS
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 
 }
@@ -57,7 +57,7 @@ namespace Emeraude::PlatformSpecific
 #include <Windows.h>
 #include <shtypes.h>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	/**
 	 * @brief Returns a value in a wide string from the Windows register.

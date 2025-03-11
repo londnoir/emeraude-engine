@@ -33,12 +33,12 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/FlagTrait.hpp"
+#include "Libs/FlagTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief Vertex buffer binding flags.
@@ -53,9 +53,9 @@ namespace Emeraude::Graphics
 
 	/**
 	 * @brief Describes the data inside a vertex attribute binding. How many elements and the primitive used.
-	 * @extends Libraries::FlagTrait
+	 * @extends EmEn::Libs::FlagTrait
 	 */
-	class VertexBufferBinding final : public Libraries::FlagTrait< uint32_t >
+	class VertexBufferBinding final : public Libs::FlagTrait< uint32_t >
 	{
 		public:
 

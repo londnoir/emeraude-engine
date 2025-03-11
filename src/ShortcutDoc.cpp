@@ -32,7 +32,7 @@
 /* Local inclusions. */
 #include "Input/KeyboardController.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	using namespace Input;
 

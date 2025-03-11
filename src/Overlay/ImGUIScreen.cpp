@@ -36,7 +36,7 @@
 /* Local inclusions. */
 #include "Vulkan/CommandBuffer.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	using namespace Vulkan;
 

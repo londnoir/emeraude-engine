@@ -52,18 +52,18 @@
 #include "Graphics/Material/Interface.hpp"
 #include "Graphics/Renderable/MeshResource.hpp"
 #include "Graphics/Renderable/SimpleMeshResource.hpp"
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Vector.hpp"
 #include "Node.hpp"
 #include "Physics/Physics.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Resources/Manager.hpp"
 #include "Scenes/Scene.hpp"
 #include "StaticEntity.hpp"
-#include "Libraries/VertexFactory/Shape.hpp"
+#include "Libs/VertexFactory/Shape.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Entity generation policy.
@@ -166,7 +166,7 @@ namespace Emeraude::Scenes
 			 * @return Toolkit &
 			 */
 			Toolkit &
-			setCursor (const Libraries::Math::Vector< 3, float > & position) noexcept
+			setCursor (const Libs::Math::Vector< 3, float > & position) noexcept
 			{
 				m_cursorFrame.reset();
 				m_cursorFrame.setPosition(position);
@@ -180,7 +180,7 @@ namespace Emeraude::Scenes
 			 * @return Toolkit &
 			 */
 			Toolkit &
-			setCursor (const Libraries::Math::CartesianFrame< float > & coordinates) noexcept
+			setCursor (const Libs::Math::CartesianFrame< float > & coordinates) noexcept
 			{
 				m_cursorFrame = coordinates;
 
@@ -192,7 +192,7 @@ namespace Emeraude::Scenes
 			 * @return Coordinates &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::CartesianFrame< float > &
+			const Libs::Math::CartesianFrame< float > &
 			cursor () const noexcept
 			{
 				return m_cursorFrame;
@@ -277,7 +277,7 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< Node >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > generateNode (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple, bool movable = true) noexcept;
+			std::shared_ptr< Node > generateNode (const Libs::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple, bool movable = true) noexcept;
 
 			/**
 			 * @brief Generates a new static entity using the cursor.
@@ -296,7 +296,7 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< StaticEntity >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< StaticEntity > generateStaticEntity (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
+			std::shared_ptr< StaticEntity > generateStaticEntity (const Libs::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept;
 
 			/**
 			 * @brief Generates a new entity using the cursor.
@@ -336,7 +336,7 @@ namespace Emeraude::Scenes
 			template< typename entity_t = StaticEntity >
 			[[nodiscard]]
 			std::shared_ptr< entity_t >
-			generateEntity (const Libraries::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateEntity (const Libs::Math::Vector< 3, float > & pointTo, const std::string & entityName = {}, GenPolicy genPolicy = GenPolicy::Simple) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				if constexpr ( std::is_same_v< entity_t, Node > )
 				{
@@ -363,7 +363,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Camera >
-			generatePerspectiveCamera (const std::string & entityName, float fov = DefaultGraphicsFieldOfView, const Libraries::Math::Vector< 3, float > & pointTo = {}, bool primaryDevice = false, bool showModel = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generatePerspectiveCamera (const std::string & entityName, float fov = DefaultGraphicsFieldOfView, const Libs::Math::Vector< 3, float > & pointTo = {}, bool primaryDevice = false, bool showModel = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -397,7 +397,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Camera >
-			generateOrthographicCamera (const std::string & entityName, float size = 1.0F, const Libraries::Math::Vector< 3, float > & pointTo = {}, bool primaryDevice = false, bool showModel = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateOrthographicCamera (const std::string & entityName, float size = 1.0F, const Libs::Math::Vector< 3, float > & pointTo = {}, bool primaryDevice = false, bool showModel = false) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -441,7 +441,7 @@ namespace Emeraude::Scenes
 
 				/* Create the camera component. */
 				auto component = entity->newCamera(true, primaryDevice, entityName);
-				component->setPerspectiveProjection(Libraries::Math::QuartRevolution< float >);
+				component->setPerspectiveProjection(Libs::Math::QuartRevolution< float >);
 
 				if ( showModel )
 				{
@@ -463,7 +463,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::DirectionalLight >
-			generateDirectionalLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo = {}, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateDirectionalLight (const std::string & entityName, const Libs::Math::Vector< 3, float > & pointTo = {}, const Libs::PixelFactory::Color< float > & color = Libs::PixelFactory::White, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -493,7 +493,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::PointLight >
-			generatePointLight (const std::string & entityName, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generatePointLight (const std::string & entityName, const Libs::PixelFactory::Color< float > & color = Libs::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(entityName);
@@ -527,7 +527,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::SpotLight >
-			generateSpotLight (const std::string & entityName, const Libraries::Math::Vector< 3, float > & pointTo = {}, float innerAngle = Component::AbstractLightEmitter::DefaultInnerAngle, float outerAngle = Component::AbstractLightEmitter::DefaultOuterAngle, const Libraries::PixelFactory::Color< float > & color = Libraries::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateSpotLight (const std::string & entityName, const Libs::Math::Vector< 3, float > & pointTo = {}, float innerAngle = Component::AbstractLightEmitter::DefaultInnerAngle, float outerAngle = Component::AbstractLightEmitter::DefaultOuterAngle, const Libs::PixelFactory::Color< float > & color = Libs::PixelFactory::White, float radius = Component::AbstractLightEmitter::DefaultRadius, float intensity = Component::AbstractLightEmitter::DefaultIntensity, uint32_t shadowMapResolution = 0) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(pointTo, entityName);
@@ -652,7 +652,7 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateMeshInstance (const std::string & entityName, const Libraries::VertexFactory::Shape< float > & shape, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateMeshInstance (const std::string & entityName, const Libs::VertexFactory::Shape< float > & shape, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
 				using namespace Graphics;
 
@@ -709,10 +709,10 @@ namespace Emeraude::Scenes
 			 */
 			template< typename entity_t = StaticEntity >
 			BuiltEntity< entity_t, Component::Visual >
-			generateCuboidInstance (const std::string & entityName, const Libraries::Math::Vector< 3, float > & size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
+			generateCuboidInstance (const std::string & entityName, const Libs::Math::Vector< 3, float > & size, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
-				using namespace Libraries;
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs;
+				using namespace EmEn::Libs::Math;
 				using namespace Graphics;
 				using namespace Physics;
 
@@ -775,8 +775,8 @@ namespace Emeraude::Scenes
 			BuiltEntity< entity_t, Component::Visual >
 			generateSphereInstance (const std::string & entityName, float radius, const std::shared_ptr< Graphics::Material::Interface > & materialResource = nullptr, bool useGeodesic = false, bool enablePhysicalProperties = true, bool enableLighting = true) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
-				using namespace Libraries;
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs;
+				using namespace EmEn::Libs::Math;
 				using namespace Graphics;
 				using namespace Physics;
 
@@ -823,8 +823,8 @@ namespace Emeraude::Scenes
 			BuiltEntity< entity_t, Component::SphericalPushModifier >
 			generateSphericalPushModifier (const std::string & entityName, float magnitude) noexcept requires (std::is_base_of_v< AbstractEntity, entity_t >)
 			{
-				using namespace Libraries;
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs;
+				using namespace EmEn::Libs::Math;
 
 				/* Create the entity. */
 				auto entity = this->generateEntity< entity_t >(entityName);
@@ -849,7 +849,7 @@ namespace Emeraude::Scenes
 			 * @return std::vector< Libraries::Math::Coordinates< float > >
 			 */
 			[[nodiscard]]
-			static std::vector< Libraries::Math::CartesianFrame< float > > generateRandomCoordinates (size_t count, float min, float max) noexcept;
+			static std::vector< Libs::Math::CartesianFrame< float > > generateRandomCoordinates (size_t count, float min, float max) noexcept;
 
 		private:
 
@@ -863,7 +863,7 @@ namespace Emeraude::Scenes
 			std::shared_ptr< Node > m_previousNode{};
 			GenPolicy m_staticEntityGenerationPolicy{GenPolicy::Simple};
 			std::shared_ptr< StaticEntity > m_previousStaticEntity{};
-			Libraries::Math::CartesianFrame< float > m_cursorFrame{};
+			Libs::Math::CartesianFrame< float > m_cursorFrame{};
 			std::array< bool, 8 > m_flags{
 				false/*Debug*/,
 				false/*UNUSED*/,

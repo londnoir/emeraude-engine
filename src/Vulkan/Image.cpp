@@ -44,9 +44,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Image::Image (const std::shared_ptr< Device > & device, VkImageType imageType, VkFormat format, const VkExtent3D & extent, VkImageUsageFlags usageFlags, VkImageLayout imageLayout, VkImageCreateFlags createFlags, uint32_t mipLevels, uint32_t arrayLayers, VkSampleCountFlagBits samples, VkImageTiling imageTiling) noexcept
 		: AbstractDeviceDependentObject(device)

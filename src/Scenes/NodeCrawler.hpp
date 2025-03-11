@@ -34,7 +34,7 @@
 /* Local inclusions for usages. */
 #include "Node.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Utility class to crawl down the node tree from a node.

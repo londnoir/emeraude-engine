@@ -27,12 +27,12 @@
 #pragma once
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Arguments;
 }
 
-namespace Emeraude::Tool
+namespace EmEn::Tool
 {
 	/**
 	 * @brief The tool interface.

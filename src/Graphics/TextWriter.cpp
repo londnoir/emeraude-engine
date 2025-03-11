@@ -27,10 +27,10 @@
 #include "TextWriter.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "FontResource.hpp"
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 #include "Tracer.hpp"
 #include <algorithm>
 #include <cstddef>
@@ -39,11 +39,11 @@
 #include <ostream>
 #include <utility>
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 
 	TextWriter::TextWriter (Pixmap< uint8_t > & target) noexcept
 		: m_target(&target)

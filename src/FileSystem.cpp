@@ -35,7 +35,7 @@
 #include <exception>
 
 /* Local inclusion. */
-#include "Libraries/IO/IO.hpp"
+#include "Libs/IO/IO.hpp"
 #include "platform.hpp"
 #include "PlatformSpecific/UserInfo.hpp"
 #include "PlatformSpecific/SystemInfo.hpp"
@@ -43,9 +43,9 @@
 #include "Arguments.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t FileSystem::ClassUID{getClassUID(ClassId)};
 	FileSystem * FileSystem::s_instance{nullptr};

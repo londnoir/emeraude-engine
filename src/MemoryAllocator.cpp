@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	const size_t MemoryAllocator::ClassUID{getClassUID(ClassId)};
 

@@ -34,16 +34,16 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Area.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Area.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/ResourceTrait.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The font resource class.
-	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
+	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class FontResource final : public Resources::ResourceTrait
 	{
@@ -68,25 +68,25 @@ namespace Emeraude::Graphics
 			 */
 			explicit FontResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -95,7 +95,7 @@ namespace Emeraude::Graphics
 			 * @return const Libraries::PixelFactory::Pixmap< uint8_t > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Pixmap< uint8_t > & glyph (uint8_t ASCIICode) const noexcept;
+			const Libs::PixelFactory::Pixmap< uint8_t > & glyph (uint8_t ASCIICode) const noexcept;
 
 			/**
 			 * @brief Returns the spacing in pixel.
@@ -135,7 +135,7 @@ namespace Emeraude::Graphics
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -145,7 +145,7 @@ namespace Emeraude::Graphics
 			 * @return Libraries::PixelFactory::Area< size_t >
 			 */
 			[[nodiscard]]
-			static Libraries::PixelFactory::Area< size_t > getUsableWidth (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
+			static Libs::PixelFactory::Area< size_t > getUsableWidth (const Libs::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
 
 			/**
 			 * @brief Parses a bitmap to create the font.
@@ -161,7 +161,7 @@ namespace Emeraude::Graphics
 			 * @param desiredHeight The height of the font.
 			 * @return bool
 			 */
-			bool parseBitmap (const Libraries::PixelFactory::Pixmap< uint8_t > & map, size_t desiredHeight) noexcept;
+			bool parseBitmap (const Libs::PixelFactory::Pixmap< uint8_t > & map, size_t desiredHeight) noexcept;
 
 			/**
 			 * @brief Parses a font file to create the font.
@@ -171,14 +171,14 @@ namespace Emeraude::Graphics
 			 */
 			bool parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept;
 
-			std::array< Libraries::PixelFactory::Pixmap< uint8_t >, ASCIIGlyphCount > m_glyphs;
+			std::array< Libs::PixelFactory::Pixmap< uint8_t >, ASCIIGlyphCount > m_glyphs;
 			size_t m_lineHeight{0UL};
 			size_t m_spacing{0UL};
 	};
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Fonts = Container< Graphics::FontResource >;
 }

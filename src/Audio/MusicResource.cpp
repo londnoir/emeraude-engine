@@ -40,7 +40,7 @@
 #endif
 
 /* Local inclusions. */
-#include "Libraries/WaveFactory/Processor.hpp"
+#include "Libs/WaveFactory/Processor.hpp"
 #include "Resources/Manager.hpp"
 #include "Buffer.hpp"
 #include "Manager.hpp"
@@ -48,15 +48,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Audio::MusicResource >::ClassId{"MusicContainer"};
+const char * const EmEn::Resources::Container< EmEn::Audio::MusicResource >::ClassId{"MusicContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Audio::MusicResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Audio::MusicResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t MusicResource::ClassUID{getClassUID(ClassId)};
 

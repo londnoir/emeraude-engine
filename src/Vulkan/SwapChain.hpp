@@ -38,16 +38,16 @@
 #include "Graphics/RenderTarget/Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/Types.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/ViewMatrices2DUBO.hpp"
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
-#include "MasterControl/Types.hpp"
-#include "Window.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Settings.hpp"
+#include "Window.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	namespace Sync
 	{
@@ -60,7 +60,7 @@ namespace Emeraude::Vulkan
 	class CommandBuffer;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Swap chain frame structure.
@@ -84,8 +84,8 @@ namespace Emeraude::Vulkan
 
 	/**
 	 * @brief The vulkan swap chain class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
-	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends EmEn::Graphics::RenderTarget::Abstract This is a render target.
 	 */
 	class SwapChain final : public AbstractDeviceDependentObject, public Graphics::RenderTarget::Abstract
 	{
@@ -102,7 +102,7 @@ namespace Emeraude::Vulkan
 			 */
 			SwapChain (const std::shared_ptr< Device > & device, Settings & settings, Window & window) noexcept;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool
 			createOnHardware () noexcept override
 			{
@@ -116,7 +116,7 @@ namespace Emeraude::Vulkan
 				return true;
 			}
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool
 			destroyFromHardware () noexcept override
 			{
@@ -130,15 +130,15 @@ namespace Emeraude::Vulkan
 				return true;
 			}
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() const */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() const */
 			[[nodiscard]]
-			MasterControl::VideoType
+			AVConsole::VideoType
 			videoType () const noexcept override
 			{
-				return MasterControl::VideoType::View;
+				return AVConsole::VideoType::View;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isCubemap() const */
 			[[nodiscard]]
 			bool
 			isCubemap () const noexcept override
@@ -146,7 +146,7 @@ namespace Emeraude::Vulkan
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::framebuffer() const */
 			[[nodiscard]]
 			const Vulkan::Framebuffer *
 			framebuffer () const noexcept override
@@ -154,7 +154,7 @@ namespace Emeraude::Vulkan
 				return m_frames[m_currentFrame].framebuffer.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::image() const */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Image >
 			image () const noexcept override
@@ -162,7 +162,7 @@ namespace Emeraude::Vulkan
 				return m_frames[m_currentFrame].colorImage;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::imageView() const */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::ImageView >
 			imageView () const noexcept override
@@ -170,7 +170,7 @@ namespace Emeraude::Vulkan
 				return m_frames[m_currentFrame].colorImageView;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() const */
 			[[nodiscard]]
 			const Graphics::ViewMatrices2DUBO &
 			viewMatrices () const noexcept override
@@ -178,7 +178,7 @@ namespace Emeraude::Vulkan
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() */
 			[[nodiscard]]
 			Graphics::ViewMatrices2DUBO &
 			viewMatrices () noexcept override
@@ -186,7 +186,7 @@ namespace Emeraude::Vulkan
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isValid() const */
 			[[nodiscard]]
 			bool
 			isValid () const noexcept override
@@ -264,26 +264,26 @@ namespace Emeraude::Vulkan
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
 			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceDisconnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
 			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onCreate() */
 			[[nodiscard]]
 			bool onCreate (Graphics::Renderer & renderer) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onDestroy() */
 			void onDestroy () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::createRenderPass() */
 			[[nodiscard]]
 			std::shared_ptr< RenderPass > createRenderPass (Graphics::Renderer & renderer) const noexcept override;
 

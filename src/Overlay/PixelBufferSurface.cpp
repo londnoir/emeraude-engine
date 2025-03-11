@@ -35,9 +35,9 @@
 /* Local inclusions. */
 #include "AbstractSurface.hpp"
 #include "FramebufferProperties.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/PixelFactory/Types.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/Math/Rectangle.hpp"
+#include "Libs/PixelFactory/Types.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Tracer.hpp"
 #include "Vulkan/DescriptorSet.hpp"
@@ -47,11 +47,11 @@
 #include "Vulkan/MemoryRegion.hpp"
 #include "Manager.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 	using namespace Vulkan;
 
@@ -257,7 +257,7 @@ namespace Emeraude::Overlay
 #ifdef DEBUG
 		TraceDebug{ClassId} <<
 			"Resizing the pixel buffer from " << m_localData.width() << 'x' << m_localData.height() << " "
-			"to " << sizes[0] << 'x' << sizes[1] << " for the '" << this->name() << "' surface ...";
+			"to " << textureWidth << 'x' << textureHeight << " for the '" << this->name() << "' surface ...";
 #endif
 
 		if ( !m_localData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )

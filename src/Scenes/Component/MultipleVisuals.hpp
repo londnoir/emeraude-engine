@@ -34,19 +34,19 @@
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/RenderableInstance/Multiple.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Defines a renderable instance suitable for the scene node tree.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Libraries::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Libs::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
 	 */
-	class MultipleVisuals final : public Abstract, public Libraries::ObserverTrait
+	class MultipleVisuals final : public Abstract, public Libs::ObserverTrait
 	{
 		public:
 
@@ -60,9 +60,9 @@ namespace Emeraude::Scenes::Component
 			 * @param renderable A reference to a renderable smart pointer.
 			 * @param coordinates A list of sub-coordinates.
 			 */
-			MultipleVisuals (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable, const std::vector< Libraries::Math::CartesianFrame< float > > & coordinates) noexcept;
+			MultipleVisuals (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable, const std::vector< Libs::Math::CartesianFrame< float > > & coordinates) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getRenderableInstance() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getRenderableInstance() const */
 			[[nodiscard]]
 			std::shared_ptr< Graphics::RenderableInstance::Abstract >
 			getRenderableInstance () const noexcept override
@@ -70,7 +70,7 @@ namespace Emeraude::Scenes::Component
 				return m_renderableInstance;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char *
 			getComponentType () const noexcept override
@@ -78,41 +78,41 @@ namespace Emeraude::Scenes::Component
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			std::shared_ptr< Graphics::RenderableInstance::Multiple > m_renderableInstance;
-			std::vector< Libraries::Math::CartesianFrame< float > > m_coordinates;
+			std::vector< Libs::Math::CartesianFrame< float > > m_coordinates;
 	};
 }

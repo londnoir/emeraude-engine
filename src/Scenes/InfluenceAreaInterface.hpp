@@ -27,11 +27,11 @@
 #pragma once
 
 /* Local inclusions. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The influence area interface.
@@ -79,7 +79,7 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
+			virtual bool isUnderInfluence (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
 
 			/**
 			 * @brief Returns the strength of influence to a scene entity from this area.
@@ -88,7 +88,7 @@ namespace Emeraude::Scenes
 			 * @return float
 			 */
 			[[nodiscard]]
-			virtual float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
+			virtual float influenceStrength (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
 
 			/**
 			 * @brief Returns whether a scene entity is under the influence of this area.
@@ -97,7 +97,7 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
+			virtual bool isUnderInfluence (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
 
 			/**
 			 * @brief Returns the strength of influence to a scene entity from this area.
@@ -106,7 +106,7 @@ namespace Emeraude::Scenes
 			 * @return float
 			 */
 			[[nodiscard]]
-			virtual float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
+			virtual float influenceStrength (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
 
 		protected:
 

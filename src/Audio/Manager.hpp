@@ -40,14 +40,14 @@
 #include "Console/Controllable.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/WaveFactory/Types.hpp"
+#include "Libs/WaveFactory/Types.hpp"
 #include "SettingKeys.hpp"
 #include "Source.hpp" // FIXME
 #include "SoundEnvironmentProperties.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Resources
 	{
@@ -57,7 +57,7 @@ namespace Emeraude
 	class PrimaryServices;
 }
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/** @brief The playing mode enumeration. */
 	enum class PlayMode
@@ -68,8 +68,8 @@ namespace Emeraude::Audio
 
 	/**
 	 * @brief The audio manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::Console::Controllable The audio manager can be controlled by the console.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Console::Controllable The audio manager can be controlled by the console.
 	 */
 	class Manager final : public ServiceInterface, public Console::Controllable
 	{
@@ -126,15 +126,15 @@ namespace Emeraude::Audio
 			 */
 			~Manager () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -198,7 +198,7 @@ namespace Emeraude::Audio
 			 * @return Frequency
 			 */
 			[[nodiscard]]
-			Libraries::WaveFactory::Frequency frequencyPlayback () const noexcept;
+			Libs::WaveFactory::Frequency frequencyPlayback () const noexcept;
 
 			/**
 			 * @brief Returns the music chunk size for streaming.
@@ -300,13 +300,13 @@ namespace Emeraude::Audio
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			/** @copydoc EmEn::Console::Controllable::onRegisterToConsole. */
 			void onRegisterToConsole () noexcept override;
 
 			/**
@@ -391,7 +391,7 @@ namespace Emeraude::Audio
 			std::map< ALCint, ALCint > m_contextAttributes;
 			std::shared_ptr< Source > m_defaultSource;
 			std::vector< std::shared_ptr< Source > > m_sources;
-			Libraries::WaveFactory::Frequency m_playbackFrequency{Libraries::WaveFactory::Frequency::PCM22050Hz};
+			Libs::WaveFactory::Frequency m_playbackFrequency{Libs::WaveFactory::Frequency::PCM22050Hz};
 			size_t m_musicChunkSize{DefaultAudioMusicChunkSize};
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,

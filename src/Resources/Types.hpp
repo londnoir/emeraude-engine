@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/** @brief Name of a default resource. */
 	constexpr auto Default{"Default"};

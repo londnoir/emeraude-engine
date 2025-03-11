@@ -40,11 +40,11 @@
 #include "Graphics/Geometry/AdaptiveVertexGridResource.hpp"
 #include "Graphics/Geometry/VertexGridResource.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	* @brief The terrain resource class.
-	 * @extends Emeraude::Graphics::Renderable::SceneAreaInterface The is a scene area.
+	 * @extends EmEn::Graphics::Renderable::SceneAreaInterface The is a scene area.
 	 */
 	class TerrainResource final : public SceneAreaInterface
 	{
@@ -77,66 +77,66 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit TerrainResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
 			bool isOpaque (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
 			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
 			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(const Libraries::Math::Vector< 3, float > &) const */
+			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getLevelAt(const Libs::Math::Vector< 3, float > &) const */
 			[[nodiscard]]
-			float getLevelAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
+			float getLevelAt (const Libs::Math::Vector< 3, float > & worldPosition) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getLevelAt(float, float, float) const */
+			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getLevelAt(float, float, float) const */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept override;
+			Libs::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::SceneAreaInterface::getNormalAt() const */
+			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getNormalAt() const */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getNormalAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept override;
+			Libs::Math::Vector< 3, float > getNormalAt (const Libs::Math::Vector< 3, float > & worldPosition) const noexcept override;
 
 			/**
 			 * @brief Loads a parametric terrain with a material.
@@ -197,14 +197,14 @@ namespace Emeraude::Graphics::Renderable
 			std::shared_ptr< Geometry::VertexGridResource > m_farGeometry{};
 			std::shared_ptr< Material::Interface > m_material{};
 			/* Contains the whole data. */
-			Libraries::VertexFactory::Grid< float > m_localData{};
-			Libraries::Math::Vector< 3, float > m_lastUpdatePosition{};
+			Libs::VertexFactory::Grid< float > m_localData{};
+			Libs::Math::Vector< 3, float > m_lastUpdatePosition{};
 			bool m_updatingActiveGeometryProcess = false;
 	};
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Terrains = Container< Graphics::Renderable::TerrainResource >;
 }

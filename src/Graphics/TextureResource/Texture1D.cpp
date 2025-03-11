@@ -36,7 +36,7 @@
 #include "Abstract.hpp"
 #include "Graphics/ImageResource.hpp"
 #include "Graphics/Renderer.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
 #include "Vulkan/Image.hpp"
@@ -46,15 +46,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::Texture1D >::ClassId{"Texture1DContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::TextureResource::Texture1D >::ClassId{"Texture1DContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::Texture1D >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::TextureResource::Texture1D >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::TextureResource
+namespace EmEn::Graphics::TextureResource
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
 	const size_t Texture1D::ClassUID{getClassUID(ClassId)};

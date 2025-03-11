@@ -30,20 +30,20 @@
 #include <memory>
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Vulkan/DescriptorSetLayout.hpp"
 #include "Vulkan/DescriptorSet.hpp"
 #include "Frustum.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	class Renderer;
 }
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/** 
 	 * @brief Defines an abstract way to describes a view with coordinates and matrices to use with Vulkan.
@@ -95,7 +95,7 @@ namespace Emeraude::Graphics
 			 * @return const Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & projectionMatrix () const noexcept = 0;
+			virtual const Libs::Math::Matrix< 4, float > & projectionMatrix () const noexcept = 0;
 
 			/**
 			 * @brief Returns the view matrix.
@@ -104,14 +104,14 @@ namespace Emeraude::Graphics
 			 * @return const Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Matrix< 4, float > & viewMatrix (bool infinity, size_t index) const noexcept = 0;
+			virtual const Libs::Math::Matrix< 4, float > & viewMatrix (bool infinity, size_t index) const noexcept = 0;
 
 			/**
 			 * @brief Returns the position of the point of view.
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Vector< 3, float > & position () const noexcept = 0;
+			virtual const Libs::Math::Vector< 3, float > & position () const noexcept = 0;
 
 			/**
 			 * @brief Returns the const access to the frustum for object clipping.
@@ -163,7 +163,7 @@ namespace Emeraude::Graphics
 			 * @param velocity A vector representing a velocity applied to the camera for special effect.
 			 * @return void
 			 */
-			virtual void updateViewCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates, const Libraries::Math::Vector< 3, float > & velocity) noexcept = 0;
+			virtual void updateViewCoordinates (const Libs::Math::CartesianFrame< float > & coordinates, const Libs::Math::Vector< 3, float > & velocity) noexcept = 0;
 
 			/**
 			 * @briefs Update optional ambient color and intensity.
@@ -171,7 +171,7 @@ namespace Emeraude::Graphics
 			 * @param intensity The light intensity.
 			 * @return void
 			 */
-			virtual void updateAmbientLightProperties (const Libraries::PixelFactory::Color< float > & color, float intensity) noexcept = 0;
+			virtual void updateAmbientLightProperties (const Libs::PixelFactory::Color< float > & color, float intensity) noexcept = 0;
 
 			/**
 			 * @brief Creates buffer in the video memory.

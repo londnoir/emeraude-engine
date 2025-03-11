@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "Saphir/FramebufferEffectInterface.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The retro lens effect class;
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class RetroLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -44,7 +44,7 @@ namespace Emeraude::Scenes
 
 			RetroLensEffect () noexcept = default;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 

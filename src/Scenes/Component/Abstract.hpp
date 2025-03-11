@@ -35,18 +35,18 @@
 #include "json/json.h"
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
-#include "Libraries/FlagArrayTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
+#include "Libs/FlagArrayTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 #include "Animations/AnimatableInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -68,16 +68,16 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Class that hold the base of every component that can be attached to an entity.
-	 * @extends Libraries::NameableTrait Each component is named.
-	 * @extends Libraries::FlagArrayTrait Each component has 8 flags, 2 are used by this base class.
-	 * @extends Libraries::ObservableTrait To transfer physical properties changes. FIXME: Observable is kept for future features.
+	 * @extends EmEn::Libs::NameableTrait Each component is named.
+	 * @extends EmEn::Libs::FlagArrayTrait Each component has 8 flags, 2 are used by this base class.
+	 * @extends EmEn::Libs::ObservableTrait To transfer physical properties changes. FIXME: Observable is kept for future features.
 	 * @extends Animations::AnimatableInterface Component are animatable.
 	 */
-	class Abstract : public Libraries::NameableTrait, public Libraries::FlagArrayTrait< 8 >, public Libraries::ObservableTrait, public Animations::AnimatableInterface
+	class Abstract : public Libs::NameableTrait, public Libs::FlagArrayTrait< 8 >, public Libs::ObservableTrait, public Animations::AnimatableInterface
 	{
 		public:
 
@@ -120,11 +120,11 @@ namespace Emeraude::Scenes::Component
 			 */
 			~Abstract () override = default;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -214,14 +214,14 @@ namespace Emeraude::Scenes::Component
 			 * @return Libraries::Math::Coordinates< float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::CartesianFrame< float > getWorldCoordinates () const noexcept;
+			Libs::Math::CartesianFrame< float > getWorldCoordinates () const noexcept;
 
 			/**
 			 * @brief Returns the absolute velocity of this component using parent node.
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > getWorldVelocity () const noexcept;
+			Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept;
 
 			/**
 			 * @brief Returns the type of component.
@@ -236,7 +236,7 @@ namespace Emeraude::Scenes::Component
 			 * @return const Libraries::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Cuboid< float > & boundingBox () const noexcept = 0;
+			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the local bounding sphere of this component.
@@ -244,7 +244,7 @@ namespace Emeraude::Scenes::Component
 			 * @return const Libraries::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Sphere< float > & boundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief This method is called when the entity is updated by the core logic every cycle.
@@ -259,7 +259,7 @@ namespace Emeraude::Scenes::Component
 			 * @param worldCoordinates A reference to the world coordinates.
 			 * @return void
 			 */
-			virtual void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept = 0;
+			virtual void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept = 0;
 
 			/**
 			 * @brief Tells the entity to remove this component.
@@ -268,8 +268,8 @@ namespace Emeraude::Scenes::Component
 			[[nodiscard]]
 			virtual bool shouldRemove () const noexcept = 0;
 
-			static const Libraries::Math::Cuboid< float > NullBoundingBox;
-			static const Libraries::Math::Sphere< float > NullBoundingSphere;
+			static const Libs::Math::Cuboid< float > NullBoundingBox;
+			static const Libs::Math::Sphere< float > NullBoundingSphere;
 
 		protected:
 

@@ -31,7 +31,7 @@
 #include "Vulkan/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	Semaphore::Semaphore (const std::shared_ptr< Device > & device, VkSemaphoreCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device)

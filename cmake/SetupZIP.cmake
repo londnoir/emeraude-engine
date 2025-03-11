@@ -1,21 +1,25 @@
-if ( EMERAUDE_USE_SYSTEM_LIBS )
+if ( NOT LIBZIP_ENABLED )
+	if ( EMERAUDE_USE_SYSTEM_LIBS )
+		message("Enabling LibZib library from system ...")
 
-	message("Enabling LibZib library from system ...")
+		find_package(PkgConfig REQUIRED)
 
-	find_package(PkgConfig REQUIRED)
+		pkg_check_modules(LIBZIP REQUIRED libzip)
 
-	pkg_check_modules(LibZib REQUIRED libzip)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_INCLUDE_DIRS})
+		target_link_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARY_DIRS})
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+	else ()
+		message("Enabling LibZib library from local source ...")
 
-	target_include_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_INCLUDE_DIRS})
-	target_link_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARY_DIRS})
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+		if ( MSVC )
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/zip.lib)
+		else ()
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libzip.a)
+		endif ()
+	endif ()
 
+	set(LIBZIP_ENABLED On)
 else ()
-
-	message("Enabling LibZib library from local source ...")
-
-	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
-
+	message("The LibZib library is already enabled.")
 endif ()
-
-set(ZIP_ENABLED On) # Complete the "libraries_config.hpp" file

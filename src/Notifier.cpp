@@ -32,11 +32,11 @@
 #include "Resources/Manager.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 
 	const size_t Notifier::ClassUID{getClassUID(ClassId)};
 

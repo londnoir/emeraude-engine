@@ -30,13 +30,13 @@
 #include "Saphir/FramebufferEffectInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The chromatic aberration lens effect class.
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class ChromaticAberrationLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -52,13 +52,13 @@ namespace Emeraude::Scenes
 			 */
 			ChromaticAberrationLensEffect (float xScale, float yScale) noexcept;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
 		private:
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::overrideFragmentFetching() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::overrideFragmentFetching() */
 			[[nodiscard]]
 			bool overrideFragmentFetching () const noexcept override;
 
@@ -67,8 +67,8 @@ namespace Emeraude::Scenes
 			static constexpr auto BlueOffset{"em_BlueOffset"};
 
 			mutable uint32_t m_samples{0};
-			Libraries::Math::Vector< 2, float > m_redOffset{};
-			Libraries::Math::Vector< 2, float > m_greenOffset{};
-			Libraries::Math::Vector< 2, float > m_blueOffset{};
+			Libs::Math::Vector< 2, float > m_redOffset{};
+			Libs::Math::Vector< 2, float > m_greenOffset{};
+			Libs::Math::Vector< 2, float > m_blueOffset{};
 	};
 }

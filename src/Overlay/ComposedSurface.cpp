@@ -36,18 +36,18 @@
 #include "Constants.hpp"
 #include "Manager.hpp"
 #include "Layouts/Main.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/Math/Rectangle.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Tracer.hpp"
 #include "Window.hpp"
 #include "Graphics/Renderer.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 	using namespace Vulkan;
 

@@ -40,7 +40,7 @@
 #include "Vulkan/Instance.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	using namespace Vulkan;
 

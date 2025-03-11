@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Overlay::Layouts
+namespace EmEn::Overlay::Layouts
 {
 
 }

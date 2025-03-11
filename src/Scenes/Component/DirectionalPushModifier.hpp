@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractModifier.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Defines a directional push modifier to make move physical object.
-	 * @extends Emeraude::Scenes::Component::AbstractModifier The base class for modifier.
+	 * @extends EmEn::Scenes::Component::AbstractModifier The base class for modifier.
 	 */
 	class DirectionalPushModifier final : public AbstractModifier
 	{
@@ -49,7 +49,7 @@ namespace Emeraude::Scenes::Component
 			 */
 			DirectionalPushModifier (const std::string & name, const AbstractEntity & parentEntity) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char *
 			getComponentType () const noexcept override
@@ -57,36 +57,36 @@ namespace Emeraude::Scenes::Component
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Sphere< float > &) */
-			Libraries::Math::Vector< 3, float > getForceAppliedToEntity (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
+			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Sphere< float > &) */
+			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Cuboid< float > &) */
-			Libraries::Math::Vector< 3, float > getForceAppliedToEntity (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
+			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Cuboid< float > &) */
+			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
 
 			/**
 			 * @brief Sets the push magnitude.
@@ -115,7 +115,7 @@ namespace Emeraude::Scenes::Component
 			 * @param direction A reference to a vector.
 			 * @return void
 			 */
-			void setCustomDirection (const Libraries::Math::Vector< 3, float > & direction) noexcept;
+			void setCustomDirection (const Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
 			 * @brief Disables the custom push direction.
@@ -128,7 +128,7 @@ namespace Emeraude::Scenes::Component
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			direction () const noexcept
 			{
 				return m_direction;
@@ -136,13 +136,13 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
 			/* Flag names */
 			static constexpr auto UseCoordinatesDirection{UnusedFlag + 0UL};
 
 			float m_magnitude{1.0F};
-			Libraries::Math::Vector< 3, float > m_direction;
+			Libs::Math::Vector< 3, float > m_direction;
 	};
 }

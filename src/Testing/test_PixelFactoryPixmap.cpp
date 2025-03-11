@@ -27,15 +27,15 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Libraries/PixelFactory/FileIO.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/Gradient.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Libs/PixelFactory/FileIO.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Gradient.hpp"
 #include "Constants.hpp"
 
-using namespace Libraries;
-using namespace Libraries::PixelFactory;
-using namespace Libraries::Time::Elapsed;
+using namespace EmEn::Libs;
+using namespace EmEn::Libs::PixelFactory;
+using namespace EmEn::Libs::Time::Elapsed;
 
 TEST(PixelFactoryPixmap, constructor)
 {

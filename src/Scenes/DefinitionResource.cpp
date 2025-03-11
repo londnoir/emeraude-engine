@@ -33,20 +33,20 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 #include "Resources/Manager.hpp"
-#include "Libraries/FastJSON.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Scene.hpp"
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Scenes::DefinitionResource >::ClassId{"SceneDefinitionContainer"};
+const char * const EmEn::Resources::Container< EmEn::Scenes::DefinitionResource >::ClassId{"SceneDefinitionContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Scenes::DefinitionResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Scenes::DefinitionResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 
 	const size_t DefinitionResource::ClassUID{getClassUID(ClassId)};

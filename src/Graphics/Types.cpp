@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <iostream>
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	const char *
 	to_cstring (RenderPassType value) noexcept

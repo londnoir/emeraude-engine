@@ -36,11 +36,11 @@
 /* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
 	/**
 	 * @brief The range element.
-	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
+	 * @extends EmEn::Overlay::ComposedSurface This a visible element.
 	 */
 	class Range final : public ComposedSurface
 	{
@@ -56,7 +56,7 @@ namespace Emeraude::Overlay::Elements
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			Range (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Range (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
 			 * @brief Gives access to the TextWriter for configuration.
@@ -77,7 +77,7 @@ namespace Emeraude::Overlay::Elements
 			void
 			setValue (float value) noexcept
 			{
-				m_value = Libraries::Math::clampToUnit(value);
+				m_value = Libs::Math::clampToUnit(value);
 
 				this->drawFinished();
 			}
@@ -100,14 +100,14 @@ namespace Emeraude::Overlay::Elements
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			bool onResize (const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
+			bool onResize (const Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
 
 			/**
 			 * @brief 
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
+			bool onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
 
 			Graphics::TextWriter m_textWriter;
 			float m_value{0.0F};

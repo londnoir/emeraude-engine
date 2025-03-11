@@ -31,10 +31,10 @@
 #include <any>
 
 /* Local inclusions. */
-#include "Libraries/ObserverTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
-using namespace Libraries;
+using namespace EmEn::Libs;
 
 class Noise final : public ObservableTrait
 {

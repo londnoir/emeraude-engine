@@ -34,12 +34,12 @@
 #if IS_WINDOWS
 #include "PlatformSpecific/Helpers.hpp"
 #endif
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Arguments::ClassUID{getClassUID(ClassId)};
 	Arguments * Arguments::s_instance{nullptr};

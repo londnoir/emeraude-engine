@@ -35,10 +35,10 @@
 #include "Graphics/Renderer.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Vulkan;
 
 	const std::array< Matrix< 4, float >, CubemapFaceIndexes.size() > ViewMatrices3DUBO::CubemapOrientation{

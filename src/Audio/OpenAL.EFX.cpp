@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/* Effect objects */
 	LPALGENEFFECTS EFX::alGenEffects{nullptr};

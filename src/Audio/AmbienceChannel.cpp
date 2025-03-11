@@ -26,10 +26,10 @@
 
 #include "AmbienceChannel.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	AmbienceChannel::AmbienceChannel (const std::shared_ptr< Source > & source) noexcept
 		: m_source(source)

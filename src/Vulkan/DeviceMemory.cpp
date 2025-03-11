@@ -31,9 +31,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DeviceMemory::DeviceMemory (const std::shared_ptr< Device > & device, const VkMemoryRequirements & memoryRequirement, VkMemoryPropertyFlags memoryPropertyFlags) noexcept
 		: AbstractDeviceDependentObject(device), m_memoryRequirement(memoryRequirement), m_memoryPropertyFlags(memoryPropertyFlags)

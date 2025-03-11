@@ -33,7 +33,7 @@
 #include "Source.hpp"
 #include "AmbienceSound.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The ambience channel class.
@@ -105,7 +105,7 @@ namespace Emeraude::Audio
 			 * @return void
 			 */
 			void
-			setPosition (const Libraries::Math::Vector< 3, float > & position) noexcept
+			setPosition (const Libs::Math::Vector< 3, float > & position) noexcept
 			{
 				m_position = position;
 			}
@@ -116,7 +116,7 @@ namespace Emeraude::Audio
 			 * @return void
 			 */
 			void
-			setVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			setVelocity (const Libs::Math::Vector< 3, float > & velocity) noexcept
 			{
 				m_velocity = velocity;
 			}
@@ -134,8 +134,8 @@ namespace Emeraude::Audio
 		private:
 
 			std::shared_ptr< Source > m_source;
-			Libraries::Math::Vector< 3, float > m_position;
-			Libraries::Math::Vector< 3, float > m_velocity;
+			Libs::Math::Vector< 3, float > m_position;
+			Libs::Math::Vector< 3, float > m_velocity;
 			unsigned int m_timeBeforeNextPlay{0U};
 			unsigned int m_time{0U};
 	};

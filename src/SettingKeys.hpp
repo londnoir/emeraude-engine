@@ -29,7 +29,7 @@
 /* Project configuration. */
 #include "emeraude_config.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/* API */
 
@@ -56,6 +56,7 @@ namespace Emeraude
 
 		/* OpenAL */
 		static constexpr auto OpenALShowInformationKey{"API/OpenAL/ShowInformation"};
+		static constexpr auto DefaultOpenALShowInformation{BOOLEAN_FOLLOWING_DEBUG};
 		static constexpr auto OpenALUseEFXExtensionsKey{"API/OpenAL/UseEFXExtensions"};
 		static constexpr auto DefaultOpenALUseEFXExtensions{true};
 		static constexpr auto OpenALRefreshRateKey{"API/OpenAL/RefreshRate"};
@@ -99,6 +100,8 @@ namespace Emeraude
 		static constexpr auto DefaultAudioMusicVolume{0.5F};
 		static constexpr auto AudioMusicChunkSizeKey{"Core/Audio/MusicChunkSize"};
 		static constexpr auto DefaultAudioMusicChunkSize{8192};
+		static constexpr auto AudioQuietConversionKey{"Core/Audio/QuietConversion"};
+		static constexpr auto DefaultAudioQuietConversion{BOOLEAN_FOLLOWING_RELEASE};
 
 			/* Recorder */
 			static constexpr auto RecorderFrequencyKey{"Core/Audio/Recorder/Frequency"};

@@ -34,14 +34,14 @@
 
 /* Local inclusions for usages. */
 #include "Input/GamepadController.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Node.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The NodeController class
-	 * @extends Emeraude::Input::KeyboardListenerInterface
+	 * @extends EmEn::Input::KeyboardListenerInterface
 	 */
 	class NodeController final : public Input::KeyboardListenerInterface
 	{
@@ -169,7 +169,7 @@ namespace Emeraude::Scenes
 			static constexpr auto DefaultRotationAngleStep{1.0F};
 
 			std::shared_ptr< Node > m_controlledNode{};
-			Libraries::Math::TransformSpace m_transformSpace{Libraries::Math::TransformSpace::Parent};
+			Libs::Math::TransformSpace m_transformSpace{Libs::Math::TransformSpace::Parent};
 			Input::GamepadController m_controller{};
 			float m_moveStep{DefaultMoveStep};
 			float m_rotationAngleStep{DefaultRotationAngleStep};

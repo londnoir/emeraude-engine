@@ -38,11 +38,11 @@
 #include "NodeCrawler.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 	using namespace Saphir;
 	using namespace Physics;
@@ -53,14 +53,14 @@ namespace Emeraude::Scenes
 		: NameableTrait(name),
 		m_graphicsRenderer(graphicsRenderer),
 		m_audioManager(audioManager),
-		m_masterControlConsole(name),
+		m_AVConsoleManager(name),
 		m_background(background),
 		m_sceneArea(sceneArea),
 		m_seaLevel(seaLevel),
 		m_rootNode(std::make_shared<Node>()),
 		m_boundary(boundary)
 	{
-		this->observe(&m_masterControlConsole);
+		this->observe(&m_AVConsoleManager);
 		this->observe(m_rootNode.get());
 
 		this->buildOctrees(octreeOptions);
@@ -198,24 +198,24 @@ namespace Emeraude::Scenes
 
 			if ( swapChain != nullptr )
 			{
-				m_masterControlConsole.addVideoDevice(swapChain, true);
+				m_AVConsoleManager.addVideoDevice(swapChain, true);
 			}
 
-			if ( !m_masterControlConsole.autoConnectPrimaryVideoDevices(m_graphicsRenderer, settings) )
+			if ( !m_AVConsoleManager.autoConnectPrimaryVideoDevices(m_graphicsRenderer, settings) )
 			{
 				TraceError{ClassId} << "Unable to auto-connect primary video devices !";
 
 				return false;
 			}
 
-			if ( !m_masterControlConsole.autoConnectPrimaryAudioDevices(m_audioManager, settings) )
+			if ( !m_AVConsoleManager.autoConnectPrimaryAudioDevices(m_audioManager, settings) )
 			{
 				TraceError{ClassId} << "Unable to auto-connect primary audio devices !";
 
 				return false;
 			}
 
-			TraceInfo{ClassId} << m_masterControlConsole.getConnexionStates();
+			TraceInfo{ClassId} << m_AVConsoleManager.getConnexionStates();
 
 			if ( !m_lightSet.initialize(m_graphicsRenderer, this->name()) )
 			{
@@ -321,7 +321,7 @@ namespace Emeraude::Scenes
 		m_nodeController.releaseNode();
 		this->resetNodeTree();
 		m_staticEntities.clear();
-		m_masterControlConsole.clear();
+		m_AVConsoleManager.clear();
 	}
 
 	bool
@@ -975,7 +975,7 @@ namespace Emeraude::Scenes
 			m_renderLists[TranslucentLighted].clear();
 		}
 
-		/* NOTE : The camera position do not move from the whole process. */
+		/* NOTE : The camera position doesn't move during calculation. */
 		const auto & cameraPosition = renderTarget->viewMatrices().position();
 		Vector< 3, float > entityPosition{};
 
@@ -1012,7 +1012,7 @@ namespace Emeraude::Scenes
 				/* Prepares the entity position (costly) for the lambda. */
 				entityPosition = staticEntity->getWorldCoordinates().position();
 
-				for ( const auto & [componentName, component] : staticEntity->components() )
+				for ( const auto & component: staticEntity->components() | std::views::values )
 				{
 					const auto renderableInstance = component->getRenderableInstance();
 
@@ -1046,7 +1046,7 @@ namespace Emeraude::Scenes
 				/* Prepares the entity position (costly) for the lambda. */
 				entityPosition = node->getWorldCoordinates().position();
 
-				for ( const auto & [componentName, component] : node->components() )
+				for ( const auto & component: node->components() | std::views::values )
 				{
 					const auto renderableInstance = component->getRenderableInstance();
 
@@ -1239,30 +1239,30 @@ namespace Emeraude::Scenes
 	}
 
 	void
-	Scene::checkMasterControlConsoleNotification (int notificationCode, const std::any & data) const noexcept
+	Scene::checkAVConsoleNotification (int notificationCode, const std::any & data) const noexcept
 	{
 		switch ( notificationCode )
 		{
-			case MasterControl::Manager::VideoDeviceAdded :
+			case AVConsole::Manager::VideoDeviceAdded :
 				TraceDebug{ClassId} << "A new video device is available.";
 
 				break;
 
-			case MasterControl::Manager::VideoDeviceRemoved :
+			case AVConsole::Manager::VideoDeviceRemoved :
 				TraceDebug{ClassId} << "A video device has been removed.";
 
 				break;
 
-			case MasterControl::Manager::AudioDeviceAdded :
+			case AVConsole::Manager::AudioDeviceAdded :
 				TraceDebug{ClassId} << "A new audio device is available.";
 				break;
 
-			case MasterControl::Manager::AudioDeviceRemoved :
+			case AVConsole::Manager::AudioDeviceRemoved :
 				TraceDebug{ClassId} << "An audio device has been removed.";
 
 				break;
 
-			case MasterControl::Manager::RenderToShadowMapAdded :
+			case AVConsole::Manager::RenderToShadowMapAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to shadow map is available ! "
@@ -1275,7 +1275,7 @@ namespace Emeraude::Scenes
 			}
 				break;
 
-			case MasterControl::Manager::RenderToTextureAdded :
+			case AVConsole::Manager::RenderToTextureAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to texture is available ! "
@@ -1288,7 +1288,7 @@ namespace Emeraude::Scenes
 			}
 				break;
 
-			case MasterControl::Manager::RenderToViewAdded :
+			case AVConsole::Manager::RenderToViewAdded :
 			{
 				TraceDebug{ClassId} <<
 					"A new render to view is available ! "
@@ -1376,32 +1376,32 @@ namespace Emeraude::Scenes
 				return true;
 
 			case AbstractEntity::CameraCreated :
-				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
+				m_AVConsoleManager.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
 
 				return true;
 
 			case AbstractEntity::PrimaryCameraCreated :
-				m_masterControlConsole.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data), true);
+				m_AVConsoleManager.addVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data), true);
 
 				return true;
 
 			case AbstractEntity::CameraDestroyed :
-				m_masterControlConsole.removeVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
+				m_AVConsoleManager.removeVideoDevice(std::any_cast< std::shared_ptr< Component::Camera > >(data));
 
 				return true;
 
 			case AbstractEntity::MicrophoneCreated :
-				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
+				m_AVConsoleManager.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
 
 				return true;
 
 			case AbstractEntity::PrimaryMicrophoneCreated :
-				m_masterControlConsole.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data), true);
+				m_AVConsoleManager.addAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data), true);
 
 				return true;
 
 			case AbstractEntity::MicrophoneDestroyed :
-				m_masterControlConsole.removeAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
+				m_AVConsoleManager.removeAudioDevice(std::any_cast< std::shared_ptr< Component::Microphone > >(data));
 
 				return true;
 
@@ -1494,9 +1494,9 @@ namespace Emeraude::Scenes
 	bool
 	Scene::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept
 	{
-		if ( observable == &m_masterControlConsole )
+		if ( observable == &m_AVConsoleManager )
 		{
-			this->checkMasterControlConsoleNotification(notificationCode, data);
+			this->checkAVConsoleNotification(notificationCode, data);
 
 			/* Keep listening. */
 			return true;
@@ -1595,7 +1595,7 @@ namespace Emeraude::Scenes
 	void
 	Scene::initializeRenderableInstance (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) const noexcept
 	{
-		for ( const auto & renderTarget : m_masterControlConsole.renderToShadowMaps() )
+		for ( const auto & renderTarget : m_AVConsoleManager.renderToShadowMaps() )
 		{
 			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{
@@ -1603,7 +1603,7 @@ namespace Emeraude::Scenes
 			}
 		}
 
-		for ( const auto & renderTarget : m_masterControlConsole.renderToTextures() )
+		for ( const auto & renderTarget : m_AVConsoleManager.renderToTextures() )
 		{
 			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{
@@ -1611,7 +1611,7 @@ namespace Emeraude::Scenes
 			}
 		}
 
-		for ( const auto & renderTarget : m_masterControlConsole.renderToViews() )
+		for ( const auto & renderTarget : m_AVConsoleManager.renderToViews() )
 		{
 			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{

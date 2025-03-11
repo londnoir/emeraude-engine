@@ -27,10 +27,10 @@
 #pragma once
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The LocatableInterface class is used to locate something in the 3D world and set its coordinates.
@@ -76,7 +76,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void setPosition (const Libraries::Math::Vector< 3, float > & position, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void setPosition (const Libs::Math::Vector< 3, float > & position, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Sets an absolute X position in meters.
@@ -84,7 +84,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void setXPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void setXPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Sets an absolute Y position in meters.
@@ -92,7 +92,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void setYPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void setYPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Sets an absolute Z position in meters.
@@ -100,7 +100,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void setZPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void setZPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Shifts the position in meters.
@@ -108,7 +108,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void move (const Libraries::Math::Vector< 3, float > & distance, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void move (const Libs::Math::Vector< 3, float > & distance, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Shifts the X position in meters.
@@ -116,7 +116,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void moveX (float distance, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void moveX (float distance, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Shifts the Y position in meters.
@@ -124,7 +124,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void moveY (float distance, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void moveY (float distance, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Shifts the Z position in meters.
@@ -132,7 +132,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the move.
 			 * @return void
 			 */
-			virtual void moveZ (float distance, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void moveZ (float distance, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Performs a rotation around an arbitrary axis.
@@ -141,7 +141,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the rotation.
 			 * @return void
 			 */
-			virtual void rotate (float radian, const Libraries::Math::Vector< 3, float > & axis, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void rotate (float radian, const Libs::Math::Vector< 3, float > & axis, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Performs a rotation around the X axis.
@@ -149,7 +149,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the rotation.
 			 * @return void
 			 */
-			virtual void pitch (float radian, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void pitch (float radian, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Performs a rotation around the Y axis.
@@ -157,7 +157,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the rotation.
 			 * @return void
 			 */
-			virtual void yaw (float radian, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void yaw (float radian, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Performs a rotation around the Z axis.
@@ -165,7 +165,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the rotation.
 			 * @return void
 			 */
-			virtual void roll (float radian, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void roll (float radian, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Applies a scale factor on the coordinates.
@@ -173,7 +173,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the scale.
 			 * @return void
 			 */
-			virtual void scale (const Libraries::Math::Vector< 3, float > & factor, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void scale (const Libs::Math::Vector< 3, float > & factor, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Applies a scale factor on the coordinates.
@@ -181,7 +181,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the scale.
 			 * @return void
 			 */
-			virtual void scale (float factor, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void scale (float factor, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Applies a scale factor on the coordinates.
@@ -189,7 +189,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the scale.
 			 * @return void
 			 */
-			virtual void scaleX (float factor, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void scaleX (float factor, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Applies a scale factor on the coordinates.
@@ -197,7 +197,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the scale.
 			 * @return void
 			 */
-			virtual void scaleY (float factor, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void scaleY (float factor, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Applies a scale factor on the coordinates.
@@ -205,7 +205,7 @@ namespace Emeraude::Scenes
 			 * @param transformSpace The space where occurs the scale.
 			 * @return void
 			 */
-			virtual void scaleZ (float factor, Libraries::Math::TransformSpace transformSpace) noexcept = 0;
+			virtual void scaleZ (float factor, Libs::Math::TransformSpace transformSpace) noexcept = 0;
 
 			/**
 			 * @brief Points the backward (Z- axis) of the coordinates system toward the target.
@@ -214,62 +214,62 @@ namespace Emeraude::Scenes
 			 * @param flipZAxis Flip the final Z axis.
 			 * @return void
 			 */
-			virtual void lookAt (const Libraries::Math::Vector< 3, float > & target, bool flipZAxis) noexcept = 0;
+			virtual void lookAt (const Libs::Math::Vector< 3, float > & target, bool flipZAxis) noexcept = 0;
 
 			/**
 			 * @brief Sets the local coordinates of this entity.
 			 * @return Libraries::Math::Coordinates< float > &
 			 */
-			virtual void setLocalCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates) noexcept = 0;
+			virtual void setLocalCoordinates (const Libs::Math::CartesianFrame< float > & coordinates) noexcept = 0;
 
 			/**
 			 * @brief Returns the local coordinates of a 3D world entity.
 			 * @return const Libraries::Math::Coordinates< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::CartesianFrame< float > & localCoordinates () const noexcept = 0;
+			virtual const Libs::Math::CartesianFrame< float > & localCoordinates () const noexcept = 0;
 
 			/**
 			 * @brief Returns the internal local coordinates of a 3D world entity.
 			 * @return const Libraries::Math::Coordinates< float > &
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::CartesianFrame< float > & localCoordinates () noexcept = 0;
+			virtual Libs::Math::CartesianFrame< float > & localCoordinates () noexcept = 0;
 
 			/**
 			 * @brief Returns the world coordinates of a 3D world entity.
 			 * @return Libraries::Math::Coordinates< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::CartesianFrame< float > getWorldCoordinates () const noexcept = 0;
+			virtual Libs::Math::CartesianFrame< float > getWorldCoordinates () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding box of a 3D world entity.
 			 * @return const Libraries::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Cuboid< float > & localBoundingBox () const noexcept = 0;
+			virtual const Libs::Math::Cuboid< float > & localBoundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding box of a 3D world entity.
 			 * @return Libraries::Math::Cuboid< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Cuboid< float > getWorldBoundingBox () const noexcept = 0;
+			virtual Libs::Math::Cuboid< float > getWorldBoundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding sphere of a 3D world entity.
 			 * @return const Libraries::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Sphere< float > & localBoundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Sphere< float > & localBoundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding sphere of a 3D world entity.
 			 * @return Libraries::Math::Sphere< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Sphere< float > getWorldBoundingSphere () const noexcept = 0;
+			virtual Libs::Math::Sphere< float > getWorldBoundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief Enables the sphere collision simplification.

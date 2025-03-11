@@ -31,7 +31,7 @@
 #include <sstream>
 #include <string>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	const char *
 	to_cstring (Key key) noexcept

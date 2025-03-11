@@ -30,7 +30,7 @@
 #include "Saphir/FramebufferEffectInterface.hpp"
 
 /* Forward declarations */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -43,11 +43,11 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The vignetting lens effect class;
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class VignettingLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -62,7 +62,7 @@ namespace Emeraude::Scenes
 			 */
 			explicit VignettingLensEffect (float strength = 1.0F) noexcept;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
@@ -85,7 +85,7 @@ namespace Emeraude::Scenes
 			static constexpr auto VignettingTexture = "em_VignettingTexture";
 			static constexpr auto Strength = "em_Strength";
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::requestScreenCoordinates() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::requestScreenCoordinates() */
 			[[nodiscard]]
 			bool requestScreenCoordinates () const noexcept override;
 

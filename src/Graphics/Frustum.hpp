@@ -33,13 +33,13 @@
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Matrix.hpp"
-#include "Libraries/Math/Plane.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Matrix.hpp"
+#include "Libs/Math/Plane.hpp"
+#include "Libs/Math/Sphere.hpp"
+#include "Libs/Math/Vector.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The Frustum class
@@ -77,7 +77,7 @@ namespace Emeraude::Graphics
 			 * @brief Updates the frustum geometry when the camera move.
 			 * @param viewProjectionMatrix
 			 */
-			void update (const Libraries::Math::Matrix< 4, float > & viewProjectionMatrix) noexcept;
+			void update (const Libs::Math::Matrix< 4, float > & viewProjectionMatrix) noexcept;
 
 			/**
 			 * @brief Updates the frustum geometry.
@@ -86,7 +86,7 @@ namespace Emeraude::Graphics
 			 * @return void
 			 */
 			void
-			update (const Libraries::Math::Matrix< 4, float > & projection, const Libraries::Math::Matrix< 4, float > & view) noexcept
+			update (const Libs::Math::Matrix< 4, float > & projection, const Libs::Math::Matrix< 4, float > & view) noexcept
 			{
 				this->update(projection * view);
 			}
@@ -97,7 +97,7 @@ namespace Emeraude::Graphics
 			 * @return Result
 			 */
 			[[nodiscard]]
-			Result isCollidingWith (const Libraries::Math::Vector< 3, float > & point) const noexcept;
+			Result isCollidingWith (const Libs::Math::Vector< 3, float > & point) const noexcept;
 
 			/**
 			 * @brief Checks a sphere against the Frustum.
@@ -105,7 +105,7 @@ namespace Emeraude::Graphics
 			 * @return Result
 			 */
 			[[nodiscard]]
-			Result isCollidingWith (const Libraries::Math::Sphere< float > & sphere) const noexcept;
+			Result isCollidingWith (const Libs::Math::Sphere< float > & sphere) const noexcept;
 
 			/**
 			 * @brief Checks an axis aligned bounding box against the Frustum.
@@ -114,7 +114,7 @@ namespace Emeraude::Graphics
 			 * @return Result
 			 */
 			[[nodiscard]]
-			Result isCollidingWith (const Libraries::Math::Cuboid< float > & box) const noexcept;
+			Result isCollidingWith (const Libs::Math::Cuboid< float > & box) const noexcept;
 
 			/**
 			 * @brief Checks a ??? against the Frustum.
@@ -181,6 +181,6 @@ namespace Emeraude::Graphics
 
 			static bool s_enableFrustumTest;
 
-			std::array< Libraries::Math::Plane< float >, PlaneCount > m_planes{};
+			std::array< Libs::Math::Plane< float >, PlaneCount > m_planes{};
 	};
 }

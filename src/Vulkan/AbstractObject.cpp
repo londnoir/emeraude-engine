@@ -34,7 +34,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 #ifdef VK_TRACKING_ENABLED
 

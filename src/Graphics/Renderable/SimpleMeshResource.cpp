@@ -31,16 +31,16 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SimpleMeshResource >::ClassId{"SimpleMeshContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Renderable::SimpleMeshResource >::ClassId{"SimpleMeshContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SimpleMeshResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Renderable::SimpleMeshResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	const size_t SimpleMeshResource::ClassUID{getClassUID(ClassId)};
 

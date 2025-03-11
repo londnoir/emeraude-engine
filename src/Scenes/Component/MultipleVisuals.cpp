@@ -30,10 +30,10 @@
 #include "Scenes/AbstractEntity.hpp"
 #include "Scenes/Scene.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Physics;
 	using namespace Graphics;

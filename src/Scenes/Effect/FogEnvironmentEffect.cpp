@@ -33,9 +33,9 @@
 #include "Saphir/VertexShader.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Saphir;
 	using namespace Saphir::Keys;
 

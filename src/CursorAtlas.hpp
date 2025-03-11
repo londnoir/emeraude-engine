@@ -40,7 +40,7 @@
 #include "Graphics/ImageResource.hpp"
 #include "Types.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The cursor atlas holds all pointer representation for the application.
@@ -73,7 +73,7 @@ namespace Emeraude
 			 * @param hotSpot A reference to an array of 2 integers. Default X:0, Y:0.
 			 * @return void
 			 */
-			void setCursor (Window & window, const std::string & label, Libraries::PixelFactory::Pixmap< uint8_t > pixmap, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept;
+			void setCursor (Window & window, const std::string & label, Libs::PixelFactory::Pixmap< uint8_t > pixmap, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept;
 
 			/**
 			 * @brief Changes the cursor representation on screen with a pixmap.

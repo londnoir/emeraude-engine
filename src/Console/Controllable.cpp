@@ -30,14 +30,14 @@
 #include <iostream>
 
 /* Local inclusions. */
-#include "Libraries/BlobTrait.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/BlobTrait.hpp"
+#include "Libs/String.hpp"
 #include "Controller.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	static constexpr auto TracerTag{"Controllable"};
 

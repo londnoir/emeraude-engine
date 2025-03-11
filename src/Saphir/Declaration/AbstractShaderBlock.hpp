@@ -34,11 +34,11 @@
 #include "BlockInterface.hpp"
 #include "Member/ShaderBlock.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief Base class for every GLSL shader blocks.
-	 * @extends Emeraude::Saphir::BlockInterface
+	 * @extends EmEn::Saphir::BlockInterface
 	 */
 	class AbstractShaderBlock : public BlockInterface
 	{
@@ -75,11 +75,11 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			~AbstractShaderBlock () override = default;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::isValid() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::bytes() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept final;
 

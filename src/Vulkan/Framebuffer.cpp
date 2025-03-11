@@ -32,9 +32,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Framebuffer::Framebuffer (const std::shared_ptr< const RenderPass > & renderPass, const VkExtent2D & extent, uint32_t layerCount, VkFramebufferCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(renderPass->device()), m_renderPass(renderPass)

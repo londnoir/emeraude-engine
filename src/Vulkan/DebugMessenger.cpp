@@ -34,9 +34,9 @@
 #include "Instance.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DebugMessenger::DebugMessenger (const Instance & instance) noexcept
 		: m_instance(instance), m_createInfo(DebugMessenger::getCreateInfo())

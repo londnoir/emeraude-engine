@@ -29,10 +29,8 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
-	
 	Help::Help (const std::string & name) noexcept
 		: NameableTrait(name)
 	{

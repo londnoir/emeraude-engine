@@ -36,14 +36,14 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Graphics/Types.hpp"
 #include "RenderPass.hpp"
 #include "PipelineLayout.hpp"
 #include "ShaderModule.hpp"
 
 /* Forward declarations */
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	namespace Material
 	{
@@ -64,11 +64,11 @@ namespace Emeraude::Graphics
 	class VertexBufferFormat;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The graphics pipeline class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This Vulkan Object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This Vulkan Object needs a device.
 	 */
 	class GraphicsPipeline final : public AbstractDeviceDependentObject
 	{
@@ -122,10 +122,10 @@ namespace Emeraude::Vulkan
 			 */
 			~GraphicsPipeline () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**
@@ -234,7 +234,7 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool configureColorBlendState (Graphics::RenderPassType renderPassType, const Graphics::Material::Interface & material, const Libraries::PixelFactory::Color< float > & blendColor = Libraries::PixelFactory::Black, VkPipelineColorBlendStateCreateFlags flags = 0) noexcept;
+			bool configureColorBlendState (Graphics::RenderPassType renderPassType, const Graphics::Material::Interface & material, const Libs::PixelFactory::Color< float > & blendColor = Libs::PixelFactory::Black, VkPipelineColorBlendStateCreateFlags flags = 0) noexcept;
 
 			/**
 			 * @brief Sets a custom color blend state;

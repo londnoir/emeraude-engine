@@ -38,28 +38,28 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "Libraries/std_source_location.hpp"
+#include "Libs/std_source_location.hpp"
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/BlobTrait.hpp"
+#include "Libs/BlobTrait.hpp"
 #include "TracerLogger.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Arguments;
 	class Settings;
 }
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The tracer service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class Tracer final : public ServiceInterface
 	{
@@ -130,15 +130,15 @@ namespace Emeraude
 			 */
 			~Tracer () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool usable () const noexcept override;
 
@@ -322,7 +322,7 @@ namespace Emeraude
 			 * @return void
 			 */
 			void
-			trace (Severity severity, const char * tag, const Libraries::BlobTrait & message, const char * location) const noexcept
+			trace (Severity severity, const char * tag, const Libs::BlobTrait & message, const char * location) const noexcept
 			{
 				this->trace(severity, tag, message.get(), location);
 			}
@@ -346,7 +346,7 @@ namespace Emeraude
 			 * @return void
 			 */
 			void
-			trace (Severity severity, const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) const noexcept
+			trace (Severity severity, const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) const noexcept
 			{
 				this->trace(severity, tag, message.get(), location);
 			}
@@ -396,7 +396,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			info (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			info (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				s_instance->trace(Severity::Info, tag, message.get(), location);
 			}
@@ -424,7 +424,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			success (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			success (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				s_instance->trace(Severity::Success, tag, message.get(), location);
 			}
@@ -452,7 +452,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			warning (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			warning (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				s_instance->trace(Severity::Warning, tag, message.get(), location);
 			}
@@ -480,7 +480,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			error (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			error (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				s_instance->trace(Severity::Error, tag, message.get(), location);
 			}
@@ -508,7 +508,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			fatal (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			fatal (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				s_instance->trace(Severity::Fatal, tag, message.get(), location);
 			}
@@ -538,7 +538,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			debug (const char * tag, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
+			debug (const char * tag, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current()) noexcept
 			{
 				#ifdef DEBUG
 				s_instance->trace(Severity::Debug, tag, message.get(), location);
@@ -570,7 +570,7 @@ namespace Emeraude
 			 */
 			static
 			void
-			API (const char * tag, const char * functionName, const Libraries::BlobTrait & message, const std::source_location & location = std::source_location::current())
+			API (const char * tag, const char * functionName, const Libs::BlobTrait & message, const std::source_location & location = std::source_location::current())
 			{
 				s_instance->traceAPI(tag, functionName, message.get(), location);
 			}
@@ -585,10 +585,10 @@ namespace Emeraude
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**
@@ -676,9 +676,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create a debug trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceDebug final : public Libraries::BlobTrait
+	class TraceDebug final : public Libs::BlobTrait
 	{
 		public:
 
@@ -742,9 +742,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create a success trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceSuccess final : public Libraries::BlobTrait
+	class TraceSuccess final : public Libs::BlobTrait
 	{
 		public:
 
@@ -808,9 +808,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create an info trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceInfo final : public Libraries::BlobTrait
+	class TraceInfo final : public Libs::BlobTrait
 	{
 		public:
 
@@ -874,9 +874,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create a warning trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceWarning final : public Libraries::BlobTrait
+	class TraceWarning final : public Libs::BlobTrait
 	{
 		public:
 
@@ -940,9 +940,9 @@ namespace Emeraude
 
 	/**
 	 * @brief TThis utils class create an error trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceError final : public Libraries::BlobTrait
+	class TraceError final : public Libs::BlobTrait
 	{
 		public:
 
@@ -1006,9 +1006,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create a fatal trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceFatal final : public Libraries::BlobTrait
+	class TraceFatal final : public Libs::BlobTrait
 	{
 		public:
 
@@ -1078,9 +1078,9 @@ namespace Emeraude
 
 	/**
 	 * @brief This utils class create an API trace object.
-	 * @extends Libraries::BlobTrait
+	 * @extends EmEn::Libs::BlobTrait
 	 */
-	class TraceAPI final : public Libraries::BlobTrait
+	class TraceAPI final : public Libs::BlobTrait
 	{
 		public:
 

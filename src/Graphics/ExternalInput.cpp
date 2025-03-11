@@ -32,9 +32,9 @@
 #include "Settings.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t ExternalInput::ClassUID{getClassUID(ClassId)};
 

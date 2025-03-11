@@ -36,11 +36,11 @@
 #include "Effects/Abstract.hpp"
 #include "Filters/Abstract.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The EffectSlot class.
-	 * @extends Emeraude::Audio::AbstractObject
+	 * @extends EmEn::Audio::AbstractObject
 	 */
 	class EffectSlot final : public AbstractObject
 	{
@@ -83,7 +83,7 @@ namespace Emeraude::Audio
 			 */
 			~EffectSlot () override;
 
-			/** @copydoc Emeraude::Engine::Audio::AbstractObject::isCreated() */
+			/** @copydoc EmEn::Engine::Audio::AbstractObject::isCreated() */
 			[[nodiscard]]
 			bool isCreated () const noexcept override;
 

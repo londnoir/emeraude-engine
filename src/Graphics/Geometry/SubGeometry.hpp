@@ -31,15 +31,15 @@
 #include <cstdint>
 
 /* Local inclusions for inheritances */
-#include "Libraries/FlagTrait.hpp"
+#include "Libs/FlagTrait.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief Defines how to use an IBO or a VBO to draw a specific geometry or sub-geometry.
-	 * @extends Libraries::FlagTrait
+	 * @extends EmEn::Libs::FlagTrait
 	 */
-	class SubGeometry final : public Libraries::FlagTrait< uint32_t >
+	class SubGeometry final : public Libs::FlagTrait< uint32_t >
 	{
 		public:
 

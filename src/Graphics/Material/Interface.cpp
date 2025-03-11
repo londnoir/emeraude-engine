@@ -31,12 +31,12 @@
 #include "Graphics/Renderer.hpp"
 #include "Saphir/Declaration/UniformBlock.hpp"
 #include "Tracer.hpp"
-#include "Libraries/FastJSON.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Vulkan/SharedUBOManager.hpp"
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	static constexpr auto TracerTag{"MaterialInterface"};
 

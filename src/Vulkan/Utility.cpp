@@ -30,11 +30,11 @@
 #include <sstream>
 
 /* Local inclusions. */
-#include "Libraries/Version.hpp"
+#include "Libs/Version.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	//static constexpr auto TracerTag{"VulkanUtility"};
 

@@ -35,7 +35,7 @@
 #include "Argument.hpp"
 #include "Output.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/** @brief Typedef of a function used by the console. */
 	using Binding = std::function< bool (const Arguments &, Outputs &) >;

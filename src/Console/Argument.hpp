@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/**	@brief Type of console argument. */
 	enum class ArgumentType

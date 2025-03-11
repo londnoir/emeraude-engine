@@ -34,21 +34,21 @@
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Audio/SoundResource.hpp"
 #include "Audio/Source.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Defines a sound source emitter.
 	 * @note You can virtually define infinite number of sound emitter, they are not strictly linked to hardware.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Libraries::ObserverTrait This component observes sound loading events.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Libs::ObserverTrait This component observes sound loading events.
 	 */
-	class SoundEmitter final : public Abstract, public Libraries::ObserverTrait
+	class SoundEmitter final : public Abstract, public Libs::ObserverTrait
 	{
 		public:
 
@@ -70,7 +70,7 @@ namespace Emeraude::Scenes::Component
 			 */
 			SoundEmitter (const std::string & name, const AbstractEntity & parentEntity, bool permanent = false) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char *
 			getComponentType () const noexcept override
@@ -78,29 +78,29 @@ namespace Emeraude::Scenes::Component
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 			/**
@@ -218,12 +218,12 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Gets an available audio source from the manager.
@@ -236,7 +236,7 @@ namespace Emeraude::Scenes::Component
 			 * @param worldCoordinates A reference to a coordinates.
 			 * @return void
 			 */
-			void updateSource (const Libraries::Math::CartesianFrame< float > & worldCoordinates) const noexcept;
+			void updateSource (const Libs::Math::CartesianFrame< float > & worldCoordinates) const noexcept;
 
 			/**
 			 * @brief Release an audio source.

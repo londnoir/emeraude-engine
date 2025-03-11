@@ -36,7 +36,7 @@
 #include "AL/alc.h"
 #include "AL/alext.h"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	bool
 	alGetErrors (const std::string & lastFunctionCalled, const std::string & filename, int line) noexcept

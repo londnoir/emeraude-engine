@@ -27,10 +27,10 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
-using namespace Libraries;
-using namespace Libraries::PixelFactory;
+using namespace EmEn::Libs;
+using namespace EmEn::Libs::PixelFactory;
 
 TEST(PixelFactoryColor, ColorFromInteger)
 {

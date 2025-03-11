@@ -33,9 +33,9 @@
 #include "SettingKeys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Math;
 	using namespace PixelFactory;
 	using namespace Graphics;

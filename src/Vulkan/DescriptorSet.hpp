@@ -33,7 +33,7 @@
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -51,11 +51,11 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The descriptor set wrapper class.
-	 * @extends Emeraude::Vulkan::AbstractObject This object will use the descriptor pool to get the device.
+	 * @extends EmEn::Vulkan::AbstractObject This object will use the descriptor pool to get the device.
 	 */
 	class DescriptorSet final : public AbstractObject
 	{

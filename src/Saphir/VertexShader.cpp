@@ -47,9 +47,9 @@
 #include "Tracer.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Declaration;
 	using namespace Graphics;
 	using namespace Keys;

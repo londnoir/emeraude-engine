@@ -38,13 +38,13 @@
 /* Local inclusions. */
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	class Scene;
 
 	/**
 	 * @brief The scene definition class.
-	 * @extends Emeraude::Resources::ResourceTrait This is a resource
+	 * @extends EmEn::Resources::ResourceTrait This is a resource
 	 */
 	class DefinitionResource final : public Resources::ResourceTrait
 	{
@@ -76,25 +76,25 @@ namespace Emeraude::Scenes
 			 */
 			explicit DefinitionResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/** @brief Gives the name of the scene. */
@@ -126,7 +126,7 @@ namespace Emeraude::Scenes
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -156,7 +156,7 @@ namespace Emeraude::Scenes
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using SceneDefinitions = Container< Scenes::DefinitionResource >;
 }

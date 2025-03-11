@@ -38,14 +38,14 @@
 #include "Arguments.hpp"
 #include "Constants.hpp"
 #include "Graphics/Types.hpp"
-#include "Libraries/BlobTrait.hpp"
+#include "Libs/BlobTrait.hpp"
 #include "Tracer.hpp"
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
+#include "Libs/VertexFactory/ShapeGenerator.hpp"
 
-namespace Emeraude::Tool
+namespace EmEn::Tool
 {
-	using namespace Libraries;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Graphics;
 
 	GeometryDataPrinter::GeometryDataPrinter (const Arguments & arguments) noexcept

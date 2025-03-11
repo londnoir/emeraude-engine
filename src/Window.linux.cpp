@@ -52,7 +52,7 @@
 #include "Vulkan/Surface.hpp"
 #include "PrimaryServices.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	using namespace Vulkan;
 

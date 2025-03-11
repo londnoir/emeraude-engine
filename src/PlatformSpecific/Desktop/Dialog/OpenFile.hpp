@@ -38,11 +38,11 @@
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	/**
 	 * @brief User dialog to select multiple files.
-	 * @extends Emeraude::PlatformSpecific::Desktop::Dialog::Abstract
+	 * @extends EmEn::PlatformSpecific::Desktop::Dialog::Abstract
 	 */
 	class OpenFile final : public Abstract
 	{
@@ -58,7 +58,7 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
 			 */
 			explicit OpenFile (const std::string & title, bool selectFolder = false, bool multiSelect = false);
 
-			/** @copydoc Emeraude::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
+			/** @copydoc EmEn::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
 			bool execute (Window * window) noexcept override;
 
 			/**

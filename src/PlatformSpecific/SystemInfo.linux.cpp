@@ -39,9 +39,9 @@
 #include <sys/utsname.h>
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	bool
 	SystemInfo::fetchOSInformation () noexcept
@@ -58,7 +58,7 @@ namespace Emeraude::PlatformSpecific
 					if ( line.starts_with("PRETTY_NAME") )
 					{
 						auto & name = m_OSInformation.systemName;
-						name = Libraries::String::right(line, "=");
+						name = Libs::String::right(line, "=");
 						std::erase(name, '"');
 					}
 				}

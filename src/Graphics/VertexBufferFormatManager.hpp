@@ -38,7 +38,7 @@
 #include "VertexBufferFormat.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics::Geometry
 	{
@@ -51,11 +51,11 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The vertex buffer format manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class VertexBufferFormatManager final
 	{

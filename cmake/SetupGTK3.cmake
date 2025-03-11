@@ -12,4 +12,4 @@ message(" - Binary : ${PC_GTK3_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PRIVATE ${PC_GTK3_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PC_GTK3_LIBRARIES})
 
-set(GTK3_ENABLED On) # Complete the "libraries_config.hpp" file
+set(GTK3_ENABLED On)

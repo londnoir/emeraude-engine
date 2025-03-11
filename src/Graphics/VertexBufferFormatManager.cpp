@@ -35,7 +35,7 @@
 #include "Vulkan/VertexBufferObject.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	VertexBufferFormatManager::~VertexBufferFormatManager () noexcept
 	{

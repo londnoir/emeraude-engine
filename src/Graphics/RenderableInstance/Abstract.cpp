@@ -45,10 +45,10 @@
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/GraphicsPipeline.hpp"
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
-	using namespace Libraries;
-	using namespace Emeraude::Vulkan;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Vulkan;
 	using namespace Saphir;
 	using namespace Keys;
 

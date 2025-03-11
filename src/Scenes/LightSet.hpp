@@ -35,19 +35,19 @@
 #include <mutex>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usage. */
+#include "AVConsole/Manager.hpp"
 #include "Component/DirectionalLight.hpp"
 #include "Component/PointLight.hpp"
 #include "Component/SpotLight.hpp"
 #include "Graphics/TextureResource/TextureCubemap.hpp"
 #include "Saphir/StaticLighting.hpp"
 #include "Vulkan/DescriptorSet.hpp"
-#include "MasterControl/Manager.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -61,13 +61,13 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief This class hold lights from a whole scene.
 	 * Libraries::ObservableTrait The light set can be observed for light addition or removal.
 	 */
-	class LightSet final : public Libraries::ObservableTrait
+	class LightSet final : public Libs::ObservableTrait
 	{
 		public:
 
@@ -97,9 +97,9 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Constructs a light set.
-			 * @param masterControlManager A reference to master control manager.
+			 * @param AVConsole A reference to master control manager.
 			 */
-			explicit LightSet (MasterControl::Manager & masterControlManager) noexcept;
+			explicit LightSet (AVConsole::Manager & AVConsole) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -132,7 +132,7 @@ namespace Emeraude::Scenes
 			 */
 			~LightSet () override = default;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -140,7 +140,7 @@ namespace Emeraude::Scenes
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -275,7 +275,7 @@ namespace Emeraude::Scenes
 			 * @return void
 			 */
 			void
-			setAmbientLightColor (const Libraries::PixelFactory::Color< float > & color) noexcept
+			setAmbientLightColor (const Libs::PixelFactory::Color< float > & color) noexcept
 			{
 				m_ambientLightColor = color;
 
@@ -292,7 +292,7 @@ namespace Emeraude::Scenes
 			void
 			setAmbientLightColor (const std::shared_ptr< Graphics::TextureResource::TextureCubemap > & cubemap, float percent = 0.2F) noexcept
 			{
-				m_ambientLightColor = cubemap->averageColor() * Libraries::Math::clampToUnit(percent);
+				m_ambientLightColor = cubemap->averageColor() * Libs::Math::clampToUnit(percent);
 
 				this->notify(AmbientLightChanged);
 			}
@@ -315,7 +315,7 @@ namespace Emeraude::Scenes
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > &
+			const Libs::PixelFactory::Color< float > &
 			ambientLightColor () const noexcept
 			{
 				return m_ambientLightColor;
@@ -344,7 +344,7 @@ namespace Emeraude::Scenes
 			enableAmbientGenerationFromLights (bool state, float factor = DefaultLightPercentToAmbient) noexcept
 			{
 				m_flags[CreateAmbientFromLights] = state;
-				m_lightPercentToAmbient = Libraries::Math::clampToUnit(factor);
+				m_lightPercentToAmbient = Libs::Math::clampToUnit(factor);
 			}
 
 			/**
@@ -476,7 +476,7 @@ namespace Emeraude::Scenes
 			 * @return Libraries::Math::Vector< 4, vectorData_t >
 			 */
 			template< typename vectorData_t = float >
-			Libraries::Math::Vector< 4, vectorData_t >
+			Libs::Math::Vector< 4, vectorData_t >
 			getLightColorFraction (const std::shared_ptr< Component::AbstractLightEmitter > & light) const noexcept
 			{
 				return light->color().toVector4<vectorData_t>() * this->lightPercentToAmbient();
@@ -559,7 +559,7 @@ namespace Emeraude::Scenes
 			static constexpr auto CreateAmbientFromLights{3UL};
 			static constexpr auto UseLightDistance{4UL};
 
-			MasterControl::Manager & m_masterControlManager;
+			AVConsole::Manager & m_AVConsoleManager;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_directionalLightBuffer;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_pointLightBuffer;
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_spotLightBuffer;
@@ -567,7 +567,7 @@ namespace Emeraude::Scenes
 			std::set< std::shared_ptr< Component::DirectionalLight > > m_directionalLights;
 			std::set< std::shared_ptr< Component::PointLight > > m_pointLights;
 			std::set< std::shared_ptr< Component::SpotLight > > m_spotLights;
-			Libraries::PixelFactory::Color< float > m_ambientLightColor{Libraries::PixelFactory::Black};
+			Libs::PixelFactory::Color< float > m_ambientLightColor{Libs::PixelFactory::Black};
 			float m_ambientLightIntensity{DefaultAmbientLightIntensity};
 			float m_lightPercentToAmbient{DefaultLightPercentToAmbient};
 			mutable std::mutex m_lightAccess;

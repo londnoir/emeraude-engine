@@ -36,9 +36,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	RenderPass::RenderPass (const std::shared_ptr< Device > & device, VkRenderPassCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device)

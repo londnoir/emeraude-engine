@@ -33,15 +33,15 @@
 #include <memory>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/VertexFactory/Shape.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/VertexFactory/Shape.hpp"
 #include "Resources/Manager.hpp"
 #include "VertexResource.hpp"
 #include "IndexedVertexResource.hpp"
 #include "VertexGridResource.hpp"
 #include "GenerationParameters.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief Geometry resources generator using threads.
@@ -90,7 +90,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > shape (const Libraries::VertexFactory::Shape< float > & shape, const std::string & resourceName) const noexcept;
+			std::shared_ptr< IndexedVertexResource > shape (const Libs::VertexFactory::Shape< float > & shape, const std::string & resourceName) const noexcept;
 
 			/**
 			 * @brief Generates a triangle geometry.
@@ -143,9 +143,9 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			[[nodiscard]]
 			std::shared_ptr< IndexedVertexResource >
-			cuboid (const Libraries::Math::Vector< 3, float > & size, const std::string & resourceName = {}) const noexcept
+			cuboid (const Libs::Math::Vector< 3, float > & size, const std::string & resourceName = {}) const noexcept
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				return this->cuboid(size[X], size[Y], size[Z], resourceName);
 			}
@@ -158,7 +158,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return std::shared_ptr< IndexedVertexResource >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< IndexedVertexResource > cuboid (const Libraries::Math::Vector< 3, float > & max, const Libraries::Math::Vector< 3, float > & min, std::string resourceName = {}) const noexcept;
+			std::shared_ptr< IndexedVertexResource > cuboid (const Libs::Math::Vector< 3, float > & max, const Libs::Math::Vector< 3, float > & min, std::string resourceName = {}) const noexcept;
 
 			/**
 			 * @brief Generates a hollowed cuboid geometry.

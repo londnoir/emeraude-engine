@@ -26,10 +26,10 @@
 
 #include "AbstractFilter.hpp"
 
-namespace Emeraude::Graphics::RenderTarget
+namespace EmEn::Graphics::RenderTarget
 {
 	AbstractFilter::AbstractFilter (const std::string & name) noexcept
-		: MasterControl::AbstractVirtualVideoDevice(name)
+		: AVConsole::AbstractVirtualVideoDevice(name)
 	{
 
 	}

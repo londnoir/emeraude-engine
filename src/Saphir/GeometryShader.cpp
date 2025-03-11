@@ -34,9 +34,9 @@
 #include "Tracer.hpp"
 #include "VertexShader.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Declaration;
 
 	GeometryShader::GeometryShader (const std::string & name, InputPrimitive inputPrimitive, OutputPrimitive outputPrimitive, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept

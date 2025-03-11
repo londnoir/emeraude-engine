@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	using namespace Keys;
 

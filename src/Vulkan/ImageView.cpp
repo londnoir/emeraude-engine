@@ -32,9 +32,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	ImageView::ImageView (const std::shared_ptr< Image > & image, VkImageViewType viewType, VkImageSubresourceRange subresourceRange, VkComponentMapping components, VkImageViewCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(image->device()), m_image(image)

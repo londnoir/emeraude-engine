@@ -31,13 +31,11 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
-
 	static constexpr auto TracerTag{"ServiceInterface"};
 
 	ServiceInterface::ServiceInterface (const std::string & serviceInstanceName) noexcept

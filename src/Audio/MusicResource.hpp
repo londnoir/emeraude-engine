@@ -40,12 +40,12 @@
 /* Local inclusions. */
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The music resource class.
-	 * @extends Emeraude::Audio::PlayableInterface
-	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
+	 * @extends EmEn::Audio::PlayableInterface
+	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class MusicResource final : public PlayableInterface, public Resources::ResourceTrait
 	{
@@ -66,7 +66,7 @@ namespace Emeraude::Audio
 			 */
 			explicit MusicResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -74,7 +74,7 @@ namespace Emeraude::Audio
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -82,7 +82,7 @@ namespace Emeraude::Audio
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Audio::PlayableInterface::streamable() */
+			/** @copydoc EmEn::Audio::PlayableInterface::streamable() */
 			[[nodiscard]]
 			size_t
 			streamable () const noexcept override
@@ -90,7 +90,7 @@ namespace Emeraude::Audio
 				return m_buffers.size();
 			}
 
-			/** @copydoc Emeraude::Audio::PlayableInterface::buffer() */
+			/** @copydoc EmEn::Audio::PlayableInterface::buffer() */
 			[[nodiscard]]
 			std::shared_ptr< const Buffer >
 			buffer (size_t bufferIndex = 0) const noexcept override
@@ -98,7 +98,7 @@ namespace Emeraude::Audio
 				return m_buffers.at(bufferIndex);
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -106,13 +106,13 @@ namespace Emeraude::Audio
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -120,7 +120,7 @@ namespace Emeraude::Audio
 			 * @return const Libraries::WaveFactory::Wave< int16_t > &
 			 */
 			[[nodiscard]]
-			const Libraries::WaveFactory::Wave< int16_t > &
+			const Libs::WaveFactory::Wave< int16_t > &
 			localData () const noexcept
 			{
 				return m_localData;
@@ -130,7 +130,7 @@ namespace Emeraude::Audio
 			 * @brief Returns the local data.
 			 * @return Libraries::WaveFactory::Wave< int16_t > &
 			 */
-			Libraries::WaveFactory::Wave< int16_t > &
+			Libs::WaveFactory::Wave< int16_t > &
 			localData () noexcept
 			{
 				return m_localData;
@@ -176,7 +176,7 @@ namespace Emeraude::Audio
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -189,14 +189,14 @@ namespace Emeraude::Audio
 			static constexpr auto DefaultInfo{"Unknown"};
 
 			std::vector< std::shared_ptr< Buffer > > m_buffers;
-			Libraries::WaveFactory::Wave< int16_t > m_localData;
+			Libs::WaveFactory::Wave< int16_t > m_localData;
 			std::string m_title{DefaultInfo};
 			std::string m_artist{DefaultInfo};
 	};
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Musics = Container< Audio::MusicResource >;
 }

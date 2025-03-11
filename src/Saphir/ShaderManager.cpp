@@ -31,19 +31,23 @@
 #include <algorithm>
 
 /* Third-party inclusions. */
+#ifdef EMERAUDE_USE_SYSTEM_LIBS
+#include <glslang/SPIRV/GlslangToSpv.h>
+#else
 #include "SPIRV/GlslangToSpv.h"
+#endif
 
 /* Local inclusions. */
-#include "Libraries/SourceCodeParser.hpp"
-#include "Libraries/IO/IO.hpp"
+#include "Libs/SourceCodeParser.hpp"
+#include "Libs/IO/IO.hpp"
 #include "Vulkan/ShaderModule.hpp"
 #include "AbstractShader.hpp"
 #include "PrimaryServices.hpp"
 #include "SettingKeys.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
 	const size_t ShaderManager::ClassUID{getClassUID(ClassId)};
@@ -761,8 +765,8 @@ namespace Emeraude::Saphir
 			.validate = false,
 			.emitNonSemanticShaderDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
 			.emitNonSemanticShaderDebugSource = false,//BOOLEAN_FOLLOWING_DEBUG,
-			.compileOnly = false,
-			.optimizerAllowExpandedIDBound = false
+			//.compileOnly = false,
+			//.optimizerAllowExpandedIDBound = false
 		};
 
 		GlslangToSpv(*program.getIntermediate(shaderType), binaryCode, &logger, &spvOptions);

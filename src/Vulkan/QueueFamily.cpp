@@ -31,7 +31,7 @@
 #include "Queue.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	QueueFamily::QueueFamily (uint32_t index, size_t maxQueueCount) noexcept
 		: m_queueFamilyIndex(index), m_maxQueueCount(maxQueueCount)

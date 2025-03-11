@@ -32,11 +32,11 @@
 /* Local inclusions for usages. */
 #include "Graphics/TextureResource/Texture2D.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The saturation lens effect class;
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class SaturationLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -48,7 +48,7 @@ namespace Emeraude::Scenes
 			 */
 			explicit SaturationLensEffect (float saturation = 0.0F) noexcept;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 

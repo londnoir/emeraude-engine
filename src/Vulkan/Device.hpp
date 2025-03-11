@@ -36,13 +36,13 @@
 
 /* Local inclusions for inheritances. */
 #include "AbstractObject.hpp"
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usage. */
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Instance;
 	class PhysicalDevice;
@@ -51,14 +51,14 @@ namespace Emeraude::Vulkan
 	class Queue;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines a logical device from a physical device.
-	 * @extends Emeraude::Vulkan::AbstractObject Obviously this is the device, so simple object is ok.
-	 * @extends Libraries::NameableTrait to set a name on a device.
+	 * @extends EmEn::Vulkan::AbstractObject Obviously this is the device, so simple object is ok.
+	 * @extends EmEn::Libs::NameableTrait to set a name on a device.
 	 */
-	class Device final : public std::enable_shared_from_this< Device >, public AbstractObject, public Libraries::NameableTrait
+	class Device final : public std::enable_shared_from_this< Device >, public AbstractObject, public Libs::NameableTrait
 	{
 		public:
 

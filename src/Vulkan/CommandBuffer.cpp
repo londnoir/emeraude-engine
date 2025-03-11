@@ -53,9 +53,9 @@
 #include "RenderPass.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	CommandBuffer::CommandBuffer (const std::shared_ptr< CommandPool > & commandPool, bool primaryLevel) noexcept
 		: m_commandPool(commandPool), m_primaryLevel(primaryLevel)

@@ -26,7 +26,7 @@
 
 #include "Command.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	Command::Command (Binding binding, std::string help) noexcept
 		: m_binding(std::move(binding)), m_help(std::move(help))

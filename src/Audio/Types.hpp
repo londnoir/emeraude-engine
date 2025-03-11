@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <cstdint>
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/** @brief The distance model to use with audio source for mixing. */
 	enum class DistanceModel : uint8_t

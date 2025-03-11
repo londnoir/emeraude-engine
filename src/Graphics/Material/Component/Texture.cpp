@@ -33,10 +33,10 @@
 #include "Resources/Manager.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Saphir;
 
 	Texture::Texture (const char * samplerName, std::string variableName, const std::shared_ptr< TextureResource::Abstract > & texture, uint32_t UVWChannel, const Vector< 3, float > & UVWScale, bool enableAlpha) noexcept

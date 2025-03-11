@@ -32,7 +32,7 @@
 /* STL inclusions. */
 #include <iostream>
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	const char *
 	to_cstring (SourceType enumeration) noexcept

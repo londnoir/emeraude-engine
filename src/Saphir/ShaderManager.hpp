@@ -51,7 +51,7 @@
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -67,7 +67,7 @@ namespace Emeraude
 	class PrimaryServices;
 }
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	static constexpr std::array< const char * const, 6 > ShaderFileExtensions{
 		VertexShaderFileExtension,
@@ -80,7 +80,7 @@ namespace Emeraude::Saphir
 
 	/**
 	 * @brief The shader manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class ShaderManager final : public ServiceInterface
 	{
@@ -139,7 +139,7 @@ namespace Emeraude::Saphir
 			 */
 			~ShaderManager () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -147,7 +147,7 @@ namespace Emeraude::Saphir
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -155,7 +155,7 @@ namespace Emeraude::Saphir
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -217,10 +217,10 @@ namespace Emeraude::Saphir
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**

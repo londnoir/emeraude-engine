@@ -26,7 +26,7 @@
 
 #include "Types.hpp"
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	const char *
 	to_cstring (GPUDeviceType value) noexcept

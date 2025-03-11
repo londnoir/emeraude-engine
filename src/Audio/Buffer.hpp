@@ -30,13 +30,13 @@
 #include "AbstractObject.hpp"
 
 /* Local inclusions for usages.*/
-#include "Libraries/WaveFactory/Wave.hpp"
+#include "Libs/WaveFactory/Wave.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The Buffer class.
-	 * @extends Emeraude::Audio::AbstractObject
+	 * @extends EmEn::Audio::AbstractObject
 	 */
 	class Buffer final : public AbstractObject
 	{
@@ -79,7 +79,7 @@ namespace Emeraude::Audio
 			 */
 			~Buffer () override;
 
-			/** @copydoc Emeraude::Audio::AbstractObject::isCreated() */
+			/** @copydoc EmEn::Audio::AbstractObject::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -100,7 +100,7 @@ namespace Emeraude::Audio
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool feedData (const Libraries::WaveFactory::Wave< short int > & wave, size_t chunkIndex = 0, size_t length = 0) noexcept;
+			bool feedData (const Libs::WaveFactory::Wave< short int > & wave, size_t chunkIndex = 0, size_t length = 0) noexcept;
 
 			/**
 			 * @brief Returns the frequency of the buffer.

@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	std::ostream &
 	operator<< (std::ostream & out, const UserInfo & obj)

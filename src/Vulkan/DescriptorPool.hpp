@@ -36,16 +36,16 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class DescriptorSetLayout;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The DescriptorPool class
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This vulkan object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This vulkan object needs a device.
 	 */
 	class DescriptorPool final : public AbstractDeviceDependentObject
 	{
@@ -101,10 +101,10 @@ namespace Emeraude::Vulkan
 			 */
 			~DescriptorPool () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

@@ -34,9 +34,9 @@
 #include <string>
 
 /* Local usages. */
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/* Common expressions. */
 	static constexpr auto NoneString{"None"};
@@ -631,7 +631,7 @@ namespace Emeraude::Graphics
 		PositiveZString, NegativeZString
 	};
 
-	using CubemapPixmaps = std::array< Libraries::PixelFactory::Pixmap< uint8_t >, CubemapFaceCount >;
+	using CubemapPixmaps = std::array< Libs::PixelFactory::Pixmap< uint8_t >, CubemapFaceCount >;
 
 	/**
 	 * @brief Converts a cubemap face enumeration value to the corresponding string.

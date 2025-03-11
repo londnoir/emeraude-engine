@@ -35,16 +35,16 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class CommandBuffer;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The CommandPool class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
 	 */
 	class CommandPool final : public AbstractDeviceDependentObject
 	{
@@ -97,10 +97,10 @@ namespace Emeraude::Vulkan
 			 */
 			~CommandPool () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

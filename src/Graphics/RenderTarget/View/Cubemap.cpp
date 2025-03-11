@@ -29,10 +29,10 @@
 /* Local inclusions. */
 #include "Graphics/Renderer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::View
+namespace EmEn::Graphics::RenderTarget::View
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Vulkan;
 
 	Cubemap::Cubemap (const std::string & name, uint32_t size, const FramebufferPrecisions & precisions) noexcept

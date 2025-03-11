@@ -33,7 +33,7 @@
 /* Third-party inclusions. */
 #include <vulkan/vulkan.h>
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The render sub-pass class to complete a render pass.

@@ -30,12 +30,12 @@
 #include <sstream>
 
 /* Local inclusions. */
-#include "Libraries/Utility.hpp"
+#include "Libs/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Keys;
 
 	Structure::Structure (Key name, Key instanceName) noexcept

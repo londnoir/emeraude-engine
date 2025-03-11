@@ -37,11 +37,11 @@
 #include "Graphics/Geometry/IndexedVertexResource.hpp"
 #include "Overlay/Manager.hpp"
 
-namespace Emeraude::Saphir::Generator
+namespace EmEn::Saphir::Generator
 {
 	/**
 	 * @brief This generator builds the graphics pipeline for the overlay rendering.
-	 * @extends Emeraude::Saphir::Generator::Abstract This a generator.
+	 * @extends EmEn::Saphir::Generator::Abstract This a generator.
 	 */
 	class OverlayRendering final : public Abstract
 	{
@@ -57,7 +57,7 @@ namespace Emeraude::Saphir::Generator
 			 */
 			OverlayRendering (Overlay::Manager & overlayManager, const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget) noexcept;
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::materialEnabled() const */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::materialEnabled() const */
 			[[nodiscard]]
 			bool
 			materialEnabled () const noexcept override
@@ -65,7 +65,7 @@ namespace Emeraude::Saphir::Generator
 				return false;
 			}
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::material() const */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::material() const */
 			[[nodiscard]]
 			const Graphics::Material::Interface *
 			material () const noexcept override
@@ -73,7 +73,7 @@ namespace Emeraude::Saphir::Generator
 				return nullptr;
 			}
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::geometry() const */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::geometry() const */
 			[[nodiscard]]
 			const Graphics::Geometry::Interface *
 			geometry () const noexcept override
@@ -83,22 +83,22 @@ namespace Emeraude::Saphir::Generator
 
 		private:
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::prepareUniformSets() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::prepareUniformSets() */
 			void
 			prepareUniformSets (SetIndexes & setIndexes) noexcept override
 			{
 				setIndexes.enableSet(SetType::PerModel);
 			}
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::onGenerateProgram() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::onGenerateProgram() */
 			[[nodiscard]]
 			bool onGenerateProgram (Program & program) noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::onGenerateProgramLayout() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::onGenerateProgramLayout() */
 			[[nodiscard]]
 			bool onGenerateProgramLayout (const SetIndexes & setIndexes, std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts, std::vector< VkPushConstantRange > & pushConstantRanges) noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Generator::Abstract::onGraphicsPipelineConfiguration() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::onGraphicsPipelineConfiguration() */
 			[[nodiscard]]
 			bool onGraphicsPipelineConfiguration (const Program & program, Vulkan::GraphicsPipeline & graphicsPipeline) noexcept override;
 

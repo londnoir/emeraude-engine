@@ -30,7 +30,7 @@
 #include <ostream>
 #include <sstream>
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	FramebufferProperties::FramebufferProperties (uint32_t width, uint32_t height, float scaleX, float scaleY) noexcept
 		: m_width(width),

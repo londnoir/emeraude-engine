@@ -37,31 +37,31 @@
 #include "Graphics/TextureResource/Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/Types.hpp"
-#include "MasterControl/Types.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::Texture
+namespace EmEn::Graphics::RenderTarget::Texture
 {
 	/**
 	 * @brief Base class for rendering to texture2Ds.
-	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
-	 * @extends Emeraude::Graphics::TextureResource::Abstract This is a usable texture.
+	 * @extends EmEn::Graphics::RenderTarget::Abstract This is a render target.
+	 * @extends EmEn::Graphics::TextureResource::Abstract This is a usable texture.
 	 */
 	class Abstract : public RenderTarget::Abstract, public TextureResource::Abstract
 	{
 		public:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
 			[[nodiscard]]
-			MasterControl::VideoType
+			AVConsole::VideoType
 			videoType () const noexcept override
 			{
-				return MasterControl::VideoType::Texture;
+				return AVConsole::VideoType::Texture;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::framebuffer() */
 			[[nodiscard]]
 			const Vulkan::Framebuffer *
 			framebuffer () const noexcept final
@@ -69,7 +69,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_framebuffer.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::image() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::image() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Image >
 			image () const noexcept final
@@ -77,7 +77,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_colorImage;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::imageView() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::imageView() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::ImageView >
 			imageView () const noexcept final
@@ -85,7 +85,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_colorImageView;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::sampler() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::sampler() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Sampler >
 			sampler () const noexcept final
@@ -93,11 +93,11 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_sampler;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isCreated() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCreated() */
 			[[nodiscard]]
 			bool isCreated () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::createOnHardware() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::createOnHardware() */
 			[[nodiscard]]
 			bool
 			createOnHardware (Renderer & renderer) noexcept final
@@ -105,27 +105,27 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return this->create(renderer);
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::destroyFromHardware() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::destroyFromHardware() */
 			bool
 			destroyFromHardware () noexcept final
 			{
 				return this->destroy();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept final;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept final;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept final;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept final;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isGrayScale() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isGrayScale() */
 			[[nodiscard]]
 			bool
 			isGrayScale () const noexcept final
@@ -134,16 +134,16 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::averageColor() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::averageColor() */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float >
+			Libs::PixelFactory::Color< float >
 			averageColor () const noexcept final
 			{
 				/* FIXME: Compute average color from video memory texture2Ds. */
-				return Libraries::PixelFactory::Grey;
+				return Libs::PixelFactory::Grey;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::dimensions() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::dimensions() */
 			[[nodiscard]]
 			uint32_t
 			dimensions () const noexcept final
@@ -151,7 +151,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return this->isCubemap() ? 3 : 2;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isCubemapTexture() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCubemapTexture() */
 			[[nodiscard]]
 			bool
 			isCubemapTexture () const noexcept final
@@ -159,7 +159,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return this->isCubemap();
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameCount() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameCount() */
 			[[nodiscard]]
 			uint32_t
 			frameCount () const noexcept final
@@ -167,7 +167,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return 1;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::duration() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::duration() */
 			[[nodiscard]]
 			uint32_t
 			duration () const noexcept final
@@ -175,7 +175,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return 0;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameIndexAt() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameIndexAt() */
 			[[nodiscard]]
 			size_t
 			frameIndexAt (uint32_t /*sceneTime*/) const noexcept override
@@ -229,14 +229,14 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onCreate() */
 			[[nodiscard]]
 			bool onCreate (Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onDestroy() */
 			void onDestroy () noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::createRenderPass() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::RenderPass > createRenderPass (Renderer & renderer) const noexcept override;
 

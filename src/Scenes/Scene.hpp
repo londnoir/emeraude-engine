@@ -39,10 +39,10 @@
 #include <mutex>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
-#include "Libraries/ObserverTrait.hpp"
-#include "Libraries/Time/EventTrait.hpp"
+#include "Libs/NameableTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
+#include "Libs/Time/EventTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/Renderable/AbstractBackground.hpp"
@@ -57,12 +57,12 @@
 #include "RenderBatch.hpp"
 
 /* Forward Declarations */
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	class Renderer;
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Structure to configure the scene octree initialization.
@@ -77,12 +77,12 @@ namespace Emeraude::Scenes
 
 	/**
 	 * @brief Class that describe a whole scene through a nodes structure.
-	 * @extends Libraries::NameableTrait A scene is a named object in the engine.
-	 * @extends Libraries::Time::EventTrait A scene can have timed events.
-	 * @extends Libraries::ObserverTrait The scene will observe the scene node tree and static entity list.
+	 * @extends EmEn::Libs::NameableTrait A scene is a named object in the engine.
+	 * @extends EmEn::Libs::Time::EventTrait A scene can have timed events.
+	 * @extends EmEn::Libs::ObserverTrait The scene will observe the scene node tree and static entity list.
 	 * Libraries::ObservableTrait Scene will notify its content change.
 	 */
-	class Scene final : public Libraries::NameableTrait, public Libraries::Time::EventTrait< uint32_t, std::milli >, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class Scene final : public Libs::NameableTrait, public Libs::Time::EventTrait< uint32_t, std::milli >, public Libs::ObserverTrait, public Libs::ObservableTrait
 	{
 		public:
 
@@ -143,7 +143,7 @@ namespace Emeraude::Scenes
 			 */
 			~Scene () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -151,7 +151,7 @@ namespace Emeraude::Scenes
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -261,7 +261,7 @@ namespace Emeraude::Scenes
 			 * @return std::shared_ptr< StaticEntity >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< StaticEntity > createStaticEntity (const std::string & name, const Libraries::Math::CartesianFrame< float > & coordinates = {}) noexcept;
+			std::shared_ptr< StaticEntity > createStaticEntity (const std::string & name, const Libs::Math::CartesianFrame< float > & coordinates = {}) noexcept;
 
 			/**
 			 * @brief Creates a static entity in the scene using only a position.
@@ -271,9 +271,9 @@ namespace Emeraude::Scenes
 			 */
 			[[nodiscard]]
 			std::shared_ptr< StaticEntity >
-			createStaticEntity (const std::string & name, const Libraries::Math::Vector< 3, float > & position) noexcept
+			createStaticEntity (const std::string & name, const Libs::Math::Vector< 3, float > & position) noexcept
 			{
-				return this->createStaticEntity(name, Libraries::Math::CartesianFrame< float >{position});
+				return this->createStaticEntity(name, Libs::Math::CartesianFrame< float >{position});
 			}
 
 			/**
@@ -380,24 +380,24 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Returns the master control manager.
-			 * @return const MasterControl::Manager &
+			 * @return const AVConsole::Manager &
 			 */
 			[[nodiscard]]
-			const MasterControl::Manager &
-			masterControlManager () const noexcept
+			const AVConsole::Manager &
+			AVConsoleManager () const noexcept
 			{
-				return m_masterControlConsole;
+				return m_AVConsoleManager;
 			}
 
 			/**
 			 * @brief Returns the master control manager.
-			 * @return MasterControl::Manager &
+			 * @return AVConsole::Manager &
 			 */
 			[[nodiscard]]
-			MasterControl::Manager &
-			masterControlManager () noexcept
+			AVConsole::Manager &
+			AVConsoleManager () noexcept
 			{
-				return m_masterControlConsole;
+				return m_AVConsoleManager;
 			}
 
 			/**
@@ -615,19 +615,19 @@ namespace Emeraude::Scenes
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool contains (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept;
+			bool contains (const Libs::Math::Vector< 3, float > & worldPosition) const noexcept;
 
 			/**
 			 * @brief Returns a random position within the scene area.
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
-			Libraries::Math::Vector< 3, float >
+			Libs::Math::Vector< 3, float >
 			getRandomPosition () const noexcept
 			{
 				return {
-					Libraries::Utility::quickRandom(-m_boundary, m_boundary),
-					Libraries::Utility::quickRandom(-m_boundary, m_boundary),
-					Libraries::Utility::quickRandom(-m_boundary, m_boundary)
+					Libs::Utility::quickRandom(-m_boundary, m_boundary),
+					Libs::Utility::quickRandom(-m_boundary, m_boundary),
+					Libs::Utility::quickRandom(-m_boundary, m_boundary)
 				};
 			}
 
@@ -768,7 +768,7 @@ namespace Emeraude::Scenes
 
 		private:
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
@@ -809,11 +809,11 @@ namespace Emeraude::Scenes
 
 			/**
 			 * @brief Checks a notification from the master console control.
-			 * @param notificationCode The notification code from MasterControl::Console::NotificationCode enum.
+			 * @param notificationCode The notification code from AVConsole::Console::NotificationCode enum.
 			 * @param data A reference to the notification payload.
 			 * @return void
 			 */
-			void checkMasterControlConsoleNotification (int notificationCode, const std::any & data) const noexcept;
+			void checkAVConsoleNotification (int notificationCode, const std::any & data) const noexcept;
 
 			/**
 			 * @brief Checks a notification from a scene node.
@@ -943,7 +943,7 @@ namespace Emeraude::Scenes
 
 			Graphics::Renderer & m_graphicsRenderer;
 			Audio::Manager & m_audioManager;
-			MasterControl::Manager m_masterControlConsole;
+			AVConsole::Manager m_AVConsoleManager;
 			std::shared_ptr< Graphics::Renderable::AbstractBackground > m_background;
 			std::shared_ptr< Graphics::Renderable::SceneAreaInterface > m_sceneArea;
 			std::shared_ptr< Graphics::Renderable::SeaLevelInterface > m_seaLevel;
@@ -954,7 +954,7 @@ namespace Emeraude::Scenes
 			NodeController m_nodeController;
 			std::shared_ptr< OctreeSector< AbstractEntity, false > > m_renderingOctree;
 			std::shared_ptr< OctreeSector< AbstractEntity, true > > m_physicsOctree;
-			LightSet m_lightSet{m_masterControlConsole};
+			LightSet m_lightSet{m_AVConsoleManager};
 			std::set< std::shared_ptr< Component::AbstractModifier > > m_modifiers;
 			Physics::PhysicalEnvironmentProperties m_physicalEnvironmentProperties{Physics::PhysicalEnvironmentProperties::Earth()};
 			Audio::SoundEnvironmentProperties m_soundEnvironmentProperties;

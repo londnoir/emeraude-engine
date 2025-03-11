@@ -27,12 +27,12 @@
 #include "MovableTrait.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	void
 	MovableTrait::setMinimalVelocity (const Vector< 3, float > & velocity) noexcept

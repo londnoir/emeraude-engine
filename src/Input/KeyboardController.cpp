@@ -38,7 +38,7 @@
 /* Local usage. */
 #include "Window.hpp"
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	std::array< char, 349 > KeyboardController::s_deviceState{};
 

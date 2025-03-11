@@ -35,7 +35,7 @@
 #include "PhysicalObjectProperties.hpp"
 #include "Collider.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief Gives the ability to move something in the 3D world with physical properties.
@@ -81,7 +81,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			setLinearVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			setLinearVelocity (const Libs::Math::Vector< 3, float > & velocity) noexcept
 			{
 				m_linearVelocity = velocity;
 				m_linearSpeed = m_linearVelocity.length();
@@ -95,7 +95,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			setAngularVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept
+			setAngularVelocity (const Libs::Math::Vector< 3, float > & velocity) noexcept
 			{
 				m_angularVelocity = velocity;
 				m_angularSpeed = m_angularVelocity.length();
@@ -108,7 +108,7 @@ namespace Emeraude::Physics
 			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			void setMinimalVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept;
+			void setMinimalVelocity (const Libs::Math::Vector< 3, float > & velocity) noexcept;
 
 			/**
 			 * @brief Adds an acceleration to the velocity to the current velocity without any checking.
@@ -116,7 +116,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			addAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept
+			addAcceleration (const Libs::Math::Vector< 3, float > & acceleration) noexcept
 			{
 				m_linearVelocity += acceleration * EngineUpdateCycleDurationS< float >;
 				m_linearSpeed = m_linearVelocity.length();
@@ -130,7 +130,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			addAngularAcceleration (const Libraries::Math::Vector< 3, float > & acceleration) noexcept
+			addAngularAcceleration (const Libs::Math::Vector< 3, float > & acceleration) noexcept
 			{
 				m_angularVelocity += acceleration;
 				m_angularSpeed = m_angularVelocity.length();
@@ -154,7 +154,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			linearVelocity () const noexcept
 			{
 				return m_linearVelocity;
@@ -187,7 +187,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			angularVelocity () const noexcept
 			{
 				return m_angularVelocity;
@@ -210,7 +210,7 @@ namespace Emeraude::Physics
 			 * @return void
 			 */
 			void
-			setCenterOfMass (const Libraries::Math::Vector< 3, float > & centerOfMass) noexcept
+			setCenterOfMass (const Libs::Math::Vector< 3, float > & centerOfMass) noexcept
 			{
 				m_centerOfMass = centerOfMass;
 			}
@@ -220,7 +220,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			centerOfMass () const noexcept
 			{
 				return m_centerOfMass;
@@ -254,14 +254,14 @@ namespace Emeraude::Physics
 			 * @param force A reference to a vector representing the force. The magnitude (length) will represent the acceleration in m/s².
 			 * @return void
 			 */
-			void addForce (const Libraries::Math::Vector< 3, float > & force) noexcept;
+			void addForce (const Libs::Math::Vector< 3, float > & force) noexcept;
 
 			/**
 			 * @brief Adds a torque to the object angular acceleration.
 			 * @param torque A reference to a vector representing the torque.
 			 * @return void
 			 */
-			void addTorque (const Libraries::Math::Vector< 3, float > & torque) noexcept;
+			void addTorque (const Libs::Math::Vector< 3, float > & torque) noexcept;
 
 			/**
 			 * @brief Deviates the velocity direction from a normal vector when the object hit something static.
@@ -269,7 +269,7 @@ namespace Emeraude::Physics
 			 * @param surfaceBounciness A scalar to reduce the velocity after deviating the movement. 1.0F = no velocity loss from the surface. Default 0.75.
 			 * @return float
 			 */
-			float deflect (const Libraries::Math::Vector< 3, float > & surfaceNormal, float surfaceBounciness = 0.75F) noexcept;
+			float deflect (const Libs::Math::Vector< 3, float > & surfaceNormal, float surfaceBounciness = 0.75F) noexcept;
 
 			/**
 			 * @brief Sets the object into inertia.
@@ -368,7 +368,7 @@ namespace Emeraude::Physics
 			 * @return Libraries::Math::Vector< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getWorldVelocity () const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world center of mass of the entity.
@@ -376,7 +376,7 @@ namespace Emeraude::Physics
 			 * @return Libraries::Math::Vector< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getWorldCenterOfMass () const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getWorldCenterOfMass () const noexcept = 0;
 
 			/**
 			 * @brief Events when this movable has hit something.
@@ -410,14 +410,14 @@ namespace Emeraude::Physics
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getWorldPosition () const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getWorldPosition () const noexcept = 0;
 
 			/**
 			 * @brief Gives the new world position after simulation computed.
 			 * @param worldPosition A reference to a vector.
 			 * @return void
 			 */
-			virtual void simulatedMove (const Libraries::Math::Vector< 3, float > & worldPosition) noexcept = 0;
+			virtual void simulatedMove (const Libs::Math::Vector< 3, float > & worldPosition) noexcept = 0;
 
 			/**
 			 * @brief Gives the new world orientation after simulation computed.
@@ -425,7 +425,7 @@ namespace Emeraude::Physics
 			 * @param worldDirection
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
-			virtual void simulatedRotation (float radianAngle, const Libraries::Math::Vector< 3, float > & worldDirection) noexcept = 0;
+			virtual void simulatedRotation (float radianAngle, const Libs::Math::Vector< 3, float > & worldDirection) noexcept = 0;
 
 		private:
 
@@ -434,10 +434,10 @@ namespace Emeraude::Physics
 			static constexpr auto AlwaysComputePhysics{1UL};
 			static constexpr auto FreeFlyModeEnabled{2UL};
 
-			Libraries::Math::Vector< 3, float > m_lastWorldPosition;
-			Libraries::Math::Vector< 3, float > m_linearVelocity;
-			Libraries::Math::Vector< 3, float > m_angularVelocity; // Omega
-			Libraries::Math::Vector< 3, float > m_centerOfMass;
+			Libs::Math::Vector< 3, float > m_lastWorldPosition;
+			Libs::Math::Vector< 3, float > m_linearVelocity;
+			Libs::Math::Vector< 3, float > m_angularVelocity; // Omega
+			Libs::Math::Vector< 3, float > m_centerOfMass;
 			float m_linearSpeed{0.0F};
 			float m_angularSpeed{0.0F};
 			Collider m_collider;

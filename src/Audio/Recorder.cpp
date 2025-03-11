@@ -26,13 +26,13 @@
 
 #include "Recorder.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Recorder::Recorder (const std::string & name) noexcept
-		: MasterControl::AbstractVirtualAudioDevice(name, MasterControl::ConnexionType::Both)
+		: AVConsole::AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Both)
 	{
 
 	}

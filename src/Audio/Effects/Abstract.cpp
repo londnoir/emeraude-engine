@@ -31,9 +31,9 @@
 #include "Audio/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	static constexpr auto TracerTag{"AbstractEffect"};
 

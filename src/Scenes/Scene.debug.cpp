@@ -27,17 +27,17 @@
 #include "Scene.hpp"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Graphics/Geometry/ResourceGenerator.hpp"
 #include "Graphics/Renderable/MeshResource.hpp"
 #include "Graphics/Material/BasicResource.hpp"
 #include "Resources/Manager.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 
 	bool

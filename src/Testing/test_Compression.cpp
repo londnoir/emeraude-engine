@@ -30,16 +30,16 @@
 #include <cstring>
 
 /* Local inclusions. */
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Libraries/Compression/ZLIB.hpp"
-#include "Libraries/Compression/LZMA.hpp"
-#include "Libraries/Compression/LZMA/Compressor.hpp"
-#include "Libraries/Compression/LZMA/Decompressor.hpp"
-#include "Libraries/Utility.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Libs/Compression/ZLIB.hpp"
+#include "Libs/Compression/LZMA.hpp"
+#include "Libs/Compression/LZMA/Compressor.hpp"
+#include "Libs/Compression/LZMA/Decompressor.hpp"
+#include "Libs/Utility.hpp"
 
-using namespace Libraries;
-using namespace Libraries::Compression;
-using namespace Libraries::Time::Elapsed;
+using namespace EmEn::Libs;
+using namespace EmEn::Libs::Compression;
+using namespace EmEn::Libs::Time::Elapsed;
 
 [[nodiscard]]
 std::string

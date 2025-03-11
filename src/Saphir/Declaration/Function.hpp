@@ -34,14 +34,14 @@
 #include "../CodeGeneratorInterface.hpp"
 
 /* Local inclusions for usage. */
-#include "Libraries/BlobTrait.hpp"
+#include "Libs/BlobTrait.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The Function class.
-	 * @extends Emeraude::Saphir::Declaration::Interface This is a shader code declaration.
-	 * @extends Emeraude::Saphir::CodeGeneratorInterface
+	 * @extends EmEn::Saphir::Declaration::Interface This is a shader code declaration.
+	 * @extends EmEn::Saphir::CodeGeneratorInterface
 	 */
 	class Function final : public Interface, public CodeGeneratorInterface
 	{
@@ -54,19 +54,19 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			explicit Function (Key name, Key returnType = Keys::GLSL::Void) noexcept;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::isValid() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::name() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::bytes() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::sourceCode() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 
@@ -128,7 +128,7 @@ namespace Emeraude::Saphir::Declaration
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			std::string callCode (const Libraries::BlobTrait & parameters) const noexcept;
+			std::string callCode (const Libs::BlobTrait & parameters) const noexcept;
 
 		private:
 

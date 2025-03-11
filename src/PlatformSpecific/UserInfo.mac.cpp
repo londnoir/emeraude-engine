@@ -35,7 +35,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	void
 	resizeBuffer (std::string & buffer) noexcept

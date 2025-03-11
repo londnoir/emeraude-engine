@@ -29,12 +29,12 @@
 /* Local inclusions for ineritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
 	/**
 	 * @brief AutoWah effect.
 	 * @warning  Support broken on OpenAL Software 1.19.1.
-	 * @extends Emeraude::Audio::Effects::Abstract This is an effect.
+	 * @extends EmEn::Audio::Effects::Abstract This is an effect.
 	 */
 	class AutoWah final : public Abstract
 	{
@@ -48,7 +48,7 @@ namespace Emeraude::Audio::Effects
 			 */
 			AutoWah () noexcept;
 
-			/** @copydoc Emeraude::Audio::Effects::Abstract::resetProperties() */
+			/** @copydoc EmEn::Audio::Effects::Abstract::resetProperties() */
 			void resetProperties () noexcept override;
 
 			/**

@@ -32,7 +32,7 @@
 #include "Physics/Physics.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The sound environnement properties class to define how the sound will be played somewhere.

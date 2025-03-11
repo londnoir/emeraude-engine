@@ -29,7 +29,7 @@
 /* Local inclusions for usages. */
 #include "Physics.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief The PhysicalEnvironmentProperties class

@@ -30,7 +30,7 @@
 #include <ostream>
 #include <string>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief This class describe one argument.

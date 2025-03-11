@@ -38,9 +38,9 @@
 #include "UniformBufferObject.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DescriptorSet::DescriptorSet (const std::shared_ptr< DescriptorPool > & descriptorPool, const std::shared_ptr< DescriptorSetLayout > & descriptorSetLayout) noexcept
 		: m_descriptorPool(descriptorPool), m_descriptorSetLayout(descriptorSetLayout)

@@ -39,7 +39,7 @@
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	bool
 	SystemInfo::fetchOSInformation () noexcept

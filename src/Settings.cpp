@@ -34,16 +34,16 @@
 #include <stack>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/IO/IO.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/IO/IO.hpp"
+#include "Libs/String.hpp"
 #include "Arguments.hpp"
 #include "FileSystem.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Settings::ClassUID{getClassUID(ClassId)};
 

@@ -34,7 +34,7 @@
 #include <ostream>
 #include <filesystem>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	/**
 	 * @brief The user info class. This will gather information on the current user.

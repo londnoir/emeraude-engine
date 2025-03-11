@@ -32,9 +32,9 @@
 #include <filesystem>
 
 /* Local inclusions for usages. */
-#include "Libraries/Network/URL.hpp"
+#include "Libs/Network/URL.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The DownloadItem class
@@ -61,7 +61,7 @@ namespace Emeraude
 			 * @param output A reference to a filesystem path [std::move].
 			 * @param replaceExistingFile Erase file on exists if true.
 			 */
-			DownloadItem (Libraries::Network::URL url, std::filesystem::path output, bool replaceExistingFile = true) noexcept;
+			DownloadItem (Libs::Network::URL url, std::filesystem::path output, bool replaceExistingFile = true) noexcept;
 
 			/**
 			 * @brief Sets the current status.
@@ -84,7 +84,7 @@ namespace Emeraude
 			 * @return const Libraries::Network::URL &
 			 */
 			[[nodiscard]]
-			const Libraries::Network::URL &
+			const Libs::Network::URL &
 			url () const noexcept
 			{
 				return m_url;
@@ -157,7 +157,7 @@ namespace Emeraude
 
 		private:
 
-			Libraries::Network::URL m_url;
+			Libs::Network::URL m_url;
 			std::filesystem::path m_output;
 			std::string m_header;
 			size_t m_bytesTotal{0};

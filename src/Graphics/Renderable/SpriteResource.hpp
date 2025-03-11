@@ -39,11 +39,11 @@
 /* Local inclusions for usages. */
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief This class provide a high level object to describe a sprite (2D) in the 3D world.
-	 * @extends Emeraude::Graphics::Renderable::Interface Adds the ability to be rendered in the 3D world.
+	 * @extends EmEn::Graphics::Renderable::Interface Adds the ability to be rendered in the 3D world.
 	 */
 	class SpriteResource final : public Interface
 	{
@@ -66,7 +66,7 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			explicit SpriteResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -74,7 +74,7 @@ namespace Emeraude::Graphics::Renderable
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -82,7 +82,7 @@ namespace Emeraude::Graphics::Renderable
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t
 			layerCount () const noexcept override
@@ -90,7 +90,7 @@ namespace Emeraude::Graphics::Renderable
 				return 1;
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
 			bool
 			isOpaque (size_t layerIndex = 0) const noexcept override
@@ -103,7 +103,7 @@ namespace Emeraude::Graphics::Renderable
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface *
 			geometry () const noexcept override
@@ -111,7 +111,7 @@ namespace Emeraude::Graphics::Renderable
 				return m_geometry.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
 			const Material::Interface *
 			material (size_t layerIndex = 0) const noexcept override
@@ -119,7 +119,7 @@ namespace Emeraude::Graphics::Renderable
 				return m_material.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
 			const RasterizationOptions *
 			layerRasterizationOptions (size_t layerIndex = 0) const noexcept override
@@ -127,9 +127,9 @@ namespace Emeraude::Graphics::Renderable
 				return nullptr;
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				if ( m_geometry == nullptr )
@@ -140,9 +140,9 @@ namespace Emeraude::Graphics::Renderable
 				return m_geometry->boundingBox();
 			}
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				if ( m_geometry == nullptr )
@@ -153,7 +153,7 @@ namespace Emeraude::Graphics::Renderable
 				return m_geometry->boundingSphere();
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -161,10 +161,10 @@ namespace Emeraude::Graphics::Renderable
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -254,7 +254,7 @@ namespace Emeraude::Graphics::Renderable
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -290,7 +290,7 @@ namespace Emeraude::Graphics::Renderable
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Sprites = Container< Graphics::Renderable::SpriteResource >;
 }

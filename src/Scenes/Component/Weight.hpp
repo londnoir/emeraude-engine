@@ -36,11 +36,11 @@
 /* Local inclusions for usages. */
 #include "Physics/PhysicalObjectProperties.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Dummy entity to add artificially physics properties to a Node.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
 	 */
 	class Weight final : public Abstract
 	{
@@ -74,25 +74,25 @@ namespace Emeraude::Scenes::Component
 			 */
 			Weight (const std::string & name, const AbstractEntity & parentEntity, const Physics::PhysicalObjectProperties & initialProperties) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char * getComponentType () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 			/**
@@ -120,10 +120,10 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			Libraries::Math::Cuboid< float > m_boundingBox;
-			Libraries::Math::Sphere< float > m_boundingSphere;
+			Libs::Math::Cuboid< float > m_boundingBox;
+			Libs::Math::Sphere< float > m_boundingSphere;
 	};
 }

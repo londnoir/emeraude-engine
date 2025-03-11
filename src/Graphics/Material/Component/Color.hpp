@@ -36,13 +36,13 @@
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
 	/**
 	 * @brief The color component type.
-	 * @extends Emeraude::Graphics::Material::Component::Interface This class describe a component type.
+	 * @extends EmEn::Graphics::Material::Component::Interface This class describe a component type.
 	 */
 	class Color : public Interface
 	{
@@ -55,9 +55,9 @@ namespace Emeraude::Graphics::Material::Component
 			 * @param variableName A string [std::move].
 			 * @param color A reference to a color. Default black.
 			 */
-			explicit Color (std::string variableName, const Libraries::PixelFactory::Color< float > & color = {}) noexcept;
+			explicit Color (std::string variableName, const Libs::PixelFactory::Color< float > & color = {}) noexcept;
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::create() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::create() */
 			[[nodiscard]]
 			bool
 			create (Renderer & /*renderer*/, uint32_t & /*binding*/) noexcept override
@@ -65,7 +65,7 @@ namespace Emeraude::Graphics::Material::Component
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -73,7 +73,7 @@ namespace Emeraude::Graphics::Material::Component
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::variableName() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::variableName() */
 			[[nodiscard]]
 			const std::string &
 			variableName () const noexcept override
@@ -81,7 +81,7 @@ namespace Emeraude::Graphics::Material::Component
 				return m_variableName;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::type() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::type() */
 			[[nodiscard]]
 			Type
 			type () const noexcept override
@@ -89,7 +89,7 @@ namespace Emeraude::Graphics::Material::Component
 				return Type::Color;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isOpaque() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isOpaque() */
 			[[nodiscard]]
 			bool
 			isOpaque () const noexcept override
@@ -97,7 +97,7 @@ namespace Emeraude::Graphics::Material::Component
 				return m_color.alpha() >= 1.0F;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::textureResource() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::textureResource() */
 			[[nodiscard]]
 			std::shared_ptr< TextureResource::Abstract >
 			textureResource () const noexcept override
@@ -111,7 +111,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @return void
 			 */
 			void
-			setColor (const Libraries::PixelFactory::Color< float > & color) noexcept
+			setColor (const Libs::PixelFactory::Color< float > & color) noexcept
 			{
 				m_color = color;
 			}
@@ -121,7 +121,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > &
+			const Libs::PixelFactory::Color< float > &
 			color () const noexcept
 			{
 				return m_color;
@@ -132,7 +132,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float > &
+			Libs::PixelFactory::Color< float > &
 			color () noexcept
 			{
 				return m_color;
@@ -178,6 +178,6 @@ namespace Emeraude::Graphics::Material::Component
 		private:
 
 			std::string m_variableName;
-			Libraries::PixelFactory::Color< float > m_color;
+			Libs::PixelFactory::Color< float > m_color;
 	};
 }

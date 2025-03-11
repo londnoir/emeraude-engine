@@ -29,10 +29,10 @@
 /* STL inclusions. */
 #include <utility>
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	KeyFrame::KeyFrame (Variant value, InterpolationType type) noexcept
 		: m_value(std::move(value)), m_interpolation(type)

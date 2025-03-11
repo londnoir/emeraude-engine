@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir::Declaration::Member
+namespace EmEn::Saphir::Declaration::Member
 {
 	Structure::Structure (VariableType type, Key name) noexcept
 		: m_type(type), m_name(name)

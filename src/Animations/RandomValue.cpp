@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	RandomValue::RandomValue (const Variant & minimum, const Variant & maximum) noexcept
 	{

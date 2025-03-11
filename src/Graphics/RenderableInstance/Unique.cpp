@@ -37,16 +37,16 @@
 #include "Graphics/Renderable/Interface.hpp"
 #include "Graphics/Types.hpp"
 #include "Graphics/ViewMatricesInterface.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 #include "Saphir/Program.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/PipelineLayout.hpp"
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Emeraude::Vulkan;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Vulkan;
 
 	Unique::Unique (const std::shared_ptr< Renderable::Interface > & renderable, const CartesianFrame< float > & location, uint32_t flagBits) noexcept
 		: Abstract(renderable, flagBits), m_cartesianFrame(location)

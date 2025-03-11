@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	
 	void
 	CursorAtlas::setCursor (Window & window, CursorType cursorType) noexcept

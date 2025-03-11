@@ -33,9 +33,9 @@
 #include "SettingKeys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Sampler::Sampler (const std::shared_ptr< Device > & device, Settings & settings, VkSamplerCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device)

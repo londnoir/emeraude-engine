@@ -32,14 +32,14 @@
 #include <sstream>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 #include "Constants.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	const size_t PhysicalObjectProperties::ClassUID{getClassUID(ClassId)};
 

@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Vulkan/Buffer.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	BufferMemoryBarrier::BufferMemoryBarrier (const Buffer & buffer, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask) noexcept
 	{

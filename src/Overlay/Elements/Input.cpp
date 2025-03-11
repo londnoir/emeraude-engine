@@ -27,14 +27,14 @@
 #include "Input.hpp"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 #include "Input/Types.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 
 	Input::Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
 		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
@@ -51,14 +51,14 @@ namespace Emeraude::Overlay::Elements
 		switch ( key )
 		{
 			/* Process the current command. */
-			case Emeraude::Input::KeyEnter :
-			case Emeraude::Input::KeyPadEnter :
-			case Emeraude::Input::KeyEscape :
+			case EmEn::Input::KeyEnter :
+			case EmEn::Input::KeyPadEnter :
+			case EmEn::Input::KeyEscape :
 				this->setFocusedState(false);
 
 				return true;
 
-			case Emeraude::Input::KeyBackspace :
+			case EmEn::Input::KeyBackspace :
 				if ( !m_text.empty() )
 				{
 					m_text.pop_back();

@@ -34,11 +34,11 @@
 #include "BlockInterface.hpp"
 #include "Member/PushConstant.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The PushConstant class
-	 * @extends Emeraude::Saphir::Declaration::BlockInterface
+	 * @extends EmEn::Saphir::Declaration::BlockInterface
 	 */
 	class PushConstantBlock final : public BlockInterface
 	{
@@ -54,15 +54,15 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			explicit PushConstantBlock (Key name, Key instanceName = nullptr) noexcept;
 
-			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::isValid() */
+			/** @copydoc EmEn::Saphir::Declaration::BlockInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::bytes() */
+			/** @copydoc EmEn::Saphir::Declaration::BlockInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::Declaration::BlockInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

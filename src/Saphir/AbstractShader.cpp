@@ -31,14 +31,14 @@
 #include <functional>
 
 /* Local inclusions. */
-#include "Libraries/IO/IO.hpp"
+#include "Libs/IO/IO.hpp"
 #include "Generator/Abstract.hpp"
 #include "Keys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Declaration;
 	
 	static constexpr auto TracerTag{"Shader"};

@@ -26,10 +26,10 @@
 
 #include "SceneAreaInterface.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	SceneAreaInterface::SceneAreaInterface (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: Interface(name, resourceFlagBits)

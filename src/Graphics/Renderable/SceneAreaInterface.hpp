@@ -33,11 +33,11 @@
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief Interface to define a physical and visible floor in a scene.
-	 * @extends Emeraude::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
+	 * @extends EmEn::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
 	 */
 	class SceneAreaInterface : public Interface
 	{
@@ -80,7 +80,7 @@ namespace Emeraude::Graphics::Renderable
 			 * @return float
 			 */
 			[[nodiscard]]
-			virtual float getLevelAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept = 0;
+			virtual float getLevelAt (const Libs::Math::Vector< 3, float > & worldPosition) const noexcept = 0;
 
 			/**
 			 * @brief Returns a position where Y is completed by the level at X,Z position.
@@ -90,7 +90,7 @@ namespace Emeraude::Graphics::Renderable
 			 * @return Vector< 3, float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept = 0;
 
 			/**
 			 * @brief Returns the normal vector under the given position.
@@ -98,7 +98,7 @@ namespace Emeraude::Graphics::Renderable
 			 * @return Vector< 3, float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > getNormalAt (const Libraries::Math::Vector< 3, float > & worldPosition) const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getNormalAt (const Libs::Math::Vector< 3, float > & worldPosition) const noexcept = 0;
 
 		protected:
 

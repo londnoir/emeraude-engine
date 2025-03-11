@@ -26,7 +26,7 @@
 
 #include "AmbienceSound.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	AmbienceSound::AmbienceSound (const std::shared_ptr< SoundResource > & soundEffect) noexcept
 		: m_soundEffect(soundEffect)

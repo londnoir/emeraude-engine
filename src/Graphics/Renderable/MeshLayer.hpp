@@ -31,18 +31,18 @@
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/Material/Interface.hpp"
 #include "Graphics/RasterizationOptions.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief The MeshLayer class
 	 */
-	class MeshLayer final : public Libraries::NameableTrait
+	class MeshLayer final : public Libs::NameableTrait
 	{
 		public:
 

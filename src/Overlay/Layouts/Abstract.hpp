@@ -30,7 +30,7 @@
 #include <vector>
 #include <memory>
 
-namespace Emeraude::Overlay::Layouts
+namespace EmEn::Overlay::Layouts
 {
 	/**
 	 * @brief The base class of overlay layouts.

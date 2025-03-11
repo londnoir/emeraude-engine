@@ -34,19 +34,19 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "Libraries/std_source_location.hpp"
+#include "Libs/std_source_location.hpp"
 
 /* Local inclusions for inheritances. */
-#include "Libraries/FlagTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/FlagTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/Renderable/Interface.hpp"
 #include "Graphics/Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -82,7 +82,7 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
 	/** @brief Renderable instance flag bits. */
 	enum RenderableInstanceFlagBits : uint32_t
@@ -136,11 +136,11 @@ namespace Emeraude::Graphics::RenderableInstance
 
 	/**
 	 * @brief Defines the base of renderable instance to draw any object in a scene.
-	 * @extends Libraries::FlagTrait A renderable instance is flag-able.
-	 * @extends Libraries::ObserverTrait A renderable instance need to observe the renderable loading.
-	 * @extends Libraries::ObservableTrait A renderable instance is observable as well.
+	 * @extends EmEn::Libs::FlagTrait A renderable instance is flag-able.
+	 * @extends EmEn::Libs::ObserverTrait A renderable instance need to observe the renderable loading.
+	 * @extends EmEn::Libs::ObservableTrait A renderable instance is observable as well.
 	 */
-	class Abstract : public std::enable_shared_from_this< Abstract >, public Libraries::FlagTrait< uint32_t >, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class Abstract : public std::enable_shared_from_this< Abstract >, public Libs::FlagTrait< uint32_t >, public Libs::ObserverTrait, public Libs::ObservableTrait
 	{
 		public:
 
@@ -187,7 +187,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 */
 			~Abstract () override = default;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -195,7 +195,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -503,7 +503,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return void
 			 */
 			void
-			setTransformationMatrix (const Libraries::Math::Matrix< 4, float > & transformationMatrix) noexcept
+			setTransformationMatrix (const Libs::Math::Matrix< 4, float > & transformationMatrix) noexcept
 			{
 				m_transformationMatrix = transformationMatrix;
 				
@@ -515,7 +515,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return const Libraries::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			transformationMatrix () const noexcept
 			{
 				return m_transformationMatrix;
@@ -623,7 +623,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::Math::Vector< 3, float > worldPosition () const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > worldPosition () const noexcept = 0;
 
 		protected:
 
@@ -691,7 +691,7 @@ namespace Emeraude::Graphics::RenderableInstance
 
 		private:
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
@@ -701,7 +701,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				RenderTargetPrograms
 			> m_renderTargets;
 			size_t m_frameIndex{0};
-			Libraries::Math::Matrix< 4, float > m_transformationMatrix;
+			Libs::Math::Matrix< 4, float > m_transformationMatrix;
 			std::shared_ptr< Saphir::Program > m_shadowProgram;
 			std::shared_ptr< Saphir::Program > m_TBNSpaceProgram;
 	};

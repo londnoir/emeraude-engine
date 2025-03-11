@@ -30,9 +30,9 @@
 #include <array>
 
 /* Local inclusions. */
-#include "Libraries/Math/Matrix.hpp"
+#include "Libs/Math/Matrix.hpp"
 
-using namespace Libraries::Math;
+using namespace EmEn::Libs::Math;
 
 using MathTypeList = testing::Types< int, float, double >;
 

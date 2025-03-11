@@ -27,11 +27,11 @@
 #include "Expression.hpp"
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Expression::Expression (const std::string & command) noexcept
 	{

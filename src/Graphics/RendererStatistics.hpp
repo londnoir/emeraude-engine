@@ -31,9 +31,9 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/Time/Elapsed/RealTime.hpp"
+#include "Libs/Time/Elapsed/RealTime.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The RendererStatistics class
@@ -108,7 +108,7 @@ namespace Emeraude::Graphics
 
 		private:
 
-			std::array< std::pair< Libraries::Time::Elapsed::RealTime< std::chrono::high_resolution_clock >, std::vector< uint64_t > >, 4 > m_CPUStats{};
+			std::array< std::pair< Libs::Time::Elapsed::RealTime< std::chrono::high_resolution_clock >, std::vector< uint64_t > >, 4 > m_CPUStats{};
 			/* VULKAN_DEV */
 			//std::array< std::pair< QueryTimeElapsed, std::vector< unsigned long int > >, 4 > m_GPUStats{};
 			size_t m_averageRange = 1;

@@ -29,13 +29,16 @@
 #if IS_LINUX
 
 /* Third-party inclusions. */
-#include <gtk/gtk.h>
+#ifdef GTK3_ENABLED
+	#include <gtk/gtk.h>
+#endif
 
 /* Local inclusions. */
 #include "Window.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
+#ifdef GTK3_ENABLED
 	bool
 	SaveFile::execute (Window * window) noexcept
 	{
@@ -79,6 +82,15 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
 
 		return true;
 	}
+#else
+	bool
+	SaveFile::execute (Window * /*window*/) noexcept
+	{
+		std::cerr << "Native GUI disabled !" "\n";
+
+		return false;
+	}
+#endif
 }
 
 #endif

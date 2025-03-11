@@ -32,7 +32,7 @@
 /* Local inclusions for usages. */
 #include "Saphir/Keys.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The declaration interface.

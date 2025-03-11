@@ -33,9 +33,9 @@
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Libraries/Version.hpp"
+#include "Libs/Version.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief This class holds information about an application.
@@ -49,7 +49,7 @@ namespace Emeraude
 
 			static constexpr auto LibraryAuthorName{"\"LondNoir\" <londnoir@gmail.com>"};
 			static constexpr auto LibraryName{ENGINE_NAME};
-			static constexpr auto LibraryVersion{Libraries::Version(ENGINE_VERSION_MAJOR, ENGINE_VERSION_MINOR, ENGINE_VERSION_PATCH)};
+			static constexpr auto LibraryVersion{Libs::Version(ENGINE_VERSION_MAJOR, ENGINE_VERSION_MINOR, ENGINE_VERSION_PATCH)};
 			static constexpr auto LibraryPlatform{PLATFORM_TARGETED};
 			static constexpr auto LibraryCompilationDate{__DATE__};
 
@@ -60,7 +60,7 @@ namespace Emeraude
 			 * @param organization The name of the application organization.
 			 * @param domain The domain of the application.
 			 */
-			Identification (const char * name, const Libraries::Version & version, const char * organization, const char * domain) noexcept;
+			Identification (const char * name, const Libs::Version & version, const char * organization, const char * domain) noexcept;
 
 			/**
 			 * @brief Returns the engine identification.
@@ -89,7 +89,7 @@ namespace Emeraude
 			 * @return const Libraries::Version &
 			 */
 			[[nodiscard]]
-			const Libraries::Version &
+			const Libs::Version &
 			applicationVersion () const noexcept
 			{
 				return m_applicationVersion;
@@ -145,7 +145,7 @@ namespace Emeraude
 			std::string m_applicationId;
 			std::string m_applicationReverseId;
 			std::string m_applicationName;
-			Libraries::Version m_applicationVersion;
+			Libs::Version m_applicationVersion;
 			std::string m_applicationOrganization;
 			std::string m_applicationDomain;
 	};

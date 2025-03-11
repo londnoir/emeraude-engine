@@ -35,17 +35,17 @@
 #include "Graphics/Geometry/Interface.hpp"
 #include "Graphics/Types.hpp"
 #include "Interface.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Saphir/Generator/Abstract.hpp"
 #include "Saphir/Code.hpp"
 #include "Saphir/Keys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
-	using namespace Libraries;
-	using namespace Emeraude::Saphir;
-	using namespace Emeraude::Saphir::Keys;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Saphir;
+	using namespace EmEn::Saphir::Keys;
 
 	static constexpr auto TracerTag{"MaterialHelpers"};
 

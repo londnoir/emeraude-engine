@@ -32,15 +32,15 @@
 #include <utility>
 
 /* Local inclusions for usages. */
-#include "Libraries/Network/URL.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/Network/URL.hpp"
+#include "Libs/String.hpp"
 #include "BaseInformation.hpp"
 #include "FileSystem.hpp"
 #include "Tracer.hpp"
 #include "ResourceTrait.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/**
 	 * @brief The resource loading request within the manager.
@@ -62,7 +62,7 @@ namespace Emeraude::Resources
 			LoadingRequest (BaseInformation baseInformation, const std::shared_ptr< resource_t > & resource) noexcept
 				: m_baseInformation(std::move(baseInformation)), m_resource(resource)
 			{
-				using namespace Libraries;
+				using namespace EmEn::Libs;
 
 				switch ( m_baseInformation.sourceType() )
 				{
@@ -107,7 +107,7 @@ namespace Emeraude::Resources
 				std::filesystem::path filepath{fileSystem.cacheDirectory()};
 				filepath.append("data");
 				filepath.append(resource_t::ClassId);
-				filepath.append(Libraries::String::extractFilename(m_baseInformation.data().asString()));
+				filepath.append(Libs::String::extractFilename(m_baseInformation.data().asString()));
 
 				return filepath;
 			}
@@ -174,7 +174,7 @@ namespace Emeraude::Resources
 			 * @return Libraries::Network::URL
 			 */
 			[[nodiscard]]
-			Libraries::Network::URL
+			Libs::Network::URL
 			url () const noexcept
 			{
 				if ( m_baseInformation.sourceType() != SourceType::ExternalData )
@@ -182,7 +182,7 @@ namespace Emeraude::Resources
 					return {};
 				}
 
-				return Libraries::Network::URL{m_baseInformation.data().asString()};
+				return Libs::Network::URL{m_baseInformation.data().asString()};
 			}
 
 			/**

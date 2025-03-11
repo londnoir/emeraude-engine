@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The shader type enumerations.

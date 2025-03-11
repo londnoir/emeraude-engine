@@ -32,11 +32,11 @@
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The StageOutput class
-	 * @extends Emeraude::Saphir::DeclarationInterface This is a shader code declaration.
+	 * @extends EmEn::Saphir::DeclarationInterface This is a shader code declaration.
 	 */
 	class StageOutput final : public Interface
 	{
@@ -52,19 +52,19 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			StageOutput (uint32_t location, Key type, Key name, Key interpolation = nullptr, int32_t arraySize = 0) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::isValid() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::name() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::bytes() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

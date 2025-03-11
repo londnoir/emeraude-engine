@@ -33,7 +33,7 @@
 #include <string>
 #include <filesystem>
 
-namespace Emeraude::PlatformSpecific::Desktop
+namespace EmEn::PlatformSpecific::Desktop
 {
 	/**
 	 * @brief Tries to open a URL in an external web browser.

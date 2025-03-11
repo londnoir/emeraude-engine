@@ -36,14 +36,14 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 
 #if IS_WINDOWS
 #undef min
 #undef max
 #endif
 
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -59,14 +59,14 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class TransferManager;
 
 	/**
 	 * @brief The vulkan image specific buffer class.
 	 * @extends std::enable_shared_from_this Adds to ability to self replicate the smart pointer.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
 	 */
 	class Image final : public AbstractDeviceDependentObject
 	{
@@ -127,10 +127,10 @@ namespace Emeraude::Vulkan
 			 */
 			~Image () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**
@@ -336,7 +336,7 @@ namespace Emeraude::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool create (TransferManager & transferManager, const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+			bool create (TransferManager & transferManager, const Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
 
 			/**
 			 * @brief Creates, allocates and returns a usable image.

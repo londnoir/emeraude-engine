@@ -38,12 +38,12 @@
 
 /* Local inclusions for inheritances. */
 #include "Console/Controllable.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 #include "ServiceInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/Time/Statistics/RealTime.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/Time/Statistics/RealTime.hpp"
 #include "VertexBufferFormatManager.hpp"
 #include "RenderTarget/Abstract.hpp"
 #include "Vulkan/LayoutManager.hpp"
@@ -52,7 +52,7 @@
 #include "Saphir/ShaderManager.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -108,15 +108,15 @@ namespace Emeraude
 	class Window;
 }
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The graphics renderer service class.
-	 * @extends Emeraude::ServiceInterface The renderer is a service.
-	 * @extends Emeraude::Console::Controllable The renderer can be controlled by the console.
-	 * @extends Libraries::ObserverTrait The renderer needs to observe handle changes for instance.
+	 * @extends EmEn::ServiceInterface The renderer is a service.
+	 * @extends EmEn::Console::Controllable The renderer can be controlled by the console.
+	 * @extends EmEn::Libs::ObserverTrait The renderer needs to observe handle changes for instance.
 	 */
-	class Renderer final : public ServiceInterface, public Console::Controllable, public Libraries::ObserverTrait
+	class Renderer final : public ServiceInterface, public Console::Controllable, public Libs::ObserverTrait
 	{
 		public:
 
@@ -175,7 +175,7 @@ namespace Emeraude::Graphics
 			 */
 			~Renderer () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -183,7 +183,7 @@ namespace Emeraude::Graphics
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -191,7 +191,7 @@ namespace Emeraude::Graphics
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -337,7 +337,7 @@ namespace Emeraude::Graphics
 			 * @return void
 			 */
 			void
-			setClearColor (const Libraries::PixelFactory::Color< float > & clearColor) noexcept
+			setClearColor (const Libs::PixelFactory::Color< float > & clearColor) noexcept
 			{
 				m_clearColors[0].color.float32[0] = clearColor.red();
 				m_clearColors[0].color.float32[1] = clearColor.green();
@@ -363,7 +363,7 @@ namespace Emeraude::Graphics
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float >
+			Libs::PixelFactory::Color< float >
 			getClearColor () const noexcept
 			{
 				return {
@@ -434,7 +434,7 @@ namespace Emeraude::Graphics
 			 * @return const Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > &
 			 */
 			[[nodiscard]]
-			const Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > &
+			const Libs::Time::Statistics::RealTime< std::chrono::high_resolution_clock > &
 			statistics () const noexcept
 			{
 				return m_statistics;
@@ -508,17 +508,17 @@ namespace Emeraude::Graphics
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
-			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			/** @copydoc EmEn::Console::Controllable::onRegisterToConsole. */
 			void onRegisterToConsole () noexcept override;
 
 			/**
@@ -596,7 +596,7 @@ namespace Emeraude::Graphics
 			std::map< size_t, std::shared_ptr< Vulkan::GraphicsPipeline > > m_pipelines;
 			std::map< std::string, std::shared_ptr< Vulkan::RenderPass > > m_renderPasses;
 			std::map< size_t, std::shared_ptr< Vulkan::Sampler > > m_samplers;
-			Libraries::Time::Statistics::RealTime< std::chrono::high_resolution_clock > m_statistics{30};
+			Libs::Time::Statistics::RealTime< std::chrono::high_resolution_clock > m_statistics{30};
 			std::array< VkClearValue, 2 > m_clearColors{};
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,

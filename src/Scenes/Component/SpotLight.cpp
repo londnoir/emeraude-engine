@@ -31,10 +31,10 @@
 #include "Scenes/Scene.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Graphics;
 	using namespace Saphir;
@@ -168,7 +168,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	SpotLight::createOnHardware (LightSet & lightSet, Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept
+	SpotLight::createOnHardware (LightSet & lightSet, Renderer & renderer, AVConsole::Manager & AVConsoleManager) noexcept
 	{
 		if ( this->isCreated() )
 		{
@@ -207,7 +207,7 @@ namespace Emeraude::Scenes::Component
 		if ( resolution > 0 )
 		{
 			/* [VULKAN-SHADOW] TODO: Reuse shadow maps + remove it from console on failure */
-			m_shadowMap = masterControlManager.createRenderToShadowMap(renderer, this->name() + ShadowMapName, resolution);
+			m_shadowMap = AVConsoleManager.createRenderToShadowMap(renderer, this->name() + ShadowMapName, resolution);
 
 			if ( m_shadowMap != nullptr )
 			{

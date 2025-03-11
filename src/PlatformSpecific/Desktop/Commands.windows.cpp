@@ -32,7 +32,7 @@
 #include <cstdlib>
 #include <sstream>
 
-namespace Emeraude::PlatformSpecific::Desktop
+namespace EmEn::PlatformSpecific::Desktop
 {
 	void
 	runDesktopApplication (const std::string & argument) noexcept

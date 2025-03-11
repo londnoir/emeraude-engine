@@ -29,9 +29,9 @@
 /* STL inclusions. */
 #include <numeric>
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	RendererStatistics::RendererStatistics () noexcept
 	{

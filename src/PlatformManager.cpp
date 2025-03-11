@@ -39,9 +39,9 @@
 #include "SettingKeys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t PlatformManager::ClassUID{getClassUID(ClassId)};
 

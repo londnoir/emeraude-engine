@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	/**
 	 * @brief Describe the available CPU on the system in order to get/print information.

@@ -33,12 +33,12 @@
 /* Local inclusions for inheritances. */
 #include "AbstractHostBuffer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines a convenient way to build a uniform buffer object (UBO).
 	 * @note Vulkan guaranteed a minimum size of 16Kb.
-	 * @extends Emeraude::Vulkan::AbstractHostBuffer This is a host-side buffer.
+	 * @extends EmEn::Vulkan::AbstractHostBuffer This is a host-side buffer.
 	 */
 	class UniformBufferObject final : public AbstractHostBuffer
 	{

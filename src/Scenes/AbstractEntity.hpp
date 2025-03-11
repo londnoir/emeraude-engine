@@ -38,13 +38,13 @@
 
 /* Local inclusions for inheritances. */
 #include "LocatableInterface.hpp"
-#include "Libraries/ObserverTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 #include "Audio/SoundResource.hpp"
 #include "Graphics/Renderable/MeshResource.hpp"
 #include "Graphics/Renderable/SpriteResource.hpp"
@@ -64,12 +64,12 @@
 #include "Component/Weight.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	class MovableTrait;
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	enum class VisualDebugType
 	{
@@ -82,13 +82,13 @@ namespace Emeraude::Scenes
 
 	/**
 	 * @brief Defines the base of an entity in the 3D world composed with components.
-	 * @extends Libraries::FlagArrayTrait Each component has 8 flags, 2 are used by this base class.
-	 * @extends Libraries::NameableTrait An entity is nameable.
-	 * @extends Emeraude::Scenes::LocatableInterface An entity is insertable to an octree system.
-	 * @extends Libraries::ObserverTrait An entity listen to its components.
-	 * @extends Libraries::ObservableTrait An entity is observable to notify its content modification easily.
+	 * @extends EmEn::Libs::FlagArrayTrait Each component has 8 flags, 2 are used by this base class.
+	 * @extends EmEn::Libs::NameableTrait An entity is nameable.
+	 * @extends EmEn::Scenes::LocatableInterface An entity is insertable to an octree system.
+	 * @extends EmEn::Libs::ObserverTrait An entity listen to its components.
+	 * @extends EmEn::Libs::ObservableTrait An entity is observable to notify its content modification easily.
 	 */
-	class AbstractEntity : public Libraries::FlagArrayTrait< 8 >, public Libraries::NameableTrait, public LocatableInterface, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class AbstractEntity : public Libs::FlagArrayTrait< 8 >, public Libs::NameableTrait, public LocatableInterface, public Libs::ObserverTrait, public Libs::ObservableTrait
 	{
 		public:
 
@@ -163,17 +163,17 @@ namespace Emeraude::Scenes
 			 */
 			~AbstractEntity () override = default;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingBox() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localBoundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			localBoundingBox () const noexcept final
 			{
 				return m_boundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingSphere() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localBoundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			localBoundingSphere () const noexcept final
 			{
 				return m_boundingSphere;
@@ -426,7 +426,7 @@ namespace Emeraude::Scenes
 			 * @param componentName The name of the component. Default "MultipleVisuals".
 			 * @return std::shared_ptr< Component::MultipleVisuals >
 			 */
-			std::shared_ptr< Component::MultipleVisuals > newVisual (const std::shared_ptr< Graphics::Renderable::Interface > & resource, const std::vector< Libraries::Math::CartesianFrame< float > > & coordinates, bool enablePhysicalProperties = true, bool enableLighting = true, const std::string & componentName = "MultipleVisuals") noexcept;
+			std::shared_ptr< Component::MultipleVisuals > newVisual (const std::shared_ptr< Graphics::Renderable::Interface > & resource, const std::vector< Libs::Math::CartesianFrame< float > > & coordinates, bool enablePhysicalProperties = true, bool enableLighting = true, const std::string & componentName = "MultipleVisuals") noexcept;
 
 			/**
 			 * @brief Creates a particles emitter using a sprite resource.
@@ -475,7 +475,7 @@ namespace Emeraude::Scenes
 			 * @param sphere A reference to a sphere.
 			 * @return void
 			 */
-			void overrideBoundingPrimitives (const Libraries::Math::Cuboid< float > & box, const Libraries::Math::Sphere< float > & sphere) noexcept;
+			void overrideBoundingPrimitives (const Libs::Math::Cuboid< float > & box, const Libs::Math::Sphere< float > & sphere) noexcept;
 
 			/**
 			 * @brief Enables a visual debug for this entity.
@@ -664,7 +664,7 @@ namespace Emeraude::Scenes
 			 * @param worldCoordinates A reference to the container world coordinates.
 			 * @return void
 			 */
-			void onContainerMove (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept;
+			void onContainerMove (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept;
 
 			/**
 			 * @brief Sets whether the entity is renderable.
@@ -698,7 +698,7 @@ namespace Emeraude::Scenes
 
 		private:
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept final;
 
@@ -818,7 +818,7 @@ namespace Emeraude::Scenes
 			 * @note If this function return false, the observer will be automatically detached.
 			 * @return bool
 			 */
-			virtual bool onUnhandledNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept = 0;
+			virtual bool onUnhandledNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept = 0;
 
 			/**
 			 * @brief Called when the entity has moved.
@@ -828,8 +828,8 @@ namespace Emeraude::Scenes
 			virtual void onLocationDataUpdate () noexcept = 0;
 
 			std::map< std::string, std::shared_ptr< Component::Abstract > > m_components;
-			Libraries::Math::Cuboid< float > m_boundingBox;
-			Libraries::Math::Sphere< float > m_boundingSphere;
+			Libs::Math::Cuboid< float > m_boundingBox;
+			Libs::Math::Sphere< float > m_boundingSphere;
 			Physics::PhysicalObjectProperties m_physicalObjectProperties;
 			uint32_t m_birthTime{0};
 			size_t m_lastUpdatedMoveCycle{0};

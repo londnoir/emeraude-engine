@@ -32,11 +32,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractLightEmitter.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Defines a scene spotlight like an electrical light torch.
-	 * @extends Emeraude::Scenes::Component::AbstractLightEmitter The base class for each light type.
+	 * @extends EmEn::Scenes::Component::AbstractLightEmitter The base class for each light type.
 	 */
 	class SpotLight final : public AbstractLightEmitter
 	{
@@ -84,43 +84,43 @@ namespace Emeraude::Scenes::Component
 			 */
 			~SpotLight () override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char * getComponentType () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::touch() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::touch() */
 			[[nodiscard]]
-			bool touch (const Libraries::Math::Vector< 3, float > & position) const noexcept override;
+			bool touch (const Libs::Math::Vector< 3, float > & position) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::createOnHardware() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::createOnHardware() */
 			[[nodiscard]]
-			bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept override;
+			bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, AVConsole::Manager & AVConsoleManager) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::destroyFromHardware() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::destroyFromHardware() */
 			void destroyFromHardware () noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::shadowMap() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::shadowMap() */
 			[[nodiscard]]
 			std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > shadowMap () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::getUniformBlock() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::getUniformBlock() */
 			[[nodiscard]]
 			Saphir::Declaration::UniformBlock getUniformBlock (uint32_t set, uint32_t binding, bool useShadow) const noexcept override;
 
@@ -175,13 +175,13 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onTargetConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onTargetConnected() */
 			void onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept override;
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::onVideoMemoryUpdate() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::onVideoMemoryUpdate() */
 			[[nodiscard]]
 			bool
 			onVideoMemoryUpdate (Vulkan::SharedUniformBuffer & UBO, uint32_t index) noexcept override
@@ -189,10 +189,10 @@ namespace Emeraude::Scenes::Component
 				return UBO.writeElementData(index, m_buffer.data());
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::onColorChange() */
-			void onColorChange (const Libraries::PixelFactory::Color< float > & color) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::onColorChange() */
+			void onColorChange (const Libs::PixelFactory::Color< float > & color) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::AbstractLightEmitter::onIntensityChange() */
+			/** @copydoc EmEn::Scenes::Component::AbstractLightEmitter::onIntensityChange() */
 			void onIntensityChange (float intensity) noexcept override;
 
 			/**
@@ -229,7 +229,7 @@ namespace Emeraude::Scenes::Component
 				/* Light direction (Spot). */
 				0.0F, 1.0F, 0.0F, 0.0F,
 				/* Light properties. */
-				this->intensity(), m_radius, std::cos(Libraries::Math::Radian(m_innerAngle)), std::cos(Libraries::Math::Radian(m_outerAngle)),
+				this->intensity(), m_radius, std::cos(Libs::Math::Radian(m_innerAngle)), std::cos(Libs::Math::Radian(m_outerAngle)),
 				/* Light matrix. */
 				1.0F, 0.0F, 0.0F, 0.0F,
 				0.0F, 1.0F, 0.0F, 0.0F,

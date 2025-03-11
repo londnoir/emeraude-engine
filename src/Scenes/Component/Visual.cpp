@@ -35,17 +35,17 @@
 #include "Abstract.hpp"
 #include "Animations/Types.hpp"
 #include "Graphics/RenderableInstance/Unique.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/ObserverTrait.hpp"
-#include "Libraries/Variant.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
+#include "Libs/ObserverTrait.hpp"
+#include "Libs/Variant.hpp"
 #include "Scenes/Scene.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Physics;
 	using namespace Graphics;
@@ -110,7 +110,7 @@ namespace Emeraude::Scenes::Component
 	}
 
 	bool
-	Visual::playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept
+	Visual::playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept
 	{
 		return false;
 	}

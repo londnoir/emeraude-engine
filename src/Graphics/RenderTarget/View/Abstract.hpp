@@ -35,29 +35,29 @@
 #include "Graphics/RenderTarget/Abstract.hpp"
 
 /* Local inclusions for usages. */
+#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/Types.hpp"
-#include "MasterControl/Types.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::View
+namespace EmEn::Graphics::RenderTarget::View
 {
 	/**
 	 * @brief The base class of every view.
-	 * @extends Emeraude::Graphics::RenderTarget::Abstract This is a render target.
+	 * @extends EmEn::Graphics::RenderTarget::Abstract This is a render target.
 	 */
 	class Abstract : public RenderTarget::Abstract
 	{
 		public:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
 			[[nodiscard]]
-			MasterControl::VideoType
+			AVConsole::VideoType
 			videoType () const noexcept override
 			{
-				return MasterControl::VideoType::View;
+				return AVConsole::VideoType::View;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::framebuffer() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::framebuffer() */
 			[[nodiscard]]
 			const Vulkan::Framebuffer *
 			framebuffer () const noexcept final
@@ -65,7 +65,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 				return m_framebuffer.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::image() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::image() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Image >
 			image () const noexcept final
@@ -73,7 +73,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 				return m_colorImage;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::imageView() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::imageView() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::ImageView >
 			imageView () const noexcept final
@@ -81,7 +81,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 				return m_colorImageView;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isValid() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept final;
 
@@ -145,14 +145,14 @@ namespace Emeraude::Graphics::RenderTarget::View
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onCreate() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onCreate() */
 			[[nodiscard]]
 			bool onCreate (Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::onDestroy() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onDestroy() */
 			void onDestroy () noexcept final;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::createRenderPass() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::createRenderPass() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::RenderPass > createRenderPass (Renderer & renderer) const noexcept override;
 

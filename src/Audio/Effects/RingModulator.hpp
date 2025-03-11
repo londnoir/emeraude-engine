@@ -29,11 +29,11 @@
 /* Local inclusions for ineritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
 	/**
 	 * @brief Ring Modulator effect.
-	 * @extends Emeraude::Audio::Effects::Abstract This is an effect.
+	 * @extends EmEn::Audio::Effects::Abstract This is an effect.
 	 */
 	class RingModulator final : public Abstract
 	{
@@ -55,7 +55,7 @@ namespace Emeraude::Audio::Effects
 			 */
 			RingModulator () noexcept;
 
-			/** @copydoc Emeraude::Audio::Effects::Abstract::resetProperties() */
+			/** @copydoc EmEn::Audio::Effects::Abstract::resetProperties() */
 			void resetProperties () noexcept override;
 
 			/**

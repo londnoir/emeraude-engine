@@ -35,18 +35,18 @@
 #include "AbstractObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Instance;
 	class PhysicalDevice;
 	class Device;
 };
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines the surface where the final image will be draw and presented to the screen.
-	 * @extends Emeraude::Vulkan::AbstractObject This is a Vulkan API object.
+	 * @extends EmEn::Vulkan::AbstractObject This is a Vulkan API object.
 	 */
 	class Surface final : public AbstractObject
 	{

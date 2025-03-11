@@ -30,18 +30,18 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
+#include "AVConsole/AbstractVirtualAudioDevice.hpp"
 #include "Abstract.hpp"
-#include "MasterControl/AbstractVirtualAudioDevice.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief This class defines a physical point of capturing sound in the world.
 	 * Like ears from a creature or microphone from a camera.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Emeraude::MasterControl::AbstractVirtualAudioDevice This is a virtual audio device.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::AVConsole::AbstractVirtualAudioDevice This is a virtual audio device.
 	 */
-	class Microphone final : public Abstract, public MasterControl::AbstractVirtualAudioDevice
+	class Microphone final : public Abstract, public AVConsole::AbstractVirtualAudioDevice
 	{
 		public:
 
@@ -55,25 +55,25 @@ namespace Emeraude::Scenes::Component
 			 */
 			Microphone (const std::string & name, const AbstractEntity & parentEntity) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char * getComponentType () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 			/**
@@ -93,13 +93,13 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualAudioDevice::onTargetConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualAudioDevice::onTargetConnected() */
 			void onTargetConnected (AbstractVirtualAudioDevice * targetDevice) noexcept override;
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 	};
 }

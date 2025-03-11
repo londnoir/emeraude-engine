@@ -29,10 +29,10 @@
 /* Local inclusions. */
 #include "Graphics/Renderer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::View
+namespace EmEn::Graphics::RenderTarget::View
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Vulkan;
 
 	Texture2D::Texture2D (const std::string & name, uint32_t width, uint32_t height, const FramebufferPrecisions & precisions) noexcept

@@ -32,26 +32,26 @@
 
 /* Local inclusions for inheritance. */
 #include "Graphics/TextureResource/Abstract.hpp"
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "FramebufferProperties.hpp"
-#include "Libraries/Math/Matrix.hpp"
-#include "Libraries/Math/Rectangle.hpp"
+#include "Libs/Math/Matrix.hpp"
+#include "Libs/Math/Rectangle.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class LayoutManager;
 	class DescriptorSet;
 }
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief The base class for all overlay surfaces.
 	 * @exception Libraries::NameableTrait A surface have a name.
 	 */
-	class AbstractSurface : public Libraries::NameableTrait
+	class AbstractSurface : public Libs::NameableTrait
 	{
 		public:
 
@@ -102,7 +102,7 @@ namespace Emeraude::Overlay
 			 * @return const Libraries::Math::Rectangle< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Rectangle< float > &
+			const Libs::Math::Rectangle< float > &
 			geometry () const noexcept
 			{
 				return m_rectangle;
@@ -124,7 +124,7 @@ namespace Emeraude::Overlay
 			 * @return const Libraries::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			transformationMatrix () const noexcept
 			{
 				return m_transformationMatrix;
@@ -399,7 +399,7 @@ namespace Emeraude::Overlay
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
 			 * @brief Updates the transformation matrix to place the surface on screen.
@@ -443,8 +443,8 @@ namespace Emeraude::Overlay
 			static constexpr auto IsOpaque{6UL};
 
 			const FramebufferProperties & m_framebufferProperties;
-			Libraries::Math::Rectangle< float > m_rectangle;
-			Libraries::Math::Matrix< 4, float > m_transformationMatrix;
+			Libs::Math::Rectangle< float > m_rectangle;
+			Libs::Math::Matrix< 4, float > m_transformationMatrix;
 			float m_depth;
 			std::array< bool, 8 > m_flags{
 				true/*VideoMemoryUpdateRequested*/,

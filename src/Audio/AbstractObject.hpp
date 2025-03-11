@@ -36,7 +36,7 @@
 #include "AL/efx.h"
 #include "AL/efx-presets.h"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief Base class for every OpenAL object which must be synced to audio memory.

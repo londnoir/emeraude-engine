@@ -33,16 +33,16 @@
 #include <stack>
 
 /* Local inclusions. */
-#include "Libraries/Math/OrientedCuboid.hpp"
+#include "Libs/Math/OrientedCuboid.hpp"
 #include "Scenes/Scene.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Graphics;
 	using namespace Physics;
 

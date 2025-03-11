@@ -29,7 +29,7 @@
 /* Local inclusions. */
 #include "Device.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	QueueFamilySQ::QueueFamilySQ (uint32_t index) noexcept
 		: m_queueFamilyIndex(index)

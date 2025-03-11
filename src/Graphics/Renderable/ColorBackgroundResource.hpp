@@ -37,11 +37,11 @@
 /* Local inclusions for usages. */
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief The ColorBackground class.
-	 * @extends Emeraude::Graphics::Renderable::AbstractBackground The is a specialized background.
+	 * @extends EmEn::Graphics::Renderable::AbstractBackground The is a specialized background.
 	 */
 	class ColorBackgroundResource final : public AbstractBackground
 	{
@@ -63,43 +63,43 @@ namespace Emeraude::Graphics::Renderable
 			 * @param color A reference to a color.
 			 * @param resourceFlagBits The resource flag bits. Default none.
 			 */
-			explicit ColorBackgroundResource (const std::string & name, const Libraries::PixelFactory::Color< float > & color, uint32_t resourceFlagBits = 0) noexcept;
+			explicit ColorBackgroundResource (const std::string & name, const Libs::PixelFactory::Color< float > & color, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerCount() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
 			size_t layerCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::isOpaque() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
 			bool isOpaque (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::geometry() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
 			const Geometry::Interface * geometry () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::material() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
 			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::layerRasterizationOptions() const */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
 			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
 
@@ -110,7 +110,7 @@ namespace Emeraude::Graphics::Renderable
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using ColorBackgrounds = Container< Graphics::Renderable::ColorBackgroundResource >;
 }

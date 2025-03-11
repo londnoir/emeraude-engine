@@ -32,11 +32,11 @@
 #include <ranges>
 
 /* Local inclusions. */
-#include "Libraries/IO/IO.hpp"
+#include "Libs/IO/IO.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 #if IS_WINDOWS
 	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool readOnly) noexcept

@@ -33,19 +33,19 @@
 
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
-#include "Libraries/ObserverTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Graphics/RenderableInstance/Unique.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Defines a component for the visual part of an entity.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Libraries::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Libs::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
 	 */
-	class Visual final : public Abstract, public Libraries::ObserverTrait
+	class Visual final : public Abstract, public Libs::ObserverTrait
 	{
 		public:
 
@@ -60,37 +60,37 @@ namespace Emeraude::Scenes::Component
 			 */
 			Visual (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getRenderableInstance() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getRenderableInstance() const */
 			[[nodiscard]]
 			std::shared_ptr< Graphics::RenderableInstance::Abstract > getRenderableInstance () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char * getComponentType () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
-			void move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
+			void move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 

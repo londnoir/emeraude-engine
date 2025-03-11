@@ -10,7 +10,7 @@
 /* Local inclusions. */
 #include "Window.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	bool
 	OpenFile::execute (Window * /*window*/) noexcept

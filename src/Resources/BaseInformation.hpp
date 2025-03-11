@@ -39,7 +39,7 @@
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	/** @brief This structure represent a resource definition in a store. It holds the way to load it. */
 	class BaseInformation final

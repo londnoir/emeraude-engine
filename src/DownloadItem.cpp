@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DownloadItem::DownloadItem (Network::URL url, std::filesystem::path output, bool replaceExistingFile) noexcept
 		: m_url(std::move(url)), m_output(std::move(output)), m_replaceExistingFile(replaceExistingFile)

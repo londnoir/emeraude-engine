@@ -26,7 +26,7 @@
 
 #include "ComputeShader.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	ComputeShader::ComputeShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept
 		: AbstractShader(name, GLSLVersion, GLSLProfile)

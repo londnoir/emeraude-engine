@@ -27,10 +27,10 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
-#include "Libraries/Utility.hpp"
+#include "Libs/String.hpp"
+#include "Libs/Utility.hpp"
 
-using namespace Libraries;
+using namespace EmEn::Libs;
 
 TEST(String, numericLabel)
 {

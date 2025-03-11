@@ -32,9 +32,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	EffectSlot::EffectSlot () noexcept
 	{

@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 
 }

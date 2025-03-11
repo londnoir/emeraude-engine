@@ -31,7 +31,7 @@
 #include "MemoryRegion.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	VertexBufferObject::VertexBufferObject (const std::shared_ptr< Device > & device, size_t vertexCount, size_t vertexElementCount) noexcept
 		: AbstractDeviceBuffer(device, 0, static_cast< VkDeviceSize >(vertexCount * vertexElementCount * sizeof(float)), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),

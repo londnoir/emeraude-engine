@@ -30,15 +30,15 @@
 #include <algorithm>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 #include "PhysicalDevice.hpp"
 #include "Device.hpp"
 #include "MemoryRegion.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	SharedUniformBuffer::SharedUniformBuffer (const std::shared_ptr< Device > & device, size_t uniformBlockSize, size_t maxElementCount) noexcept
 		: m_device(device), m_uniformBlockSize(uniformBlockSize)

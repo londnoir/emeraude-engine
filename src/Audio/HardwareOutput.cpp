@@ -33,13 +33,13 @@
 /* Local inclusions. */
 #include "Audio/Manager.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	HardwareOutput::HardwareOutput (const std::string & name, Manager & audioManager) noexcept
-		: AbstractVirtualAudioDevice(name, MasterControl::ConnexionType::Input), m_audioManager(&audioManager)
+		: AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Input), m_audioManager(&audioManager)
 	{
 
 	}

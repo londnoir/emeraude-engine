@@ -27,9 +27,9 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 
-using namespace Libraries::Math;
+using namespace EmEn::Libs::Math;
 
 TEST(Math, clamp)
 {

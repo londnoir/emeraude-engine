@@ -39,11 +39,11 @@
 /* Local inclusions for usages. */
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief Defines an arbitrary geometry using a VBO and an IBO.
-	 * @extends Emeraude::Graphics::Geometry::Interface The common base for all geometry types.
+	 * @extends EmEn::Graphics::Geometry::Interface The common base for all geometry types.
 	 */
 	class IndexedVertexResource final : public Interface
 	{
@@ -62,7 +62,7 @@ namespace Emeraude::Graphics::Geometry
 			/**
 			 * @brief Constructs a vertex indexed geometry resource.
 			 * @param name A reference to a string for the resource name.
-			 * @param geometryFlagBits The geometry resource flag bits, See Emeraude::Graphics::Geometry::GeometryFlagBits. Default none.
+			 * @param geometryFlagBits The geometry resource flag bits, See EmEn::Graphics::Geometry::GeometryFlagBits. Default none.
 			 */
 			explicit IndexedVertexResource (const std::string & name, uint32_t geometryFlagBits = 0) noexcept;
 
@@ -95,7 +95,7 @@ namespace Emeraude::Graphics::Geometry
 			 */
 			~IndexedVertexResource () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -103,7 +103,7 @@ namespace Emeraude::Graphics::Geometry
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -111,7 +111,7 @@ namespace Emeraude::Graphics::Geometry
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -129,7 +129,7 @@ namespace Emeraude::Graphics::Geometry
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::topology() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::topology() */
 			[[nodiscard]]
 			Topology
 			topology () const noexcept override
@@ -137,7 +137,7 @@ namespace Emeraude::Graphics::Geometry
 				return Topology::TriangleList;
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryCount() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
 			size_t
 			subGeometryCount () const noexcept override
@@ -151,7 +151,7 @@ namespace Emeraude::Graphics::Geometry
 				return m_subGeometries.size();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::subGeometryRange() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
 			std::array< uint32_t, 2 >
 			subGeometryRange (size_t subGeometryIndex) const noexcept override
@@ -170,23 +170,23 @@ namespace Emeraude::Graphics::Geometry
 				return m_subGeometries[subGeometryIndex].range();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingBox() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return m_localData.boundingBox();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::boundingSphere() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return m_localData.boundingSphere();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::vertexBufferObject() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::vertexBufferObject() */
 			[[nodiscard]]
 			const Vulkan::VertexBufferObject *
 			vertexBufferObject () const noexcept override
@@ -194,7 +194,7 @@ namespace Emeraude::Graphics::Geometry
 				return m_vertexBufferObject.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::indexBufferObject() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::indexBufferObject() */
 			[[nodiscard]]
 			const Vulkan::IndexBufferObject *
 			indexBufferObject () const noexcept override
@@ -202,7 +202,7 @@ namespace Emeraude::Graphics::Geometry
 				return m_indexBufferObject.get();
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::useIndexBuffer() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::useIndexBuffer() */
 			[[nodiscard]]
 			bool
 			useIndexBuffer () const noexcept override
@@ -214,16 +214,16 @@ namespace Emeraude::Graphics::Geometry
 #endif
 			}
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::create() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::create() */
 			bool create () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::update() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::update() */
 			bool update () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Geometry::Interface::destroy() */
+			/** @copydoc EmEn::Graphics::Geometry::Interface::destroy() */
 			void destroy (bool clearLocalData) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -231,13 +231,13 @@ namespace Emeraude::Graphics::Geometry
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -246,14 +246,14 @@ namespace Emeraude::Graphics::Geometry
 			 * @param shape A reference to a geometry from vertexFactory library.
 			 * @return bool
 			 */
-			bool load (const Libraries::VertexFactory::Shape< float > & shape) noexcept;
+			bool load (const Libs::VertexFactory::Shape< float > & shape) noexcept;
 
 			/**
 			 * @brief Gives access to the local geometry data.
 			 * @return Libraries::VertexFactory::Shape< float > &
 			 */
 			[[nodiscard]]
-			Libraries::VertexFactory::Shape< float > &
+			Libs::VertexFactory::Shape< float > &
 			localData () noexcept
 			{
 				return m_localData;
@@ -264,7 +264,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return const Libraries::VertexFactory::Shape< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::VertexFactory::Shape< float > &
+			const Libs::VertexFactory::Shape< float > &
 			localData () const noexcept
 			{
 				return m_localData;
@@ -301,13 +301,13 @@ namespace Emeraude::Graphics::Geometry
 
 			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject;
 			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
-			Libraries::VertexFactory::Shape< float > m_localData;
+			Libs::VertexFactory::Shape< float > m_localData;
 			std::vector< SubGeometry > m_subGeometries;
 	};
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using IndexedVertexGeometries = Container< Graphics::Geometry::IndexedVertexResource >;
 }

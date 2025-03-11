@@ -34,16 +34,16 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/String.hpp"
 #include "Stores.hpp"
 #include "Types.hpp"
 #include "Manager.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	static constexpr auto TracerTag{"ResourceChain"};
 

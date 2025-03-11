@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	/**
 	 * @brief The button layout enumeration.

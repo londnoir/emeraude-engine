@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir::Declaration::Member
+namespace EmEn::Saphir::Declaration::Member
 {
 	ShaderBlock::ShaderBlock (VariableType type, Key name, Key interpolation, size_t arraySize) noexcept
 		: m_type(type), m_name(name), m_interpolation(interpolation), m_arraySize(arraySize)

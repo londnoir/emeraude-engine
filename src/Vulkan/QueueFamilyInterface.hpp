@@ -40,13 +40,13 @@
 #include "Types.hpp"
 
 /* Forward declaration. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Device;
 	class Queue;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The queue family interface.

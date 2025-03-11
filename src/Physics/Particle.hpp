@@ -39,11 +39,11 @@
 #include "Scenes/Component/AbstractModifier.hpp"
 #include "PhysicalEnvironmentProperties.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief The particle class.
-	 * @extends Emeraude::Scenes::LocatableInterface A particle is locatable in the scene.
+	 * @extends EmEn::Scenes::LocatableInterface A particle is locatable in the scene.
 	 */
 	class Particle final : public Scenes::LocatableInterface
 	{
@@ -63,137 +63,137 @@ namespace Emeraude::Physics
 			 * @param initialLocation A reference to a cartesian frame. Default origin.
 			 * return void
 			 */
-			void initialize (uint32_t initialLife, float initialSize, float spreadingRadius = 0.0F, const Libraries::Math::CartesianFrame< float > & initialLocation = {}) noexcept;
+			void initialize (uint32_t initialLife, float initialSize, float spreadingRadius = 0.0F, const Libs::Math::CartesianFrame< float > & initialLocation = {}) noexcept;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setPosition(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
-			void setPosition (const Libraries::Math::Vector< 3, float > & position, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::setPosition(const Libs::Math::Vector< 3, float > &, Libs::Math::TransformSpace) */
+			void setPosition (const Libs::Math::Vector< 3, float > & position, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setXPosition(float, Libraries::Math::TransformSpace) */
-			void setXPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::setXPosition(float, Libs::Math::TransformSpace) */
+			void setXPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setYPosition(float, Libraries::Math::TransformSpace) */
-			void setYPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::setYPosition(float, Libs::Math::TransformSpace) */
+			void setYPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setZPosition(float, Libraries::Math::TransformSpace) */
-			void setZPosition (float position, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::setZPosition(float, Libs::Math::TransformSpace) */
+			void setZPosition (float position, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::move(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
-			void move (const Libraries::Math::Vector< 3, float > & distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::move(const Libs::Math::Vector< 3, float > &, Libs::Math::TransformSpace) */
+			void move (const Libs::Math::Vector< 3, float > & distance, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveX(float, Libraries::Math::TransformSpace) */
-			void moveX (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::moveX(float, Libs::Math::TransformSpace) */
+			void moveX (float distance, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveY(float, Libraries::Math::TransformSpace) */
-			void moveY (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::moveY(float, Libs::Math::TransformSpace) */
+			void moveY (float distance, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::moveZ(float, Libraries::Math::TransformSpace) */
-			void moveZ (float distance, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::moveZ(float, Libs::Math::TransformSpace) */
+			void moveZ (float distance, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::rotate(float, const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
-			void rotate (float radian, const Libraries::Math::Vector< 3, float > & axis, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::rotate(float, const Libs::Math::Vector< 3, float > &, Libs::Math::TransformSpace) */
+			void rotate (float radian, const Libs::Math::Vector< 3, float > & axis, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::pitch(float, Libraries::Math::TransformSpace) */
-			void pitch (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::pitch(float, Libs::Math::TransformSpace) */
+			void pitch (float radian, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::yaw(float, Libraries::Math::TransformSpace) */
-			void yaw (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::yaw(float, Libs::Math::TransformSpace) */
+			void yaw (float radian, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::roll(float, Libraries::Math::TransformSpace) */
-			void roll (float radian, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::roll(float, Libs::Math::TransformSpace) */
+			void roll (float radian, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::scale(const Libraries::Math::Vector< 3, float > &, Libraries::Math::TransformSpace) */
-			void scale (const Libraries::Math::Vector< 3, float > & factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::scale(const Libs::Math::Vector< 3, float > &, Libs::Math::TransformSpace) */
+			void scale (const Libs::Math::Vector< 3, float > & factor, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::scale(float, Libraries::Math::TransformSpace) */
-			void scale (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::scale(float, Libs::Math::TransformSpace) */
+			void scale (float factor, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleX(float, Libraries::Math::TransformSpace) */
-			void scaleX (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::scaleX(float, Libs::Math::TransformSpace) */
+			void scaleX (float factor, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleY(float, Libraries::Math::TransformSpace) */
-			void scaleY (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::scaleY(float, Libs::Math::TransformSpace) */
+			void scaleY (float factor, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::scaleZ(float, Libraries::Math::TransformSpace) */
-			void scaleZ (float factor, Libraries::Math::TransformSpace transformSpace) noexcept override;
+			/** @copydoc EmEn::Scenes::LocatableInterface::scaleZ(float, Libs::Math::TransformSpace) */
+			void scaleZ (float factor, Libs::Math::TransformSpace transformSpace) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::lookAt(const Libraries::Math::Vector< 3, float > &, bool) */
+			/** @copydoc EmEn::Scenes::LocatableInterface::lookAt(const Libs::Math::Vector< 3, float > &, bool) */
 			void
-			lookAt (const Libraries::Math::Vector< 3, float > & target, bool flipZAxis) noexcept override
+			lookAt (const Libs::Math::Vector< 3, float > & target, bool flipZAxis) noexcept override
 			{
 				m_cartesianFrame.lookAt(target, flipZAxis);
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::setLocalCoordinates(const Libraries::Math::CartesianFrame< float > &) */
+			/** @copydoc EmEn::Scenes::LocatableInterface::setLocalCoordinates(const Libs::Math::CartesianFrame< float > &) */
 			void
-			setLocalCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates) noexcept override
+			setLocalCoordinates (const Libs::Math::CartesianFrame< float > & coordinates) noexcept override
 			{
 				m_cartesianFrame = coordinates;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localCoordinates() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localCoordinates() const */
 			[[nodiscard]]
-			const Libraries::Math::CartesianFrame< float > &
+			const Libs::Math::CartesianFrame< float > &
 			localCoordinates () const noexcept override
 			{
 				return m_cartesianFrame;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localCoordinates() */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localCoordinates() */
 			[[nodiscard]]
-			Libraries::Math::CartesianFrame< float > &
+			Libs::Math::CartesianFrame< float > &
 			localCoordinates () noexcept override
 			{
 				return m_cartesianFrame;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::getWorldCoordinates() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::getWorldCoordinates() const */
 			[[nodiscard]]
-			Libraries::Math::CartesianFrame< float >
+			Libs::Math::CartesianFrame< float >
 			getWorldCoordinates () const noexcept override
 			{
 				return m_cartesianFrame;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingBox() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localBoundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			localBoundingBox () const noexcept override
 			{
 				return Scenes::Component::Abstract::NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::getWorldBoundingBox() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::getWorldBoundingBox() const */
 			[[nodiscard]]
-			Libraries::Math::Cuboid< float >
+			Libs::Math::Cuboid< float >
 			getWorldBoundingBox () const noexcept override
 			{
 				return Scenes::Component::Abstract::NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::localBoundingSphere() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::localBoundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			localBoundingSphere () const noexcept override
 			{
 				return Scenes::Component::Abstract::NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::getWorldBoundingSphere() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::getWorldBoundingSphere() const */
 			[[nodiscard]]
-			Libraries::Math::Sphere< float >
+			Libs::Math::Sphere< float >
 			getWorldBoundingSphere () const noexcept override
 			{
 				return Scenes::Component::Abstract::NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::enableSphereCollision(bool) */
+			/** @copydoc EmEn::Scenes::LocatableInterface::enableSphereCollision(bool) */
 			void
 			enableSphereCollision (bool /*state*/) noexcept override
 			{
 
 			}
 
-			/** @copydoc Emeraude::Scenes::LocatableInterface::sphereCollisionIsEnabled() const */
+			/** @copydoc EmEn::Scenes::LocatableInterface::sphereCollisionIsEnabled() const */
 			[[nodiscard]]
 			bool
 			sphereCollisionIsEnabled () const noexcept override
@@ -206,7 +206,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			linearVelocity () const noexcept
 			{
 				return m_linearVelocity;
@@ -217,7 +217,7 @@ namespace Emeraude::Physics
 			 * @return Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > &
+			Libs::Math::Vector< 3, float > &
 			linearVelocity () noexcept
 			{
 				return m_linearVelocity;
@@ -300,7 +300,7 @@ namespace Emeraude::Physics
 			 * @param modifiers A reference to a vector of scene modifiers.
 			 * @return bool
 			 */
-			bool updateSimulation (const PhysicalEnvironmentProperties & envProperties, const PhysicalObjectProperties & particleProperties, const Libraries::Math::CartesianFrame< float > & worldCoordinates, const std::set< std::shared_ptr< Scenes::Component::AbstractModifier > > & modifiers) noexcept;
+			bool updateSimulation (const PhysicalEnvironmentProperties & envProperties, const PhysicalObjectProperties & particleProperties, const Libs::Math::CartesianFrame< float > & worldCoordinates, const std::set< std::shared_ptr< Scenes::Component::AbstractModifier > > & modifiers) noexcept;
 
 			/**
 			 * @brief Updates the particles position and properties.
@@ -309,7 +309,7 @@ namespace Emeraude::Physics
 			 * @param chaos A chaos value to apply.
 			 * @return void
 			 */
-			void update (const Libraries::Math::Vector< 3, float > & velocity, float sizeDelta, float chaos) noexcept;
+			void update (const Libs::Math::Vector< 3, float > & velocity, float sizeDelta, float chaos) noexcept;
 
 		private:
 
@@ -319,8 +319,8 @@ namespace Emeraude::Physics
 			 */
 			void shiftLocation (float magnitude) noexcept;
 
-			Libraries::Math::CartesianFrame< float > m_cartesianFrame;
-			Libraries::Math::Vector< 3, float > m_linearVelocity;
+			Libs::Math::CartesianFrame< float > m_cartesianFrame;
+			Libs::Math::Vector< 3, float > m_linearVelocity;
 			uint32_t m_lifetime{0};
 			float m_size{1.0F};
 	};

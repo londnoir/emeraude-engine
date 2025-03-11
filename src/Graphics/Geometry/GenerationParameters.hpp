@@ -32,22 +32,22 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/FlagTrait.hpp"
+#include "Libs/FlagTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Matrix.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/VertexFactory/ShapeBuilderOptions.hpp"
+#include "Libs/Math/Matrix.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/VertexFactory/ShapeBuilderOptions.hpp"
 #include "Graphics/Types.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief Defines parameters to generate a geometry with the resource generator.
-	 * @extends Libraries::FlagTrait Needs FlagTrait to pass it to generated geometries.
+	 * @extends EmEn::Libs::FlagTrait Needs FlagTrait to pass it to generated geometries.
 	 */
-	class GenerationParameters final : public Libraries::FlagTrait< uint32_t >
+	class GenerationParameters final : public Libs::FlagTrait< uint32_t >
 	{
 		public:
 
@@ -89,7 +89,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return void
 			 */
 			void
-			setGlobalVertexColor (const Libraries::PixelFactory::Color< float > & globalVertexColor) noexcept
+			setGlobalVertexColor (const Libs::PixelFactory::Color< float > & globalVertexColor) noexcept
 			{
 				m_globalVertexColor = globalVertexColor;
 
@@ -102,7 +102,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return void
 			 */
 			void
-			setTransformMatrix (const Libraries::Math::Matrix< 4, float > & transformMatrix) noexcept
+			setTransformMatrix (const Libs::Math::Matrix< 4, float > & transformMatrix) noexcept
 			{
 				m_transformMatrix = transformMatrix;
 			}
@@ -115,7 +115,7 @@ namespace Emeraude::Graphics::Geometry
 			void
 			setTextureCoordinatesMultiplier (float multiplier) noexcept
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				m_textureCoordinatesMultiplier[X] = multiplier;
 				m_textureCoordinatesMultiplier[Y] = multiplier;
@@ -131,7 +131,7 @@ namespace Emeraude::Graphics::Geometry
 			void
 			setTextureCoordinatesMultiplier (float xMultiplier, float yMultiplier) noexcept
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				m_textureCoordinatesMultiplier[X] = xMultiplier;
 				m_textureCoordinatesMultiplier[Y] = yMultiplier;
@@ -148,7 +148,7 @@ namespace Emeraude::Graphics::Geometry
 			void
 			setTextureCoordinatesMultiplier (float xMultiplier, float yMultiplier, float zMultiplier) noexcept
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				m_textureCoordinatesMultiplier[X] = xMultiplier;
 				m_textureCoordinatesMultiplier[Y] = yMultiplier;
@@ -193,7 +193,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > &
+			const Libs::PixelFactory::Color< float > &
 			globalVertexColor () const noexcept
 			{
 				return m_globalVertexColor;
@@ -204,7 +204,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return const Libraries::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			transformMatrix () const noexcept
 			{
 				return m_transformMatrix;
@@ -215,7 +215,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			textureCoordinatesMultiplier () const noexcept
 			{
 				return m_textureCoordinatesMultiplier;
@@ -266,7 +266,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @return Libraries::VertexFactory::ShapeBuilderOptions< float >
 			 */
 			[[nodiscard]]
-			Libraries::VertexFactory::ShapeBuilderOptions< float > getShapeBuilderOptions () const noexcept;
+			Libs::VertexFactory::ShapeBuilderOptions< float > getShapeBuilderOptions () const noexcept;
 
 		private:
 
@@ -276,9 +276,9 @@ namespace Emeraude::Graphics::Geometry
 			static constexpr auto GlobalVertexColorSet{2UL};
 
 			VertexColorGenMode m_vertexColorGenMode{VertexColorGenMode::UseRandom};
-			Libraries::PixelFactory::Color< float > m_globalVertexColor{Libraries::PixelFactory::Magenta};
-			Libraries::Math::Matrix< 4, float > m_transformMatrix;
-			Libraries::Math::Vector< 3, float > m_textureCoordinatesMultiplier{1.0F, 1.0F, 1.0F};
+			Libs::PixelFactory::Color< float > m_globalVertexColor{Libs::PixelFactory::Magenta};
+			Libs::Math::Matrix< 4, float > m_transformMatrix;
+			Libs::Math::Vector< 3, float > m_textureCoordinatesMultiplier{1.0F, 1.0F, 1.0F};
 			std::array< bool, 8 > m_flags{
 				false/*CenterAtBottom*/,
 				false/*FlipGeometry*/,

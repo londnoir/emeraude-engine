@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractBufferBackedBlock.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief Shader Storage Block. This is the GLSL counter-part of Shader Storage Buffer Object.
-	 * @extends Emeraude::Saphir::AbstractBufferBackedBlock
+	 * @extends EmEn::Saphir::AbstractBufferBackedBlock
 	 */
 	class ShaderStorageBlock final : public AbstractBufferBackedBlock
 	{
@@ -50,7 +50,7 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			ShaderStorageBlock (uint32_t set, uint32_t binding, MemoryLayout memoryLayout, Key name, Key instanceName = nullptr, size_t arraySize = 0) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 	};

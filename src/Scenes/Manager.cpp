@@ -46,9 +46,9 @@
 #include "Resources/Manager.hpp"
 #include "PrimaryServices.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 
 	const size_t Manager::ClassUID{getClassUID(ClassId)};
@@ -405,7 +405,7 @@ namespace Emeraude::Scenes
 		{
 			TraceInfo{ClassId} << "Refreshing scene '" << scene->name() << "' ...";
 
-			for ( const auto & renderTarget : scene->masterControlManager().renderToViews() )
+			for ( const auto & renderTarget : scene->AVConsoleManager().renderToViews() )
 			{
 				scene->refreshRenderableInstances(renderTarget);
 			}

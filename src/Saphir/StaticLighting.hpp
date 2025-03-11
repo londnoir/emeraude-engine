@@ -31,12 +31,12 @@
 #include <string>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Graphics/Types.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The static lighting class.
@@ -67,7 +67,7 @@ namespace Emeraude::Saphir
 			 * @return StaticLighting &
 			 */
 			StaticLighting &
-			setAmbientParameters (const Libraries::PixelFactory::Color< float > & color, float intensity = DefaultAmbientIntensity) noexcept
+			setAmbientParameters (const Libs::PixelFactory::Color< float > & color, float intensity = DefaultAmbientIntensity) noexcept
 			{
 				m_ambientColor = color;
 				m_ambientIntensity = intensity;
@@ -82,7 +82,7 @@ namespace Emeraude::Saphir
 			 * @return StaticLighting &
 			 */
 			StaticLighting &
-			setLightParameters (const Libraries::PixelFactory::Color< float > & color, float intensity = DefaultLightIntensity) noexcept
+			setLightParameters (const Libs::PixelFactory::Color< float > & color, float intensity = DefaultLightIntensity) noexcept
 			{
 				m_color = color;
 				m_intensity = intensity;
@@ -96,7 +96,7 @@ namespace Emeraude::Saphir
 			 * @return void
 			 */
 			void
-			setAsDirectionalLight (const Libraries::Math::Vector< 3, float > & direction) noexcept
+			setAsDirectionalLight (const Libs::Math::Vector< 3, float > & direction) noexcept
 			{
 				m_type = Graphics::LightType::Directional;
 				m_direction = direction.normalized();
@@ -109,7 +109,7 @@ namespace Emeraude::Saphir
 			 * @return void
 			 */
 			void
-			setAsPointLight (const Libraries::Math::Vector< 3, float > & position, float radius = DefaultLightRadius) noexcept
+			setAsPointLight (const Libs::Math::Vector< 3, float > & position, float radius = DefaultLightRadius) noexcept
 			{
 				m_type = Graphics::LightType::Point;
 				m_position = position;
@@ -126,7 +126,7 @@ namespace Emeraude::Saphir
 			 * @return StaticLighting &
 			 */
 			void
-			setAsSpotLight (const Libraries::Math::Vector< 3, float > & position, const Libraries::Math::Vector< 3, float > & pointTo, float innerAngle = DefaultSpotLightInnerAngle, float outerAngle = DefaultSpotLightOuterAngle, float radius = DefaultLightRadius) noexcept
+			setAsSpotLight (const Libs::Math::Vector< 3, float > & position, const Libs::Math::Vector< 3, float > & pointTo, float innerAngle = DefaultSpotLightInnerAngle, float outerAngle = DefaultSpotLightOuterAngle, float radius = DefaultLightRadius) noexcept
 			{
 				m_type = Graphics::LightType::Spot;
 				m_position = position;
@@ -136,13 +136,13 @@ namespace Emeraude::Saphir
 				if ( innerAngle > outerAngle )
 				{
 					/* NOTE: Swap angles if the outer angle is bigger than the inner angle. */
-					m_innerCosAngle = std::cos(Libraries::Math::Radian(outerAngle));
-					m_outerCosAngle = std::cos(Libraries::Math::Radian(innerAngle));
+					m_innerCosAngle = std::cos(Libs::Math::Radian(outerAngle));
+					m_outerCosAngle = std::cos(Libs::Math::Radian(innerAngle));
 				}
 				else
 				{
-					m_innerCosAngle = std::cos(Libraries::Math::Radian(innerAngle));
-					m_outerCosAngle = std::cos(Libraries::Math::Radian(outerAngle));
+					m_innerCosAngle = std::cos(Libs::Math::Radian(innerAngle));
+					m_outerCosAngle = std::cos(Libs::Math::Radian(outerAngle));
 				}
 			}
 
@@ -273,14 +273,14 @@ namespace Emeraude::Saphir
 		private:
 
 			Graphics::LightType m_type{Graphics::LightType::Directional};
-			Libraries::Math::Vector< 3, float > m_position{250.0F, -500.0F, 250.0F}; /* (Spot & Point) */
-			Libraries::Math::Vector< 3, float > m_direction{-0.333F, 0.333F, -0.333F}; /* (Directional & Spot) */
-			Libraries::PixelFactory::Color< float > m_ambientColor{Libraries::PixelFactory::DarkCyan};
-			Libraries::PixelFactory::Color< float > m_color{Libraries::PixelFactory::White}; /* (All) */
+			Libs::Math::Vector< 3, float > m_position{250.0F, -500.0F, 250.0F}; /* (Spot & Point) */
+			Libs::Math::Vector< 3, float > m_direction{-0.333F, 0.333F, -0.333F}; /* (Directional & Spot) */
+			Libs::PixelFactory::Color< float > m_ambientColor{Libs::PixelFactory::DarkCyan};
+			Libs::PixelFactory::Color< float > m_color{Libs::PixelFactory::White}; /* (All) */
 			float m_ambientIntensity{DefaultAmbientIntensity};
 			float m_intensity{DefaultLightIntensity}; /* (All) */
 			float m_radius{DefaultLightRadius}; /* (Spot & Point) */
-			float m_innerCosAngle{std::cos(Libraries::Math::Radian(DefaultSpotLightInnerAngle))}; /* (Spot) */
-			float m_outerCosAngle{std::cos(Libraries::Math::Radian(DefaultSpotLightOuterAngle))}; /* (Spot) */
+			float m_innerCosAngle{std::cos(Libs::Math::Radian(DefaultSpotLightInnerAngle))}; /* (Spot) */
+			float m_outerCosAngle{std::cos(Libs::Math::Radian(DefaultSpotLightOuterAngle))}; /* (Spot) */
 	};
 }

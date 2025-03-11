@@ -37,11 +37,11 @@
 #include "Scenes/CubicInfluenceArea.hpp"
 #include "Scenes/SphericalInfluenceArea.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief The AbstractModifier class
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
 	 */
 	class AbstractModifier : public Abstract
 	{
@@ -203,7 +203,7 @@ namespace Emeraude::Scenes::Component
 			 * @param worldBoundingSphere A reference to a sphere.
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
-			virtual Libraries::Math::Vector< 3, float > getForceAppliedToEntity (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
 
 			/**
 			 * @brief Returns the force applied to an entity.
@@ -211,7 +211,7 @@ namespace Emeraude::Scenes::Component
 			 * @param worldBoundingBox A reference to a sphere.
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
-			virtual Libraries::Math::Vector< 3, float > getForceAppliedToEntity (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
+			virtual Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
 
 		protected:
 

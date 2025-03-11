@@ -30,7 +30,7 @@
 #include <memory>
 #include <stack>
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Utility class to crawl down the octree sector from a base sector.

@@ -31,7 +31,7 @@
 #include <ostream>
 #include <string>
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The memory region helper class.

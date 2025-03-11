@@ -31,7 +31,7 @@
 #include <set>
 
 /* Forward declarations */
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	namespace Generator
 	{
@@ -42,7 +42,7 @@ namespace Emeraude::Saphir
 	class FragmentShader;
 }
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The effect interface.

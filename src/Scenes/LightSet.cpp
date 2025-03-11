@@ -34,19 +34,19 @@
 #include "Vulkan/SwapChain.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 	using namespace Saphir;
 	using namespace Vulkan;
 
 	const size_t LightSet::ClassUID{getClassUID(ClassId)};
 
-	LightSet::LightSet (MasterControl::Manager & masterControlManager) noexcept
-		: m_masterControlManager(masterControlManager)
+	LightSet::LightSet (AVConsole::Manager & AVConsoleManager) noexcept
+		: m_AVConsoleManager(AVConsoleManager)
 	{
 
 	}
@@ -105,7 +105,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_directionalLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
+				if ( !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 				{
 					TraceError{ClassId} << "Unable to create the directional light '" << light->name() << "' !";
 
@@ -130,7 +130,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_pointLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
+				if ( !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 				{
 					TraceError{ClassId} << "Unable to create the point light '" << light->name() << "' !";
 
@@ -155,7 +155,7 @@ namespace Emeraude::Scenes
 			/* NOTE: Register existing lights. */
 			for ( const auto & light : m_spotLights )
 			{
-				if ( !light->createOnHardware(*this, renderer, m_masterControlManager) )
+				if ( !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 				{
 					TraceError{ClassId} << "Unable to create the spot light '" << light->name() << "' !";
 
@@ -228,7 +228,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::DirectionalLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 		{
 			TraceError{ClassId} << "Unable to create the directional light '" << light->name() << "' !";
 
@@ -247,7 +247,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::PointLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 		{
 			TraceError{ClassId} << "Unable to create the point light '" << light->name() << "' !";
 
@@ -266,7 +266,7 @@ namespace Emeraude::Scenes
 	LightSet::add (const std::shared_ptr< Component::SpotLight > & light, Renderer & renderer) noexcept
 	{
 		/* NOTE: If light set is uninitialized, the light creation will be postponed. */
-		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_masterControlManager) )
+		if ( m_flags[Initialized] && !light->createOnHardware(*this, renderer, m_AVConsoleManager) )
 		{
 			TraceError{ClassId} << "Unable to create the spot light '" << light->name() << "' !";
 

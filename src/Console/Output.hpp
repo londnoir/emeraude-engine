@@ -34,7 +34,7 @@
 /* Local inclusions for usages. */
 #include "../Types.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/**
 	 * @brief Console output class to return command execution info.

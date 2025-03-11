@@ -32,9 +32,9 @@
 #include "StagingBuffer.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	AbstractDeviceBuffer::AbstractDeviceBuffer (const std::shared_ptr< Device > & device, VkBufferCreateFlags createFlags, VkDeviceSize deviceSize, VkBufferUsageFlags bufferUsageFlags) noexcept
 		: Buffer(device, createFlags, deviceSize, bufferUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)

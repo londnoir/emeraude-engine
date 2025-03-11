@@ -34,21 +34,21 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/BlobTrait.hpp"
-#include "Libraries/Utility.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/BlobTrait.hpp"
+#include "Libs/Utility.hpp"
 #include "Node.hpp"
 #include "Scenes/Scene.hpp"
 #include "StaticEntity.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Graphics;
 
 	size_t Toolkit::s_autoEntityCount{0};

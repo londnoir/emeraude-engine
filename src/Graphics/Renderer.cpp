@@ -36,9 +36,9 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/Time/Statistics/RealTime.hpp"
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/Time/Statistics/RealTime.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Vulkan/Sync/ImageMemoryBarrier.hpp"
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Queue.hpp"
@@ -59,9 +59,9 @@
 #include "PrimaryServices.hpp"
 #include "Window.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Math;
 	using namespace PixelFactory;
 	using namespace Vulkan;
@@ -488,6 +488,7 @@ namespace Emeraude::Graphics
 
 		m_statistics.start();
 
+		/* NOTE: Offscreen rendering */
 		if ( scene != nullptr )
 		{
 			/* [VULKAN-SHADOW] */
@@ -576,7 +577,7 @@ namespace Emeraude::Graphics
 	{
 		const auto * queue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & shadowMap : scene.masterControlManager().renderToShadowMaps() )
+		for ( const auto & shadowMap : scene.AVConsoleManager().renderToShadowMaps() )
 		{
 			const auto commandBuffer = this->getCommandBuffer(shadowMap);
 
@@ -614,7 +615,7 @@ namespace Emeraude::Graphics
 	{
 		const auto * queue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & renderToTexture : scene.masterControlManager().renderToTextures() )
+		for ( const auto & renderToTexture : scene.AVConsoleManager().renderToTextures() )
 		{
 			const auto commandBuffer = this->getCommandBuffer(renderToTexture);
 
@@ -652,7 +653,7 @@ namespace Emeraude::Graphics
 	{
 		//const auto * graphicsQueue = this->device()->getQueue(QueueJob::Graphics, QueuePriority::High);
 
-		for ( const auto & renderToView : scene.masterControlManager().renderToViews() )
+		for ( const auto & renderToView : scene.AVConsoleManager().renderToViews() )
 		{
 			TraceDebug{ClassId} << "[DEBUG] Rendering to view '" << renderToView->id() << "' ...";
 		}

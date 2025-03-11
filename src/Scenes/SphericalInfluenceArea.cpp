@@ -30,10 +30,10 @@
 #include "AbstractEntity.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Physics;
 
 	SphericalInfluenceArea::SphericalInfluenceArea (const AbstractEntity & parentEntity) noexcept

@@ -31,9 +31,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	ShaderModule::ShaderModule (const std::shared_ptr< Device > & device, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode, VkShaderModuleCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device), m_shaderType(shaderType), m_binaryCode(binaryCode)

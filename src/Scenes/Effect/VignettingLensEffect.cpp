@@ -37,9 +37,9 @@
 #include "Saphir/Code.hpp"
 #include "Vulkan/Image.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Saphir;
 	using namespace Saphir::Keys;
 	using namespace Graphics;

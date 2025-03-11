@@ -26,7 +26,7 @@
 
 #include "CachedDownloadItem.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	CachedDownloadItem::CachedDownloadItem (size_t cacheId, std::string originalFilename, size_t filesize) noexcept
 		: m_cacheId(cacheId), m_originalFilename(std::move(originalFilename)), m_filesize(filesize)

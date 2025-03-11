@@ -30,16 +30,16 @@
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/LockableTrait.hpp"
+#include "Libs/LockableTrait.hpp"
 #include "AbstractHostBuffer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief This buffer is intended to push data all-purposes buffer from CPU to GPU specific buffer.
-	 * @extends Emeraude::Vulkan::AbstractHostBuffer This is a host-side buffer.
+	 * @extends EmEn::Vulkan::AbstractHostBuffer This is a host-side buffer.
 	 */
-	class StagingBuffer final : public Libraries::LockableTrait, public AbstractHostBuffer
+	class StagingBuffer final : public Libs::LockableTrait, public AbstractHostBuffer
 	{
 		public:
 

@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	uint32_t
 	getElementCountFromFlags (uint32_t geometryFlagBits) noexcept

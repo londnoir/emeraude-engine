@@ -33,7 +33,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "AbstractSurface.hpp"
@@ -41,14 +41,14 @@
 #include "Graphics/Renderer.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief Defines an overlaying screen object.
 	 * @details There is no physical properties. This is just a group of surfaces and dispatch input event to it.
 	 * @exception Libraries::NameableTrait A UI screen have a name.
 	 */
-	class UIScreen final : public Libraries::NameableTrait
+	class UIScreen final : public Libs::NameableTrait
 	{
 		public:
 

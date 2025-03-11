@@ -41,7 +41,7 @@
 #include "Types.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	std::array< JoystickState, DeviceCount > JoystickController::s_devicesState{};
 

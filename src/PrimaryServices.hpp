@@ -39,7 +39,7 @@
 #include "FileSystem.hpp"
 #include "Settings.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief This class holds the primary services.

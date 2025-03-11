@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <sstream>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	void
 	SetIndexes::enableSet (SetType setType) noexcept

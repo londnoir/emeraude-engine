@@ -35,13 +35,13 @@
 
 /* Local inclusions for usages. */
 #include "Graphics/Renderable/Interface.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
 	/**
 	 * @brief This is a renderable object that use an UBO to determine the location of the renderable object.
-	 * @extends Emeraude::Graphics::RenderableInstance::Abstract It needs the base of a renderable instance.
+	 * @extends EmEn::Graphics::RenderableInstance::Abstract It needs the base of a renderable instance.
 	 */
 	class Unique final : public Abstract
 	{
@@ -56,9 +56,9 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @param location A reference to a coordinates for the initial location. Default origin.
 			 * @param flagBits The multiple renderable instance level flags. Default 0.
 			 */
-			explicit Unique (const std::shared_ptr< Renderable::Interface > & renderable, const Libraries::Math::CartesianFrame< float > & location = {}, uint32_t flagBits = 0) noexcept;
+			explicit Unique (const std::shared_ptr< Renderable::Interface > & renderable, const Libs::Math::CartesianFrame< float > & location = {}, uint32_t flagBits = 0) noexcept;
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::isModelMatricesCreated() const */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::isModelMatricesCreated() const */
 			[[nodiscard]]
 			bool
 			isModelMatricesCreated () const noexcept override
@@ -66,14 +66,14 @@ namespace Emeraude::Graphics::RenderableInstance
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::resetModelMatrices() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::resetModelMatrices() */
 			void
 			resetModelMatrices () noexcept override
 			{
 				m_cartesianFrame.reset();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelUniformBufferObject() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::useModelUniformBufferObject() */
 			[[nodiscard]]
 			bool
 			useModelUniformBufferObject () const noexcept override
@@ -81,7 +81,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelVertexBufferObject() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::useModelVertexBufferObject() */
 			[[nodiscard]]
 			bool
 			useModelVertexBufferObject () const noexcept override
@@ -89,9 +89,9 @@ namespace Emeraude::Graphics::RenderableInstance
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::worldPosition() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::worldPosition() */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float >
+			Libs::Math::Vector< 3, float >
 			worldPosition () const noexcept override
 			{
 				return m_cartesianFrame.position();
@@ -104,17 +104,17 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return void
 			 */
 			void
-			updateModelMatrix (const Libraries::Math::CartesianFrame< float > & worldCartesianFrame) noexcept
+			updateModelMatrix (const Libs::Math::CartesianFrame< float > & worldCartesianFrame) noexcept
 			{
 				m_cartesianFrame = worldCartesianFrame;
 			}
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::pushMatrices() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::pushMatrices() */
 			void pushMatrices (const Vulkan::CommandBuffer & commandBuffer, const Vulkan::PipelineLayout & pipelineLayout, const ViewMatricesInterface & viewMatrices, const Saphir::Program & program) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::instanceCount() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::instanceCount() */
 			[[nodiscard]]
 			size_t
 			instanceCount () const noexcept override
@@ -122,9 +122,9 @@ namespace Emeraude::Graphics::RenderableInstance
 				return 1;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::bindInstanceModelLayer() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::bindInstanceModelLayer() */
 			void bindInstanceModelLayer (const Vulkan::CommandBuffer & commandBuffer, size_t layerIndex) const noexcept override;
 
-			Libraries::Math::CartesianFrame< float > m_cartesianFrame;
+			Libs::Math::CartesianFrame< float > m_cartesianFrame;
 	};
 }

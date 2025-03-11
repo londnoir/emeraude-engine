@@ -38,24 +38,24 @@
 #include <type_traits>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/Math/Cuboid.hpp"
+#include "Libs/Math/Cuboid.hpp"
 
 /* Local inclusions for usages. */
 #include "LocatableInterface.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The octree sector class.
-	 * @tparam element_t The type of inserted element, it must inherit from Emeraude::Scenes::LocatableInterface.
+	 * @tparam element_t The type of inserted element, it must inherit from EmEn::Scenes::LocatableInterface.
 	 * @tparam enable_volume Enable the use of the element volume instead of their position. This implies multiple insertions at the same depth level.
 	 * @extends std::enable_shared_from_this A sector must be able to give his own smart pointer.
-	 * @extends Libraries::Math::Cuboid A sector is a cube in the 3D space and thus provide intersection detection with primitives.
+	 * @extends EmEn::Libs::Math::Cuboid A sector is a cube in the 3D space and thus provide intersection detection with primitives.
 	 */
 	template< typename element_t, bool enable_volume >
-	requires (std::is_base_of_v< Libraries::NameableTrait, element_t >, std::is_base_of_v< LocatableInterface, element_t >)
-	class OctreeSector final : public std::enable_shared_from_this< OctreeSector< element_t, enable_volume > >, public Libraries::Math::Cuboid< float >
+	requires (std::is_base_of_v< Libs::NameableTrait, element_t >, std::is_base_of_v< LocatableInterface, element_t >)
+	class OctreeSector final : public std::enable_shared_from_this< OctreeSector< element_t, enable_volume > >, public Libs::Math::Cuboid< float >
 	{
 		public:
 
@@ -82,7 +82,7 @@ namespace Emeraude::Scenes
 			 * @param maxElementPerSector The threshold number of elements to trigger a new sector subdivision. Default 8.
 			 * @param enableAutoCollapse Enable a leaf sector to be automatically removed if empty. Default false.
 			 */
-			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum, size_t maxElementPerSector = DefaultSectorElementLimit, bool enableAutoCollapse = false) noexcept
+			OctreeSector (const Libs::Math::Vector< 3, float > & maximum, const Libs::Math::Vector< 3, float > & minimum, size_t maxElementPerSector = DefaultSectorElementLimit, bool enableAutoCollapse = false) noexcept
 				: Cuboid(maximum, minimum), m_maxElementPerSector(std::max< size_t >(DefaultSectorElementLimit, maxElementPerSector))
 			{
 				m_flags[AutoCollapseEnabled] = enableAutoCollapse;
@@ -95,7 +95,7 @@ namespace Emeraude::Scenes
 			 * @param parentSector A reference to the parent sector smart pointer.
 			 * @param slot The slot where the sub-sector is built.
 			 */
-			OctreeSector (const Libraries::Math::Vector< 3, float > & maximum, const Libraries::Math::Vector< 3, float > & minimum, const std::shared_ptr< OctreeSector > & parentSector, size_t slot) noexcept
+			OctreeSector (const Libs::Math::Vector< 3, float > & maximum, const Libs::Math::Vector< 3, float > & minimum, const std::shared_ptr< OctreeSector > & parentSector, size_t slot) noexcept
 				: Cuboid(maximum, minimum), m_parentSector(parentSector), m_slot(slot), m_maxElementPerSector(parentSector->m_maxElementPerSector)
 			{
 				m_flags[AutoCollapseEnabled] = parentSector->m_flags[AutoCollapseEnabled];
@@ -785,7 +785,7 @@ namespace Emeraude::Scenes
 			void
 			expand () noexcept
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				const auto size = this->width() * 0.5F;
 				const auto max = this->maximum();

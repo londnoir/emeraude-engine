@@ -38,18 +38,18 @@
 #include "json/json.h"
 
 /* Local inclusions for inheritances. */
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Physics.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief Class defining physical properties of an object.
 	 * Libraries::ObservableTrait This notifies each physical property changes.
 	 */
-	class PhysicalObjectProperties final : public Libraries::ObservableTrait
+	class PhysicalObjectProperties final : public Libs::ObservableTrait
 	{
 		public:
 
@@ -101,11 +101,11 @@ namespace Emeraude::Physics
 			 */
 			explicit PhysicalObjectProperties (float mass, float surface, float dragCoefficient, float bounciness = DefaultBounciness, float stickiness = DefaultStickiness) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
@@ -173,7 +173,7 @@ namespace Emeraude::Physics
 
 			/**
 			 * @brief Sets the drag coefficient of the object.
-			 * @note Use constants from Emeraude::Physics::DragCoefficient namespace.
+			 * @note Use constants from EmEn::Physics::DragCoefficient namespace.
 			 * @param value The coefficient.
 			 * @param fireEvents Controls whether event are fired or not when setting the property. Default true.
 			 * @return bool

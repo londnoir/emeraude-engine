@@ -38,16 +38,16 @@
 #include "Declaration/StageOutput.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	class TesselationControlShader;
 }
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief The TesselationEvaluationShader class.
-	 * @extends Emeraude::Saphir::AbstractShader The base class of every shader type.
+	 * @extends EmEn::Saphir::AbstractShader The base class of every shader type.
 	 */
 	class TesselationEvaluationShader final : public AbstractShader
 	{
@@ -65,7 +65,7 @@ namespace Emeraude::Saphir
 			 */
 			TesselationEvaluationShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept;
 
-			/** @copydoc Emeraude::Saphir::AbstractShader::type() */
+			/** @copydoc EmEn::Saphir::AbstractShader::type() */
 			[[nodiscard]]
 			ShaderType
 			type () const noexcept override
@@ -191,11 +191,11 @@ namespace Emeraude::Saphir
 
 		private:
 
-			/** @copydoc Emeraude::Saphir::AbstractShader::onSourceCodeGeneration() */
+			/** @copydoc EmEn::Saphir::AbstractShader::onSourceCodeGeneration() */
 			[[nodiscard]]
 			bool onSourceCodeGeneration (Generator::Abstract & generator, std::stringstream & code, std::string & topInstructions, std::string & outputInstructions) noexcept override;
 
-			/** @copydoc Emeraude::Saphir::AbstractShader::onGetDeclarationStats() */
+			/** @copydoc EmEn::Saphir::AbstractShader::onGetDeclarationStats() */
 			void onGetDeclarationStats (std::stringstream & output) const noexcept override;
 
 			/* Tesselation evaluation shader inputs. */

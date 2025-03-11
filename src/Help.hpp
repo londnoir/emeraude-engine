@@ -31,18 +31,18 @@
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "ArgumentDoc.hpp"
 #include "ShortcutDoc.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief This class holds help for an application.
 	 */
-	class Help final : public Libraries::NameableTrait
+	class Help final : public Libs::NameableTrait
 	{
 		public:
 
@@ -99,7 +99,7 @@ namespace Emeraude
 			 * @return void
 			 */
 			void
-			registerShortcut (const std::string & description, Emeraude::Input::Key key, int modifiers = 0) noexcept
+			registerShortcut (const std::string & description, EmEn::Input::Key key, int modifiers = 0) noexcept
 			{
 				m_shortcutDocs.emplace_back(description, key, modifiers);
 			}

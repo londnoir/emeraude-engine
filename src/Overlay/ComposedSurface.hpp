@@ -37,21 +37,21 @@
 
 /* Local inclusions for usages. */
 #include "Layouts/Main.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/Math/Rectangle.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Graphics/Geometry/IndexedVertexResource.hpp"
 #include "Vulkan/DescriptorSet.hpp"
 #include "Vulkan/Image.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	class Renderer;
 	class ImageResource;
 }
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	enum class Position : uint8_t
 	{
@@ -68,7 +68,7 @@ namespace Emeraude::Overlay
 
 	/**
 	 * @brief The base class of all overlay surfaces.
-	 * @extends Emeraude::Overlay::AbstractSurface This is a surface.
+	 * @extends EmEn::Overlay::AbstractSurface This is a surface.
 	 */
 	class ComposedSurface : public AbstractSurface
 	{
@@ -86,17 +86,17 @@ namespace Emeraude::Overlay
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			ComposedSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			ComposedSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::descriptorSet() const */
+			/** @copydoc EmEn::Overlay::AbstractSurface::descriptorSet() const */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet * descriptorSet () const noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::createOnHardware() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::createOnHardware() */
 			[[nodiscard]]
 			bool createOnHardware (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::destroyFromHardware() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::destroyFromHardware() */
 			bool destroyFromHardware () noexcept final;
 
 			/**
@@ -179,7 +179,7 @@ namespace Emeraude::Overlay
 			 * @return const Libraries::Math::Vector< 2, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 2, float > & textureOffset () const noexcept;
+			const Libs::Math::Vector< 2, float > & textureOffset () const noexcept;
 
 		protected:
 
@@ -202,14 +202,14 @@ namespace Emeraude::Overlay
 			 * @param offset
 			 * @return void
 			 */
-			void setTextureOffset (const Libraries::Math::Vector< 2, float > & offset) noexcept;
+			void setTextureOffset (const Libs::Math::Vector< 2, float > & offset) noexcept;
 
 			/**
 			 * @brief This method it's called on first surface initialization and every time the geometry changes.
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			virtual bool onResize (const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+			virtual bool onResize (const Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
 
 			/**
 			 * @brief Callback before Surface::drawFinished() function is executed.
@@ -217,19 +217,19 @@ namespace Emeraude::Overlay
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			virtual bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
+			virtual bool onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
 
 		private:
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::createDescriptorSet() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::createDescriptorSet() */
 			[[nodiscard]]
 			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
 			[[nodiscard]]
 			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onVideoMemoryUpdate() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onVideoMemoryUpdate() */
 			[[nodiscard]]
 			bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept final;
 
@@ -260,12 +260,12 @@ namespace Emeraude::Overlay
 			static constexpr auto IsFocused{3UL};
 
 			Layouts::Main m_rootLayout{};
-			Libraries::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
+			Libs::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
 			std::unique_ptr< Graphics::Geometry::IndexedVertexResource > m_geometry{};
 			std::shared_ptr< Vulkan::Image > m_texture{};
-			Libraries::PixelFactory::Pixmap< uint8_t > m_data{};
-			Libraries::Math::Vector< 2, float > m_textureProportion{1.0F, 1.0F};
-			Libraries::Math::Vector< 2, float > m_textureOffset{};
+			Libs::PixelFactory::Pixmap< uint8_t > m_data{};
+			Libs::Math::Vector< 2, float > m_textureProportion{1.0F, 1.0F};
+			Libs::Math::Vector< 2, float > m_textureOffset{};
 			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet{};
 			std::array< bool, 8 > m_flags{
 				false/*CapturePointerEvents*/,

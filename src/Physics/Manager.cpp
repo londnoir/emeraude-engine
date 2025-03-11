@@ -40,7 +40,7 @@
 #include "PrimaryServices.hpp"
 #include "SettingKeys.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	using namespace Vulkan;
 

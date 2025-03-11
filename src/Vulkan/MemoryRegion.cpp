@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	MemoryRegion::MemoryRegion (const void * source, size_t bytes, size_t offset) noexcept
 		: m_source(source), m_offset(offset), m_bytes(bytes)

@@ -36,7 +36,7 @@
 /* Local inclusions. */
 #include "Window.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 #ifdef GTK3_ENABLED
 	GtkMessageType

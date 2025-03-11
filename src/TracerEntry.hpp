@@ -30,12 +30,12 @@
 #include <chrono>
 #include <string>
 #include <thread>
-#include "Libraries/std_source_location.hpp"
+#include "Libs/std_source_location.hpp"
 
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief A single entry for the tracer.

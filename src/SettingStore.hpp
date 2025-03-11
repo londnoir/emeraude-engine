@@ -32,7 +32,7 @@
 #include <string>
 #include <any>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The SettingStore class

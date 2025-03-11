@@ -26,7 +26,7 @@
 
 #include "Output.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	Output::Output (Severity severity, std::string message) noexcept
 		: m_severity(severity), m_message(std::move(message))

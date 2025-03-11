@@ -30,11 +30,11 @@
 #include <memory>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/Utility.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/Utility.hpp"
 #include "SoundResource.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The ambience sound class.
@@ -94,8 +94,8 @@ namespace Emeraude::Audio
 			void
 			setRandomPitchRange (float pitchA, float pitchB) noexcept
 			{
-				m_minimumPitch = Libraries::Utility::ifZero(std::min(pitchA, pitchB), 1.0F);
-				m_maximumPitch = Libraries::Utility::ifZero(std::max(pitchA, pitchB), 1.0F);
+				m_minimumPitch = Libs::Utility::ifZero(std::min(pitchA, pitchB), 1.0F);
+				m_maximumPitch = Libs::Utility::ifZero(std::max(pitchA, pitchB), 1.0F);
 			}
 
 			/**
@@ -133,7 +133,7 @@ namespace Emeraude::Audio
 					return m_minimumPitch;
 				}
 
-				return Libraries::Utility::quickRandom(m_minimumPitch, m_maximumPitch);
+				return Libs::Utility::quickRandom(m_minimumPitch, m_maximumPitch);
 			}
 
 			/**
@@ -163,7 +163,7 @@ namespace Emeraude::Audio
 			 * @return float
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float >
+			Libs::Math::Vector< 3, float >
 			getRandomVelocity () const noexcept
 			{
 				if ( !this->useVelocityRandomization() )
@@ -171,7 +171,7 @@ namespace Emeraude::Audio
 					return {};
 				}
 
-				return Libraries::Math::Vector< 3, float >::quickRandom(-m_radialVelocity, -m_radialVelocity);
+				return Libs::Math::Vector< 3, float >::quickRandom(-m_radialVelocity, -m_radialVelocity);
 			}
 
 			/**

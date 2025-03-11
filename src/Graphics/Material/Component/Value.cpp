@@ -26,7 +26,7 @@
 
 #include "Value.hpp"
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
 	Value::Value (std::string variableName) noexcept
 		: m_variableName(std::move(variableName))

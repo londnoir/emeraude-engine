@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief Returns how many times the engine will be updated in one second.

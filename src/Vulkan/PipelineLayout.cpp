@@ -35,9 +35,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	PipelineLayout::PipelineLayout (const std::shared_ptr< Device > & device, std::string UUID, const std::vector< std::shared_ptr< DescriptorSetLayout > > & descriptorSetLayouts, const std::vector< VkPushConstantRange > & pushConstantRanges, VkPipelineLayoutCreateFlags flags) noexcept
 		: AbstractDeviceDependentObject(device), m_UUID(std::move(UUID)), m_descriptorSetLayouts(descriptorSetLayouts), m_pushConstantRanges(pushConstantRanges)

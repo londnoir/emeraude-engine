@@ -33,17 +33,17 @@
 #include <memory>
 
 /* Local inclusions for usages. */
-#include "Libraries/Utility.hpp"
+#include "Libs/Utility.hpp"
 #include "AmbienceChannel.hpp"
 #include "AmbienceSound.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The ambience class.
-	 * @extends Libraries::ObserverTrait This component observes sound loading events.
+	 * @extends EmEn::Libs::ObserverTrait This component observes sound loading events.
 	 */
-	class Ambience final : public Libraries::ObserverTrait
+	class Ambience final : public Libs::ObserverTrait
 	{
 		public:
 
@@ -224,9 +224,9 @@ namespace Emeraude::Audio
 
 		private:
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Returns a random delay.
@@ -236,7 +236,7 @@ namespace Emeraude::Audio
 			uint32_t
 			getRandomDelay () const noexcept
 			{
-				return Libraries::Utility::quickRandom(m_minDelay, m_maxDelay);
+				return Libs::Utility::quickRandom(m_minDelay, m_maxDelay);
 			}
 
 			/**
@@ -281,7 +281,7 @@ namespace Emeraude::Audio
 			AmbienceSound &
 			getRandomSound () noexcept
 			{
-				return m_soundEffects[Libraries::Utility::quickRandom(static_cast< size_t >(0), m_soundEffects.size() - 1)];
+				return m_soundEffects[Libs::Utility::quickRandom(static_cast< size_t >(0), m_soundEffects.size() - 1)];
 			}
 
 			/* JSON key. */

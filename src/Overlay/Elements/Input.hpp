@@ -37,12 +37,12 @@
 /* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
 	/**
 	 * @brief The input form element.
-	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
-	 * @extends Emeraude::Overlay::Elements::UIInputInterface this is a user input element.
+	 * @extends EmEn::Overlay::ComposedSurface This a visible element.
+	 * @extends EmEn::Overlay::Elements::UIInputInterface this is a user input element.
 	 */
 	class Input final : public ComposedSurface, public UIInputInterface
 	{
@@ -58,12 +58,12 @@ namespace Emeraude::Overlay::Elements
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onKeyRelease() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onKeyRelease() */
 			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept override;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onCharacterType() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onCharacterType() */
 			bool onCharacterType (uint32_t unicode) noexcept override;
 
 			/**
@@ -78,14 +78,14 @@ namespace Emeraude::Overlay::Elements
 			 * @param color A reference to the color.
 			 * @return void
 			 */
-			void setClearColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setClearColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Returns the clear color.
 			 * @return const Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & clearColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & clearColor () const noexcept;
 
 			/**
 			 * @brief Sets the initial content of the input box.
@@ -113,9 +113,9 @@ namespace Emeraude::Overlay::Elements
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
+			bool onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
 
-			Libraries::PixelFactory::Color< float > m_clearColor = Libraries::PixelFactory::Transparent;
+			Libs::PixelFactory::Color< float > m_clearColor = Libs::PixelFactory::Transparent;
 			std::string m_text{};
 			Graphics::TextWriter m_textWriter{};
 	};

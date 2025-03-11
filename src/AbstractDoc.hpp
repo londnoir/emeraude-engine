@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <string>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief Base class for the help service documentation.

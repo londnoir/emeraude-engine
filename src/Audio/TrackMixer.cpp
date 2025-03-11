@@ -32,9 +32,9 @@
 #include "Settings.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t TrackMixer::ClassUID{getClassUID(ClassId)};
 
@@ -320,7 +320,7 @@ namespace Emeraude::Audio
 	}
 
 	bool
-	TrackMixer::onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
+	TrackMixer::onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
 		if ( observable->is(MusicResource::ClassUID) )
 		{

@@ -33,22 +33,22 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "Libraries/Time/EventTrait.hpp"
+#include "Libs/Time/EventTrait.hpp"
 
 /* Local inclusions for usages */
-#include "Libraries/PixelFactory/TextProcessor.hpp"
+#include "Libs/PixelFactory/TextProcessor.hpp"
 #include "Overlay/Manager.hpp"
 #include "Overlay/PixelBufferSurface.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The on-screen notifier service.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::ObserverTrait The notifier want to listen to overlay manager changes.
-	 * @extends Libraries::Time::EventTrait The notifier use a timer to hide message.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Libs::ObserverTrait The notifier want to listen to overlay manager changes.
+	 * @extends EmEn::Libs::Time::EventTrait The notifier use a timer to hide message.
 	 */
-	class Notifier final : public ServiceInterface, public Libraries::ObserverTrait, public Libraries::Time::EventTrait< uint32_t, std::milli >
+	class Notifier final : public ServiceInterface, public Libs::ObserverTrait, public Libs::Time::EventTrait< uint32_t, std::milli >
 	{
 		public:
 
@@ -67,7 +67,7 @@ namespace Emeraude
 			 */
 			explicit Notifier (Overlay::Manager & overlayManager) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -75,7 +75,7 @@ namespace Emeraude
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -83,7 +83,7 @@ namespace Emeraude
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -106,7 +106,7 @@ namespace Emeraude
 			 * @return bool
 			 */
 			bool
-			push (const Libraries::BlobTrait & message, uint32_t duration = DefaultDuration) noexcept
+			push (const Libs::BlobTrait & message, uint32_t duration = DefaultDuration) noexcept
 			{
 				return this->push(message.get(), duration);
 			}
@@ -119,15 +119,15 @@ namespace Emeraude
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Updates the notification area pixel buffer.
@@ -138,8 +138,8 @@ namespace Emeraude
 			Overlay::Manager & m_overlayManager;
 			std::shared_ptr< Overlay::UIScreen > m_screen;
 			std::shared_ptr< Overlay::PixelBufferSurface > m_pixelBuffer;
-			Libraries::PixelFactory::TextProcessor< uint8_t > m_processor;
-			std::vector< std::pair< std::string, Libraries::Time::TimerID > > m_notifications;
+			Libs::PixelFactory::TextProcessor< uint8_t > m_processor;
+			std::vector< std::pair< std::string, Libs::Time::TimerID > > m_notifications;
 			mutable std::mutex m_lock;
 	};
 }

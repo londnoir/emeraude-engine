@@ -31,7 +31,7 @@
 #include <array>
 #include <iostream>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/**
 	 * @brief Interface giving the ability to listen to the keyboard events.

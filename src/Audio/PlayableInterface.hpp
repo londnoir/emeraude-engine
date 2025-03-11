@@ -32,7 +32,7 @@
 /* Local inclusions. */
 #include "Buffer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief Playable interface class.

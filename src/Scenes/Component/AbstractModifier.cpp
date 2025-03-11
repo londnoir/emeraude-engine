@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Scenes/AbstractEntity.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	AbstractModifier::AbstractModifier (const std::string & name, const AbstractEntity & parentEntity) noexcept
 		: Abstract(name, parentEntity)

@@ -31,16 +31,16 @@
 #include <iostream>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 #include "Resources/Manager.hpp"
 #include "PrimaryServices.hpp"
 #include "Source.hpp"
 #include "Utility.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	const size_t Manager::ClassUID{getClassUID(ClassId)};
 	Manager * Manager::s_instance{nullptr};
@@ -87,7 +87,7 @@ namespace Emeraude::Audio
 	bool
 	Manager::onInitialize () noexcept
 	{
-		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, DefaultOpenALShowInformation);
 
 		if ( m_primaryServices.arguments().get("--disable-audio").isPresent() || !m_primaryServices.settings().get< bool >(AudioEnableKey, DefaultAudioEnable) )
 		{
@@ -104,6 +104,8 @@ namespace Emeraude::Audio
 
 		/* Sets the music chunk size in bytes. */
 		m_musicChunkSize = m_primaryServices.settings().get< uint32_t >(AudioMusicChunkSizeKey, DefaultAudioMusicChunkSize);
+
+		SoundResource::s_quietConversion = m_primaryServices.settings().get< bool >(AudioQuietConversionKey, DefaultAudioQuietConversion);
 
 		this->queryDevices();
 

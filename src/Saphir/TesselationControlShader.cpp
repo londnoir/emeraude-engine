@@ -33,9 +33,9 @@
 #include "VertexShader.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Declaration;
 
 	TesselationControlShader::TesselationControlShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept

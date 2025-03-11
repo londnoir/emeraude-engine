@@ -27,17 +27,17 @@
 #include "ResourceGenerator.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Hash/Hash.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/VertexFactory/ShapeAssembler.hpp"
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
+#include "Libs/Hash/Hash.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/VertexFactory/ShapeAssembler.hpp"
+#include "Libs/VertexFactory/ShapeGenerator.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
+	using namespace EmEn::Libs::VertexFactory;
 
 	ResourceGenerator::ResourceGenerator (Resources::Manager & resources, uint32_t geometryFlagBits) noexcept
 		: m_resources(&resources), m_generationParameters(geometryFlagBits)

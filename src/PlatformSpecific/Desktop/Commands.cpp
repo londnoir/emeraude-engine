@@ -27,12 +27,12 @@
 #include "Commands.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Network/URL.hpp"
+#include "Libs/Network/URL.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop
+namespace EmEn::PlatformSpecific::Desktop
 {
-	using namespace Libraries::Network;
+	using namespace EmEn::Libs::Network;
 
 	static constexpr auto TracerTag{"DesktopCommand"};
 

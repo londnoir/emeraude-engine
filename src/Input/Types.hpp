@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	constexpr auto DeviceCount{16};
 	constexpr auto JoystickMaxAxis{6};

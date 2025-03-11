@@ -32,7 +32,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	Argument::Argument (bool value) noexcept
 		: m_type(ArgumentType::Boolean),

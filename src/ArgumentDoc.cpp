@@ -36,7 +36,7 @@
 /* Local inclusions. */
 #include "AbstractDoc.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	ArgumentDoc::ArgumentDoc (std::string description, std::string longName, char shortName, const std::vector< std::string > & options) noexcept
 		: AbstractDoc(std::move(description)), m_longName(std::move(longName)), m_shortName(shortName), m_options(options)

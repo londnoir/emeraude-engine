@@ -36,22 +36,22 @@
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "Graphics/Types.hpp"
 #include "Saphir/Keys.hpp"
 
 /* Forward declarations */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	class Manager;
 }
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
 	/**
 	 * @brief The texture component type.
-	 * @extends Emeraude::Graphics::Material::Component::Interface This class describe a component type.
+	 * @extends EmEn::Graphics::Material::Component::Interface This class describe a component type.
 	 */
 	class Texture : public Interface
 	{
@@ -68,7 +68,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @param UVWScale A reference to a vector to scale the texture coordinates. Default 1.0 in all directions.
 			 * @param enableAlpha Enable the alpha channel for opacity/blending. Request a 4 channels texture. Default false.
 			 */
-			Texture (const char * samplerName, std::string variableName, const std::shared_ptr< TextureResource::Abstract > & texture, uint32_t UVWChannel = 0, const Libraries::Math::Vector< 3, float > & UVWScale = {1.0F, 1.0F, 1.0F}, bool enableAlpha = false) noexcept;
+			Texture (const char * samplerName, std::string variableName, const std::shared_ptr< TextureResource::Abstract > & texture, uint32_t UVWChannel = 0, const Libs::Math::Vector< 3, float > & UVWScale = {1.0F, 1.0F, 1.0F}, bool enableAlpha = false) noexcept;
 
 			/**
 			 * @brief Constructs a texture component from json data.
@@ -80,11 +80,11 @@ namespace Emeraude::Graphics::Material::Component
 			 */
 			Texture (const char * samplerName, std::string variableName, const Json::Value & data, const FillingType & fillingType, Resources::Manager & resources) noexcept;
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::create() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::create() */
 			[[nodiscard]]
 			bool create (Renderer & renderer, uint32_t & binding) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -97,7 +97,7 @@ namespace Emeraude::Graphics::Material::Component
 				return m_texture->isCreated();
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::variableName() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::variableName() */
 			[[nodiscard]]
 			const std::string &
 			variableName () const noexcept override
@@ -105,7 +105,7 @@ namespace Emeraude::Graphics::Material::Component
 				return m_variableName;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::type() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::type() */
 			[[nodiscard]]
 			Type
 			type () const noexcept override
@@ -113,7 +113,7 @@ namespace Emeraude::Graphics::Material::Component
 				return Type::Texture;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isOpaque() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isOpaque() */
 			[[nodiscard]]
 			bool
 			isOpaque () const noexcept override
@@ -121,7 +121,7 @@ namespace Emeraude::Graphics::Material::Component
 				return !m_alphaEnabled;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::textureResource() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::textureResource() */
 			[[nodiscard]]
 			std::shared_ptr< TextureResource::Abstract >
 			textureResource () const noexcept override
@@ -157,7 +157,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @return void
 			 */
 			void
-			setUVWScale (const Libraries::Math::Vector< 3, float > & UVWScale) noexcept
+			setUVWScale (const Libs::Math::Vector< 3, float > & UVWScale) noexcept
 			{
 				m_UVWScale = UVWScale;
 			}
@@ -178,7 +178,7 @@ namespace Emeraude::Graphics::Material::Component
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			UVWScale () const noexcept
 			{
 				return m_UVWScale;
@@ -272,7 +272,7 @@ namespace Emeraude::Graphics::Material::Component
 			const char * m_samplerName;
 			std::string m_variableName;
 			std::shared_ptr< TextureResource::Abstract > m_texture{};
-			Libraries::Math::Vector< 3, float > m_UVWScale{1.0F, 1.0F, 1.0F};
+			Libs::Math::Vector< 3, float > m_UVWScale{1.0F, 1.0F, 1.0F};
 			uint32_t m_UVWChannel{0};
 			uint32_t m_binding{0};
 			bool m_alphaEnabled{false};

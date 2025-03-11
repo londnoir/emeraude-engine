@@ -30,15 +30,15 @@
 #include <cstdint>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	class AbstractEntity;
 }
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/** @brief The type of collision enumeration. */
 	enum class CollisionType : uint8_t
@@ -70,7 +70,7 @@ namespace Emeraude::Physics
 			 * @param position A reference to a vector for the collision world position.
 			 * @param direction A reference to a vector for the collision direction.
 			 */
-			Collision (CollisionType type, Scenes::AbstractEntity * entity, const Libraries::Math::Vector< 3, float > & position, const Libraries::Math::Vector< 3, float > & direction) noexcept;
+			Collision (CollisionType type, Scenes::AbstractEntity * entity, const Libs::Math::Vector< 3, float > & position, const Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
 			 * @brief Returns the type of collision.
@@ -100,7 +100,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			position () const noexcept
 			{
 				return m_position;
@@ -111,7 +111,7 @@ namespace Emeraude::Physics
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			direction () const noexcept
 			{
 				return m_direction;
@@ -121,7 +121,7 @@ namespace Emeraude::Physics
 
 			CollisionType m_type;
 			Scenes::AbstractEntity * m_entity;
-			Libraries::Math::Vector< 3, float > m_position;
-			Libraries::Math::Vector< 3, float > m_direction;
+			Libs::Math::Vector< 3, float > m_position;
+			Libs::Math::Vector< 3, float > m_direction;
 	};
 }

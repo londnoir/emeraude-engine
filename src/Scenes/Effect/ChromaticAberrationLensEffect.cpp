@@ -32,10 +32,10 @@
 #include "Saphir/FragmentShader.hpp"
 #include "Saphir/Code.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Saphir;
 	using namespace Saphir::Keys;
 	using namespace Graphics;

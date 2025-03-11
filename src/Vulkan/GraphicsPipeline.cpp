@@ -44,9 +44,9 @@
 #include "Core.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 	using namespace Saphir;
 

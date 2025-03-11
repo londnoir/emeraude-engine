@@ -36,9 +36,9 @@
 #include "DescriptorSetLayout.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t LayoutManager::ClassUID{getClassUID(ClassId)};
 

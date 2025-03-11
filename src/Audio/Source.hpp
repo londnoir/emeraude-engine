@@ -40,16 +40,16 @@
 #include "AbstractObject.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/Math/Vector.hpp"
 #include "EffectSlot.hpp"
 #include "PlayableInterface.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The Source class
-	 * @extends Emeraude::Audio::AbstractObject
+	 * @extends EmEn::Audio::AbstractObject
 	 */
 	class Source final : public AbstractObject
 	{
@@ -108,7 +108,7 @@ namespace Emeraude::Audio
 			 */
 			~Source () override;
 
-			/** @copydoc Emeraude::Audio::AbstractObject::isCreated() */
+			/** @copydoc EmEn::Audio::AbstractObject::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -126,14 +126,14 @@ namespace Emeraude::Audio
 			 * @param position A reference to a vector.
 			 * @return void
 			 */
-			void setPosition (const Libraries::Math::Vector< 3, float > & position) noexcept;
+			void setPosition (const Libs::Math::Vector< 3, float > & position) noexcept;
 
 			/**
 			 * @brief Sets the source position.
 			 * @param position A reference to a vector.
 			 * @return void
 			 */
-			void setPosition (const Libraries::Math::Vector< 4, float > & position) noexcept;
+			void setPosition (const Libs::Math::Vector< 4, float > & position) noexcept;
 
 			/**
 			 * @brief Sets the source position.
@@ -149,21 +149,21 @@ namespace Emeraude::Audio
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > position () const noexcept;
+			Libs::Math::Vector< 3, float > position () const noexcept;
 
 			/**
 			 * @brief Sets the direction of the sound emission source.
 			 * @param direction A reference to a vector.
 			 * @return void
 			 */
-			void setDirection (const Libraries::Math::Vector< 3, float > & direction) noexcept;
+			void setDirection (const Libs::Math::Vector< 3, float > & direction) noexcept;
 
 			/**
 			 * @brief Sets the direction of the sound emission source.
 			 * @param direction A reference to a vector.
 			 * @return void
 			 */
-			void setDirection (const  Libraries::Math::Vector< 4, float > & direction) noexcept;
+			void setDirection (const  Libs::Math::Vector< 4, float > & direction) noexcept;
 
 			/**
 			 * @brief Sets the direction of the sound emission source.
@@ -179,21 +179,21 @@ namespace Emeraude::Audio
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > direction () const noexcept;
+			Libs::Math::Vector< 3, float > direction () const noexcept;
 
 			/**
 			 * @brief Sets the source velocity to simulate doppler effect.
 			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			void setVelocity (const Libraries::Math::Vector< 3, float > & velocity) noexcept;
+			void setVelocity (const Libs::Math::Vector< 3, float > & velocity) noexcept;
 
 			/**
 			 * @brief Sets the source velocity to simulate doppler effect.
 			 * @param velocity A reference to a vector.
 			 * @return void
 			 */
-			void setVelocity (const Libraries::Math::Vector< 4, float > & velocity) noexcept;
+			void setVelocity (const Libs::Math::Vector< 4, float > & velocity) noexcept;
 
 			/**
 			 * @brief Sets the source velocity to simulate doppler effect.
@@ -209,7 +209,7 @@ namespace Emeraude::Audio
 			 * @return Libraries::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float > velocity () const noexcept;
+			Libs::Math::Vector< 3, float > velocity () const noexcept;
 
 			/**
 			 * @brief Sets the source gain.
@@ -349,7 +349,7 @@ namespace Emeraude::Audio
 			float
 			coneInnerAngle () const noexcept
 			{
-				return this->getFloatValue(AL_CONE_INNER_ANGLE, Libraries::Math::FullRevolution< float >);
+				return this->getFloatValue(AL_CONE_INNER_ANGLE, Libs::Math::FullRevolution< float >);
 			}
 
 			/**
@@ -360,7 +360,7 @@ namespace Emeraude::Audio
 			float
 			coneOuterAngle () const noexcept
 			{
-				return this->getFloatValue(AL_CONE_OUTER_ANGLE, Libraries::Math::FullRevolution< float >);
+				return this->getFloatValue(AL_CONE_OUTER_ANGLE, Libs::Math::FullRevolution< float >);
 			}
 
 			/**

@@ -41,12 +41,12 @@
 #include "json/json.h"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/Types.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/ObservableTrait.hpp"
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Types.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/ObservableTrait.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/String.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
 #include "Resources/ResourceTrait.hpp"
@@ -54,15 +54,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::MovieResource >::ClassId{"MovieContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::MovieResource >::ClassId{"MovieContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::MovieResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::MovieResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t MovieResource::ClassUID{getClassUID(ClassId)};
 

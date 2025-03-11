@@ -35,13 +35,13 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 #include "Graphics/Geometry/Interface.hpp"
 #include "Graphics/Material/Interface.hpp"
 #include "Graphics/RasterizationOptions.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/** @brief Renderable interface flag bits. */
 	enum RenderableFlagBits : uint32_t
@@ -58,14 +58,14 @@ namespace Emeraude::Graphics::Renderable
 	/**
 	 * @brief Defines a contract to render an object in the 3D world.
 	 * @note This holds only what to draw.
-	 * @extends Emeraude::Resources::ResourceTrait Every renderable is a resource.
+	 * @extends EmEn::Resources::ResourceTrait Every renderable is a resource.
 	 */
 	class Interface : public Resources::ResourceTrait
 	{
 		public:
 
-			static const Libraries::Math::Cuboid< float > NullBoundingBox;
-			static const Libraries::Math::Sphere< float > NullBoundingSphere;
+			static const Libs::Math::Cuboid< float > NullBoundingBox;
+			static const Libs::Math::Sphere< float > NullBoundingSphere;
 
 			/**
 			 * @brief Copy constructor.
@@ -177,14 +177,14 @@ namespace Emeraude::Graphics::Renderable
 			 * @return const Libraries::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Cuboid< float > & boundingBox () const noexcept = 0;
+			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding sphere surrounding the renderable.
 			 * @return const Libraries::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Sphere< float > & boundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;
 
 		protected:
 
@@ -215,7 +215,7 @@ namespace Emeraude::Graphics::Renderable
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 	};

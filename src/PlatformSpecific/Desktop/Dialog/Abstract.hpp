@@ -30,13 +30,13 @@
 #include <string>
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Arguments;
 	class Window;
 }
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	/**
 	 * @brief The base class for all dialogs.

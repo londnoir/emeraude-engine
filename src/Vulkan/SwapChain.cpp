@@ -46,15 +46,15 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 
 	SwapChain::SwapChain (const std::shared_ptr< Device > & device, Settings & settings, Window & window) noexcept
 		: AbstractDeviceDependentObject(device),
-		Abstract(ClassId, {}, {}, RenderTargetType::View, MasterControl::ConnexionType::Input, false),
+		Abstract(ClassId, {}, {}, RenderTargetType::View, AVConsole::ConnexionType::Input, false),
 		m_window(&window)
 	{
 		m_window->surface()->update(device);

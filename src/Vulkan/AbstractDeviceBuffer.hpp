@@ -33,17 +33,17 @@
 #include "Buffer.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class TransferManager;
 	class MemoryRegion;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines an abstract class for all device-side buffers in Vulkan API.
-	 * @extends Emeraude::Vulkan::Buffer This is the base for Vulkan buffer logics.
+	 * @extends EmEn::Vulkan::Buffer This is the base for Vulkan buffer logics.
 	 */
 	class AbstractDeviceBuffer : public Buffer
 	{

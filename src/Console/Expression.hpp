@@ -34,7 +34,7 @@
 /* Local inclusions. */
 #include "Argument.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/**
 	 * @brief The console expression class.

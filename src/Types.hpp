@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief Standard cursor handled automatically by GLFW.

@@ -32,17 +32,17 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
 #include "Abstract.hpp"
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "MasterControl/Types.hpp"
-#include "MasterControl/Manager.hpp"
+#include "AVConsole/Manager.hpp"
+#include "AVConsole/Types.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Vulkan/SharedUniformBuffer.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -70,14 +70,14 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief Base class of light emitters.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Emeraude::MasterControl::AbstractVirtualVideoDevice This can act as a virtual video device.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This can act as a virtual video device.
 	 */
-	class AbstractLightEmitter : public Abstract, public MasterControl::AbstractVirtualVideoDevice
+	class AbstractLightEmitter : public Abstract, public AVConsole::AbstractVirtualVideoDevice
 	{
 		public:
 
@@ -95,7 +95,7 @@ namespace Emeraude::Scenes::Component
 			};
 
 			/* Default variables. */
-			static constexpr auto DefaultColor{Libraries::PixelFactory::White};
+			static constexpr auto DefaultColor{Libs::PixelFactory::White};
 			static constexpr auto DefaultIntensity{1.0F};
 			static constexpr auto DefaultRadius{0.0F};
 			static constexpr auto DefaultInnerAngle{30.0F};
@@ -132,12 +132,12 @@ namespace Emeraude::Scenes::Component
 			 */
 			~AbstractLightEmitter () override = default;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
 			[[nodiscard]]
-			MasterControl::VideoType
+			AVConsole::VideoType
 			videoType () const noexcept override
 			{
-				return MasterControl::VideoType::Light;
+				return AVConsole::VideoType::Light;
 			}
 
 			/**
@@ -193,7 +193,7 @@ namespace Emeraude::Scenes::Component
 			 * @return void
 			 */
 			void
-			setColor (const Libraries::PixelFactory::Color< float > & color) noexcept
+			setColor (const Libs::PixelFactory::Color< float > & color) noexcept
 			{
 				m_color = color;
 
@@ -222,7 +222,7 @@ namespace Emeraude::Scenes::Component
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > &
+			const Libs::PixelFactory::Color< float > &
 			color () const noexcept
 			{
 				return m_color;
@@ -244,7 +244,7 @@ namespace Emeraude::Scenes::Component
 			 * @return Libraries::Math::Matrix< 4, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Matrix< 4, float > getLightSpaceMatrix () const noexcept;
+			Libs::Math::Matrix< 4, float > getLightSpaceMatrix () const noexcept;
 
 			/**
 			 * @brief Updates the UBO with the light data.
@@ -339,17 +339,17 @@ namespace Emeraude::Scenes::Component
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool touch (const Libraries::Math::Vector< 3, float > & position) const noexcept = 0;
+			virtual bool touch (const Libs::Math::Vector< 3, float > & position) const noexcept = 0;
 
 			/**
 			 * @brief Creates the light on the GPU with the shadow map if requested.
 			 * @param lightSet A reference to the light set.
 			 * @param renderer A reference to the graphic renderer.
-			 * @param masterControlManager A reference to master control manager.
+			 * @param AVConsoleManager A reference to master control manager.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, MasterControl::Manager & masterControlManager) noexcept = 0;
+			virtual bool createOnHardware (LightSet & lightSet, Graphics::Renderer & renderer, AVConsole::Manager & AVConsoleManager) noexcept = 0;
 
 			/**
 			 * @brief Removes the light from the GPU.
@@ -381,8 +381,8 @@ namespace Emeraude::Scenes::Component
 			 * @return Libraries::Math::Vector< 4, float >
 			 */
 			static
-			Libraries::Math::Vector< 4, float >
-			intensifiedColor (const Libraries::PixelFactory::Color< float > & color, float intensity) noexcept
+			Libs::Math::Vector< 4, float >
+			intensifiedColor (const Libs::PixelFactory::Color< float > & color, float intensity) noexcept
 			{
 				return {color.red() * intensity, color.green() * intensity, color.blue() * intensity, 1.0F};
 			}
@@ -397,10 +397,10 @@ namespace Emeraude::Scenes::Component
 			 */
 			AbstractLightEmitter (const std::string & name, const AbstractEntity & parentEntity, uint32_t shadowMapResolution) noexcept;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept final;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept final;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept final;
 
 			/**
@@ -448,7 +448,7 @@ namespace Emeraude::Scenes::Component
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			virtual void onColorChange (const Libraries::PixelFactory::Color< float > & color) noexcept = 0;
+			virtual void onColorChange (const Libs::PixelFactory::Color< float > & color) noexcept = 0;
 
 			/**
 			 * @brief Event when the color intensity changes.
@@ -462,7 +462,7 @@ namespace Emeraude::Scenes::Component
 			static constexpr auto VideoMemoryUpdateRequested{UnusedFlag + 1UL};
 			static constexpr auto ShadowMapEnabled{UnusedFlag + 2UL};
 
-			Libraries::PixelFactory::Color< float > m_color{DefaultColor};
+			Libs::PixelFactory::Color< float > m_color{DefaultColor};
 			float m_intensity{DefaultIntensity};
 			uint32_t m_shadowMapResolution{0};
 			std::shared_ptr< Vulkan::SharedUniformBuffer > m_sharedUniformBuffer{};

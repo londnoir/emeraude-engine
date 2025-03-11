@@ -33,12 +33,12 @@
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
 	/**
 	 * @brief The value component type.
 	 * @note The value is not hold by this object. It exists only to be the counter-part of TypeTexture and TypeColor.
-	 * @extends Emeraude::Graphics::Material::Component::Interface This class describe a component type.
+	 * @extends EmEn::Graphics::Material::Component::Interface This class describe a component type.
 	 */
 	class Value final : public Interface
 	{
@@ -53,7 +53,7 @@ namespace Emeraude::Graphics::Material::Component
 			 */
 			explicit Value (std::string variableName) noexcept;
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::create() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::create() */
 			[[nodiscard]]
 			bool
 			create (Renderer & /*renderer*/, uint32_t & /*binding*/) noexcept override
@@ -61,7 +61,7 @@ namespace Emeraude::Graphics::Material::Component
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isCreated() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isCreated() */
 			[[nodiscard]]
 			bool
 			isCreated () const noexcept override
@@ -69,7 +69,7 @@ namespace Emeraude::Graphics::Material::Component
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::variableName() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::variableName() */
 			[[nodiscard]]
 			const std::string &
 			variableName () const noexcept override
@@ -77,7 +77,7 @@ namespace Emeraude::Graphics::Material::Component
 				return m_variableName;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::type() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::type() */
 			[[nodiscard]]
 			Type
 			type () const noexcept override
@@ -85,7 +85,7 @@ namespace Emeraude::Graphics::Material::Component
 				return Type::Value;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::isOpaque() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::isOpaque() */
 			[[nodiscard]]
 			bool
 			isOpaque () const noexcept override
@@ -93,7 +93,7 @@ namespace Emeraude::Graphics::Material::Component
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::Material::Component::Interface::textureResource() */
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::textureResource() */
 			[[nodiscard]]
 			std::shared_ptr< TextureResource::Abstract >
 			textureResource () const noexcept override

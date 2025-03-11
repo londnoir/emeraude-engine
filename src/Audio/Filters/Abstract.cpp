@@ -31,9 +31,9 @@
 #include "Audio/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio::Filters
+namespace EmEn::Audio::Filters
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	static constexpr auto TracerTag{"AbstractFilter"};
 

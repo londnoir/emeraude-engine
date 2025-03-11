@@ -48,7 +48,7 @@
 #include "Scene.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Resources
 	{
@@ -63,7 +63,7 @@ namespace Emeraude
 	class PrimaryServices;
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Keeps scene targets for the console.
@@ -139,8 +139,8 @@ namespace Emeraude::Scenes
 
 	/**
 	 * @brief The scene manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Emeraude::Console::Controllable The scene manager service is usable from the console.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Console::Controllable The scene manager service is usable from the console.
 	 */
 	class Manager final : public ServiceInterface, public Console::Controllable
 	{
@@ -215,7 +215,7 @@ namespace Emeraude::Scenes
 			 */
 			~Manager () override = default;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -223,7 +223,7 @@ namespace Emeraude::Scenes
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -231,7 +231,7 @@ namespace Emeraude::Scenes
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -382,13 +382,13 @@ namespace Emeraude::Scenes
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			/** @copydoc EmEn::Console::Controllable::onRegisterToConsole. */
 			void onRegisterToConsole () noexcept override;
 
 			/* Flag names */

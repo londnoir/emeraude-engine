@@ -33,16 +33,16 @@
 #include "Interface.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	class StageOutput;
 }
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The StageInput class
-	 * @extends Emeraude::Saphir::DeclarationInterface This is a shader code declaration.
+	 * @extends EmEn::Saphir::DeclarationInterface This is a shader code declaration.
 	 */
 	class StageInput final : public Interface
 	{
@@ -64,19 +64,19 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			explicit StageInput (const StageOutput & stageOutput) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::isValid() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::name() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::bytes() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

@@ -33,7 +33,7 @@
 #include <iostream>
 #include <string>
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	const char *
 	to_cstring (ButtonLayout value) noexcept

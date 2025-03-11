@@ -26,9 +26,9 @@
 
 #include "Color.hpp"
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Color::Color (std::string variableName, const PixelFactory::Color< float > & color) noexcept
 		: m_variableName(std::move(variableName)), m_color(color)

@@ -29,11 +29,11 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 
 	std::string
 	StaticLighting::positionVec3 () const noexcept

@@ -43,7 +43,7 @@
 	#include "hwloc.h"
 #endif
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	SystemInfo::SystemInfo () noexcept
 	{

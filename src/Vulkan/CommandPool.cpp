@@ -31,9 +31,9 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	CommandPool::CommandPool (const std::shared_ptr< Device > & device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags) noexcept
 		: AbstractDeviceDependentObject(device)

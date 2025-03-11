@@ -32,12 +32,12 @@
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The memory allocator service class.
 	 * @TODO Make a way to allocate huge part of memory to share between local usage in the engine.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class MemoryAllocator final : public ServiceInterface
 	{
@@ -54,24 +54,24 @@ namespace Emeraude
 			 */
 			MemoryAllocator () noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool usable () const noexcept override;
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/* Flag names */

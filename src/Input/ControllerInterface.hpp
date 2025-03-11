@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <string>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/**
 	 * @brief The controller interface class.

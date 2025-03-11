@@ -33,7 +33,7 @@
 /* Local inclusions. */
 #include "OutputBlock.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	using namespace Keys;
 

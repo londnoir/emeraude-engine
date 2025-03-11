@@ -38,18 +38,18 @@
 #include "json/json.h"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The movie resource class.
 	 * @todo FIXME: There is a bug when unloading this resource at the engine shutdown.
 	 * The main resources directory is "./data-stores/Movies/".
-	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
+	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class MovieResource final : public Resources::ResourceTrait
 	{
@@ -58,7 +58,7 @@ namespace Emeraude::Graphics
 		public:
 
 			/** @brief A frame from the movie with duration in milliseconds. */
-			using Frame = std::pair< Libraries::PixelFactory::Pixmap< uint8_t >, size_t >;
+			using Frame = std::pair< Libs::PixelFactory::Pixmap< uint8_t >, size_t >;
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"MovieResource"};
@@ -73,7 +73,7 @@ namespace Emeraude::Graphics
 			 */
 			explicit MovieResource (const std::string & name, uint32_t resourceFlagBits = 0) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -81,7 +81,7 @@ namespace Emeraude::Graphics
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -89,7 +89,7 @@ namespace Emeraude::Graphics
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -97,13 +97,13 @@ namespace Emeraude::Graphics
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load() */
+			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const std::filesystem::path &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::load(const Json::Value &) */
+			/** @copydoc EmEn::Resources::ResourceTrait::load(const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -112,7 +112,7 @@ namespace Emeraude::Graphics
 			 * @return const Libraries::PixelFactory::Pixmap< uint8_t > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Pixmap< uint8_t > & data (size_t frameIndex) const noexcept;
+			const Libs::PixelFactory::Pixmap< uint8_t > & data (size_t frameIndex) const noexcept;
 
 			/**
 			 * @brief Returns the frames from the movie.
@@ -161,7 +161,7 @@ namespace Emeraude::Graphics
 			 * @return Libraries::PixelFactory::Color< float >
 			 */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float > averageColor () const noexcept;
+			Libs::PixelFactory::Color< float > averageColor () const noexcept;
 
 			/**
 			 * @brief Returns the duration in milliseconds.
@@ -233,7 +233,7 @@ namespace Emeraude::Graphics
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
@@ -284,7 +284,7 @@ namespace Emeraude::Graphics
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Movies = Container< Graphics::MovieResource >;
 }

@@ -30,19 +30,19 @@
 #include "InfluenceAreaInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	class AbstractEntity;
 }
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Defines a cubic area of influence for a modifier.
-	 * @extends Emeraude::Scenes::InfluenceAreaInterface The influence area base class.
+	 * @extends EmEn::Scenes::InfluenceAreaInterface The influence area base class.
 	 */
 	class CubicInfluenceArea final : public InfluenceAreaInterface
 	{
@@ -64,21 +64,21 @@ namespace Emeraude::Scenes
 			 */
 			CubicInfluenceArea (const AbstractEntity & parentEntity, float xSize, float ySize, float zSize) noexcept;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Sphere< float > &) */
+			/** @copydoc EmEn::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Sphere< float > &) */
 			[[nodiscard]]
-			bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
+			bool isUnderInfluence (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::influenceStrength(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Sphere< float > &) */
+			/** @copydoc EmEn::Scenes::InfluenceAreaInterface::influenceStrength(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Sphere< float > &) */
 			[[nodiscard]]
-			float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
+			float influenceStrength (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Cuboid< float > &) */
+			/** @copydoc EmEn::Scenes::InfluenceAreaInterface::isUnderInfluence(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Cuboid< float > &) */
 			[[nodiscard]]
-			bool isUnderInfluence (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
+			bool isUnderInfluence (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
 
-			/** @copydoc Emeraude::Scenes::InfluenceAreaInterface::influenceStrength(const Libraries::Math::CartesianFrame< float > &, const Libraries::Math::Cuboid< float > &) */
+			/** @copydoc EmEn::Scenes::InfluenceAreaInterface::influenceStrength(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Cuboid< float > &) */
 			[[nodiscard]]
-			float influenceStrength (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
+			float influenceStrength (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
 
 			/**
 			 * @brief Sets the size of the area.
@@ -125,7 +125,7 @@ namespace Emeraude::Scenes
 			 * @return Libraries::Math::Vector< 4, float >
 			 */
 			[[nodiscard]]
-			Libraries::Math::Vector< 4, float > getPositionInModifierSpace (const Libraries::Math::Vector< 3, float > & position) const noexcept;
+			Libs::Math::Vector< 4, float > getPositionInModifierSpace (const Libs::Math::Vector< 3, float > & position) const noexcept;
 
 			const AbstractEntity * m_parentEntity{nullptr};
 			float m_xSize;

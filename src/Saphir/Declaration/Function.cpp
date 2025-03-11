@@ -30,11 +30,11 @@
 #include <sstream>
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Keys;
 
 	Function::Function (Key name, Key returnType) noexcept
@@ -127,7 +127,7 @@ namespace Emeraude::Saphir::Declaration
 	}
 
 	std::string
-	Function::callCode (const Libraries::BlobTrait & parameters) const noexcept
+	Function::callCode (const Libs::BlobTrait & parameters) const noexcept
 	{
 		return this->callCode(parameters.get());
 	}

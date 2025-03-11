@@ -32,7 +32,7 @@
 /* Local inclusions for usages. */
 #include "Graphics/Types.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief Gets the shader variable type for a vertex attribute.
@@ -52,7 +52,7 @@ namespace Emeraude::Saphir::Declaration
 
 	/**
 	 * @brief Defines a vertex attribute in a shader.
-	 * @extends Emeraude::Saphir::DeclarationInterface This is a shader code declaration.
+	 * @extends EmEn::Saphir::DeclarationInterface This is a shader code declaration.
 	 */
 	class InputAttribute final : public Interface
 	{
@@ -80,19 +80,19 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			InputAttribute (uint32_t location, Key type, Key name, size_t arraySize = 0) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::isValid() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::name() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::bytes() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

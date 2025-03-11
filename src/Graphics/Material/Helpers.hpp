@@ -28,11 +28,11 @@
 
 /* Local inclusions for usages. */
 #include "Graphics/Types.hpp"
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Saphir
 	{
@@ -58,7 +58,7 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
 	/* JSON key. */
 	static constexpr auto JKName{"Name"};
@@ -114,7 +114,7 @@ namespace Emeraude::Graphics::Material
 	 * @return Libraries::PixelFactory::Color< float >
 	 */
 	[[nodiscard]]
-	Libraries::PixelFactory::Color< float > parseColorComponent (const Json::Value & data) noexcept;
+	Libs::PixelFactory::Color< float > parseColorComponent (const Json::Value & data) noexcept;
 
 	/**
 	 * @brief Parses from an identified color component JSON data.

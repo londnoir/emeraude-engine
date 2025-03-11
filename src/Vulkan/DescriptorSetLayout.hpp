@@ -37,11 +37,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The DescriptorSetLayout class
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This is a device dependant vulkan object.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This is a device dependant vulkan object.
 	 */
 	class DescriptorSetLayout final : public AbstractDeviceDependentObject
 	{
@@ -100,10 +100,10 @@ namespace Emeraude::Vulkan
 			 */
 			~DescriptorSetLayout () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

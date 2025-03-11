@@ -36,11 +36,11 @@
 /* Local inclusions for usages. */
 #include "Graphics/ViewMatrices2DUBO.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::View
+namespace EmEn::Graphics::RenderTarget::View
 {
 	/**
 	 * @brief The view class.
-	 * @extends Emeraude::Graphics::RenderTarget::View::Abstract This is a view.
+	 * @extends EmEn::Graphics::RenderTarget::View::Abstract This is a view.
 	 */
 	class Texture2D final : public Abstract
 	{
@@ -63,7 +63,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 			 */
 			~Texture2D () override;
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isCubemap() */
 			[[nodiscard]]
 			bool
 			isCubemap () const noexcept override
@@ -71,7 +71,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() const */
 			[[nodiscard]]
 			const ViewMatricesInterface &
 			viewMatrices () const noexcept override
@@ -79,7 +79,7 @@ namespace Emeraude::Graphics::RenderTarget::View
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() */
 			[[nodiscard]]
 			ViewMatricesInterface &
 			viewMatrices () noexcept override
@@ -89,16 +89,16 @@ namespace Emeraude::Graphics::RenderTarget::View
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
 			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceDisconnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
 			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
 			ViewMatrices2DUBO m_viewMatrices;

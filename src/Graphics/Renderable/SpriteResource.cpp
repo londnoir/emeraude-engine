@@ -30,8 +30,8 @@
 #include <cmath>
 
 /* Local inclusions. */
-#include "Libraries/VertexFactory/ShapeBuilder.hpp"
-#include "Libraries/FastJSON.hpp"
+#include "Libs/VertexFactory/ShapeBuilder.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Graphics/Geometry/IndexedVertexResource.hpp"
 #include "Graphics/Material/BasicResource.hpp"
 #include "Graphics/Material/Helpers.hpp"
@@ -39,17 +39,17 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SpriteResource >::ClassId{"SpriteContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Renderable::SpriteResource >::ClassId{"SpriteContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SpriteResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Renderable::SpriteResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Saphir;
 	using namespace Saphir::Keys;
 

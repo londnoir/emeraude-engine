@@ -26,7 +26,7 @@
 
 #include "ShaderStorageBufferObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	ShaderStorageBufferObject::ShaderStorageBufferObject (const std::shared_ptr< Device > & device, VkDeviceSize size) noexcept
 		: AbstractDeviceBuffer(device, 0, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)

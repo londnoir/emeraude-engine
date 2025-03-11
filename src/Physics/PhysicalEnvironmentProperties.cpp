@@ -26,7 +26,7 @@
 
 #include "PhysicalEnvironmentProperties.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	PhysicalEnvironmentProperties::PhysicalEnvironmentProperties (float surfaceGravity, float atmosphericDensity, float planetRadius) noexcept
 		: m_surfaceGravity(surfaceGravity),

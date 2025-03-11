@@ -30,16 +30,16 @@
 #include "AbstractObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Instance;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Holds the debug messenger extension from the Vulkan API.
-	 * @extends Emeraude::Vulkan::AbstractObject Do not need a device to works.
+	 * @extends EmEn::Vulkan::AbstractObject Do not need a device to works.
 	 */
 	class DebugMessenger final : public AbstractObject
 	{

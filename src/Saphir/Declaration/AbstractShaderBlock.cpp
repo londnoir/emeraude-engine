@@ -27,12 +27,12 @@
 #include "AbstractShaderBlock.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Utility.hpp"
+#include "Libs/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const char * ShaderBlockTracerTag = "ShaderBlock";
 

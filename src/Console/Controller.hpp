@@ -35,13 +35,13 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "Libraries/Time/EventTrait.hpp"
+#include "Libs/Time/EventTrait.hpp"
 
 /* Local usages */
 #include "Output.hpp"
 
 /* Forward declarations */
-namespace Emeraude
+namespace EmEn
 {
 	class PrimaryServices;
 
@@ -52,14 +52,14 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/**
 	 * @brief The console service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::Time::EventTrait This service needs to delay some behavior.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Libs::Time::EventTrait This service needs to delay some behavior.
 	 */
-	class Controller final : public ServiceInterface, private Libraries::Time::EventTrait< uint32_t, std::milli >
+	class Controller final : public ServiceInterface, private Libs::Time::EventTrait< uint32_t, std::milli >
 	{
 		public:
 
@@ -106,7 +106,7 @@ namespace Emeraude::Console
 			 */
 			~Controller () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -114,7 +114,7 @@ namespace Emeraude::Console
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -122,7 +122,7 @@ namespace Emeraude::Console
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool usable () const noexcept override;
 
@@ -187,10 +187,10 @@ namespace Emeraude::Console
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**

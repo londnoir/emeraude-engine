@@ -31,17 +31,17 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/NameableTrait.hpp"
-#include "Libraries/Math/Matrix.hpp"
-#include "Libraries/Math/Rectangle.hpp"
+#include "Libs/NameableTrait.hpp"
+#include "Libs/Math/Matrix.hpp"
+#include "Libs/Math/Rectangle.hpp"
 #include "Graphics/Renderer.hpp"
 #include "FramebufferProperties.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 
 	static constexpr auto TracerTag{"OverlaySurface"};

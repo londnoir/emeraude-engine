@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <cmath>
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	/**
 	 * @brief Class defining physical properties of a surface.

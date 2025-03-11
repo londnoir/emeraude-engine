@@ -30,13 +30,13 @@
 #include "Saphir/EffectInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The fog environment effect.
-	 * @extends Emeraude::Saphir::EffectInterface This is a shader effect.
+	 * @extends EmEn::Saphir::EffectInterface This is a shader effect.
 	 */
 	class FogEnvironmentEffect final : public Saphir::EffectInterface
 	{
@@ -61,11 +61,11 @@ namespace Emeraude::Scenes
 			 */
 			FogEnvironmentEffect (FogMode mode = FogMode::Exponential, bool highQuality = true) noexcept;
 
-			/** @copydoc Emeraude::Saphir::EffectInterface::FogEnvironmentEffect::generateVertexShaderCode() */
+			/** @copydoc EmEn::Saphir::EffectInterface::FogEnvironmentEffect::generateVertexShaderCode() */
 			[[nodiscard]]
 			bool generateVertexShaderCode (Saphir::Generator::Abstract & generator, Saphir::VertexShader & vertexShader) const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::EffectInterface::FogEnvironmentEffect::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::EffectInterface::FogEnvironmentEffect::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
@@ -90,7 +90,7 @@ namespace Emeraude::Scenes
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Tries to use the background color of the scene.
@@ -131,7 +131,7 @@ namespace Emeraude::Scenes
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & color () const noexcept;
+			const Libs::PixelFactory::Color< float > & color () const noexcept;
 
 		private:
 
@@ -149,7 +149,7 @@ namespace Emeraude::Scenes
 			/* Only for exponential mode */
 			float m_density{1.0F};
 			/* Fog color */
-			Libraries::PixelFactory::Color< float > m_color{};
+			Libs::PixelFactory::Color< float > m_color{};
 			/* Per vertex or pixel */
 			bool m_highQuality{true};
 			bool m_useBackgroundColor{false};

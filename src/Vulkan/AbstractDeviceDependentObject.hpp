@@ -35,11 +35,11 @@
 /* Local inclusions for usages. */
 #include "Device.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Base of all Vulkan API object dealing with a device.
-	 * @extends Emeraude::Vulkan::AbstractObject The vulkan device dependent object is a vulkan object.
+	 * @extends EmEn::Vulkan::AbstractObject The vulkan device dependent object is a vulkan object.
 	 */
 	class AbstractDeviceDependentObject : public AbstractObject
 	{

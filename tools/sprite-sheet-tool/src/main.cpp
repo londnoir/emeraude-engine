@@ -4,12 +4,12 @@
 
 /* Local inclusions. */
 #include "Arguments.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/FileIO.hpp"
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/FileIO.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 
 using namespace Emeraude;
-using namespace Libraries;
+using namespace EmEn::Libs;
 
 int
 main (int argc, char * * argv)

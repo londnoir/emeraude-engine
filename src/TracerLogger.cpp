@@ -31,7 +31,7 @@
 #include <thread>
 #include <utility>
 
-namespace Emeraude
+namespace EmEn
 {
 	TracerLogger::TracerLogger (std::string filepath) noexcept
 	 : m_filepath(std::move(filepath))

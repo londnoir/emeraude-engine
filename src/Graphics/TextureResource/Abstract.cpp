@@ -31,8 +31,8 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Pixmap.hpp"
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Tracer.hpp"
 #include "Graphics/Renderer.hpp"
@@ -40,10 +40,10 @@
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Sampler.hpp"
 
-namespace Emeraude::Graphics::TextureResource
+namespace EmEn::Graphics::TextureResource
 {
-	using namespace Libraries;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Vulkan;
 
 	static constexpr auto TracerTag{"AbstractTextureResource"};

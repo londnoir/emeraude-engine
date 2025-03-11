@@ -35,17 +35,17 @@
 #include <ranges>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
-#include "Libraries/Network/Network.hpp"
-#include "Libraries/Network/URL.hpp"
-#include "Libraries/Network/URI.hpp"
-#include "Libraries/ParallelizableTrait.hpp"
-#include "Libraries/IO/IO.hpp"
+#include "Libs/FastJSON.hpp"
+#include "Libs/Network/Network.hpp"
+#include "Libs/Network/URL.hpp"
+#include "Libs/Network/URI.hpp"
+#include "Libs/ParallelizableTrait.hpp"
+#include "Libs/IO/IO.hpp"
 #include "PrimaryServices.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t NetworkManager::ClassUID{getClassUID(ClassId)};
 

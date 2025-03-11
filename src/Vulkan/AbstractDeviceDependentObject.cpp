@@ -30,7 +30,7 @@
 #include "Device.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	AbstractDeviceDependentObject::AbstractDeviceDependentObject (const std::shared_ptr< Device > & device) noexcept
 		: m_device(device)

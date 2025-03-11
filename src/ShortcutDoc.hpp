@@ -36,11 +36,11 @@
 /* Local inclusions for usages. */
 #include "Input/Types.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
  	 * @brief Class for shortcut documentation.
-	 * @extends Emeraude::AbstractDoc The base documentation class.
+	 * @extends EmEn::AbstractDoc The base documentation class.
 	 */
 	class ShortcutDoc final : public AbstractDoc
 	{
@@ -56,7 +56,7 @@ namespace Emeraude
 
 			/**
 			 * @brief Returns the main key of the shortcut.
-			 * @return Emeraude::Input::Key
+			 * @return EmEn::Input::Key
 			 */
 			[[nodiscard]]
 			Input::Key

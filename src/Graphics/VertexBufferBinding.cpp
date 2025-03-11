@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	VertexBufferBinding::VertexBufferBinding (uint32_t binding, size_t elementCount, Topology topology, uint32_t bufferFlags) noexcept
 		: FlagTrait(bufferFlags), m_binding(binding), m_elementCount(elementCount), m_topology(topology)

@@ -41,11 +41,11 @@
 /* Local inclusions. */
 #include "Argument.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The application arguments service.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class Arguments final : public ServiceInterface
 	{
@@ -105,7 +105,7 @@ namespace Emeraude
 			 */
 			~Arguments () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -113,7 +113,7 @@ namespace Emeraude
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -121,7 +121,7 @@ namespace Emeraude
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool
 			usable () const noexcept override
@@ -257,10 +257,10 @@ namespace Emeraude
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**

@@ -36,11 +36,11 @@
 /* Local inclusions for inheritances. */
 #include "QueueFamilyInterface.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Describe a queue family for a device using multiple queues.
-	 * @extends Emeraude::Vulkan::QueueFamilyInterface The base class of queue family.
+	 * @extends EmEn::Vulkan::QueueFamilyInterface The base class of queue family.
 	 */
 	class QueueFamily final : public QueueFamilyInterface
 	{
@@ -56,7 +56,7 @@ namespace Emeraude::Vulkan
 			 */
 			QueueFamily (uint32_t index, size_t maxQueueCount) noexcept;
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::index() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::index() */
 			[[nodiscard]]
 			uint32_t
 			index () const noexcept override
@@ -64,7 +64,7 @@ namespace Emeraude::Vulkan
 				return m_queueFamilyIndex;
 			}
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::maxQueueCount() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::maxQueueCount() */
 			[[nodiscard]]
 			size_t
 			maxQueueCount () const noexcept override
@@ -72,7 +72,7 @@ namespace Emeraude::Vulkan
 				return m_maxQueueCount;
 			}
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::hasSingleQueue() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::hasSingleQueue() */
 			[[nodiscard]]
 			bool
 			hasSingleQueue () const noexcept override
@@ -80,19 +80,19 @@ namespace Emeraude::Vulkan
 				return false;
 			}
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::declareQueueStructure() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::declareQueueStructure() */
 			[[nodiscard]]
 			bool declareQueueStructure (const std::vector< std::pair< QueueJob, float > > & structure) noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::getCreateInfo() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::getCreateInfo() */
 			[[nodiscard]]
 			VkDeviceQueueCreateInfo getCreateInfo (VkDeviceQueueCreateFlags createFlag) const noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::retrieveQueuesFromDevice() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::retrieveQueuesFromDevice() */
 			[[nodiscard]]
 			bool retrieveQueuesFromDevice (const std::shared_ptr< Device > & device) noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::QueueFamilyInterface::queue() */
+			/** @copydoc EmEn::Vulkan::QueueFamilyInterface::queue() */
 			[[nodiscard]]
 			Queue *
 			queue (QueueJob /*job*/, QueuePriority /*priority*/) noexcept override

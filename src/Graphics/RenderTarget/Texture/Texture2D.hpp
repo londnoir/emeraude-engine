@@ -36,17 +36,17 @@
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
 #include "Graphics/ViewMatrices2DUBO.hpp"
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Vector.hpp"
 #include "Resources/Container.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::Texture
+namespace EmEn::Graphics::RenderTarget::Texture
 {
 	/**
 	 * @brief The render to 2D texture class.
-	 * @extends Emeraude::Graphics::RenderTarget::Texture::Abstract This is a render to texture
+	 * @extends EmEn::Graphics::RenderTarget::Texture::Abstract This is a render to texture
 	 */
 	class Texture2D final : public Abstract
 	{
@@ -78,7 +78,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 			 */
 			~Texture2D () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t
 			classUID () const noexcept override
@@ -86,7 +86,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return ClassUID;
 			}
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool
 			is (size_t classUID) const noexcept override
@@ -94,7 +94,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return classUID == ClassUID;
 			}
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char *
 			classLabel () const noexcept override
@@ -102,7 +102,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::isCubemap() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isCubemap() */
 			[[nodiscard]]
 			bool
 			isCubemap () const noexcept override
@@ -110,7 +110,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() const */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() const */
 			[[nodiscard]]
 			const ViewMatricesInterface &
 			viewMatrices () const noexcept override
@@ -118,7 +118,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderTarget::Abstract::viewMatrices() */
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::viewMatrices() */
 			[[nodiscard]]
 			ViewMatricesInterface &
 			viewMatrices () noexcept override
@@ -126,7 +126,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return m_viewMatrices;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::type() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::type() */
 			[[nodiscard]]
 			TextureResource::Type
 			type () const noexcept override
@@ -134,7 +134,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 				return TextureResource::Type::Texture2D;
 			}
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
 			[[nodiscard]]
 			bool
 			request3DTextureCoordinates () const noexcept override
@@ -160,16 +160,16 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceConnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
 			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualVideoDevice::onSourceDisconnected() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
 			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
 
 			ViewMatrices2DUBO m_viewMatrices;
@@ -177,7 +177,7 @@ namespace Emeraude::Graphics::RenderTarget::Texture
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using RenderToTexture2Ds = Container< Graphics::RenderTarget::Texture::Texture2D >;
 }

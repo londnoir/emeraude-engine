@@ -26,7 +26,7 @@
 
 #include "SeaLevelInterface.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	SeaLevelInterface::SeaLevelInterface (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: Interface(name, resourceFlagBits)

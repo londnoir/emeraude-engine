@@ -34,7 +34,7 @@
 #include "Command.hpp"
 #include "Expression.hpp"
 
-namespace Emeraude::Console
+namespace EmEn::Console
 {
 	/**
 	 * @brief Interface to register an object controllable with the console.

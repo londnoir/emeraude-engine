@@ -33,11 +33,11 @@
 /* Local inclusions for inheritances. */
 #include "Interface.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief Interface to define a visible sea level in a scene.
-	 * @extends Emeraude::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
+	 * @extends EmEn::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
 	 */
 	class SeaLevelInterface : public Interface
 	{

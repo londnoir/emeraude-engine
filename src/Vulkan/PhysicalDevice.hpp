@@ -37,9 +37,9 @@
 #include <vulkan/vulkan.h>
 
 /* Local inclusions for usages. */
-#include "Libraries/Version.hpp"
+#include "Libs/Version.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The physical device class to build a logical vulkan device.
@@ -136,10 +136,10 @@ namespace Emeraude::Vulkan
 			 * @return Libraries::Version
 			 */
 			[[nodiscard]]
-			Libraries::Version
+			Libs::Version
 			APIDriver () const noexcept
 			{
-				return Libraries::Version{m_properties.apiVersion};
+				return Libs::Version{m_properties.apiVersion};
 			}
 
 			/**
@@ -160,10 +160,10 @@ namespace Emeraude::Vulkan
 			 * @return Libraries::Version
 			 */
 			[[nodiscard]]
-			Libraries::Version
+			Libs::Version
 			DriverVersion () const noexcept
 			{
-				return Libraries::Version{m_properties.driverVersion};
+				return Libs::Version{m_properties.driverVersion};
 			}
 
 			/**

@@ -32,7 +32,7 @@
 /* Third-party inclusions. */
 #include "AL/alc.h"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * brief

@@ -37,19 +37,19 @@
 
 /* Local inclusions. */
 #include "FontResource.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Area.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/Margin.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Area.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Margin.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief
-	 * @extends Libraries::PixelFactory::Margin
+	 * @extends EmEn::Libs::PixelFactory::Margin
 	 */
-	class TextWriter final : public Libraries::PixelFactory::Margin< size_t >
+	class TextWriter final : public Libs::PixelFactory::Margin< size_t >
 	{
 		public:
 
@@ -84,7 +84,7 @@ namespace Emeraude::Graphics
 
 			TextWriter () noexcept = default;
 
-			explicit TextWriter (Libraries::PixelFactory::Pixmap< uint8_t > & target) noexcept;
+			explicit TextWriter (Libs::PixelFactory::Pixmap< uint8_t > & target) noexcept;
 
 			TextWriter (const TextWriter & copy) = delete;
 
@@ -119,25 +119,25 @@ namespace Emeraude::Graphics
 			[[nodiscard]]
 			bool isAllCharactersEnabled () const noexcept;
 
-			void setTarget (Libraries::PixelFactory::Pixmap< uint8_t > * target) noexcept;
+			void setTarget (Libs::PixelFactory::Pixmap< uint8_t > * target) noexcept;
 
 			[[nodiscard]]
-			Libraries::PixelFactory::Pixmap< uint8_t > * target () const noexcept;
+			Libs::PixelFactory::Pixmap< uint8_t > * target () const noexcept;
 
 			void setFont (const std::shared_ptr< FontResource > & font) noexcept;
 
 			[[nodiscard]]
 			std::shared_ptr< FontResource > font () const noexcept;
 
-			void setColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & color () const noexcept;
+			const Libs::PixelFactory::Color< float > & color () const noexcept;
 
-			void setClearColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setClearColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & clearColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & clearColor () const noexcept;
 
 			template< typename number_t >
 			void
@@ -147,16 +147,16 @@ namespace Emeraude::Graphics
 				{
 					const auto _coordX = static_cast< int >(coordX);
 
-					m_originCursor[Libraries::Math::X] = _coordX;
-					m_currentCursor[Libraries::Math::X] = _coordX;
+					m_originCursor[Libs::Math::X] = _coordX;
+					m_currentCursor[Libs::Math::X] = _coordX;
 				}
 
 				if constexpr ( std::is_floating_point_v< number_t > )
 				{
 					const auto _coordX = static_cast< int >(std::round(coordX));
 
-					m_originCursor[Libraries::Math::X] = _coordX;
-					m_currentCursor[Libraries::Math::X] = _coordX;
+					m_originCursor[Libs::Math::X] = _coordX;
+					m_currentCursor[Libs::Math::X] = _coordX;
 				}
 			}
 
@@ -168,16 +168,16 @@ namespace Emeraude::Graphics
 				{
 					const auto _coordY = static_cast< int >(coordY);
 
-					m_originCursor[Libraries::Math::Y] = _coordY;
-					m_currentCursor[Libraries::Math::Y] = _coordY;
+					m_originCursor[Libs::Math::Y] = _coordY;
+					m_currentCursor[Libs::Math::Y] = _coordY;
 				}
 
 				if constexpr ( std::is_floating_point_v< number_t > )
 				{
 					const auto _coordY = static_cast< int >(std::round(coordY));
 
-					m_originCursor[Libraries::Math::Y] = _coordY;
-					m_currentCursor[Libraries::Math::Y] = _coordY;
+					m_originCursor[Libs::Math::Y] = _coordY;
+					m_currentCursor[Libs::Math::Y] = _coordY;
 				}
 			}
 
@@ -195,12 +195,12 @@ namespace Emeraude::Graphics
 			{
 				if constexpr ( std::is_integral_v< number_t > )
 				{
-					m_currentCursor[Libraries::Math::X] += static_cast< int >(coordX);
+					m_currentCursor[Libs::Math::X] += static_cast< int >(coordX);
 				}
 
 				if constexpr ( std::is_floating_point_v< number_t > )
 				{
-					m_currentCursor[Libraries::Math::X] += static_cast< int >(std::round(coordX));
+					m_currentCursor[Libs::Math::X] += static_cast< int >(std::round(coordX));
 				}
 			}
 
@@ -210,12 +210,12 @@ namespace Emeraude::Graphics
 			{
 				if constexpr ( std::is_integral_v< number_t > )
 				{
-					m_currentCursor[Libraries::Math::Y] += static_cast< int >(coordY);
+					m_currentCursor[Libs::Math::Y] += static_cast< int >(coordY);
 				}
 
 				if constexpr ( std::is_floating_point_v< number_t > )
 				{
-					m_currentCursor[Libraries::Math::Y] += static_cast< int >(std::round(coordY));
+					m_currentCursor[Libs::Math::Y] += static_cast< int >(std::round(coordY));
 				}
 			}
 
@@ -230,10 +230,10 @@ namespace Emeraude::Graphics
 			void resetCursorToOrigin () noexcept;
 
 			[[nodiscard]]
-			const Libraries::Math::Vector< 2, int > & originCursor () const noexcept;
+			const Libs::Math::Vector< 2, int > & originCursor () const noexcept;
 
 			[[nodiscard]]
-			const Libraries::Math::Vector< 2, int > & currentCursor () const noexcept;
+			const Libs::Math::Vector< 2, int > & currentCursor () const noexcept;
 
 			void setSpacing (int spacing) noexcept;
 
@@ -274,14 +274,14 @@ namespace Emeraude::Graphics
 					return 0;
 				}
 
-				return (m_target->height() - (static_cast< size_t >(m_currentCursor[Libraries::Math::Y]) + 1)) - (height - 1);
+				return (m_target->height() - (static_cast< size_t >(m_currentCursor[Libs::Math::Y]) + 1)) - (height - 1);
 			}
 
 			[[nodiscard]]
-			Libraries::PixelFactory::Area< size_t >
-			getArea (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) const noexcept
+			Libs::PixelFactory::Area< size_t >
+			getArea (const Libs::PixelFactory::Pixmap< uint8_t > & glyph) const noexcept
 			{
-				return {static_cast< size_t >(m_currentCursor[Libraries::Math::X]), this->OpenGLCursorY(glyph.height()), glyph.width(), glyph.height()};
+				return {static_cast< size_t >(m_currentCursor[Libs::Math::X]), this->OpenGLCursorY(glyph.height()), glyph.width(), glyph.height()};
 			}
 
 			[[nodiscard]]
@@ -292,11 +292,11 @@ namespace Emeraude::Graphics
 
 			bool executeCharacter (uint8_t ASCIICode) noexcept;
 
-			bool renderGlyph (const Libraries::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
+			bool renderGlyph (const Libs::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
 
 			bool autoAlignCursor (Alignment alignment, const std::pair< size_t, size_t > & requestedSizes) noexcept;
 
-			bool moveUp (size_t distance, const Libraries::PixelFactory::Color< float > & color) noexcept;
+			bool moveUp (size_t distance, const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/* Flag names. */
 			static constexpr auto WrappingEnabled{0UL};
@@ -304,12 +304,12 @@ namespace Emeraude::Graphics
 			static constexpr auto ScrollUpEnabled{2UL};
 			static constexpr auto AllCharactersEnabled{3UL};
 
-			Libraries::PixelFactory::Pixmap< uint8_t > * m_target{nullptr};
+			Libs::PixelFactory::Pixmap< uint8_t > * m_target{nullptr};
 			std::shared_ptr< FontResource > m_font{};
-			Libraries::PixelFactory::Color< float > m_color{};
-			Libraries::PixelFactory::Color< float > m_clearColor{Libraries::PixelFactory::Transparent};
-			Libraries::Math::Vector< 2, int > m_originCursor{};
-			Libraries::Math::Vector< 2, int > m_currentCursor{};
+			Libs::PixelFactory::Color< float > m_color{};
+			Libs::PixelFactory::Color< float > m_clearColor{Libs::PixelFactory::Transparent};
+			Libs::Math::Vector< 2, int > m_originCursor{};
+			Libs::Math::Vector< 2, int > m_currentCursor{};
 			int m_spacing = 0;
 			std::array< bool, 8 > m_flags{
 				false,/*WrappingEnabled*/

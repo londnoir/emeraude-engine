@@ -29,16 +29,16 @@
 /* STL inclusions. */
 #include <cmath>
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Saphir;
 	using namespace Graphics;
 
 	Camera::Camera (const std::string & name, const AbstractEntity & parentEntity, bool perspective) noexcept
-		: Abstract(name, parentEntity), AbstractVirtualVideoDevice(name, MasterControl::ConnexionType::Output)
+		: Abstract(name, parentEntity), AbstractVirtualVideoDevice(name, AVConsole::ConnexionType::Output)
 	{
 		this->setFlag(PerspectiveProjection, perspective);
 	}
@@ -61,10 +61,10 @@ namespace Emeraude::Scenes::Component
 		return NullBoundingSphere;
 	}
 
-	MasterControl::VideoType
+	AVConsole::VideoType
 	Camera::videoType () const noexcept
 	{
-		return MasterControl::VideoType::Camera;
+		return AVConsole::VideoType::Camera;
 	}
 
 	bool

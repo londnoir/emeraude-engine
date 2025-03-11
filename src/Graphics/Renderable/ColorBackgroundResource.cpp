@@ -28,15 +28,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderable::ColorBackgroundResource >::ClassId{"ColorBackgroundContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Renderable::ColorBackgroundResource >::ClassId{"ColorBackgroundContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::ColorBackgroundResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Renderable::ColorBackgroundResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t ColorBackgroundResource::ClassUID{getClassUID(ClassId)};
 

@@ -39,8 +39,8 @@
 #include "Graphics/Renderable/Interface.hpp"
 #include "Graphics/Types.hpp"
 #include "Graphics/ViewMatricesInterface.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Matrix.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Matrix.hpp"
 #include "Tracer.hpp"
 #include "Saphir/Program.hpp"
 #include "Vulkan/CommandBuffer.hpp"
@@ -48,11 +48,11 @@
 #include "Vulkan/TransferManager.hpp"
 #include "Vulkan/Types.hpp"
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Emeraude::Vulkan;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Vulkan;
 
 	Multiple::Multiple (const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< CartesianFrame< float > > & instanceLocations, uint32_t flagBits) noexcept
 		: Abstract(renderable, EnableInstancing | flagBits),

@@ -27,15 +27,15 @@
 #include "AbstractBackground.hpp"
 
 /* Local inclusions. */
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
+#include "Libs/VertexFactory/ShapeGenerator.hpp"
 #include "Resources/Manager.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
+	using namespace EmEn::Libs::VertexFactory;
 
 	AbstractBackground::AbstractBackground (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: Interface(name, resourceFlagBits)

@@ -31,9 +31,9 @@
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
 
-namespace Emeraude::Audio::Filters
+namespace EmEn::Audio::Filters
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	LowPass::LowPass () noexcept
 		: Abstract()

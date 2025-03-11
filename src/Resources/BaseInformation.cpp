@@ -27,15 +27,15 @@
 #include "BaseInformation.hpp"
 
 /* Local inclusions. */
-#include "Libraries/Network/URL.hpp"
-#include "Libraries/IO/IO.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/Network/URL.hpp"
+#include "Libs/IO/IO.hpp"
+#include "Libs/String.hpp"
 #include "FileSystem.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	bool
 	BaseInformation::parseName (const Json::Value & resourceDefinition) noexcept

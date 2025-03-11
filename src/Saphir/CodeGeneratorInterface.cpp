@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	void
 	CodeGeneratorInterface::addComment (const std::string & comment, size_t depth) noexcept

@@ -26,15 +26,15 @@
 
 #include "AbstractLightEmitter.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 
 	AbstractLightEmitter::AbstractLightEmitter (const std::string & name, const AbstractEntity & parentEntity, uint32_t shadowMapResolution) noexcept
 		: Abstract(name, parentEntity),
-		AbstractVirtualVideoDevice(name, MasterControl::ConnexionType::Output),
+		AbstractVirtualVideoDevice(name, AVConsole::ConnexionType::Output),
 		m_shadowMapResolution(shadowMapResolution)
 	{
 		this->enableFlag(Enabled);
@@ -77,7 +77,7 @@ namespace Emeraude::Scenes::Component
 
 		for ( const auto & output : this->outputs() )
 		{
-			const auto videoDevice = std::dynamic_pointer_cast< MasterControl::AbstractVirtualVideoDevice >(output);
+			const auto videoDevice = std::dynamic_pointer_cast< AVConsole::AbstractVirtualVideoDevice >(output);
 
 			videoDevice->updateProperties(isPerspectiveProjection, distance, fovOrNear);
 		}

@@ -26,7 +26,7 @@
 
 #include "Types.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	const char *
 	to_cstring (QueueJob value) noexcept

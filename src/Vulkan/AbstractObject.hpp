@@ -40,7 +40,7 @@
 /* Third-party inclusions. */
 #include <vulkan/vulkan.h>
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Base of all Vulkan API objects.

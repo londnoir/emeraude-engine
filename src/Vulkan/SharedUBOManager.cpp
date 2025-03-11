@@ -34,9 +34,9 @@
 #include "Device.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t SharedUBOManager::ClassUID{getClassUID(ClassId)};
 

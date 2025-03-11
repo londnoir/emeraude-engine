@@ -36,8 +36,8 @@
 #include <thread>
 
 /* Local inclusions. */
-#include "Libraries/BlobTrait.hpp"
-#include "Libraries/String.hpp"
+#include "Libs/BlobTrait.hpp"
+#include "Libs/String.hpp"
 #include "Arguments.hpp"
 #include "ServiceInterface.hpp"
 #include "Settings.hpp"
@@ -53,9 +53,9 @@
 #include <unistd.h>
 #endif
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Tracer::ClassUID{getClassUID(ClassId)};
 
@@ -180,7 +180,7 @@ namespace Emeraude
 		{
 			m_logger.reset();
 
-			this->trace(Severity::Error, "Tracer", BlobTrait() << "Unable to enable the logger with the file '" << filepath << "' !");
+			this->trace(Severity::Error, "Tracer", Libs::BlobTrait() << "Unable to enable the logger with the file '" << filepath << "' !");
 
 			return false;
 		}

@@ -37,16 +37,16 @@
 #include "Graphics/Renderer.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::Texture
+namespace EmEn::Graphics::RenderTarget::Texture
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 	using namespace Saphir;
 
 	static constexpr auto TracerTag{"AbstractTexture"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept
-		: RenderTarget::Abstract(name, precisions, extent, renderType, MasterControl::ConnexionType::Both, true),
+		: RenderTarget::Abstract(name, precisions, extent, renderType, AVConsole::ConnexionType::Both, true),
 		TextureResource::Abstract(name, 0)
 	{
 

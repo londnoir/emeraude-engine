@@ -32,7 +32,7 @@
 #include <string>
 #include <utility>
 
-namespace Emeraude
+namespace EmEn
 {
 	Argument::Argument (bool noValue) noexcept
 		: m_isSwitch(noValue)

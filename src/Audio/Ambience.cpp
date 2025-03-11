@@ -30,16 +30,16 @@
 #include <cmath>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Resources/Manager.hpp"
 #include "Audio/Manager.hpp"
 #include "Constants.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Ambience::~Ambience ()
 	{

@@ -45,19 +45,19 @@
 #include "AL/alc.h"
 
 /* Local inclusions for usages. */
-#include "Libraries/WaveFactory/Types.hpp"
+#include "Libs/WaveFactory/Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class PrimaryServices;
 }
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief Class that define a device to grab audio from outside the engine like a real microphone.
-	 * @extends Emeraude::ServiceInterface This is a service.
+	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class ExternalInput final : public ServiceInterface
 	{
@@ -104,15 +104,15 @@ namespace Emeraude::Audio
 			 */
 			~ExternalInput () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool usable () const noexcept override;
 
@@ -142,10 +142,10 @@ namespace Emeraude::Audio
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
 			/**
@@ -168,7 +168,7 @@ namespace Emeraude::Audio
 			std::vector< std::string > m_availableCaptureDevices;
 			std::vector< ALshort > m_samples;
 			std::thread m_process;
-			Libraries::WaveFactory::Frequency m_frequency = Libraries::WaveFactory::Frequency::PCM44100Hz;
+			Libs::WaveFactory::Frequency m_frequency = Libs::WaveFactory::Frequency::PCM44100Hz;
 			std::array< bool, 8 > m_flags{
 				false/*ShowInformation*/,
 				false/*IsRecording*/,

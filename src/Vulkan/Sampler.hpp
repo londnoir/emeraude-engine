@@ -33,16 +33,16 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Settings;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The sampler class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
 	 */
 	class Sampler  final : public AbstractDeviceDependentObject
 	{
@@ -95,10 +95,10 @@ namespace Emeraude::Vulkan
 			 */
 			~Sampler () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

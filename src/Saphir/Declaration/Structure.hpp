@@ -33,11 +33,11 @@
 #include "Interface.hpp"
 #include "Member/Structure.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The Structure class
-	 * @extends Emeraude::Saphir::DeclarationInterface This is a shader code declaration.
+	 * @extends EmEn::Saphir::DeclarationInterface This is a shader code declaration.
 	 */
 	class Structure final : public Interface
 	{
@@ -53,19 +53,19 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			explicit Structure (Key name, Key instanceName = nullptr) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::isValid() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::name() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::name() */
 			[[nodiscard]]
 			Key name () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::bytes() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 

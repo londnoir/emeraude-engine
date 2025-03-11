@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 	
 	Program::Program (const std::string & name, std::string GLSLVersion, std::string GLSLProfile) noexcept

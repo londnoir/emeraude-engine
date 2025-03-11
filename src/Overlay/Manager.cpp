@@ -46,7 +46,7 @@
 
 /* Local inclusions. */
 #include "Graphics/Renderer.hpp"
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
+#include "Libs/VertexFactory/ShapeGenerator.hpp"
 #include "PrimaryServices.hpp"
 #include "Resources/Manager.hpp"
 #include "Saphir/Generator/OverlayRendering.hpp"
@@ -56,11 +56,11 @@
 #include "Vulkan/CommandBuffer.hpp"
 #include "Window.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Saphir;
 	using namespace Graphics;
 	using namespace Vulkan;

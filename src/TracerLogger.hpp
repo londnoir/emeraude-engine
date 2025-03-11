@@ -39,7 +39,7 @@
 #include "TracerEntry.hpp"
 #include "Types.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The tracer logger class.

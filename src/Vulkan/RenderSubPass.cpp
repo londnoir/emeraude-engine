@@ -26,7 +26,7 @@
 
 #include "RenderSubPass.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	RenderSubPass::RenderSubPass (VkPipelineBindPoint pipelineBindPoint, VkSubpassDescriptionFlags flags) noexcept
 		: m_flags(flags), m_pipelineBindPoint(pipelineBindPoint)

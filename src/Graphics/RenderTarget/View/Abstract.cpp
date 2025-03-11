@@ -38,16 +38,16 @@
 #include "Settings.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::View
+namespace EmEn::Graphics::RenderTarget::View
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 	using namespace Saphir;
 
 	static constexpr auto TracerTag{"AbstractView"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept
-		: RenderTarget::Abstract(name, precisions, extent, renderType, MasterControl::ConnexionType::Both, true)
+		: RenderTarget::Abstract(name, precisions, extent, renderType, AVConsole::ConnexionType::Both, true)
 	{
 
 	}

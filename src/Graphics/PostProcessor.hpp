@@ -25,14 +25,14 @@
  */
 
 #pragma once
-#include "Libraries/PixelFactory/Area.hpp"
+#include "Libs/PixelFactory/Area.hpp"
 /* Local inclusions for usages. */
 /* VULKAN_DEV */
 //#include "Framebuffer.hpp"
 #include "Saphir/FramebufferEffectInterface.hpp"
 #include "Geometry/IndexedVertexResource.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The PostProcessor class
@@ -97,7 +97,7 @@ namespace Emeraude::Graphics
 			 * @param region The viewport area to blit/copy the render.
 			 * @return void
 			 */
-			void render (const Libraries::PixelFactory::Area< size_t > & region) const noexcept;
+			void render (const Libs::PixelFactory::Area< size_t > & region) const noexcept;
 
 			/**
 			 * @brief Returns a pointer to the framebuffer responsible for the post-processor.
@@ -118,7 +118,7 @@ namespace Emeraude::Graphics
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setBackgroundColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setBackgroundColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 		private:
 

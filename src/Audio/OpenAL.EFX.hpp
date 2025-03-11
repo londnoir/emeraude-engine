@@ -35,7 +35,7 @@
 #include "AL/efx.h"
 #include "AL/efx-presets.h"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The EFX class

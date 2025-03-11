@@ -34,11 +34,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The ShaderModule class.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
 	 */
 	class ShaderModule final : public AbstractDeviceDependentObject
 	{
@@ -94,10 +94,10 @@ namespace Emeraude::Vulkan
 			 */
 			~ShaderModule () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

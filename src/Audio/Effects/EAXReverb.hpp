@@ -29,11 +29,11 @@
 /* Local inclusions for ineritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
 	/**
 	 * @brief Reverb effect (EAX version).
-	 * @extends Emeraude::Audio::Effects::Abstract This is an effect.
+	 * @extends EmEn::Audio::Effects::Abstract This is an effect.
 	 */
 	class EAXReverb final : public Abstract
 	{
@@ -47,7 +47,7 @@ namespace Emeraude::Audio::Effects
 			 */
 			EAXReverb () noexcept;
 
-			/** @copydoc Emeraude::Audio::Effects::Abstract::resetProperties() */
+			/** @copydoc EmEn::Audio::Effects::Abstract::resetProperties() */
 			void resetProperties () noexcept override;
 
 			/**

@@ -36,21 +36,21 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/VertexFactory/Grid.hpp"
-#include "Libraries/VertexFactory/Shape.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Cuboid.hpp"
+#include "Libs/VertexFactory/Grid.hpp"
+#include "Libs/VertexFactory/Shape.hpp"
+#include "Libs/Math/Sphere.hpp"
+#include "Libs/Math/Cuboid.hpp"
 #include "Vulkan/VertexBufferObject.hpp"
 #include "Vulkan/IndexBufferObject.hpp"
 #include "Graphics/Types.hpp"
 #include "Types.hpp"
 #include "SubGeometry.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/**
 	 * @brief This is the base of all geometry compatible with the graphic engine.
-	 * @extends Emeraude::Resources::ResourceTrait Every material is a resource.
+	 * @extends EmEn::Resources::ResourceTrait Every material is a resource.
 	 */
 	class Interface : public Resources::ResourceTrait
 	{
@@ -238,14 +238,14 @@ namespace Emeraude::Graphics::Geometry
 			 * @return const Libraries::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Cuboid< float > & boundingBox () const noexcept = 0;
+			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding sphere surrounding the renderable.
 			 * @return const Libraries::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libraries::Math::Sphere< float > & boundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief Returns the vertex buffer object.
@@ -331,10 +331,10 @@ namespace Emeraude::Graphics::Geometry
 			 * @brief Returns the normals format.
 			 * @return Libraries::VertexFactory::NormalType
 			 */
-			Libraries::VertexFactory::NormalType
+			Libs::VertexFactory::NormalType
 			getNormalsFormat () const noexcept
 			{
-				using namespace Libraries::VertexFactory;
+				using namespace EmEn::Libs::VertexFactory;
 
 				if ( this->isFlagEnabled(EnableTangentSpace) )
 				{
@@ -353,10 +353,10 @@ namespace Emeraude::Graphics::Geometry
 			 * @brief Returns the primary texture coordinates format.
 			 * @return Libraries::VertexFactory::TextureCoordinatesType
 			 */
-			Libraries::VertexFactory::TextureCoordinatesType
+			Libs::VertexFactory::TextureCoordinatesType
 			getPrimaryTextureCoordinatesFormat () const noexcept
 			{
-				using namespace Libraries::VertexFactory;
+				using namespace EmEn::Libs::VertexFactory;
 
 				if ( !this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
 				{
@@ -370,10 +370,10 @@ namespace Emeraude::Graphics::Geometry
 			 * @brief Returns the secondary texture coordinates format.
 			 * @return Libraries::VertexFactory::TextureCoordinatesType
 			 */
-			Libraries::VertexFactory::TextureCoordinatesType
+			Libs::VertexFactory::TextureCoordinatesType
 			getSecondaryTextureCoordinatesFormat () const noexcept
 			{
-				using namespace Libraries::VertexFactory;
+				using namespace EmEn::Libs::VertexFactory;
 
 				if ( !this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
 				{
@@ -397,7 +397,7 @@ namespace Emeraude::Graphics::Geometry
 			 * @param subGeometries A reference to a sub geometry list.
 			 * @return bool
 			 */
-			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, const Libraries::VertexFactory::Shape< float > & shape) noexcept;
+			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, const Libs::VertexFactory::Shape< float > & shape) noexcept;
 
 			/**
 			 * @brief Builds geometry batches from grid.
@@ -405,11 +405,11 @@ namespace Emeraude::Graphics::Geometry
 			 * @param subGeometries A reference to a sub geometry list.
 			 * @return bool
 			 */
-			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, const Libraries::VertexFactory::Grid< float > & grid) noexcept;
+			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, const Libs::VertexFactory::Grid< float > & grid) noexcept;
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 	};

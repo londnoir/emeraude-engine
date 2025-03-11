@@ -38,18 +38,18 @@
 /* Local inclusions. */
 #include "Constants.hpp"
 #include "Input/Types.hpp"
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Libraries/Time/Time.hpp"
-#include "Libraries/Version.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Libs/Time/Time.hpp"
+#include "Libs/Version.hpp"
 #include "PlatformSpecific/Desktop/Dialog/Message.hpp"
 #include "PlatformSpecific/Desktop/Dialog/OpenFile.hpp"
 #include "PlatformSpecific/Desktop/Commands.hpp"
 #include "Tool/GeometryDataPrinter.hpp"
 #include "Tool/ShowVulkanInformation.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 	using namespace Graphics;
 	using namespace Scenes;

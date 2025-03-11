@@ -26,7 +26,7 @@
 
 #include "PhysicalSurfaceProperties.hpp"
 
-namespace Emeraude::Physics
+namespace EmEn::Physics
 {
 	void
 	PhysicalSurfaceProperties::reset () noexcept

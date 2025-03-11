@@ -26,7 +26,7 @@
 
 #include "Types.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	const char *
 	to_cstring (Severity value) noexcept

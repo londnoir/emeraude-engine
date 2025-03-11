@@ -37,11 +37,11 @@
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	/**
 	 * @brief The file box class.
-	 * @extends Emeraude::PlatformSpecific::Desktop::Dialog::Abstract
+	 * @extends EmEn::PlatformSpecific::Desktop::Dialog::Abstract
 	 */
 	class SaveFile final : public Abstract
 	{
@@ -55,7 +55,7 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
 			 */
 			explicit SaveFile (const std::string & title);
 
-			/** @copydoc Emeraude::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
+			/** @copydoc EmEn::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
 			bool execute (Window * window) noexcept override;
 
 			/**

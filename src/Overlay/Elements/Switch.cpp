@@ -27,13 +27,13 @@
 #include "Switch.hpp"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 #include "Graphics/ImageResource.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace PixelFactory;
 	using namespace Graphics;
 
@@ -119,7 +119,7 @@ namespace Emeraude::Overlay::Elements
 	}
 
 	bool
-	Switch::onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept
+	Switch::onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept
 	{
 		/* Applies the current background. */
 		pixmap = Processor< uint8_t >::resize(m_image->data(), pixmap.width(), pixmap.height());

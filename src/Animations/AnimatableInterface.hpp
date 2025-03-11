@@ -33,10 +33,10 @@
 #include <any>
 
 /* Local inclusions for usages. */
-#include "Libraries/Variant.hpp"
+#include "Libs/Variant.hpp"
 #include "AnimationInterface.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief The AnimatableInterface class
@@ -132,7 +132,7 @@ namespace Emeraude::Animations
 			 * @param cycle The current engine cycle.
 			 * @return bool
 			 */
-			virtual bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept = 0;
+			virtual bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept = 0;
 
 			std::map< uint8_t, std::shared_ptr< AnimationInterface > > m_animations;
 	};

@@ -34,18 +34,18 @@
 #include <vector>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The service interface.
 	 * @note A service cannot be duplicated and should act like a singleton.
-	 * @extends Libraries::NameableTrait Each service have a name.
+	 * @extends EmEn::Libs::NameableTrait Each service have a name.
 	 * Libraries::ObservableTrait Each service should be observable.
 	 */
-	class ServiceInterface : public Libraries::NameableTrait, public Libraries::ObservableTrait
+	class ServiceInterface : public Libs::NameableTrait, public Libs::ObservableTrait
 	{
 		public:
 

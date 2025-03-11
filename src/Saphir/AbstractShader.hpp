@@ -32,7 +32,7 @@
 #include <filesystem>
 
 /* Local inclusions for inheritances. */
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 #include "CodeGeneratorInterface.hpp"
 
 /* Local inclusions for usages. */
@@ -47,18 +47,18 @@
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Saphir::Generator
+namespace EmEn::Saphir::Generator
 {
 	class Abstract;
 }
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief Defines a shader that can be filled with source code and compiled. Or directly filled with binary code.
-	 * @extends Libraries::NameableTrait
+	 * @extends EmEn::Libs::NameableTrait
 	 */
-	class AbstractShader : public Libraries::NameableTrait, public CodeGeneratorInterface
+	class AbstractShader : public Libs::NameableTrait, public CodeGeneratorInterface
 	{
 		public:
 

@@ -38,7 +38,7 @@
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	/**
 	 * @brief The system info class. This will gather system information.

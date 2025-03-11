@@ -37,19 +37,19 @@
 #include "Audio/Manager.hpp"
 #include "Audio/SoundResource.hpp"
 #include "Audio/Source.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
 #include "Physics/MovableTrait.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Scenes/AbstractEntity.hpp"
 #include "Tracer.hpp"
-#include "Libraries/Variant.hpp"
+#include "Libs/Variant.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Audio;
 

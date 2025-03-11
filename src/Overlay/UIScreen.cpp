@@ -37,13 +37,13 @@
 /* Local inclusions. */
 #include "FramebufferProperties.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/NameableTrait.hpp"
 #include "AbstractSurface.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 
 	UIScreen::UIScreen (const std::string & name, const FramebufferProperties & framebufferProperties, Renderer & graphicsRenderer, bool enableKeyboardListener, bool enablePointerListener) noexcept

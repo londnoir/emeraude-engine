@@ -35,27 +35,27 @@
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"
-#include "Libraries/ParallelizableTrait.hpp"
+#include "Libs/ParallelizableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Network/URL.hpp"
+#include "Libs/Network/URL.hpp"
 #include "CachedDownloadItem.hpp"
 #include "DownloadItem.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class PrimaryServices;
 }
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The network manager service class.
-	 * @extends Emeraude::ServiceInterface This is a service.
-	 * @extends Libraries::ParallelizableTrait This needs to parallelize download processes.
+	 * @extends EmEn::ServiceInterface This is a service.
+	 * @extends EmEn::Libs::ParallelizableTrait This needs to parallelize download processes.
 	 */
-	class NetworkManager final : public ServiceInterface, public Libraries::ParallelizableTrait< size_t >
+	class NetworkManager final : public ServiceInterface, public Libs::ParallelizableTrait< size_t >
 	{
 		public:
 
@@ -83,15 +83,15 @@ namespace Emeraude
 			 */
 			explicit NetworkManager (PrimaryServices & primaryServices) noexcept;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::usable() */
+			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
 			bool usable () const noexcept override;
 
@@ -102,7 +102,7 @@ namespace Emeraude
 			 * @param replaceExistingFile A switch to replace on exists file.
 			 * @return int
 			 */
-			int download (const Libraries::Network::URL & url, const std::filesystem::path & output, bool replaceExistingFile = true) noexcept;
+			int download (const Libs::Network::URL & url, const std::filesystem::path & output, bool replaceExistingFile = true) noexcept;
 
 			/**
 			 * @brief Gets the download status using a ticket got from NetworkManager::newDownloadRequest().
@@ -164,13 +164,13 @@ namespace Emeraude
 
 		private:
 
-			/** @copydoc Emeraude::ServiceInterface::onInitialize() */
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
 			bool onInitialize () noexcept override;
 
-			/** @copydoc Emeraude::ServiceInterface::onTerminate() */
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
 			bool onTerminate () noexcept override;
 
-			/** @copydoc Libraries::ParallelizableTrait::task() */
+			/** @copydoc EmEn::Libs::ParallelizableTrait::task() */
 			bool task (const size_t & data) noexcept override;
 
 			/**

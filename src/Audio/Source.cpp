@@ -35,10 +35,10 @@
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 
 	Source::Source () noexcept
 	{

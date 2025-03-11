@@ -31,24 +31,24 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Graphics/Renderer.hpp"
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
+#include "Graphics/Renderer.hpp"
 #include "Graphics/Types.hpp"
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
-#include "MasterControl/Types.hpp"
+#include "Tracer.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Instance.hpp"
-#include "Tracer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget
+namespace EmEn::Graphics::RenderTarget
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
 	static constexpr auto TracerTag{"RenderTarget"};
 
-	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, MasterControl::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept
+	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, AVConsole::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept
 		: AbstractVirtualVideoDevice(name, allowedConnexionType),
 		m_precisions(precisions),
 		m_extent(extent),

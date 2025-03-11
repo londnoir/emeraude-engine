@@ -31,7 +31,7 @@
 /* Local inclusions. */
 #include "Window.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	UINT
 	getMessageType (MessageType type)

@@ -30,13 +30,13 @@
 #include "Saphir/FramebufferEffectInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The gray scale lens effect class;
-	 * @extends Emeraude::FramebufferEffectInterface This is a framebuffer effect.
+	 * @extends EmEn::FramebufferEffectInterface This is a framebuffer effect.
 	 */
 	class GrayscaleLensEffect final : public Saphir::FramebufferEffectInterface
 	{
@@ -87,7 +87,7 @@ namespace Emeraude::Scenes
 			 */
 			explicit GrayscaleLensEffect (Mode mode = Mode::Average, Option option = Option::None) noexcept;
 
-			/** @copydoc Emeraude::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
+			/** @copydoc EmEn::Saphir::FramebufferEffectInterface::generateFragmentShaderCode() */
 			[[nodiscard]]
 			bool generateFragmentShaderCode (Saphir::Generator::Abstract & generator, Saphir::FragmentShader & fragmentShader) const noexcept override;
 
@@ -138,21 +138,21 @@ namespace Emeraude::Scenes
 			 * @param color A reference to a color
 			 * @return void
 			 */
-			void setTaint (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setTaint (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Returns the color.
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & taint () const noexcept;
+			const Libs::PixelFactory::Color< float > & taint () const noexcept;
 
 		private:
 
 			static constexpr auto Taint{"em_Taint"};
 			static constexpr auto ScaleLevel{"em_ScaleLevel"};
 
-			Libraries::PixelFactory::Color< float > m_taint = Libraries::PixelFactory::White;
+			Libs::PixelFactory::Color< float > m_taint = Libs::PixelFactory::White;
 			Mode m_mode{Mode::Average};
 			Option m_option{Option::None};
 			unsigned int m_scaleLevel{16};

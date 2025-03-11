@@ -33,7 +33,7 @@
 #include "Saphir/Keys.hpp"
 #include "Saphir/Declaration/Types.hpp"
 
-namespace Emeraude::Saphir::Declaration::Member
+namespace EmEn::Saphir::Declaration::Member
 {
 	/**
 	 * @brief The structure member interface.

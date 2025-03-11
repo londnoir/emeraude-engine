@@ -30,7 +30,7 @@
 #include <string>
 #include <utility>
 
-namespace Emeraude
+namespace EmEn
 {
 	AbstractDoc::AbstractDoc (std::string description) noexcept
 		: m_description(std::move(description))

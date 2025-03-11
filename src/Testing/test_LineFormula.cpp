@@ -27,9 +27,9 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/Math/LineFormula.hpp"
+#include "Libs/Math/LineFormula.hpp"
 
-using namespace Libraries::Math;
+using namespace EmEn::Libs::Math;
 
 using MathTypeList = testing::Types< int, float, double >;
 

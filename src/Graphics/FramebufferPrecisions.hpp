@@ -32,7 +32,7 @@
 /* Local inclusions. */
 #include "SettingKeys.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief The framebuffer precisions class.

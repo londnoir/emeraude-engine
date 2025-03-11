@@ -1,5 +1,24 @@
-message("Enabling BZIP2 library from local source ...")
+if ( NOT BZIP2_ENABLED )
+	if ( EMERAUDE_USE_SYSTEM_LIBS )
+		message("Enabling bzip2 library from system ...")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE bz2_static)
+		# NOTE: https://cmake.org/cmake/help/latest/module/FindBZip2.html
+		find_package(BZip2 REQUIRED)
 
-set(BZIP2_ENABLED On) # Complete the "libraries_config.hpp" file
+		target_include_directories(${PROJECT_NAME} PRIVATE ${BZIP2_INCLUDE_DIRS})
+		target_link_directories(${PROJECT_NAME} PRIVATE ${BZIP2_LIBRARIES})
+		target_link_libraries(${PROJECT_NAME} PRIVATE BZip2::BZip2)
+	else ()
+		message("Enabling bzip2 library from local source ...")
+
+		if ( MSVC )
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/bz2_static.lib)
+		else ()
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libbz2_static.a)
+		endif ()
+	endif ()
+
+	set(BZIP2_ENABLED On)
+else ()
+	message("The bzip2 library is already enabled.")
+endif ()

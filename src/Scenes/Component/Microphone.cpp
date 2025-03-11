@@ -34,15 +34,15 @@
 /* Local inclusions. */
 #include "Scenes/AbstractEntity.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Animations;
 	using namespace Audio;
 
 	Microphone::Microphone (const std::string & name, const AbstractEntity & parentEntity) noexcept
-		: Abstract(name, parentEntity), MasterControl::AbstractVirtualAudioDevice(name, MasterControl::ConnexionType::Output)
+		: Abstract(name, parentEntity), AVConsole::AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Output)
 	{
 
 	}

@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "Vulkan/AbstractObject.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	/**
 	 * @brief The memory barrier class. This is used for synchronize command buffers.
-	 * @extends Emeraude::Vulkan::AbstractObject This is a sample Vulkan structure.
+	 * @extends EmEn::Vulkan::AbstractObject This is a sample Vulkan structure.
 	 */
 	class MemoryBarrier final : public AbstractObject
 	{

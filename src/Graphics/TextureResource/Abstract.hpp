@@ -39,11 +39,11 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -60,7 +60,7 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::TextureResource
+namespace EmEn::Graphics::TextureResource
 {
 	/**
 	 * @brief Higher level texture type enumeration.
@@ -79,7 +79,7 @@ namespace Emeraude::Graphics::TextureResource
 
 	/**
 	 * @brief This is the base class for every vulkan texture resource.
-	 * @extends Emeraude::Resources::ResourceTrait This is a loadable resource.
+	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class Abstract : public Resources::ResourceTrait
 	{
@@ -166,7 +166,7 @@ namespace Emeraude::Graphics::TextureResource
 			 * @return Color< float >
 			 */
 			[[nodiscard]]
-			virtual Libraries::PixelFactory::Color< float > averageColor () const noexcept = 0;
+			virtual Libs::PixelFactory::Color< float > averageColor () const noexcept = 0;
 
 			/**
 			 * @brief Returns the dimensions for use with texture coordinates. Should be 1, 2 or 3.
@@ -240,7 +240,7 @@ namespace Emeraude::Graphics::TextureResource
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool validatePixmap (const char * classId, Libraries::PixelFactory::Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck = false) noexcept;
+			static bool validatePixmap (const char * classId, Libs::PixelFactory::Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck = false) noexcept;
 
 		protected:
 
@@ -253,7 +253,7 @@ namespace Emeraude::Graphics::TextureResource
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 	};

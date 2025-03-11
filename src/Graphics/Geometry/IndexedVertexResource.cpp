@@ -34,27 +34,27 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/VertexFactory/ShapeGenerator.hpp"
-#include "Libraries/VertexFactory/FileIO.hpp"
+#include "Libs/VertexFactory/ShapeGenerator.hpp"
+#include "Libs/VertexFactory/FileIO.hpp"
 #include "Resources/Manager.hpp"
 #include "Vulkan/TransferManager.hpp"
 #include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Geometry::IndexedVertexResource >::ClassId{"IndexedVertexResourceContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Geometry::IndexedVertexResource >::ClassId{"IndexedVertexResourceContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::IndexedVertexResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Geometry::IndexedVertexResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::VertexFactory;
-	using namespace Libraries::PixelFactory;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::VertexFactory;
+	using namespace EmEn::Libs::PixelFactory;
+	using namespace EmEn::Libs::VertexFactory;
 	using namespace Vulkan;
 
 	const size_t IndexedVertexResource::ClassUID{getClassUID(ClassId)};

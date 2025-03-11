@@ -38,7 +38,7 @@
 #include "Graphics/Types.hpp" // BlendingMode
 
 /* Forward declaration */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -77,7 +77,7 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
 	/** @brief Material interface flag bits. */
 	enum MaterialFlagBits
@@ -102,7 +102,7 @@ namespace Emeraude::Graphics::Material
 
 	/**
 	 * @brief This is the base of all material compatible with the graphic engine.
-	 * @extends Emeraude::Resources::ResourceTrait Every material is a resource.
+	 * @extends EmEn::Resources::ResourceTrait Every material is a resource.
 	 */
 	class Interface : public Resources::ResourceTrait
 	{
@@ -532,7 +532,7 @@ namespace Emeraude::Graphics::Material
 
 		private:
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::onDependenciesLoaded() */
+			/** @copydoc EmEn::Resources::ResourceTrait::onDependenciesLoaded() */
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 	};

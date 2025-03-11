@@ -35,7 +35,7 @@
 /* Local inclusions for usages. */
 #include "Graphics/RenderableInstance/Abstract.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief The RenderBatch class

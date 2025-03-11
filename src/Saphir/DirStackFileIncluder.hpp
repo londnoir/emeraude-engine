@@ -34,7 +34,7 @@
 /* Local inclusions for inheritance. */
 #include "glslang/Public/ShaderLang.h"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/**
 	 * @brief Default include class for normal include convention of search backward

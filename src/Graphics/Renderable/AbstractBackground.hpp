@@ -35,14 +35,14 @@
 #include "Interface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Graphics/Geometry/IndexedVertexResource.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief An abstract class to define the far background of a scene.
-	 * @extends Emeraude::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
+	 * @extends EmEn::Graphics::Renderable::Interface This class is a renderable object in the 3D world.
 	 */
 	class AbstractBackground : public Interface
 	{
@@ -79,83 +79,83 @@ namespace Emeraude::Graphics::Renderable
 			 */
 			~AbstractBackground () override = default;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingBox() */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > & boundingBox () const noexcept final;
+			const Libs::Math::Cuboid< float > & boundingBox () const noexcept final;
 
-			/** @copydoc Emeraude::Graphics::Renderable::Interface::boundingSphere() */
+			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > & boundingSphere () const noexcept final;
+			const Libs::Math::Sphere< float > & boundingSphere () const noexcept final;
 
 			/**
 			 * @brief Sets the average color to represent the background.
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setAverageColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setAverageColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light position.
 			 * @param position A reference to a position vector.
 			 * @return void
 			 */
-			void setLightPosition (const Libraries::Math::Vector< 3, float > & position) noexcept;
+			void setLightPosition (const Libs::Math::Vector< 3, float > & position) noexcept;
 
 			/**
 			 * @brief Sets the light ambient color.
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setLightAmbientColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setLightAmbientColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light diffuse color.
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setLightDiffuseColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setLightDiffuseColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Sets the light specular color.
 			 * @param color A reference to a color.
 			 * @return void
 			 */
-			void setLightSpecularColor (const Libraries::PixelFactory::Color< float > & color) noexcept;
+			void setLightSpecularColor (const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/**
 			 * @brief Returns the average color of the background.
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & averageColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & averageColor () const noexcept;
 
 			/**
 			 * @brief Returns the light position.
 			 * @return const Libraries::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > & lightPosition () const noexcept;
+			const Libs::Math::Vector< 3, float > & lightPosition () const noexcept;
 
 			/**
 			 * @brief Returns the light ambient color.
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & lightAmbientColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & lightAmbientColor () const noexcept;
 
 			/**
 			 * @brief Returns the light diffuse color.
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & lightDiffuseColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & lightDiffuseColor () const noexcept;
 
 			/**
 			 * @brief Returns the light specular color.
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > & lightSpecularColor () const noexcept;
+			const Libs::PixelFactory::Color< float > & lightSpecularColor () const noexcept;
 
 			/**
 			 * @brief Creates and/or returns a sky box (cube) geometry.
@@ -188,10 +188,10 @@ namespace Emeraude::Graphics::Renderable
 			/* FIXME: Set a correct size. */
 			static constexpr auto SkySize{512.0F};
 
-			Libraries::PixelFactory::Color< float > m_averageColor{10.0F / 256.0F, 24.0F / 256.0F, 43.0F / 256.0F, 1.0F};
-			Libraries::Math::Vector< 3, float > m_lightPosition{0.6666F, 0.3333F, 0.6666F};
-			Libraries::PixelFactory::Color< float > m_lightAmbientColor{0.0F, 0.0F, 0.13F, 1.0F};
-			Libraries::PixelFactory::Color< float > m_lightDiffuseColor{1.0F, 1.0F, 1.0F, 1.0F};
-			Libraries::PixelFactory::Color< float > m_lightSpecularColor{1.0F, 1.0F, 1.0F, 1.0F};
+			Libs::PixelFactory::Color< float > m_averageColor{10.0F / 256.0F, 24.0F / 256.0F, 43.0F / 256.0F, 1.0F};
+			Libs::Math::Vector< 3, float > m_lightPosition{0.6666F, 0.3333F, 0.6666F};
+			Libs::PixelFactory::Color< float > m_lightAmbientColor{0.0F, 0.0F, 0.13F, 1.0F};
+			Libs::PixelFactory::Color< float > m_lightDiffuseColor{1.0F, 1.0F, 1.0F, 1.0F};
+			Libs::PixelFactory::Color< float > m_lightSpecularColor{1.0F, 1.0F, 1.0F, 1.0F};
 	};
 }

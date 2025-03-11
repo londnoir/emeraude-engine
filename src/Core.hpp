@@ -40,8 +40,8 @@
 /* Local inclusions for inheritances. */
 #include "Input/KeyboardListenerInterface.hpp"
 #include "Console/Controllable.hpp"
-#include "Libraries/ObserverTrait.hpp"
-#include "Libraries/ObservableTrait.hpp"
+#include "Libs/ObserverTrait.hpp"
+#include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
 #include "Audio/ExternalInput.hpp"
@@ -66,17 +66,17 @@
 #include "Vulkan/Instance.hpp"
 #include "Window.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief Core object of Emeraude-Engine. One of his main role is to hold all services.
 	 * @note This class act as a singleton. So you can call from everywhere with Core::instance().
-	 * @extends Emeraude::Input::KeyboardListenerInterface The core need to get events from the keyboard for low level interaction.
-	 * @extends Emeraude::Console::Controllable The core can be controlled by the console.
-	 * @extends Libraries::ObserverTrait The core is an observer.
-	 * @extends Libraries::ObservableTrait The core is observable.
+	 * @extends EmEn::Input::KeyboardListenerInterface The core need to get events from the keyboard for low level interaction.
+	 * @extends EmEn::Console::Controllable The core can be controlled by the console.
+	 * @extends EmEn::Libs::ObserverTrait The core is an observer.
+	 * @extends EmEn::Libs::ObservableTrait The core is observable.
 	 */
-	class Core : private Input::KeyboardListenerInterface, private Console::Controllable, public Libraries::ObserverTrait, public Libraries::ObservableTrait
+	class Core : private Input::KeyboardListenerInterface, private Console::Controllable, public Libs::ObserverTrait, public Libs::ObservableTrait
 	{
 		public:
 
@@ -209,7 +209,7 @@ namespace Emeraude
 			 * @return void
 			 */
 			void
-			notifyUser (const Libraries::BlobTrait & message, uint32_t duration = Notifier::DefaultDuration) noexcept
+			notifyUser (const Libs::BlobTrait & message, uint32_t duration = Notifier::DefaultDuration) noexcept
 			{
 				const auto messageStr = message.get();
 
@@ -672,7 +672,7 @@ namespace Emeraude
 			 * @param applicationOrganization The name of the application organization. Default "UnknownOrganization".
 			 * @param applicationDomain The domain of the application. Default "unknown.org".
 			 */
-			Core (int argc, wchar_t * * wargv, const char * applicationName = "UnknownApplication", const Libraries::Version & applicationVersion = {0, 0, 0}, const char * applicationOrganization = "UnknownOrganization", const char * applicationDomain = "unknown.org") noexcept;
+			Core (int argc, wchar_t * * wargv, const char * applicationName = "UnknownApplication", const Libs::Version & applicationVersion = {0, 0, 0}, const char * applicationOrganization = "UnknownOrganization", const char * applicationDomain = "unknown.org") noexcept;
 #else
 			/**
 			 * @brief Constructs the engine core.
@@ -683,7 +683,7 @@ namespace Emeraude
 			 * @param applicationOrganization The name of the application organization. Default "UnknownOrganization".
 			 * @param applicationDomain The domain of the application. Default "localhost".
 			 */
-			Core (int argc, char * * argv, const char * applicationName = "UnknownApplication", const Libraries::Version & applicationVersion = {0, 0, 0}, const char * applicationOrganization = "UnknownOrganization", const char * applicationDomain = "localhost") noexcept;
+			Core (int argc, char * * argv, const char * applicationName = "UnknownApplication", const Libs::Version & applicationVersion = {0, 0, 0}, const char * applicationOrganization = "UnknownOrganization", const char * applicationDomain = "localhost") noexcept;
 #endif
 
 			/**
@@ -773,7 +773,7 @@ namespace Emeraude
 			 * @return void
 			 */
 			void
-			setCursor (const std::string & label, const Libraries::PixelFactory::Pixmap< uint8_t > & pixmap, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept
+			setCursor (const std::string & label, const Libs::PixelFactory::Pixmap< uint8_t > & pixmap, const std::array< int, 2 > & hotSpot = {0, 0}) noexcept
 			{
 				m_cursorAtlas.setCursor(m_window, label, pixmap, hotSpot);
 			}
@@ -817,20 +817,20 @@ namespace Emeraude
 
 		private:
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyPress() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onKeyPress() */
 			bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept final;
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onKeyRelease() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onKeyRelease() */
 			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept final;
 
-			/** @copydoc Emeraude::Input::KeyboardListenerInterface::onCharacterType() */
+			/** @copydoc EmEn::Input::KeyboardListenerInterface::onCharacterType() */
 			bool onCharacterType (uint32_t unicode) noexcept final;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept final;
+			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept final;
 
-			/** @copydoc Emeraude::Console::Controllable::onRegisterToConsole. */
+			/** @copydoc EmEn::Console::Controllable::onRegisterToConsole. */
 			void onRegisterToConsole () noexcept override;
 
 			/**
@@ -901,7 +901,7 @@ namespace Emeraude
 			void
 			onShaderCompilationFailed (const std::string & shaderIdentifier, const std::string & sourceCode) noexcept
 			{
-				this->notifyUser(Libraries::BlobTrait{} << "Shader '" << shaderIdentifier << "' compilation failed !");
+				this->notifyUser(Libs::BlobTrait{} << "Shader '" << shaderIdentifier << "' compilation failed !");
 
 				m_messages.emplace(sourceCode);
 			}
@@ -986,7 +986,7 @@ namespace Emeraude
 			 * @param data Pointer to possible data.
 			 * @return bool
 			 */
-			virtual bool onAppNotification (const Libraries::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept = 0;
+			virtual bool onAppNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept = 0;
 
 			/**
 			 * @brief Called when files has been loaded.

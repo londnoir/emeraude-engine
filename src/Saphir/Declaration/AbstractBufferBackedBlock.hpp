@@ -37,11 +37,11 @@
 #include "Member/BufferBackedBlock.hpp"
 #include "Types.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief Base class for every GLSL Buffer-Backed blocks.
-	 * @extends Emeraude::Saphir::Declaration::BlockInterface
+	 * @extends EmEn::Saphir::Declaration::BlockInterface
 	 */
 	class AbstractBufferBackedBlock : public BlockInterface
 	{
@@ -78,11 +78,11 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			~AbstractBufferBackedBlock () override = default;
 
-			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::isValid() */
+			/** @copydoc EmEn::Saphir::Declaration::BlockInterface::isValid() */
 			[[nodiscard]]
 			bool isValid () const noexcept override;
 
-			/** @copydoc Emeraude::Saphir::Declaration::BlockInterface::bytes() */
+			/** @copydoc EmEn::Saphir::Declaration::BlockInterface::bytes() */
 			[[nodiscard]]
 			size_t bytes () const noexcept final;
 
@@ -165,7 +165,7 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			AbstractBufferBackedBlock (uint32_t set, uint32_t binding, MemoryLayout memoryLayout, Key name, Key instanceName = nullptr, size_t arraySize = 0) noexcept;
 
-			/** @copydoc Emeraude::Saphir::BlockInterface::getLayoutQualifier() */
+			/** @copydoc EmEn::Saphir::BlockInterface::getLayoutQualifier() */
 			std::string getLayoutQualifier () const noexcept;
 
 		private:

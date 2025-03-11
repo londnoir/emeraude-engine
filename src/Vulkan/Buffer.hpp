@@ -34,16 +34,16 @@
 #include "AbstractDeviceDependentObject.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class DeviceMemory;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines the base class of all buffers in Vulkan API.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject to allocate memory on device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject to allocate memory on device.
 	 */
 	class Buffer : public AbstractDeviceDependentObject
 	{
@@ -98,10 +98,10 @@ namespace Emeraude::Vulkan
 			 */
 			~Buffer () override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept final;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept final;
 
 			/**

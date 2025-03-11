@@ -38,7 +38,7 @@
 /* Local inclusions. */
 #include "Window.hpp"
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	std::array< char, 8 > PointerController::s_deviceState{};
 

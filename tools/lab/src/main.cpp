@@ -3,9 +3,9 @@
 #include <iostream>
 
 /* Local inclusions. */
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/Vector.hpp"
 
-using namespace Libraries::Math;
+using namespace EmEn::Libs::Math;
 
 int
 main (int argc, char * * argv)

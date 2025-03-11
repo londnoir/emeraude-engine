@@ -26,9 +26,9 @@
 
 #include "MatrixStack.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs::Math;
 
 	const Matrix< 4, float > MatrixStack::s_identity;
 }

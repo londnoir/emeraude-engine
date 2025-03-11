@@ -27,9 +27,9 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "Libraries/Hash/Hash.hpp"
+#include "Libs/Hash/Hash.hpp"
 
-using namespace Libraries;
+using namespace EmEn::Libs;
 
 TEST(Hash, md5)
 {

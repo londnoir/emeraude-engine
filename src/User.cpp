@@ -30,7 +30,7 @@
 #include "Settings.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
 	const size_t User::ClassUID{getClassUID(ClassId)};
 

@@ -35,16 +35,16 @@
 #include "GLFW/glfw3.h"
 
 /* Local inclusions. */
-#include "Libraries/Utility.hpp"
-#include "Libraries/IO/IO.hpp"
+#include "Libs/Utility.hpp"
+#include "Libs/IO/IO.hpp"
 #include "GamepadController.hpp"
 #include "JoystickController.hpp"
 #include "PrimaryServices.hpp"
 #include "Window.hpp"
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
 	const size_t Manager::ClassUID{getClassUID(ClassId)};

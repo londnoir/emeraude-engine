@@ -27,22 +27,22 @@
 #include "SkyBoxResource.hpp"
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Graphics/Material/BasicResource.hpp"
 #include "Resources/Manager.hpp"
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SkyBoxResource >::ClassId{"SkyboxContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Renderable::SkyBoxResource >::ClassId{"SkyboxContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Renderable::SkyBoxResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Renderable::SkyBoxResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Material;
 
 	const size_t SkyBoxResource::ClassUID{getClassUID(ClassId)};

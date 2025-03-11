@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
 	/**
 	 * @brief The UI input interface.

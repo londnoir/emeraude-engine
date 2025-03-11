@@ -34,7 +34,7 @@
 /* Local inclusions for usages. */
 #include "Graphics/Types.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	namespace TextureResource
 	{
@@ -44,7 +44,7 @@ namespace Emeraude::Graphics
 	class Renderer;
 }
 
-namespace Emeraude::Graphics::Material::Component
+namespace EmEn::Graphics::Material::Component
 {
 	/** @brief The component type enumeration. */
 	enum class Type : uint8_t

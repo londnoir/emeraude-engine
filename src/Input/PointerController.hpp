@@ -37,16 +37,16 @@
 #include "Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Window;
 }
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/**
 	 * @brief The pointer controller class.
-	 * @extends Emeraude::Input::PointerController This is an input controller.
+	 * @extends EmEn::Input::PointerController This is an input controller.
 	 */
 	class PointerController final : public ControllerInterface
 	{
@@ -60,14 +60,14 @@ namespace Emeraude::Input
 			 */
 			PointerController () noexcept = default;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disable() */
+			/** @copydoc EmEn::Input::ControllerInterface::disable() */
 			void
 			disable (bool state) noexcept override
 			{
 				m_disabled = state;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disabled() */
+			/** @copydoc EmEn::Input::ControllerInterface::disabled() */
 			[[nodiscard]]
 			bool
 			disabled () const noexcept override
@@ -75,7 +75,7 @@ namespace Emeraude::Input
 				return m_disabled;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::isConnected() */
+			/** @copydoc EmEn::Input::ControllerInterface::isConnected() */
 			[[nodiscard]]
 			bool
 			isConnected () const noexcept override
@@ -83,7 +83,7 @@ namespace Emeraude::Input
 				return true;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::getRawState() */
+			/** @copydoc EmEn::Input::ControllerInterface::getRawState() */
 			[[nodiscard]]
 			std::string getRawState () const noexcept override;
 

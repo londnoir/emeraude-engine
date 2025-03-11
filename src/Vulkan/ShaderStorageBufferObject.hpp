@@ -32,12 +32,12 @@
 /* Local inclusions. */
 #include "AbstractDeviceBuffer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines a convenient way to build an shader storage buffer object.
 	 * @note OpenGL guaranteed a minimum size of 128MB.
-	 * @extends Emeraude::Vulkan::AbstractDeviceBuffer This is a device-side buffer.
+	 * @extends EmEn::Vulkan::AbstractDeviceBuffer This is a device-side buffer.
 	 */
 	class ShaderStorageBufferObject final : public AbstractDeviceBuffer
 	{

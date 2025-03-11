@@ -44,16 +44,16 @@
 #include "Tracer.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	class Window;
 }
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	/**
 	 * @brief The gamepad controller class.
-	 * @extends Emeraude::Input::ControllerInterface This is an input controller.
+	 * @extends EmEn::Input::ControllerInterface This is an input controller.
 	 */
 	class GamepadController final : public ControllerInterface
 	{
@@ -67,14 +67,14 @@ namespace Emeraude::Input
 			 */
 			GamepadController () noexcept = default;
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disable() */
+			/** @copydoc EmEn::Input::ControllerInterface::disable() */
 			void
 			disable (bool state) noexcept override
 			{
 				m_disabled = state;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::disabled() */
+			/** @copydoc EmEn::Input::ControllerInterface::disabled() */
 			[[nodiscard]]
 			bool
 			disabled () const noexcept override
@@ -82,7 +82,7 @@ namespace Emeraude::Input
 				return m_disabled;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::isConnected() */
+			/** @copydoc EmEn::Input::ControllerInterface::isConnected() */
 			[[nodiscard]]
 			bool
 			isConnected () const noexcept override
@@ -90,7 +90,7 @@ namespace Emeraude::Input
 				return m_deviceID > -1 && m_deviceID <= DeviceCount;
 			}
 
-			/** @copydoc Emeraude::Input::ControllerInterface::getRawState() */
+			/** @copydoc EmEn::Input::ControllerInterface::getRawState() */
 			[[nodiscard]]
 			std::string getRawState () const noexcept override;
 

@@ -39,11 +39,11 @@
 #include "Vulkan/UniformBufferObject.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief Specialization of view matrices for 2D surface rendering.
-	 * @extends Emeraude::Graphics::ViewMatricesInterface
+	 * @extends EmEn::Graphics::ViewMatricesInterface
 	 */
 	class ViewMatrices2DUBO final : public ViewMatricesInterface
 	{
@@ -57,31 +57,31 @@ namespace Emeraude::Graphics
 			 */
 			ViewMatrices2DUBO () noexcept = default;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::projectionMatrix() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::projectionMatrix() */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			projectionMatrix () const noexcept override
 			{
 				return m_projection;
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::viewMatrix() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::viewMatrix() */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			viewMatrix (bool infinity, size_t /*index*/) const noexcept override
 			{
 				return infinity ? m_infinityView : m_view;
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::position() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::position() */
 			[[nodiscard]]
-			const Libraries::Math::Vector< 3, float > &
+			const Libs::Math::Vector< 3, float > &
 			position () const noexcept override
 			{
 				return m_position;
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::frustum() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::frustum() */
 			[[nodiscard]]
 			const Frustum &
 			frustum (size_t /*index*/) const noexcept override
@@ -89,7 +89,7 @@ namespace Emeraude::Graphics
 				return m_frustum;
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::getAspectRatio() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::getAspectRatio() */
 			[[nodiscard]]
 			float
 			getAspectRatio () const noexcept override
@@ -104,37 +104,37 @@ namespace Emeraude::Graphics
 				return m_bufferData[ViewWidthOffset] / m_bufferData[ViewHeightOffset];
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::fieldOfView() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::fieldOfView() */
 			[[nodiscard]]
 			float
 			fieldOfView () const noexcept override
 			{
-				using namespace Libraries::Math;
+				using namespace EmEn::Libs::Math;
 
 				constexpr auto Rad2Deg = HalfRevolution< float > / Pi< float >;
 
 				return std::atan(1.0F / m_projection[M4x4Col1Row1]) * 2.0F * Rad2Deg;
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::updatePerspectiveViewProperties() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::updatePerspectiveViewProperties() */
 			void updatePerspectiveViewProperties (float width, float height, float distance, float fov) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::updateOrthographicViewProperties() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::updateOrthographicViewProperties() */
 			void updateOrthographicViewProperties (float width, float height, float distance, float near) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::updateViewCoordinates() */
-			void updateViewCoordinates (const Libraries::Math::CartesianFrame< float > & coordinates, const Libraries::Math::Vector< 3, float > & velocity) noexcept override;
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::updateViewCoordinates() */
+			void updateViewCoordinates (const Libs::Math::CartesianFrame< float > & coordinates, const Libs::Math::Vector< 3, float > & velocity) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::updateAmbientLightProperties() */
-			void updateAmbientLightProperties (const Libraries::PixelFactory::Color< float > & color, float intensity) noexcept override;
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::updateAmbientLightProperties() */
+			void updateAmbientLightProperties (const Libs::PixelFactory::Color< float > & color, float intensity) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::create() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::create() */
 			bool create (Renderer & renderer, const std::string & instanceID) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::updateVideoMemory() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::updateVideoMemory() */
 			bool updateVideoMemory () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::destroy() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::destroy() */
 			void
 			destroy () noexcept override
 			{
@@ -145,7 +145,7 @@ namespace Emeraude::Graphics
 				m_uniformBufferObject.reset();
 			}
 
-			/** @copydoc Emeraude::Graphics::ViewMatricesInterface::descriptorSet() */
+			/** @copydoc EmEn::Graphics::ViewMatricesInterface::descriptorSet() */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet *
 			descriptorSet () const noexcept override
@@ -184,10 +184,10 @@ namespace Emeraude::Graphics
 			static constexpr auto AmbientLightColorOffset{28UL};
 			static constexpr auto AmbientLightIntensityOffset{32UL};
 
-			Libraries::Math::Matrix< 4, float > m_projection;
-			Libraries::Math::Matrix< 4, float > m_view;
-			Libraries::Math::Matrix< 4, float > m_infinityView;
-			Libraries::Math::Vector< 3, float > m_position;
+			Libs::Math::Matrix< 4, float > m_projection;
+			Libs::Math::Matrix< 4, float > m_view;
+			Libs::Math::Matrix< 4, float > m_infinityView;
+			Libs::Math::Vector< 3, float > m_position;
 			Frustum m_frustum;
 			std::array< float, ViewUBOElementCount > m_bufferData{
 				/* Projection matrix. */

@@ -39,12 +39,12 @@
 #include "UniformBufferObject.hpp"
 #include "DescriptorSet.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Device;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The shared uniform buffer class.

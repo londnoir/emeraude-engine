@@ -26,7 +26,7 @@
 
 #include "MemoryBarrier.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	MemoryBarrier::MemoryBarrier (VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask) noexcept
 	{

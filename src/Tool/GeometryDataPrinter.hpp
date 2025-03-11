@@ -36,13 +36,13 @@
 
 /* Local inclusions for usages. */
 #include "Graphics/Types.hpp"
-#include "Libraries/VertexFactory/Shape.hpp"
+#include "Libs/VertexFactory/Shape.hpp"
 
-namespace Emeraude::Tool
+namespace EmEn::Tool
 {
 	/**
 	 * @brief The geometry data printer tool.
-	 * @extends Emeraude::Tool::ToolInterface This is tool interface.
+	 * @extends EmEn::Tool::ToolInterface This is tool interface.
 	 */
 	class GeometryDataPrinter final : public ToolInterface
 	{
@@ -57,7 +57,7 @@ namespace Emeraude::Tool
 			 */
 			explicit GeometryDataPrinter (const Arguments & arguments) noexcept;
 
-			/** @copydoc Emeraude::Tool::ToolInterface::execute() */
+			/** @copydoc EmEn::Tool::ToolInterface::execute() */
 			[[nodiscard]]
 			bool execute () noexcept override;
 
@@ -77,7 +77,7 @@ namespace Emeraude::Tool
 			static constexpr auto Enable3DTexCoords{3UL};
 
 			std::string m_outputFile{};
-			Libraries::VertexFactory::Shape< float > m_shape{};
+			Libs::VertexFactory::Shape< float > m_shape{};
 			Graphics::ShapeType m_shapeType{Graphics::ShapeType::Cube};
 			float m_baseSize{1.0F};
 			float m_baseLength{4.0F};

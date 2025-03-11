@@ -35,25 +35,25 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "Libraries/FastJSON.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Resources/Manager.hpp"
 #include "Vulkan/TransferManager.hpp"
 #include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Geometry::VertexGridResource >::ClassId{"VertexGridContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Geometry::VertexGridResource >::ClassId{"VertexGridContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Geometry::VertexGridResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Geometry::VertexGridResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::VertexFactory;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::VertexFactory;
+	using namespace EmEn::Libs::PixelFactory;
 	using namespace Vulkan;
 
 	const size_t VertexGridResource::ClassUID{getClassUID(ClassId)};

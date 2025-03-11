@@ -30,11 +30,11 @@
 #include <sstream>
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "CodeGeneratorInterface.hpp"
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	/** @brief Code location type. */
 	enum class Location
@@ -111,7 +111,7 @@ namespace Emeraude::Saphir
 			 * @return std::string
 			 */
 			Code &
-			operator<< (const Libraries::Math::Vector< 2, float > & value) noexcept
+			operator<< (const Libs::Math::Vector< 2, float > & value) noexcept
 			{
 				m_code << "vec2(" << value.x() << ", " << value.y() << ")";
 
@@ -124,7 +124,7 @@ namespace Emeraude::Saphir
 			 * @return std::string
 			 */
 			Code &
-			operator<< (const Libraries::Math::Vector< 3, float > & value) noexcept
+			operator<< (const Libs::Math::Vector< 3, float > & value) noexcept
 			{
 				m_code << "vec3(" << value.x() << ", " << value.y() << ", " << value.z() << ")";
 
@@ -137,7 +137,7 @@ namespace Emeraude::Saphir
 			 * @return std::string
 			 */
 			Code &
-			operator<< (const Libraries::Math::Vector< 4, float > & value) noexcept
+			operator<< (const Libs::Math::Vector< 4, float > & value) noexcept
 			{
 				m_code << "vec4(" << value.x() << ", " << value.y() << ", " << value.z() << ", " << value.w() << ")";
 
@@ -150,7 +150,7 @@ namespace Emeraude::Saphir
 			 * @return std::string
 			 */
 			Code &
-			operator<< (const Libraries::PixelFactory::Color< float > & value) noexcept
+			operator<< (const Libs::PixelFactory::Color< float > & value) noexcept
 			{
 				m_code << "vec4(" << value.red() << ", " << value.green() << ", " << value.blue() << ", " << value.alpha() << ")";
 

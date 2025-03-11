@@ -38,11 +38,11 @@
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	/**
 	 * @brief The user dialog message class.
-	 * @extends Emeraude::PlatformSpecific::Desktop::Dialog::Abstract This is an user dialog box.
+	 * @extends EmEn::PlatformSpecific::Desktop::Dialog::Abstract This is an user dialog box.
 	 */
 	class Message final : public Abstract
 	{
@@ -60,7 +60,7 @@ namespace Emeraude::PlatformSpecific::Desktop::Dialog
 			 */
 			Message (const std::string & title, std::string message, ButtonLayout buttonLayout = ButtonLayout::OK, MessageType messageType = MessageType::Info) noexcept;
 
-			/** @copydoc Emeraude::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
+			/** @copydoc EmEn::PlatformSpecific::Desktop::Dialog::Abstract::execute() */
 			bool execute (Window * window) noexcept override;
 
 			/**

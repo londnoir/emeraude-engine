@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "Audio/AbstractObject.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
 	/**
 	 * @brief The base class for all OpenAL effects.
-	 * @extends Emeraude::Audio::AbstractObject This is a base OpenAL object.
+	 * @extends EmEn::Audio::AbstractObject This is a base OpenAL object.
 	 */
 	class Abstract : public AbstractObject
 	{
@@ -68,7 +68,7 @@ namespace Emeraude::Audio::Effects
 			 */
 			Abstract & operator= (Abstract && copy) noexcept = default;
 
-			/** @copydoc Emeraude::Audio::AbstractObject::isCreated() const */
+			/** @copydoc EmEn::Audio::AbstractObject::isCreated() const */
 			[[nodiscard]]
 			bool isCreated () const noexcept final;
 

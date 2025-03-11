@@ -33,9 +33,9 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/FastJSON.hpp"
+#include "Libs/Math/Base.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/FastJSON.hpp"
 #include "Saphir/Declaration/Function.hpp"
 #include "Saphir/Declaration/Types.hpp"
 #include "Saphir/Generator/Abstract.hpp"
@@ -52,15 +52,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::Material::BasicResource >::ClassId{"BasicResourceContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::Material::BasicResource >::ClassId{"BasicResourceContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::Material::BasicResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::Material::BasicResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::Material
+namespace EmEn::Graphics::Material
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Math;
 	using namespace Saphir;
 	using namespace Keys;

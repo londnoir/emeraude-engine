@@ -26,7 +26,7 @@
 
 #include "RasterizationOptions.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	RasterizationOptions::RasterizationOptions (PolygonMode polygonMode, CullingMode cullingMode, bool triangleClockwise) noexcept
 		: m_polygonMode(polygonMode), m_cullingMode(cullingMode), m_triangleClockwise(triangleClockwise)

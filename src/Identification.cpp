@@ -30,11 +30,11 @@
 #include <ranges>
 
 
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 
-namespace Emeraude
+namespace EmEn
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	Identification::Identification (const char * name, const Version & version, const char * organization, const char * domain) noexcept
 		: m_applicationName(name), m_applicationVersion(version), m_applicationOrganization(organization), m_applicationDomain(domain)

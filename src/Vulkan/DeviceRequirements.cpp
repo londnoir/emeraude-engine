@@ -31,12 +31,12 @@
 #include <iterator>
 
 /* Local inclusions. */
-#include "Libraries/Math/Base.hpp"
+#include "Libs/Math/Base.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	DeviceRequirements::DeviceRequirements (DeviceJobHint deviceJobHint) noexcept
 		: m_deviceJobHint(deviceJobHint)

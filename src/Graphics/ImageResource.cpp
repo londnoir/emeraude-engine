@@ -33,22 +33,22 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
-#include "Libraries/PixelFactory/FileIO.hpp"
+#include "Libs/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/FileIO.hpp"
 #include "Resources/Manager.hpp"
 #include "Tracer.hpp"
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::ImageResource >::ClassId{"ImageContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::ImageResource >::ClassId{"ImageContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::ImageResource >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::ImageResource >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t ImageResource::ClassUID{getClassUID(ClassId)};
 

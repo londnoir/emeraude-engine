@@ -36,17 +36,17 @@
 /* Local inclusions for inheritances. */
 #include "AbstractDeviceDependentObject.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Device;
 	class DescriptorSetLayout;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The PipelineLayout class. This class describes all external resources used by shaders, UBO, samples, push_constant, except the VBO.
-	 * @extends Emeraude::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
+	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This Vulkan object needs a device.
 	 */
 	class PipelineLayout final : public AbstractDeviceDependentObject
 	{
@@ -124,10 +124,10 @@ namespace Emeraude::Vulkan
 				return !this->operator==(operand);
 			}
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::createOnHardware() */
 			bool createOnHardware () noexcept override;
 
-			/** @copydoc Emeraude::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
+			/** @copydoc EmEn::Vulkan::AbstractDeviceDependentObject::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
 			/**

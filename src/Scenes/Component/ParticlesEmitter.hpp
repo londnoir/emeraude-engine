@@ -36,18 +36,18 @@
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Time/TimedEvent.hpp"
+#include "Libs/Time/TimedEvent.hpp"
 #include "Graphics/RenderableInstance/Multiple.hpp"
 #include "Physics/Particle.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
 	/**
 	 * @brief A class that build a particles generator with mesh or sprite instance.
-	 * @extends Emeraude::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends Libraries::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
+	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
+	 * @extends EmEn::Libs::ObserverTrait This class must dispatch modifications from renderable instance to the entity.
 	 */
-	class ParticlesEmitter final : public Abstract, public Libraries::ObserverTrait
+	class ParticlesEmitter final : public Abstract, public Libs::ObserverTrait
 	{
 		public:
 
@@ -76,7 +76,7 @@ namespace Emeraude::Scenes::Component
 			 */
 			ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable, size_t instanceCount) noexcept;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getRenderableInstance() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getRenderableInstance() const */
 			[[nodiscard]]
 			std::shared_ptr< Graphics::RenderableInstance::Abstract >
 			getRenderableInstance () const noexcept override
@@ -84,7 +84,7 @@ namespace Emeraude::Scenes::Component
 				return m_renderableInstance;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::getComponentType() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char *
 			getComponentType () const noexcept override
@@ -92,33 +92,33 @@ namespace Emeraude::Scenes::Component
 				return ClassId;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingBox() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libraries::Math::Cuboid< float > &
+			const Libs::Math::Cuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return NullBoundingBox;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::boundingSphere() const */
+			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libraries::Math::Sphere< float > &
+			const Libs::Math::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return NullBoundingSphere;
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::move() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
 			void
-			move (const Libraries::Math::CartesianFrame< float > & worldCoordinates) noexcept override
+			move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override
 			{
 				// FIXME: Check the particles coordinates
 			}
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::processLogics() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */
 			void processLogics (const Scene & scene) noexcept override;
 
-			/** @copydoc Emeraude::Scenes::Component::Abstract::shouldRemove() */
+			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
 			/**
@@ -362,7 +362,7 @@ namespace Emeraude::Scenes::Component
 			 * @return void
 			 */
 			void
-			setCustomPhysicsSimulationFunction (const std::function< bool (const Physics::PhysicalEnvironmentProperties &, const Physics::PhysicalObjectProperties &, const Libraries::Math::CartesianFrame< float > &, Physics::Particle &) > & function) noexcept
+			setCustomPhysicsSimulationFunction (const std::function< bool (const Physics::PhysicalEnvironmentProperties &, const Physics::PhysicalObjectProperties &, const Libs::Math::CartesianFrame< float > &, Physics::Particle &) > & function) noexcept
 			{
 				m_customPhysicsSimulationFullFunction = function;
 
@@ -406,10 +406,10 @@ namespace Emeraude::Scenes::Component
 
 		private:
 
-			/** @copydoc Emeraude::Animations::AnimatableInterface::playAnimation() */
-			bool playAnimation (uint8_t animationID, const Libraries::Variant & value, size_t cycle) noexcept override;
+			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
+			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			/** @copydoc Libraries::ObserverTrait::onNotification() */
+			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
@@ -426,7 +426,7 @@ namespace Emeraude::Scenes::Component
 					return m_minimumParticleLifetime;
 				}
 
-				return Libraries::Utility::quickRandom(m_minimumParticleLifetime, m_maximumParticleLifetime);
+				return Libs::Utility::quickRandom(m_minimumParticleLifetime, m_maximumParticleLifetime);
 			}
 
 			/**
@@ -442,7 +442,7 @@ namespace Emeraude::Scenes::Component
 					return m_minimumParticleSize;
 				}
 
-				return Libraries::Utility::quickRandom(m_minimumParticleSize, m_maximumParticleSize);
+				return Libs::Utility::quickRandom(m_minimumParticleSize, m_maximumParticleSize);
 			}
 
 			/* Flag names */
@@ -463,9 +463,9 @@ namespace Emeraude::Scenes::Component
 			std::shared_ptr< Graphics::RenderableInstance::Multiple > m_renderableInstance;
 			Physics::PhysicalObjectProperties m_particlePhysicalProperties{};
 			std::vector< Physics::Particle > m_particles;
-			std::unique_ptr< Libraries::Time::TimedEvent< uint64_t, std::micro > > m_timedEvent;
+			std::unique_ptr< Libs::Time::TimedEvent< uint64_t, std::micro > > m_timedEvent;
 			std::function< bool (Physics::Particle &) > m_customPhysicsSimulationSimpleFunction;
-			std::function< bool (const Physics::PhysicalEnvironmentProperties &, const Physics::PhysicalObjectProperties &, const Libraries::Math::CartesianFrame< float > &, Physics::Particle & particle) > m_customPhysicsSimulationFullFunction;
+			std::function< bool (const Physics::PhysicalEnvironmentProperties &, const Physics::PhysicalObjectProperties &, const Libs::Math::CartesianFrame< float > &, Physics::Particle & particle) > m_customPhysicsSimulationFullFunction;
 			size_t m_particleLimit;
 			uint32_t m_particleGeneratedPerCycle{1};
 			uint32_t m_minimumParticleLifetime{1};

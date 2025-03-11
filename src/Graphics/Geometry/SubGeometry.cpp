@@ -29,9 +29,9 @@
 /* Local inclusions. */
 #include "Types.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	SubGeometry::SubGeometry (uint32_t offset, uint32_t length, bool enableDoubleSidedFaces) noexcept
 		: FlagTrait(0), m_range{offset, length}

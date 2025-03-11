@@ -32,11 +32,11 @@
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
 
-namespace Emeraude::Audio::Filters
+namespace EmEn::Audio::Filters
 {
 	/**
 	 * @brief The band pass filter.
-	 * @extends Emeraude::Audio::Abstract This is a filter.
+	 * @extends EmEn::Audio::Abstract This is a filter.
 	 */
 	class BandPass final : public Abstract
 	{
@@ -50,7 +50,7 @@ namespace Emeraude::Audio::Filters
 			 */
 			BandPass () noexcept;
 
-			/** @copydoc Emeraude::Audio::Filters::Abstract::resetProperties() */
+			/** @copydoc EmEn::Audio::Filters::Abstract::resetProperties() */
 			void resetProperties () noexcept override;
 
 			/**

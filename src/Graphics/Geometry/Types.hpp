@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
 	/** @brief Geometry interface flag bits. */
 	enum GeometryFlagBits : uint32_t

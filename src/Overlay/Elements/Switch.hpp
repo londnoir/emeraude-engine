@@ -35,12 +35,12 @@
 #include "Overlay/ComposedSurface.hpp"
 #include "Interface.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
 	/**
 	 * @brief The switch form element.
-	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
-	 * @extends Emeraude::Overlay::Elements::UIInputInterface this is a user input element.
+	 * @extends EmEn::Overlay::ComposedSurface This a visible element.
+	 * @extends EmEn::Overlay::Elements::UIInputInterface this is a user input element.
 	 */
 	class Switch final : public ComposedSurface, public UIInputInterface
 	{
@@ -56,18 +56,18 @@ namespace Emeraude::Overlay::Elements
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			Switch (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Switch (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerEnter() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onPointerEnter() */
 			void onPointerEnter (float positionX, float positionY) noexcept override;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onPointerLeave() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onPointerLeave() */
 			void onPointerLeave (float positionX, float positionY) noexcept override;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonPress() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onButtonPress() */
 			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onButtonRelease() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onButtonRelease() */
 			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/**
@@ -123,7 +123,7 @@ namespace Emeraude::Overlay::Elements
 			 * @param pixmap A reference to a pixmap.
 			 * @return bool
 			 */
-			bool onDrawFinished (Libraries::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
+			bool onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept override;
 
 			std::shared_ptr< Graphics::ImageResource > m_image{};
 			Status m_status = Status::Normal;

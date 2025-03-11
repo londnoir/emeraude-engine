@@ -37,15 +37,15 @@
 /* Local inclusions for usages. */
 #include "FramebufferProperties.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
-#include "Libraries/Math/Rectangle.hpp"
-#include "Libraries/PixelFactory/Pixmap.hpp"
+#include "Libs/Math/Rectangle.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Vulkan/DescriptorSet.hpp"
 
-namespace Emeraude::Overlay
+namespace EmEn::Overlay
 {
 	/**
 	 * @brief The base class of all overlay surfaces using a pixel buffer.
-	 * @extends Emeraude::Overlay::AbstractSurface This is a surface.
+	 * @extends EmEn::Overlay::AbstractSurface This is a surface.
 	 */
 	class PixelBufferSurface : public AbstractSurface
 	{
@@ -61,21 +61,21 @@ namespace Emeraude::Overlay
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			PixelBufferSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			PixelBufferSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::descriptorSet() const */
+			/** @copydoc EmEn::Overlay::AbstractSurface::descriptorSet() const */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet * descriptorSet () const noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::createOnHardware() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::createOnHardware() */
 			[[nodiscard]]
 			bool createOnHardware (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::destroyFromHardware() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::destroyFromHardware() */
 			bool destroyFromHardware () noexcept final;
 
 			[[nodiscard]]
-			Libraries::PixelFactory::Pixmap< uint8_t > &
+			Libs::PixelFactory::Pixmap< uint8_t > &
 			pixmap () noexcept
 			{
 				return m_localData;
@@ -83,15 +83,15 @@ namespace Emeraude::Overlay
 
 		private:
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::createDescriptorSet() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::createDescriptorSet() */
 			[[nodiscard]]
 			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
 			[[nodiscard]]
 			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept final;
 
-			/** @copydoc Emeraude::Overlay::AbstractSurface::onVideoMemoryUpdate() */
+			/** @copydoc EmEn::Overlay::AbstractSurface::onVideoMemoryUpdate() */
 			[[nodiscard]]
 			bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept final;
 
@@ -118,7 +118,7 @@ namespace Emeraude::Overlay
 			[[nodiscard]]
 			bool getSampler (Graphics::Renderer & renderer) noexcept;
 
-			Libraries::PixelFactory::Pixmap< uint8_t > m_localData;
+			Libs::PixelFactory::Pixmap< uint8_t > m_localData;
 			std::shared_ptr< Vulkan::Image > m_image;
 			std::shared_ptr< Vulkan::ImageView > m_imageView;
 			std::shared_ptr< Vulkan::Sampler > m_sampler;

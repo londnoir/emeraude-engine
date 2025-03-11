@@ -37,10 +37,10 @@
 #include "AbstractObject.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Vulkan
 	{
@@ -71,11 +71,11 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief The command buffer wrapper class
-	 * @extends Emeraude::Vulkan::AbstractObject This object will use the command pool to get the device.
+	 * @extends EmEn::Vulkan::AbstractObject This object will use the command pool to get the device.
 	 */
 	class CommandBuffer final : public AbstractObject
 	{
@@ -272,7 +272,7 @@ namespace Emeraude::Vulkan
 			 * @param color A reference to a color. Default black.
 			 * @return void
 			 */
-			void clearColor (const Image & image, VkImageLayout imageLayout, const Libraries::PixelFactory::Color< float > & color = {}) const noexcept;
+			void clearColor (const Image & image, VkImageLayout imageLayout, const Libs::PixelFactory::Color< float > & color = {}) const noexcept;
 
 			/**
 			 * @brief Clears the depth/stencil part of the image.

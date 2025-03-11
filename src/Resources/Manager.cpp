@@ -36,9 +36,9 @@
 /* Local inclusions. */
 #include "PrimaryServices.hpp"
 
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t Manager::ClassUID{getClassUID(ClassId)};
 

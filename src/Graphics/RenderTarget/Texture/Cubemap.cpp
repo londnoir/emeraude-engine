@@ -35,16 +35,16 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::RenderTarget::Texture::Cubemap >::ClassId{"RenderToCubemapContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::RenderTarget::Texture::Cubemap >::ClassId{"RenderToCubemapContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::RenderTarget::Texture::Cubemap >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::RenderTarget::Texture::Cubemap >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::RenderTarget::Texture
+namespace EmEn::Graphics::RenderTarget::Texture
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Vulkan;
 	using namespace Saphir;
 	using namespace Saphir::Keys;

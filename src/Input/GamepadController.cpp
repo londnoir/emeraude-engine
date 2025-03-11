@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Input
+namespace EmEn::Input
 {
 	std::array< GLFWgamepadstate, DeviceCount > GamepadController::s_devicesState{};
 

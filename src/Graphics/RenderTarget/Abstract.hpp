@@ -35,17 +35,17 @@
 #include <vulkan/vulkan.h>
 
 /* Local inclusions for inheritances. */
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
 
 /* Local inclusions for usages. */
+#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/Types.hpp"
 #include "Vulkan/Sync/Fence.hpp"
 #include "Vulkan/Sync/Semaphore.hpp"
-#include "MasterControl/Types.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -63,13 +63,13 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::RenderTarget
+namespace EmEn::Graphics::RenderTarget
 {
 	/**
 	 * @brief The base class for all render targets.
-	 * @extends Emeraude::MasterControl::AbstractVirtualVideoDevice This is a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This is a virtual video device.
 	 */
-	class Abstract : public MasterControl::AbstractVirtualVideoDevice
+	class Abstract : public AVConsole::AbstractVirtualVideoDevice
 	{
 		public:
 
@@ -350,7 +350,7 @@ namespace Emeraude::Graphics::RenderTarget
 			 * @param enableSyncPrimitives Enable the creation of global sync primitive for this render target.
 			 * @param allowedConnexionType The type of connexion this virtual device allows.
 			 */
-			Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, MasterControl::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept;
+			Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, AVConsole::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept;
 
 			/**
 			 * @brief Sets extents of the render target.

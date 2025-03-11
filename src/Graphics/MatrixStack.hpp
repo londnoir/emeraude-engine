@@ -30,9 +30,9 @@
 #include <stack>
 
 /* Local inclusions. */
-#include "Libraries/Math/Matrix.hpp"
+#include "Libs/Math/Matrix.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief Controls the current object being displayed respectively in the scene hierarchy.
@@ -52,7 +52,7 @@ namespace Emeraude::Graphics
 			 * @return void
 			 */
 			void
-			add (const Libraries::Math::Matrix< 4, float > & matrix) noexcept
+			add (const Libs::Math::Matrix< 4, float > & matrix) noexcept
 			{
 				if ( m_matrices.empty() )
 				{
@@ -70,7 +70,7 @@ namespace Emeraude::Graphics
 			 * @return void
 			 */
 			void
-			replace (const Libraries::Math::Matrix< 4, float > & matrix) noexcept
+			replace (const Libs::Math::Matrix< 4, float > & matrix) noexcept
 			{
 				if ( m_matrices.empty() )
 				{
@@ -104,7 +104,7 @@ namespace Emeraude::Graphics
 			void
 			clear () noexcept
 			{
-				std::stack< Libraries::Math::Matrix< 4, float > > empty;
+				std::stack< Libs::Math::Matrix< 4, float > > empty;
 
 				std::swap(m_matrices, empty);
 			}
@@ -114,7 +114,7 @@ namespace Emeraude::Graphics
 			 * @return const Libraries::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
-			const Libraries::Math::Matrix< 4, float > &
+			const Libs::Math::Matrix< 4, float > &
 			top () const noexcept
 			{
 				if ( m_matrices.empty() )
@@ -127,8 +127,8 @@ namespace Emeraude::Graphics
 
 		private:
 
-			static const Libraries::Math::Matrix< 4, float > s_identity;
+			static const Libs::Math::Matrix< 4, float > s_identity;
 
-			std::stack< Libraries::Math::Matrix< 4, float > > m_matrices;
+			std::stack< Libs::Math::Matrix< 4, float > > m_matrices;
 	};
 }

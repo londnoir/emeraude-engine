@@ -39,7 +39,7 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 	static constexpr auto TracerTag{"Helpers"};
 

@@ -29,11 +29,11 @@
 /* Local inclusions for inheritances. */
 #include "AbstractShaderBlock.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief The InputBlock class
-	 * @extends Emeraude::Saphir::AbstractShaderBlock
+	 * @extends EmEn::Saphir::AbstractShaderBlock
 	 */
 	class InputBlock final : public AbstractShaderBlock
 	{
@@ -54,7 +54,7 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			explicit InputBlock (const AbstractShaderBlock & outputBlock) noexcept;
 
-			/** @copydoc Emeraude::Saphir::DeclarationInterface::sourceCode() */
+			/** @copydoc EmEn::Saphir::DeclarationInterface::sourceCode() */
 			[[nodiscard]]
 			std::string sourceCode () const noexcept override;
 	};

@@ -35,11 +35,11 @@
 /* Local inclusions for usages. */
 #include "Graphics/TextWriter.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
 	/**
 	 * @brief The text element.
-	 * @extends Emeraude::Overlay::ComposedSurface This a visible element.
+	 * @extends EmEn::Overlay::ComposedSurface This a visible element.
 	 */
 	class Text final : public ComposedSurface
 	{
@@ -55,7 +55,7 @@ namespace Emeraude::Overlay::Elements
 			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
-			Text (const FramebufferProperties & framebufferProperties, const std::string & name, const Libraries::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
+			Text (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
 			 * @brief Gives access to the TextWriter for configuration.
@@ -75,7 +75,7 @@ namespace Emeraude::Overlay::Elements
 			 * @return void
 			 */
 			void
-			setClearColor (const Libraries::PixelFactory::Color< float > & color) noexcept
+			setClearColor (const Libs::PixelFactory::Color< float > & color) noexcept
 			{
 				m_clearColor = color;
 				m_textWriter.setClearColor(color);
@@ -86,7 +86,7 @@ namespace Emeraude::Overlay::Elements
 			 * @return const Libraries::PixelFactory::Color< float > &
 			 */
 			[[nodiscard]]
-			const Libraries::PixelFactory::Color< float > &
+			const Libs::PixelFactory::Color< float > &
 			clearColor () const noexcept
 			{
 				return m_clearColor;
@@ -119,7 +119,7 @@ namespace Emeraude::Overlay::Elements
 
 		private:
 
-			Libraries::PixelFactory::Color< float > m_clearColor{Libraries::PixelFactory::Transparent};
+			Libs::PixelFactory::Color< float > m_clearColor{Libs::PixelFactory::Transparent};
 			std::string m_text{};
 			Graphics::TextWriter m_textWriter{};
 	};

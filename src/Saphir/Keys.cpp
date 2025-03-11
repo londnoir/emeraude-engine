@@ -30,7 +30,7 @@
 #include <sstream>
 #include <string>
 
-namespace Emeraude::Saphir
+namespace EmEn::Saphir
 {
 	std::string
 	MatrixPC (const char * componentName) noexcept

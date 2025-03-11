@@ -27,9 +27,9 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
-#include "../Libraries/Node.hpp"
+#include "../Libs/Node.hpp"
 
-using namespace Libraries;
+using namespace EmEn::Libs;
 
 TEST(Node, init)
 {

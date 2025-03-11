@@ -32,20 +32,20 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Cuboid.hpp"
-#include "Libraries/Math/Sphere.hpp"
-#include "Libraries/Math/Vector.hpp"
-#include "Libraries/NameableTrait.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Sphere.hpp"
+#include "Libs/Math/Vector.hpp"
+#include "Libs/NameableTrait.hpp"
 #include "Physics/MovableTrait.hpp"
 #include "Physics/PhysicalObjectProperties.hpp"
 #include "Scenes/AbstractEntity.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Scenes::Component
+namespace EmEn::Scenes::Component
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 	using namespace Physics;
 

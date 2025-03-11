@@ -33,11 +33,11 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::Geometry
+namespace EmEn::Graphics::Geometry
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::VertexFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::VertexFactory;
 
 	static constexpr auto TracerTag{"GeometryInterface"};
 

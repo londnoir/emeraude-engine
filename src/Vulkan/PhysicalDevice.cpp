@@ -32,13 +32,13 @@
 #include <iterator>
 
 /* Local inclusions. */
-#include "Libraries/String.hpp"
+#include "Libs/String.hpp"
 #include "Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	PhysicalDevice::PhysicalDevice (const VkPhysicalDevice & physicalDevice) noexcept
 		: m_physicalDevice(physicalDevice)

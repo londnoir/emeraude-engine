@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <string>
 
-namespace Emeraude
+namespace EmEn
 {
 	/**
 	 * @brief The cached download item class.

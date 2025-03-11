@@ -36,12 +36,12 @@
 #include "Abstract.hpp"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/ResourceTrait.hpp"
 
 /* Forward declarations. */
-namespace Emeraude
+namespace EmEn
 {
 	namespace Graphics
 	{
@@ -54,11 +54,11 @@ namespace Emeraude
 	}
 }
 
-namespace Emeraude::Graphics::TextureResource
+namespace EmEn::Graphics::TextureResource
 {
 	/**
 	 * @brief The texture 2D resource class.
-	 * @extends Emeraude::Graphics::TextureResource::Abstract This is a loadable texture resource.
+	 * @extends EmEn::Graphics::TextureResource::Abstract This is a loadable texture resource.
 	 */
 	class Texture2D final : public Abstract
 	{
@@ -112,83 +112,83 @@ namespace Emeraude::Graphics::TextureResource
 			 */
 			~Texture2D () override;
 
-			/** @copydoc Libraries::ObservableTrait::classUID() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
 			size_t classUID () const noexcept override;
 
-			/** @copydoc Libraries::ObservableTrait::is() const */
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
 			bool is (size_t classUID) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isCreated() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCreated() */
 			[[nodiscard]]
 			bool isCreated () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::createOnHardware() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::createOnHardware() */
 			bool createOnHardware (Renderer & renderer) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::destroyFromHardware() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::destroyFromHardware() */
 			bool destroyFromHardware () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::type() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::type() */
 			[[nodiscard]]
 			Type type () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isGrayScale() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isGrayScale() */
 			[[nodiscard]]
 			bool isGrayScale () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::averageColor() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::averageColor() */
 			[[nodiscard]]
-			Libraries::PixelFactory::Color< float > averageColor () const noexcept override;
+			Libs::PixelFactory::Color< float > averageColor () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::dimensions() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::dimensions() */
 			[[nodiscard]]
 			uint32_t dimensions () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::isCubemapTexture() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCubemapTexture() */
 			[[nodiscard]]
 			bool isCubemapTexture () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameCount() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameCount() */
 			[[nodiscard]]
 			uint32_t frameCount () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::duration() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::duration() */
 			[[nodiscard]]
 			uint32_t duration () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::frameIndexAt() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameIndexAt() */
 			[[nodiscard]]
 			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::image() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::image() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Image > image () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::imageView() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::imageView() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::ImageView > imageView () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::sampler() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::sampler() */
 			[[nodiscard]]
 			std::shared_ptr< Vulkan::Sampler > sampler () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
 			[[nodiscard]]
 			bool request3DTextureCoordinates () const noexcept override;
 
-			/** @copydoc Emeraude::Resources::ResourceTrait::classLabel() const */
+			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
 			const char * classLabel () const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load() */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::load() */
 			bool load () noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load (const std::filesystem::path &) */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::load (const std::filesystem::path &) */
 			bool load (const std::filesystem::path & filepath) noexcept override;
 
-			/** @copydoc Emeraude::Graphics::TextureResource::Abstract::load (const Json::Value &) */
+			/** @copydoc EmEn::Graphics::TextureResource::Abstract::load (const Json::Value &) */
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
@@ -231,7 +231,7 @@ namespace Emeraude::Graphics::TextureResource
 }
 
 /* Expose the resource manager as a convenient type. */
-namespace Emeraude::Resources
+namespace EmEn::Resources
 {
 	using Texture2Ds = Container< Graphics::TextureResource::Texture2D >;
 }

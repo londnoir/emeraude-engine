@@ -33,7 +33,7 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Color.hpp"
+#include "Libs/PixelFactory/Color.hpp"
 #include "Graphics/ImageResource.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Resources/Manager.hpp"
@@ -44,15 +44,15 @@
 
 /* Defining the resource manager class id. */
 template<>
-const char * const Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::AnimatedTexture2D >::ClassId{"AnimatedTexture2DContainer"};
+const char * const EmEn::Resources::Container< EmEn::Graphics::TextureResource::AnimatedTexture2D >::ClassId{"AnimatedTexture2DContainer"};
 
 /* Defining the resource manager ClassUID. */
 template<>
-const size_t Emeraude::Resources::Container< Emeraude::Graphics::TextureResource::AnimatedTexture2D >::ClassUID{getClassUID(ClassId)};
+const size_t EmEn::Resources::Container< EmEn::Graphics::TextureResource::AnimatedTexture2D >::ClassUID{getClassUID(ClassId)};
 
-namespace Emeraude::Graphics::TextureResource
+namespace EmEn::Graphics::TextureResource
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
 	const size_t AnimatedTexture2D::ClassUID{getClassUID(ClassId)};

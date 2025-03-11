@@ -31,9 +31,9 @@
 #include <Audio/OpenAL.EFX.hpp>
 #include "Audio/Utility.hpp"
 
-namespace Emeraude::Audio::Effects
+namespace EmEn::Audio::Effects
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	RingModulator::RingModulator () noexcept
 		: Abstract()

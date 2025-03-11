@@ -30,20 +30,20 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "MasterControl/AbstractVirtualAudioDevice.hpp"
+#include "AVConsole/AbstractVirtualAudioDevice.hpp"
 
 /* Local inclusions for usages. */
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Vector.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Vector.hpp"
 
 /* https://kcat.strangesoft.net/openal-extensions/SOFT_loopback.txt */
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
 	/**
 	 * @brief The audio recorder class.
-	 * @extends Emeraude::MasterControl::AbstractVirtualAudioDevice This is a virtual audio device.
+	 * @extends EmEn::AVConsole::AbstractVirtualAudioDevice This is a virtual audio device.
 	 */
-	class Recorder final : public MasterControl::AbstractVirtualAudioDevice
+	class Recorder final : public AVConsole::AbstractVirtualAudioDevice
 	{
 		public:
 
@@ -55,7 +55,7 @@ namespace Emeraude::Audio
 
 		private:
 
-			/** @copydoc Emeraude::MasterControl::AbstractVirtualDevice::updateDeviceFromCoordinates() */
-			void updateDeviceFromCoordinates (const Libraries::Math::CartesianFrame< float > & worldCoordinates, const Libraries::Math::Vector< 3, float > & worldVelocity) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
+			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 	};
 }

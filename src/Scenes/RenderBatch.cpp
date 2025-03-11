@@ -26,7 +26,7 @@
 
 #include "RenderBatch.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	using namespace Graphics;
 

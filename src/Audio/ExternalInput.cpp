@@ -31,14 +31,14 @@
 #include <iostream>
 
 /* Local inclusions. */
-#include "Libraries/WaveFactory/Wave.hpp"
+#include "Libs/WaveFactory/Wave.hpp"
 #include "Constants.hpp"
 #include "PrimaryServices.hpp"
 #include "Manager.hpp"
 
-namespace Emeraude::Audio
+namespace EmEn::Audio
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	const size_t ExternalInput::ClassUID{getClassUID(ClassId)};
 

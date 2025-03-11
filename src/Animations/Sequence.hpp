@@ -38,11 +38,11 @@
 /* Local inclusions for usages. */
 #include "KeyFrame.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief Define an animation sequence with key frames during a specific time measured in milliseconds.
-	 * @extends Emeraude::Animations::AnimationInterface This is an animation.
+	 * @extends EmEn::Animations::AnimationInterface This is an animation.
 	 */
 	class Sequence final : public AnimationInterface
 	{
@@ -58,10 +58,10 @@ namespace Emeraude::Animations
 			 */
 			explicit Sequence (uint32_t duration, int32_t repeat = -1) noexcept;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::getNextValue() */
-			Libraries::Variant getNextValue () noexcept override;
+			/** @copydoc EmEn::Animations::AnimationInterface::getNextValue() */
+			Libs::Variant getNextValue () noexcept override;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPlaying() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPlaying() */
 			[[nodiscard]]
 			bool
 			isPlaying () const noexcept override
@@ -69,7 +69,7 @@ namespace Emeraude::Animations
 				return m_flags[IsPlaying];
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPaused() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPaused() */
 			[[nodiscard]]
 			bool
 			isPaused () const noexcept override
@@ -77,7 +77,7 @@ namespace Emeraude::Animations
 				return !m_flags[IsPlaying];
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isFinished() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isFinished() */
 			[[nodiscard]]
 			bool
 			isFinished () const noexcept override
@@ -85,10 +85,10 @@ namespace Emeraude::Animations
 				return m_repeat == 0 && m_elapsedTime >= m_duration;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::play() */
+			/** @copydoc EmEn::Animations::AnimationInterface::play() */
 			bool play () noexcept override;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::pause() */
+			/** @copydoc EmEn::Animations::AnimationInterface::pause() */
 			bool pause () noexcept override;
 
 			/**
@@ -110,7 +110,7 @@ namespace Emeraude::Animations
 			* @param interpolation The type of interpolation. Default linear.
 			* @return void
 			*/
-			void addKeyFrame (uint32_t timeCode, const Libraries::Variant & value, Libraries::Math::InterpolationType interpolation = Libraries::Math::InterpolationType::Linear) noexcept;
+			void addKeyFrame (uint32_t timeCode, const Libs::Variant & value, Libs::Math::InterpolationType interpolation = Libs::Math::InterpolationType::Linear) noexcept;
 
 			/**
 			 * @brief Adds a key frame with a position relative to the sequence.
@@ -119,7 +119,7 @@ namespace Emeraude::Animations
 			 * @param interpolation The type of interpolation. Default linear.
 			 * @return void
 			 */
-			void addKeyFrame (float position, const Libraries::Variant & value, Libraries::Math::InterpolationType interpolation = Libraries::Math::InterpolationType::Linear) noexcept;
+			void addKeyFrame (float position, const Libs::Variant & value, Libs::Math::InterpolationType interpolation = Libs::Math::InterpolationType::Linear) noexcept;
 
 			/**
 			 * @brief Sets the current animation range time.
@@ -166,7 +166,7 @@ namespace Emeraude::Animations
 			 * @param factor The interpolation factor between the two frames.
 			 * @return Libraries::Variant
 			 */
-			static Libraries::Variant getLinearInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
+			static Libs::Variant getLinearInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
 
 			/**
 			 * @brief Performs a cosine interpolation.
@@ -175,7 +175,7 @@ namespace Emeraude::Animations
 			 * @param factor The interpolation factor between the two frames.
 			 * @return Libraries::Variant
 			 */
-			static Libraries::Variant getCosineInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
+			static Libs::Variant getCosineInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
 
 			/**
 			 * @brief Performs a cubic interpolation.
@@ -184,7 +184,7 @@ namespace Emeraude::Animations
 			 * @param factor The interpolation factor between the two frames.
 			 * @return Libraries::Variant
 			 */
-			static Libraries::Variant getCubicInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
+			static Libs::Variant getCubicInterpolation (const KeyFrames::const_iterator & itStart, const KeyFrames::const_iterator & itEnd, float factor) noexcept;
 
 			/* Flag names. */
 			static constexpr auto IsPlaying{0UL};

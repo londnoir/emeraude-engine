@@ -28,7 +28,7 @@
 
 #if IS_LINUX
 
-namespace Emeraude::PlatformSpecific
+namespace EmEn::PlatformSpecific
 {
 
 }

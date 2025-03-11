@@ -36,7 +36,7 @@
 #include "AbstractEntity.hpp"
 #include "Component/Abstract.hpp"
 
-namespace Emeraude::Scenes
+namespace EmEn::Scenes
 {
 	/**
 	 * @brief Class representing temporarily the link between a node and a new component.

@@ -31,12 +31,12 @@
 #include <cstddef>
 
 /* Local inclusions. */
-#include "Libraries/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Libraries/ParallelizableTrait.hpp"
-#include "Libraries/Utility.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
+#include "Libs/ParallelizableTrait.hpp"
+#include "Libs/Utility.hpp"
 
-using namespace Libraries;
-using namespace Libraries::Time::Elapsed;
+using namespace EmEn::Libs;
+using namespace EmEn::Libs::Time::Elapsed;
 
 class Fibonnizzer final : public ParallelizableTrait< size_t >
 {

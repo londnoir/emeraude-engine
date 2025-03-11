@@ -27,15 +27,15 @@
 #pragma once
 
 /* Local inclusions for usages. */
-#include "Libraries/Variant.hpp"
+#include "Libs/Variant.hpp"
 #include "AnimationInterface.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
 	/**
 	 * @brief Animation using a simple constant value.
 	 * @note ie, This can be used to add 1 degree each logic cycle to a rotation.
-	 * @extends Emeraude::Animations::AnimationInterface This is an animation.
+	 * @extends EmEn::Animations::AnimationInterface This is an animation.
 	 */
 	class ConstantValue final : public AnimationInterface
 	{
@@ -53,16 +53,16 @@ namespace Emeraude::Animations
 			 * @brief Constructs a constant value with a next value [std::move].
 			 * @param getNextValue The next value.
 			 */
-			explicit ConstantValue (Libraries::Variant getNextValue) noexcept;
+			explicit ConstantValue (Libs::Variant getNextValue) noexcept;
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::getNextValue() */
-			Libraries::Variant
+			/** @copydoc EmEn::Animations::AnimationInterface::getNextValue() */
+			Libs::Variant
 			getNextValue () noexcept override
 			{
 				return m_value;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPlaying() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPlaying() */
 			[[nodiscard]]
 			bool
 			isPlaying () const noexcept override
@@ -70,7 +70,7 @@ namespace Emeraude::Animations
 				return true;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isPaused() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isPaused() */
 			[[nodiscard]]
 			bool
 			isPaused () const noexcept override
@@ -78,7 +78,7 @@ namespace Emeraude::Animations
 				return false;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::isFinished() */
+			/** @copydoc EmEn::Animations::AnimationInterface::isFinished() */
 			[[nodiscard]]
 			bool
 			isFinished () const noexcept override
@@ -86,14 +86,14 @@ namespace Emeraude::Animations
 				return false;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::play() */
+			/** @copydoc EmEn::Animations::AnimationInterface::play() */
 			bool
 			play () noexcept override
 			{
 				return true;
 			}
 
-			/** @copydoc Emeraude::Animations::AnimationInterface::pause() */
+			/** @copydoc EmEn::Animations::AnimationInterface::pause() */
 			bool
 			pause () noexcept override
 			{
@@ -106,13 +106,13 @@ namespace Emeraude::Animations
 			 * @return void
 			 */
 			void
-			setValue (const Libraries::Variant & value) noexcept
+			setValue (const Libs::Variant & value) noexcept
 			{
 				m_value = value;
 			}
 
 		private:
 
-			Libraries::Variant m_value;
+			Libs::Variant m_value;
 	};
 }

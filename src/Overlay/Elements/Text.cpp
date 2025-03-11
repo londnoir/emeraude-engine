@@ -29,10 +29,10 @@
 /* Local inclusions. */
 #include "Tracer.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace PixelFactory;
 	using namespace Graphics;
 

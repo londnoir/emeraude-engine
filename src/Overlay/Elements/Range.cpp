@@ -27,13 +27,13 @@
 #include "Range.hpp"
 
 /* Local inclusions. */
-#include "Libraries/PixelFactory/Processor.hpp"
+#include "Libs/PixelFactory/Processor.hpp"
 
-namespace Emeraude::Overlay::Elements
+namespace EmEn::Overlay::Elements
 {
-	using namespace Libraries;
-	using namespace Libraries::Math;
-	using namespace Libraries::PixelFactory;
+	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
+	using namespace EmEn::Libs::PixelFactory;
 
 	Range::Range (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
 		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())

@@ -29,7 +29,7 @@
 /* STL inclusions. */
 #include <sstream>
 
-namespace Emeraude::Saphir::Declaration::Member
+namespace EmEn::Saphir::Declaration::Member
 {
 	PushConstant::PushConstant (VariableType type, Key name, size_t arraySize) noexcept
 		: m_type(type), m_name(name), m_arraySize(arraySize)

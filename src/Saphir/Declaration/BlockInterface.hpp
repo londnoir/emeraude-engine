@@ -33,11 +33,11 @@
 #include "Interface.hpp"
 #include "Structure.hpp"
 
-namespace Emeraude::Saphir::Declaration
+namespace EmEn::Saphir::Declaration
 {
 	/**
 	 * @brief Base class for GLSL interface blocks.
-	 * @extends Emeraude::Saphir::DeclarationInterface This is a shader code declaration.
+	 * @extends EmEn::Saphir::DeclarationInterface This is a shader code declaration.
 	 *
 	 * storage_qualifier block_name
 	 * {
@@ -79,7 +79,7 @@ namespace Emeraude::Saphir::Declaration
 			 */
 			~BlockInterface () override = default;
 
-			/** @copydoc Emeraude::Saphir::Declaration::Interface::name() */
+			/** @copydoc EmEn::Saphir::Declaration::Interface::name() */
 			[[nodiscard]]
 			Key name () const noexcept final;
 

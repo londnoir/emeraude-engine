@@ -26,9 +26,9 @@
 
 #include "ConstantValue.hpp"
 
-namespace Emeraude::Animations
+namespace EmEn::Animations
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	ConstantValue::ConstantValue (Variant value) noexcept
 		: m_value(std::move(value))

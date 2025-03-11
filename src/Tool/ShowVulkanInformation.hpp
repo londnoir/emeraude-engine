@@ -29,16 +29,16 @@
 /* Local inclusions for inheritances. */
 #include "ToolInterface.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class Instance;
 }
 
-namespace Emeraude::Tool
+namespace EmEn::Tool
 {
 	/**
 	 * @brief The vulkan information class.
-	 * @extends Emeraude::Tool::ToolInterface This is tool interface.
+	 * @extends EmEn::Tool::ToolInterface This is tool interface.
 	 */
 	class ShowVulkanInformation final : public ToolInterface
 	{
@@ -54,7 +54,7 @@ namespace Emeraude::Tool
 			 */
 			explicit ShowVulkanInformation (const Arguments & arguments, const Vulkan::Instance & vulkanInstance) noexcept;
 
-			/** @copydoc Emeraude::Tool::ToolInterface::execute() */
+			/** @copydoc EmEn::Tool::ToolInterface::execute() */
 			[[nodiscard]]
 			bool execute () noexcept override;
 

@@ -26,7 +26,7 @@
 
 #include "OpenFile.hpp"
 
-namespace Emeraude::PlatformSpecific::Desktop::Dialog
+namespace EmEn::PlatformSpecific::Desktop::Dialog
 {
 	OpenFile::OpenFile (const std::string & title, bool selectFolder, bool multiSelect)
 		: Abstract(title)

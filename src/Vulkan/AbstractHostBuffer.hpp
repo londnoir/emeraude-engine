@@ -36,16 +36,16 @@
 #include "DeviceMemory.hpp"
 
 /* Forward declarations. */
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	class MemoryRegion;
 }
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief Defines an abstract class for all host-side buffers in Vulkan API.
-	 * @extends Emeraude::Vulkan::Buffer This is the base for Vulkan buffer logics.
+	 * @extends EmEn::Vulkan::Buffer This is the base for Vulkan buffer logics.
 	 */
 	class AbstractHostBuffer : public Buffer
 	{

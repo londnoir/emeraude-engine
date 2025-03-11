@@ -38,7 +38,7 @@
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
 	/**
 	 * @brief This class describes the requirements to create a Vulkan logical device.

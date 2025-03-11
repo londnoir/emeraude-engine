@@ -26,9 +26,9 @@
 
 #include "MeshLayer.hpp"
 
-namespace Emeraude::Graphics::Renderable
+namespace EmEn::Graphics::Renderable
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 
 	MeshLayer::MeshLayer (const std::string & name, const std::shared_ptr< Material::Interface > & material, const RasterizationOptions & options, int flags) noexcept
 		: NameableTrait(name), m_material(material), m_rasterizationOptions(options), m_renderableFlags(flags)

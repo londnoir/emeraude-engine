@@ -38,16 +38,16 @@
 #include "SettingKeys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Graphics::RenderTarget::ShadowMap
+namespace EmEn::Graphics::RenderTarget::ShadowMap
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Vulkan;
 	using namespace Saphir;
 
 	static constexpr auto TracerTag{"AbstractShadowMap"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept
-		: RenderTarget::Abstract(name, precisions, extent, renderType, MasterControl::ConnexionType::Input, true)
+		: RenderTarget::Abstract(name, precisions, extent, renderType, AVConsole::ConnexionType::Input, true)
 	{
 
 	}

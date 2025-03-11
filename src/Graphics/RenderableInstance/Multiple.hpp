@@ -36,16 +36,16 @@
 
 /* Local inclusions for usages. */
 #include "Graphics/Renderable/Interface.hpp"
-#include "Libraries/Math/CartesianFrame.hpp"
-#include "Libraries/Math/Matrix.hpp"
+#include "Libs/Math/CartesianFrame.hpp"
+#include "Libs/Math/Matrix.hpp"
 #include "Vulkan/VertexBufferObject.hpp"
 
-namespace Emeraude::Graphics::RenderableInstance
+namespace EmEn::Graphics::RenderableInstance
 {
 	/**
 	 * @brief This is a renderable object that use a VBO to determine multiple locations for the renderable object.
 	 * @note This version use its own VBO to store locations.
-	 * @extends Emeraude::Graphics::RenderableInstance::Abstract It needs the base of a renderable instance.
+	 * @extends EmEn::Graphics::RenderableInstance::Abstract It needs the base of a renderable instance.
 	 */
 	class Multiple final : public Abstract
 	{
@@ -60,7 +60,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @param instanceLocations A reference to a vector of coordinates. The max location count will be extracted from size().
 			 * @param flagBits The multiple renderable instance level flags. Default 0.
 			 */
-			Multiple (const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< Libraries::Math::CartesianFrame< float > > & instanceLocations, uint32_t flagBits = 0) noexcept;
+			Multiple (const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< Libs::Math::CartesianFrame< float > > & instanceLocations, uint32_t flagBits = 0) noexcept;
 
 			/**
 			 * @brief Constructs a renderable instance.
@@ -70,7 +70,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 */
 			Multiple (const std::shared_ptr< Renderable::Interface > & renderable, size_t instanceCount, uint32_t flagBits = 0) noexcept;
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::isModelMatricesCreated() const */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::isModelMatricesCreated() const */
 			[[nodiscard]]
 			bool
 			isModelMatricesCreated () const noexcept override
@@ -83,7 +83,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				return m_vertexBufferObject->isCreated();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::resetModelMatrices() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::resetModelMatrices() */
 			void
 			resetModelMatrices () noexcept override
 			{
@@ -92,7 +92,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				this->updateVideoMemory();
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelUniformBufferObject() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::useModelUniformBufferObject() */
 			[[nodiscard]]
 			bool
 			useModelUniformBufferObject () const noexcept override
@@ -100,7 +100,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				return false;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::useModelVertexBufferObject() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::useModelVertexBufferObject() */
 			[[nodiscard]]
 			bool
 			useModelVertexBufferObject () const noexcept override
@@ -108,9 +108,9 @@ namespace Emeraude::Graphics::RenderableInstance
 				return true;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::worldPosition() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::worldPosition() */
 			[[nodiscard]]
-			Libraries::Math::Vector< 3, float >
+			Libs::Math::Vector< 3, float >
 			worldPosition () const noexcept override
 			{
 				// TODO: This should have the average location ...
@@ -135,7 +135,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool updateLocalData (const Libraries::Math::CartesianFrame< float > & instanceLocation, size_t instanceIndex) noexcept;
+			bool updateLocalData (const Libs::Math::CartesianFrame< float > & instanceLocation, size_t instanceIndex) noexcept;
 
 			/**
 			 * @brief Updates instance locations from a batch.
@@ -144,7 +144,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool updateLocalData (const std::vector< Libraries::Math::CartesianFrame< float > > & instanceLocations, size_t instanceOffset = 0) noexcept;
+			bool updateLocalData (const std::vector< Libs::Math::CartesianFrame< float > > & instanceLocations, size_t instanceOffset = 0) noexcept;
 
 			/**
 			 * @brief Copies local data to video memory.
@@ -154,10 +154,10 @@ namespace Emeraude::Graphics::RenderableInstance
 
 		private:
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::pushMatrices() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::pushMatrices() */
 			void pushMatrices (const Vulkan::CommandBuffer & commandBuffer, const Vulkan::PipelineLayout & pipelineLayout, const ViewMatricesInterface & viewMatrices, const Saphir::Program & program) const noexcept override;
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::instanceCount() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::instanceCount() */
 			[[nodiscard]]
 			size_t
 			instanceCount () const noexcept override
@@ -165,7 +165,7 @@ namespace Emeraude::Graphics::RenderableInstance
 				return m_activeInstanceCount;
 			}
 
-			/** @copydoc Emeraude::Graphics::RenderableInstance::Abstract::bindInstanceModelLayer() */
+			/** @copydoc EmEn::Graphics::RenderableInstance::Abstract::bindInstanceModelLayer() */
 			void bindInstanceModelLayer (const Vulkan::CommandBuffer & commandBuffer, size_t layerIndex) const noexcept override;
 
 			/**
@@ -188,7 +188,7 @@ namespace Emeraude::Graphics::RenderableInstance
 			 * @param strict Ensure the two vectors are same size. Default no.
 			 * @return bool
 			 */
-			static bool coordinatesToModelMatrices (const std::vector< Libraries::Math::CartesianFrame< float > > & coordinates, std::vector< Libraries::Math::Matrix< 4, float > > & modelMatrices, bool strict = false) noexcept;
+			static bool coordinatesToModelMatrices (const std::vector< Libs::Math::CartesianFrame< float > > & coordinates, std::vector< Libs::Math::Matrix< 4, float > > & modelMatrices, bool strict = false) noexcept;
 
 			/* Position vector (vec3 aligned to a vec4) + scale vector (vec3 aligned to a vec4) */
 			//static constexpr size_t SpriteVBOElementCount = 4UL + 4UL;

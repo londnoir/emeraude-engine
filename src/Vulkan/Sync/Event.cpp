@@ -31,7 +31,7 @@
 #include "Vulkan/Utility.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan::Sync
+namespace EmEn::Vulkan::Sync
 {
 	const char *
 	to_cstring (EventStatus value) noexcept

@@ -40,9 +40,9 @@
 #include "SettingKeys.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Vulkan
+namespace EmEn::Vulkan
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 
 	Device::Device (const std::shared_ptr< PhysicalDevice > & physicalDevice) noexcept

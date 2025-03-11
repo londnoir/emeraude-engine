@@ -29,7 +29,7 @@
 /* Local inclusions for usages. */
 #include "Types.hpp"
 
-namespace Emeraude::Graphics
+namespace EmEn::Graphics
 {
 	/**
 	 * @brief Defines options to rasterize a renderable instance.

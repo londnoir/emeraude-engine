@@ -29,11 +29,11 @@
 /* Local inclusion for inheritances */
 #include "Abstract.hpp"
 
-namespace Emeraude::Overlay::Layouts
+namespace EmEn::Overlay::Layouts
 {
 	/**
 	 * @brief The horizontal layout.
-	 * @extends Emeraude::Overlay::Layouts::Abstract
+	 * @extends EmEn::Overlay::Layouts::Abstract
 	 */
 	class Horizontal final : public Abstract
 	{

@@ -30,17 +30,17 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "MasterControl/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualVideoDevice.hpp"
 
 /* Local inclusions for usages. */
 
-namespace Emeraude::Graphics::RenderTarget
+namespace EmEn::Graphics::RenderTarget
 {
 	/**
 	 * @brief The base class for all render target filters.
-	 * @extends Emeraude::MasterControl::AbstractVirtualVideoDevice This is a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This is a virtual video device.
 	 */
-	class AbstractFilter : public MasterControl::AbstractVirtualVideoDevice
+	class AbstractFilter : public AVConsole::AbstractVirtualVideoDevice
 	{
 		protected:
 

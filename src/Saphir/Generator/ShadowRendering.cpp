@@ -27,16 +27,16 @@
 #include "ShadowRendering.hpp"
 
 /* Local inclusions. */
-#include "Libraries/SourceCodeParser.hpp"
+#include "Libs/SourceCodeParser.hpp"
 #include "Graphics/RenderTarget/Abstract.hpp"
 #include "Graphics/RenderableInstance/Abstract.hpp"
 #include "Graphics/Types.hpp"
 #include "Saphir/Code.hpp"
 #include "Tracer.hpp"
 
-namespace Emeraude::Saphir::Generator
+namespace EmEn::Saphir::Generator
 {
-	using namespace Libraries;
+	using namespace EmEn::Libs;
 	using namespace Graphics;
 	using namespace Vulkan;
 	using namespace Keys;
