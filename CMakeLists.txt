@@ -325,6 +325,8 @@ if ( EMERAUDE_ENABLE_LZMA )
 endif ()
 
 if ( EMERAUDE_ENABLE_LIBZIP )
+	include(SetupBZIP2)
+
 	include(SetupZIP)
 endif ()
 

@@ -1,5 +1,4 @@
 if ( MSVC )
-
 	message("Enabling SNDFile library from local binary ...")
 
 	set(SNDFILE_VERSION "1.2.2bin")
@@ -14,15 +13,12 @@ if ( MSVC )
 		${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/sndfile.dll
 		ONLY_IF_DIFFERENT
 	)
-
 else ()
-
 	message("Enabling SNDFile library from system ...")
 
 	find_package(PkgConfig REQUIRED)
 
 	pkg_check_modules(SNDFILE REQUIRED sndfile)
-
 endif ()
 
 message("SndFile ${SNDFILE_VERSION} library enabled !")

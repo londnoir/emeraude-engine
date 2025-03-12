@@ -1,5 +1,4 @@
 if ( EMERAUDE_USE_SYSTEM_LIBS )
-
 	message("Enabling LibZib library from system ...")
 
 	find_package(PkgConfig REQUIRED)
@@ -9,13 +8,14 @@ if ( EMERAUDE_USE_SYSTEM_LIBS )
 	target_include_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_INCLUDE_DIRS})
 	target_link_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARY_DIRS})
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
-
 else ()
-
 	message("Enabling LibZib library from local source ...")
 
-	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
-
+	if ( MSVC )
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/zip.lib)
+	else ()
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libzip.a)
+	endif ()
 endif ()
 
 set(ZIP_ENABLED On) # Complete the "libraries_config.hpp" file

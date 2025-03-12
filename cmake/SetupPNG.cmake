@@ -1,5 +1,4 @@
 if ( EMERAUDE_USE_SYSTEM_LIBS )
-
 	message("Enabling LibPNG library from system ...")
 
 	find_package(PkgConfig REQUIRED)
@@ -9,9 +8,7 @@ if ( EMERAUDE_USE_SYSTEM_LIBS )
 	target_include_directories(${PROJECT_NAME} PRIVATE ${PNG_INCLUDE_DIRS})
 	target_link_directories(${PROJECT_NAME} PRIVATE ${PNG_LIBRARY_DIRS})
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${PNG_LIBRARIES})
-
 else ()
-
 	message("Enabling LibPNG library from local source ...")
 
 	if ( MSVC )
@@ -22,12 +19,11 @@ else ()
 		endif ()
 	else ()
 		if ( CMAKE_BUILD_TYPE MATCHES Debug )
-			target_link_libraries(${PROJECT_NAME} PRIVATE png16d)
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libpng16d.a)
 		else ()
-			target_link_libraries(${PROJECT_NAME} PRIVATE png16)
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libpng16.a)
 		endif ()
 	endif ()
-
 endif ()
 
 set(PNG_ENABLED On) # Complete the "libraries_config.hpp" file
