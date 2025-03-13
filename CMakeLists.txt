@@ -76,8 +76,12 @@ else ()
 endif ()
 
 # Create constant variable for dependency inclusions
-get_filename_component(TEMP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src ABSOLUTE)
-set(EMERAUDE_INCLUDE_DIR ${TEMP_INCLUDE_DIR} CACHE STRING "Emeraude include directory.")
+get_filename_component(TEMP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src ABSOLUTE)
+set(EMERAUDE_SOURCE_DIR ${TEMP_DIR} CACHE STRING "Emeraude-Engine source directory.")
+
+# Create constant variable for dependency inclusions
+get_filename_component(TEMP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies ABSOLUTE)
+set(EMERAUDE_DEPENDENCIES_DIR ${TEMP_DIR} CACHE STRING "Emeraude-Engine dependencies directory.")
 
 # Common libraries directory
 if ( UNIX AND NOT APPLE )
@@ -140,7 +144,7 @@ endif ()
 
 # Print out project paths
 message("[${PROJECT_NAME}] Project directory : ${CMAKE_SOURCE_DIR}, current : ${CMAKE_CURRENT_SOURCE_DIR}")
-message("[${PROJECT_NAME}] Source directory : ${EMERAUDE_INCLUDE_DIR}")
+message("[${PROJECT_NAME}] Source directory : ${EMERAUDE_SOURCE_DIR}")
 message("[${PROJECT_NAME}] Binary directory : ${CMAKE_BINARY_DIR}, current : ${CMAKE_CURRENT_BINARY_DIR}")
 message("[${PROJECT_NAME}] Install directory : ${CMAKE_INSTALL_PREFIX}")
 
@@ -409,7 +413,7 @@ if ( EMERAUDE_ENABLE_TESTS )
 		SOVERSION 1
 	)
 
-	target_include_directories(EmeraudeTest PRIVATE ${EMERAUDE_INCLUDE_DIR})
+	target_include_directories(EmeraudeTest PRIVATE ${EMERAUDE_SOURCE_DIR})
 	target_link_libraries(EmeraudeTest PRIVATE ${PROJECT_NAME})
 
 	# Enabling google test as sub project

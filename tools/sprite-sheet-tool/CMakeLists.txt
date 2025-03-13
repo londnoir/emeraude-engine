@@ -100,5 +100,5 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sr
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../.. Emeraude)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EMERAUDE_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${EMERAUDE_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC Emeraude)
