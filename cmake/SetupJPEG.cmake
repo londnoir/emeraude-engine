@@ -18,4 +18,4 @@ else ()
 	endif ()
 endif ()
 
-set(JPEG_ENABLED On) # Complete the "libraries_config.hpp" file
+set(JPEG_ENABLED On)

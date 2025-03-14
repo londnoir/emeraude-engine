@@ -31,7 +31,11 @@
 #include <algorithm>
 
 /* Third-party inclusions. */
+#ifdef EMERAUDE_USE_SYSTEM_LIBS
+#include <glslang/SPIRV/GlslangToSpv.h>
+#else
 #include "SPIRV/GlslangToSpv.h"
+#endif
 
 /* Local inclusions. */
 #include "Libraries/SourceCodeParser.hpp"
@@ -761,8 +765,8 @@ namespace Emeraude::Saphir
 			.validate = false,
 			.emitNonSemanticShaderDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
 			.emitNonSemanticShaderDebugSource = false,//BOOLEAN_FOLLOWING_DEBUG,
-			.compileOnly = false,
-			.optimizerAllowExpandedIDBound = false
+			//.compileOnly = false,
+			//.optimizerAllowExpandedIDBound = false
 		};
 
 		GlslangToSpv(*program.getIntermediate(shaderType), binaryCode, &logger, &spvOptions);

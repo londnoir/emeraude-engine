@@ -33,16 +33,13 @@
 #include <iostream>
 
 /* Third-party inclusions. */
-#ifdef ZLIB_ENABLED
 #include <zlib.h>
-#endif
 
 namespace Libraries::Compression::ZLIB
 {
 	size_t
 	compressStream (std::istream & sourceStream, std::ostream & targetStream, size_t chunkSize, int level) noexcept
 	{
-#ifdef ZLIB_ENABLED
 		auto uLongf_chunkSize = static_cast< uLongf >(chunkSize);
 		sourceStream.seekg(0, std::istream::end);
 		const std::streamoff finalPosition = sourceStream.tellg();
@@ -138,17 +135,11 @@ namespace Libraries::Compression::ZLIB
 		}
 
 		return compressedSize;
-#else
-		std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", ZLib not available !" "\n";
-
-		return 0;
-#endif
 	}
 
 	bool
 	decompressStream (std::istream & sourceStream, std::ostream & targetStream) noexcept
 	{
-#ifdef ZLIB_ENABLED
 		/* Compressed source stream will go here. */
 		std::string source;
 		/* Uncompressed buffer will go here
@@ -209,11 +200,6 @@ namespace Libraries::Compression::ZLIB
 		std::cerr << __PRETTY_FUNCTION__ << ", stream seems broken." "\n";
 
 		return false;
-#else
-		std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", ZLib not available !" "\n";
-
-		return false;
-#endif
 	}
 
 	/**

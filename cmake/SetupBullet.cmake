@@ -1,10 +1,16 @@
-find_package(Bullet REQUIRED)
+if ( NOT BULLET_ENABLED )
+	message("Enabling Bullet library from local source ...")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${BULLET_INCLUDE_DIRS})
-target_link_directories(${PROJECT_NAME} PRIVATE ${BULLET_LIBRARIES})
+	find_package(Bullet REQUIRED)
 
-message("Bullet library enabled !")
-message(" - Headers : ${BULLET_INCLUDE_DIRS}")
-message(" - Libraries : ${BULLET_LIBRARIES}")
+	target_include_directories(${PROJECT_NAME} PRIVATE ${BULLET_INCLUDE_DIRS})
+	target_link_directories(${PROJECT_NAME} PRIVATE ${BULLET_LIBRARIES})
 
-set(BULLET_ENABLED On) # Complete the "libraries_config.hpp" file
+	message("Bullet library enabled !")
+	message(" - Headers : ${BULLET_INCLUDE_DIRS}")
+	message(" - Libraries : ${BULLET_LIBRARIES}")
+
+	set(BULLET_ENABLED On)
+else ()
+	message("The Bullet library is already enabled.")
+endif ()

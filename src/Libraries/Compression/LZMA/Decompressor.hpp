@@ -29,8 +29,6 @@
 /* Engine configuration file. */
 #include "emeraude_config.hpp"
 
-#if defined(LZMA_ENABLED) && !defined(WIN32)
-
 /* STL inclusions. */
 #include <cstdint>
 #include <sstream>
@@ -137,5 +135,3 @@ namespace Libraries::Compression::LZMA
 			bool m_ready{false};
 	};
 }
-
-#endif

@@ -26,8 +26,6 @@
 
 #include "ZipReader.hpp"
 
-#ifdef ZIP_ENABLED
-
 /* STL inclusions. */
 #include <iostream>
 #include <fstream>
@@ -213,5 +211,3 @@ namespace Libraries::IO
 		}
 	}
 }
-
-#endif

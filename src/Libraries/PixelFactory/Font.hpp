@@ -35,16 +35,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
 
 /* Third-party inclusions. */
-#ifdef FREETYPE_ENABLED
 #include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-#endif
 
 /* Local inclusions. */
 #include "Pixmap.hpp"
@@ -278,7 +275,6 @@ namespace Libraries::PixelFactory
 			bool
 			readTrueTypeFile (const std::filesystem::path & filepath) noexcept
 			{
-#ifdef FREETYPE_ENABLED
 				FT_Library library{};
 				FT_Face face{};
 
@@ -408,11 +404,6 @@ namespace Libraries::PixelFactory
 				FT_Done_FreeType(library);
 
 				return true;
-#else
-				std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LibFreeType is not available ! Unable to save image to " << filepath << '\n';
-
-				return false;
-#endif
 			}
 
 			/**

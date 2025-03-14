@@ -33,16 +33,13 @@
 #include <iostream>
 
 /* Third-party inclusions. */
-#ifdef LZMA_ENABLED
 #include "lzma.h"
-#endif
 
 namespace Libraries::Compression::LZMA
 {
 	bool
 	compressString (const std::string & input, std::string & output, int level) noexcept
 	{
-#ifdef LZMA_ENABLED
 		output.clear();
 		output.resize(input.size() + (input.size() >> 2) + 128);
 
@@ -69,17 +66,11 @@ namespace Libraries::Compression::LZMA
 		output.resize(outPosition);
 
 		return true;
-#else
-		std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LZMA lib not available !" "\n";
-
-		return false;
-#endif
 	}
 
 	bool
 	decompressString (const std::string & input, std::string & output) noexcept
 	{
-#ifdef LZMA_ENABLED
 		static constexpr size_t kMemLimit = 1 << 30;  // 1 GB.
 
 		lzma_stream stream = LZMA_STREAM_INIT;
@@ -135,10 +126,5 @@ namespace Libraries::Compression::LZMA
 				stream.avail_out = avail0 = output.size() - resultUsed;
 			}
 		}
-#else
-		std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LZMA lib not available !" "\n";
-
-		return false;
-#endif
 	}
 }

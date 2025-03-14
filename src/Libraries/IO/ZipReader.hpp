@@ -29,8 +29,6 @@
 /* Application config. */
 #include "emeraude_config.hpp"
 
-#ifdef ZIP_ENABLED
-
 /* STL inclusions. */
 #include <filesystem>
 #include <vector>
@@ -163,5 +161,3 @@ namespace Libraries::IO
 			std::vector< std::string > m_entryNames;
 	};
 }
-
-#endif

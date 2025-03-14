@@ -26,8 +26,6 @@
 
 #include "ZipWriter.hpp"
 
-#ifdef ZIP_ENABLED
-
 /* STL inclusions. */
 #include <algorithm>
 #include <iostream>
@@ -231,5 +229,3 @@ namespace Libraries::IO
 		m_sources.clear();
 	}
 }
-
-#endif

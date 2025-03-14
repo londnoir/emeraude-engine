@@ -35,12 +35,6 @@ set(EMERAUDE_INTERNET_CHECK_DOMAIN "google.com" CACHE STRING "Web domain to chec
 set(EMERAUDE_INSTALL_DEV_FILES Off CACHE BOOL "Installs Emeraude dev files (Default Off).")
 set(EMERAUDE_USE_SYSTEM_LIBS Off CACHE BOOL "Use the system for common libraries instead of the embedded ones (Default Off).")
 set(EMERAUDE_ENABLE_OPENMP On CACHE BOOL "Enable 'libomp' library [SYSTEM] (Default On).")
-set(EMERAUDE_ENABLE_ZLIB On CACHE BOOL "Enable 'zlib' library [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_LZMA On CACHE BOOL "Enable 'liblzma' library [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_LIBZIP On CACHE BOOL "Enable 'libzip' library [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_JPEG On CACHE BOOL "Enable 'libjpeg-turbo' library [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_PNG On CACHE BOOL "Enable 'libpng' library [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_FREETYPE On CACHE BOOL "Enable 'freetype' library. Adds the ability to read font file [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_SNDFILE On CACHE BOOL "Enable 'libsndfile' library. Adds the ability to read a wide range of sound formats [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_SAMPLERATE On CACHE BOOL "Enable 'libsamplerate' library. Adds the ability to resample a sound on the fly to meet OpenAL settings [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_GLM Off CACHE BOOL "Enable 'libglm' library. Adds an alternate math library [SYSTEM|LOCAL] (Default Off).")
@@ -296,49 +290,47 @@ target_link_directories(${PROJECT_NAME} PUBLIC ${LOCAL_LIB_DIR}/lib)
 
 ###### Dependencies ######
 
-if ( EMERAUDE_ENABLE_OPENMP AND NOT APPLE )
-	include(SetupOpenMP)
+# Request : brotli, bzip2, harbuzz, png, zlib
+include(SetupFreetype)
+
+# Request : zlib bzip2 xz zstd
+include(SetupZIP)
+
+# Request : zlib
+include(SetupPNG)
+
+# Request : zlib
+if ( EMERAUDE_ENABLE_TAGLIB )
+	include(SetupTagLib)
 endif ()
 
-if ( EMERAUDE_ENABLE_ZLIB )
-	include(SetupZLIB)
-endif ()
+include(SetupZLIB)
 
-if ( EMERAUDE_ENABLE_FREETYPE AND NOT EMERAUDE_USE_SYSTEM_LIBS )
-	include(SetupBZIP2)
+include(SetupBZIP2)
 
+include(SetupLZMA)
+
+include(SetupZSTD)
+
+if ( NOT EMERAUDE_USE_SYSTEM_LIBS )
 	include(SetupBrotli)
 
 	include(SetupHarfbuzz)
 endif ()
 
-if ( EMERAUDE_ENABLE_JPEG )
-	include(SetupJPEG)
+include(SetupJPEG)
+
+include(SetupThreads)
+
+include(SetupPostSourcesJsonCpp)
+
+include(SetupGLFW3)
+
+include(SetupVulkan)
+
+if ( EMERAUDE_ENABLE_OPENMP AND NOT APPLE )
+	include(SetupOpenMP)
 endif ()
-
-if ( EMERAUDE_ENABLE_PNG )
-	include(SetupPNG)
-endif ()
-
-if ( EMERAUDE_ENABLE_FREETYPE )
-	include(SetupFreetype)
-endif ()
-
-if ( EMERAUDE_ENABLE_LZMA )
-	include(SetupLZMA)
-endif ()
-
-if ( EMERAUDE_ENABLE_LIBZIP )
-	include(SetupBZIP2)
-
-	include(SetupZIP)
-endif ()
-
-if ( EMERAUDE_ENABLE_NATIVE_DIALOGS )
-	if ( UNIX AND NOT APPLE )
-		include(SetupGTK3)
-	endif ()
-endif()
 
 # FIXME: Needs attention (static: no sound on Linux)
 if ( EMERAUDE_ENABLE_OPENAL )
@@ -353,21 +345,8 @@ if ( EMERAUDE_ENABLE_SAMPLERATE )
 	include(SetupSampleRate)
 endif ()
 
-if ( EMERAUDE_ENABLE_GLM )
-	include(SetupGLM)
-endif ()
-
-if ( EMERAUDE_ENABLE_EIGEN )
-	include(SetupEigen3)
-endif ()
-
 if ( EMERAUDE_ENABLE_ASIO )
 	include(SetupASIO)
-endif ()
-
-# FIXME: Needs attention (rewrite)
-if ( EMERAUDE_ENABLE_TAGLIB )
-	include(SetupTagLib)
 endif ()
 
 if ( EMERAUDE_ENABLE_CPUFEATURES )
@@ -382,19 +361,23 @@ if ( EMERAUDE_ENABLE_IMGUI )
 	include(SetupPostSourcesImGui)
 endif ()
 
+if ( EMERAUDE_ENABLE_NATIVE_DIALOGS )
+	if ( UNIX AND NOT APPLE )
+		include(SetupGTK3)
+	endif ()
+endif()
+
 if ( EMERAUDE_ENABLE_BULLET )
 	include(SetupBullet)
 endif()
 
-include(SetupThreads)
+if ( EMERAUDE_ENABLE_GLM )
+	include(SetupGLM)
+endif ()
 
-include(SetupPostSourcesJsonCpp)
-
-include(SetupGLFW3)
-
-include(SetupVulkan)
-
-include(SetupGLSLang)
+if ( EMERAUDE_ENABLE_EIGEN )
+	include(SetupEigen3)
+endif ()
 
 
 

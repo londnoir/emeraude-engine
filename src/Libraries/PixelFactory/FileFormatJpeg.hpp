@@ -37,9 +37,7 @@
 #include <type_traits>
 
 /* Third-party inclusions. */
-#ifdef JPEG_ENABLED
 #include <jpeglib.h>
-#endif
 
 /* Local inclusions for inheritances. */
 #include "FileFormatInterface.hpp"
@@ -72,7 +70,6 @@ namespace Libraries::PixelFactory
 			{
 				pixmap.clear();
 
-#ifdef JPEG_ENABLED
 				auto loaded = false;
 
 				/* FIXME: Use C++ stream. */
@@ -169,11 +166,6 @@ namespace Libraries::PixelFactory
 				}
 
 				return loaded;
-#else
-				std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LibJPEG not available !" "\n";
-
-				return false;
-#endif
 			}
 
 			/** @copydoc Libraries::PixelFactory::FileFormatInterface::writeFile() */
@@ -187,8 +179,6 @@ namespace Libraries::PixelFactory
 
 					return false;
 				}
-
-#ifdef JPEG_ENABLED
 
 				if ( pixmap.colorCount() != 3 && pixmap.colorCount() != 1 )
 				{
@@ -287,11 +277,6 @@ namespace Libraries::PixelFactory
 				}
 
 				return false;
-#else
-				std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LibJPEG not available !" "\n";
-
-				return false;
-#endif
 			}
 
 			/**

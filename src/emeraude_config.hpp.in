@@ -66,12 +66,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 /* Third-party libraries enabled at compile-time. */
-#cmakedefine ZLIB_ENABLED
-#cmakedefine LZMA_ENABLED
-#cmakedefine ZIP_ENABLED
-#cmakedefine JPEG_ENABLED
-#cmakedefine PNG_ENABLED
-#cmakedefine FREETYPE_ENABLED
+#cmakedefine EMERAUDE_USE_SYSTEM_LIBS
 #cmakedefine SNDFILE_ENABLED
 #cmakedefine SAMPLERATE_ENABLED
 #cmakedefine GLM_ENABLED

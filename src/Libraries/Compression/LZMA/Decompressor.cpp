@@ -26,8 +26,6 @@
 
 #include "Decompressor.hpp"
 
-#if defined(LZMA_ENABLED) && !defined(WIN32)
-
 /* STL inclusions. */
 #include <iostream>
 #include <array>
@@ -229,5 +227,3 @@ namespace Libraries::Compression::LZMA
 		}
 	}
 }
-
-#endif

@@ -38,9 +38,7 @@
 #include <vector>
 
 /* Third-party inclusions. */
-#ifdef PNG_ENABLED
-	#include <png.h>
-#endif
+#include <png.h>
 
 /* Local inclusions for inheritances. */
 #include "FileFormatInterface.hpp"
@@ -74,7 +72,6 @@ namespace Libraries::PixelFactory
 			{
 				pixmap.clear();
 
-#ifdef PNG_ENABLED
 				std::ifstream file{filepath, std::ios::binary};
 				
 				if ( !file.is_open() )
@@ -254,11 +251,6 @@ namespace Libraries::PixelFactory
 				png_destroy_read_struct(&png, &pngInfo, nullptr);
 
 				return true;
-#else
-				std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LibPNG not available !" "\n";
-
-				return false;
-#endif
 			}
 
 			/** @copydoc Libraries::PixelFactory::FileFormatInterface::writeFile() */
@@ -266,7 +258,6 @@ namespace Libraries::PixelFactory
 			bool
 			writeFile (const std::filesystem::path & filepath, const Pixmap< data_t > & pixmap) const noexcept override
 			{
-#ifdef PNG_ENABLED
 				if ( !pixmap.isValid() )
 				{
 					std::cerr << __PRETTY_FUNCTION__ << ", pixmap parameter is invalid !" "\n";
@@ -363,11 +354,6 @@ namespace Libraries::PixelFactory
 				png_destroy_write_struct(&png, &pngInfo);
 
 				return true;
-#else
-				std::cerr << "[DEBUG] " << __PRETTY_FUNCTION__ << ", LibPNG not available !" "\n";
-
-				return false;
-#endif
 			}
 
 		private:
