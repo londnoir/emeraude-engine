@@ -71,8 +71,6 @@
 #cmakedefine EMERAUDE_USE_SYSTEM_LIBS
 #cmakedefine SNDFILE_ENABLED
 #cmakedefine SAMPLERATE_ENABLED
-#cmakedefine GLM_ENABLED
-#cmakedefine EIGEN_ENABLED
 #cmakedefine ASIO_ENABLED
 #cmakedefine OPENAL_ENABLED
 #cmakedefine TAGLIB_ENABLED

@@ -1,77 +1,51 @@
-# Emeraude Engine
+# Emeraude Engine (LGPLv3)
 
-## Introduction
+This project is a cross-platform engine to render a scene in 3D using the Vulkan API and written in C++20. There is an audio layer and a minimal physics simulation layer.
 
-Emeraude is an open-source 3D world engine written in C++20. It uses Vulkan for the graphics, OpenAL for the sound and a home solution for scene management and physics. This project is educative. There is no final goal yet, except making a 3D environment to play with and to evolve from scratch with the algorithms linked to 3D scenery. This is the 6th form of the engine.
+This lib provide :
+- a scene manager based on a node system.
+- a resources manager to load data in a hierarchical manner.
+- a material manager with auto generated shaders
+- an overlay manager to draw on screen.
+- ...
 
-This project is written on Debian with QtCreator using CMake.
+# External dependencies
 
-NOTE : Libraries and tools version are the used ones at time of writing (2022/03/11).
+The engine need some external libraries, most of them are provided by an external repository that creates an archive of static binaries (https://github.com/londnoir/ext-deps-generator).
+Others are submodules and compiled directly with the final binary.
 
-## Cross-platform tools
+# Requirements
 
-- CMake >= 3.27.0
-- QtCreator >= 10.0.2 (Optional)
-- CLion >= 2023.3.2 (Optional)
- 
-## Dependent Libraries
+ - A compiler compatible with C++20
+ - CMake (3.25.1) to generate the projet
+ - Python3
 
-- Vulkan >= 1.3.250
-- GLSLang >= 13.0.0
-- OpenAL >= 1.23.1
-- GLFW >= 3.3.8
-- ASIO >= 1.22.1
-- JsonCPP >= 1.9.5
-- ZLIB >= 1.2.13
-- JPEG >= 2.1.5
-- PNG >= 1.6.40
-- FreeType >= 2.13.2
-- SNDFile >= 1.2.2
-- SampleRate >= 0.2.2
-- Taglib >= 1.13.1 (Optional)
-- ImGUI >= 1.89.6 (Optional)
-- GLM >= 0.9.9.8 (Optional)
-- Eigen >= 3.4.0 (Optional)
+This library is maintained from Debian 12 (stable) using G++ 12.2.
+On macOS, you need Xcode environment installed for the minimal SDK 12.
+On Windows, you need Visual Studio 2022 environment installed.
 
-NOTE : On Debian-like linux platform there is a script to install dependencies via APT automatically.
+Note: Further information will come here to complete dependent softwares and libraries installation. 
+But, this shouldn't be complicated to resolve problems described by CMake logs.
 
-## Project configuration for Linux (Debian-like)
+# Quick compilation from a terminal
 
-Steps are based on a Debian-like system. Normally, it can be reproduced with some modifications on others distros. 
-Just skip the line 'setup-debian' for other system. Installs tools and dependencies manually.
+For now, you need to copy manually the results of "ext-deps-generator" into the directory "emeraude-engine/dependencies/" in order to CMake find the static libraries.
+Keep the exact directory name (linux|mac|windows).(x86_64|arm64)-(Debug|Release).
 
-### Platform-specific tools
+This will produce the shared library.
 
-- Ninja-build >= 1.11.1
-- GCC >= 13.2 or Clang >= 16.0
-- MSVC 2022
-
-### Setup for development
-
-These command lines will ask for sudo password in order to install dev packages from official debian repository.
-
-Feel free to open 'setup-debian' script before launching the command.
+## Release
 
 ```bash
-git clone --recurse-submodules git@bitbucket.org:londnoir/emeraude-engine.git
-cd emeraude-engine
-./tools/linux/setup-debian
-./install
-cd ..
+git clone --recurse-submodules https://github.com/londnoir/emeraude-engine.git
+cmake -S ./emeraude-engine -B ./emeraude-engine/cmake-build-release -DCMAKE_BUILD_TYPE=Release
+cmake --build ./emeraude-engine/cmake-build-release --config Release
 ```
 
-## Project configuration for Windows
+## Debug
 
-This project is intended to be compatible with Windows compilation through MinGW.
-A compilation has been successfully done once, but nothing more since. 
-
-## Project configuration for macOS
-
-This project is intended to be compatible with macOS compilation through Clang.
-A compilation has been successfully done once, but nothing more since.
-
-Installs tools and libraries with :
-
-```
-brew install python cmake pkgconfig ninja libomp jpeg-turbo freetype libsndfile libsamplerate hwloc
+```bash
+git clone --recurse-submodules https://github.com/londnoir/emeraude-engine.git
+cmake -S ./emeraude-engine -B ./emeraude-engine/cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build ./emeraude-engine/cmake-build-debug --config Debug
 ```

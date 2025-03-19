@@ -95,6 +95,10 @@ namespace EmEn::Overlay
 			[[nodiscard]]
 			bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept final;
 
+			/** @copydoc EmEn::Overlay::AbstractSurface::isEventBlockedWithAlpha() */
+			[[nodiscard]]
+			bool isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept final;
+
 			/**
 			 * @brief Creates the Vulkan image.
 			 * @param renderer A reference to the renderer.

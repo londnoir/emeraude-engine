@@ -47,7 +47,7 @@ namespace EmEn::Physics
 {
 	/**
 	 * @brief Class defining physical properties of an object.
-	 * Libraries::ObservableTrait This notifies each physical property changes.
+	 * @extends EmEn::Libs::ObservableTrait This notifies each physical property changes.
 	 */
 	class PhysicalObjectProperties final : public Libs::ObservableTrait
 	{

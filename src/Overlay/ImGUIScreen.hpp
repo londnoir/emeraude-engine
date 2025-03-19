@@ -49,9 +49,9 @@ namespace EmEn::Overlay
 {
 	/**
 	 * @brief The ImGUI screen specific class.
-	 * @exception Libraries::NameableTrait A UI screen have a name.
+	 * @exception EmEn::Libs::NameableTrait A UI screen have a name.
 	 */
-	class ImGUIScreen final : public Libraries::NameableTrait
+	class ImGUIScreen final : public Libs::NameableTrait
 	{
 		public:
 

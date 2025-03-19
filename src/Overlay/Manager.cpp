@@ -287,7 +287,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	Manager::generateProgram () noexcept
+	Manager::generateGraphicsPipeline () noexcept
 	{
 		Generator::OverlayRendering generator{*this, m_graphicsRenderer.swapChain()};
 
@@ -346,21 +346,6 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	Manager::updateProgram () const noexcept
-	{
-		if ( m_program == nullptr )
-		{
-			return true;
-		}
-
-		return m_program->graphicsPipeline()->recreateOnHardware(
-			*m_graphicsRenderer.swapChain(),
-			m_framebufferProperties.width(),
-			m_framebufferProperties.height()
-		);
-	}
-
-	bool
 	Manager::onInitialize () noexcept
 	{
 		m_surfaceGeometry = std::make_shared< Geometry::IndexedVertexResource >("OverlayQuad", Geometry::EnablePrimaryTextureCoordinates);
@@ -374,7 +359,7 @@ namespace EmEn::Overlay
 			return false;
 		}
 
-		if ( !this->generateProgram() )
+		if ( !this->generateGraphicsPipeline() )
 		{
 			TraceError{ClassId} << "Unable to generate a program to render the overlay !";
 
@@ -642,7 +627,7 @@ namespace EmEn::Overlay
 				continue;
 			}
 
-			if ( !screen->updateVideoMemory(m_graphicsRenderer) )
+			if ( !screen->updateVideoMemory() )
 			{
 				errors++;
 			}
@@ -693,6 +678,11 @@ namespace EmEn::Overlay
 
 			for ( const auto & surface : screen->surfaces() | std::views::values )
 			{
+				if ( !surface->isVisible() )
+				{
+					continue;
+				}
+
 				// TODO: Surface should have a render() function to use a mutex between surface update and render it.
 				if ( surface->descriptorSet() == nullptr || !surface->descriptorSet()->isCreated() )
 				{
@@ -708,7 +698,7 @@ namespace EmEn::Overlay
 					VK_SHADER_STAGE_VERTEX_BIT,
 					0,
 					Matrix4Alignment * sizeof(float),
-					surface->transformationMatrix().data()
+					surface->modelMatrix().data()
 				);
 
 				/* Bind the surface texture. */
@@ -739,7 +729,7 @@ namespace EmEn::Overlay
 		m_updateMutex.unlock();
 	}
 
-	void
+	bool
 	Manager::updateContent (bool fromResize) noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_updateMutex};
@@ -749,6 +739,7 @@ namespace EmEn::Overlay
 		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
 		const auto & windowState = m_window.state();
 
+		/* NOTE: This structure is shared with all screens and surfaces. */
 		m_framebufferProperties.updateProperties(
 			windowState.framebufferWidth,
 			windowState.framebufferHeight,
@@ -756,26 +747,40 @@ namespace EmEn::Overlay
 			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
 		);
 
-		if ( this->updateProgram() )
+		if ( m_program == nullptr )
 		{
-			for ( const auto & [name, screen] : m_screens )
-			{
-				if ( !screen->updatePhysicalRepresentation(m_graphicsRenderer) )
-				{
-					TraceError{ClassId} << "The UI screen '" << name << "' physical representation update failed ! Disabling it ...";
+			TraceError{ClassId} << "The program wasn't generated !";
 
-					screen->setVisibility(false);
-				}
-			}
+			return false;
+		}
 
-			if ( fromResize )
+		if ( m_program->graphicsPipeline()->recreateOnHardware(*m_graphicsRenderer.swapChain(), m_framebufferProperties.width(), m_framebufferProperties.height()) )
+		{
+			TraceError{ClassId} << "Unable to recreate the graphics pipeline with the new size !" "\n" << m_framebufferProperties;
+
+			return false;
+		}
+
+		/* NOTE: Update all screen according to the new framebuffer. */
+		for ( const auto & [name, screen] : m_screens )
+		{
+			if ( !screen->updatePhysicalRepresentation() )
 			{
-				this->notify(OverlayResized, std::array< uint32_t, 2 >{
-				   windowState.framebufferWidth,
-				   windowState.framebufferHeight
-				});
+				TraceError{ClassId} << "The UI screen '" << name << "' physical representation update failed ! Disabling it ...";
+
+				screen->setVisibility(false);
 			}
 		}
+
+		if ( fromResize )
+		{
+			this->notify(OverlayResized, std::array< uint32_t, 2 >{
+			   windowState.framebufferWidth,
+			   windowState.framebufferHeight
+			});
+		}
+
+		return true;
 	}
 
 	bool
@@ -787,13 +792,11 @@ namespace EmEn::Overlay
 			{
 				case Window::Created :
 					this->updateContent(false);
-
-					return true;
+					break;
 
 				case Window::OSNotifiesFramebufferResized :
 					this->updateContent(true);
-
-					return true;
+					break;
 
 				default :
 #ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN

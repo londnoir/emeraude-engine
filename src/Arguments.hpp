@@ -34,6 +34,7 @@
 #include <string>
 #include <algorithm>
 #include <filesystem>
+#include <ranges>
 
 /* Local inclusions for inheritances. */
 #include "ServiceInterface.hpp"

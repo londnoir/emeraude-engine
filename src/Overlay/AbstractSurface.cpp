@@ -26,16 +26,7 @@
 
 #include "AbstractSurface.hpp"
 
-/* C/C++ standard libraries. */
-#include <iostream>
-#include <string>
-
 /* Local inclusions. */
-#include "Libs/NameableTrait.hpp"
-#include "Libs/Math/Matrix.hpp"
-#include "Libs/Math/Rectangle.hpp"
-#include "Graphics/Renderer.hpp"
-#include "FramebufferProperties.hpp"
 #include "Tracer.hpp"
 
 namespace EmEn::Overlay
@@ -52,7 +43,39 @@ namespace EmEn::Overlay
 		m_rectangle(geometry),
 		m_depth(depth)
 	{
-		this->setTransformationMatrix();
+		this->updateModelMatrix();
+	}
+
+	void
+	AbstractSurface::setGeometry (const Rectangle< float > & rectangle) noexcept
+	{
+		m_rectangle = rectangle;
+	}
+
+	void
+	AbstractSurface::setPosition (float xPosition, float yPosition) noexcept
+	{
+		m_rectangle.setOffsetX(xPosition);
+		m_rectangle.setOffsetY(yPosition);
+	}
+
+	void
+	AbstractSurface::setSize (float width, float height) noexcept
+	{
+		m_rectangle.setWidth(width);
+		m_rectangle.setHeight(height);
+	}
+
+	void
+	AbstractSurface::setDepth (float depth) noexcept
+	{
+		m_depth = depth;
+	}
+
+	void
+	AbstractSurface::move (float deltaX, float deltaY) noexcept
+	{
+		m_rectangle.move(deltaX, deltaY);
 	}
 
 	bool
@@ -97,15 +120,33 @@ namespace EmEn::Overlay
 		return true;
 	}
 
+	bool
+	AbstractSurface::isEventBlocked (float positionX, float positionY) const noexcept
+	{
+		/* The test is disabled. */
+		if ( !m_flags[IsOpaque] )
+		{
+			return false;
+		}
+
+		/* The alpha test is not required, so the position is blocked. */
+		if ( !m_flags[IsAlphaTestEnabled] )
+		{
+			return true;
+		}
+
+		return this->isEventBlockedWithAlpha(positionX, positionY, m_alphaThreshold);
+	}
+
 	void
-	AbstractSurface::setTransformationMatrix () noexcept
+	AbstractSurface::updateModelMatrix () noexcept
 	{
 		const auto xPosition = (-1.0F + m_rectangle.width()) + (m_rectangle.offsetX() * 2.0F);
 		const auto yPosition = (-1.0F + m_rectangle.height()) + (m_rectangle.offsetY() * 2.0F);
 
-		m_transformationMatrix.reset();
-		m_transformationMatrix *= Matrix< 4, float >::translation(xPosition, yPosition, m_depth);
-		m_transformationMatrix *= Matrix< 4, float >::scaling(m_rectangle.width(), m_rectangle.height(), 1.0F);
+		m_modelMatrix.reset();
+		m_modelMatrix *= Matrix< 4, float >::translation(xPosition, yPosition, m_depth);
+		m_modelMatrix *= Matrix< 4, float >::scaling(m_rectangle.width(), m_rectangle.height(), 1.0F);
 	}
 
 	bool
@@ -118,7 +159,7 @@ namespace EmEn::Overlay
 			return false;
 		}
 
-		this->setTransformationMatrix();
+		this->updateModelMatrix();
 
 		return true;
 	}

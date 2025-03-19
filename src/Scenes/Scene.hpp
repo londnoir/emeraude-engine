@@ -80,7 +80,7 @@ namespace EmEn::Scenes
 	 * @extends EmEn::Libs::NameableTrait A scene is a named object in the engine.
 	 * @extends EmEn::Libs::Time::EventTrait A scene can have timed events.
 	 * @extends EmEn::Libs::ObserverTrait The scene will observe the scene node tree and static entity list.
-	 * Libraries::ObservableTrait Scene will notify its content change.
+	 * @extends EmEn::Libs::ObservableTrait Scene will notify its content change.
 	 */
 	class Scene final : public Libs::NameableTrait, public Libs::Time::EventTrait< uint32_t, std::milli >, public Libs::ObserverTrait, public Libs::ObservableTrait
 	{

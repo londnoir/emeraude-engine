@@ -27,7 +27,6 @@
 #include "PixelBufferSurface.hpp"
 
 /* STL inclusions. */
-#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -297,6 +296,39 @@ namespace EmEn::Overlay
 	PixelBufferSurface::onVideoMemoryUpdate (Renderer & renderer) noexcept
 	{
 		return m_image->writeData(renderer.transferManager(), {m_localData.data().data(), m_localData.bytes()});
+	}
+
+	bool
+	PixelBufferSurface::isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept
+	{
+		// TODO !!!!
+		/* NOTE: Get the right pixel. */
+		//const auto pixelX = static_cast< size_t >(positionX - (static_cast< float >(m_framebufferProperties.width()) * m_webViewArea.x()));
+		//const auto pixelY = static_cast< size_t >(positionY - (static_cast< float >(m_framebufferProperties.height()) * m_webViewArea.y()));
+		//const auto pixel = (pixelY * m_localPixmapWidth) + pixelX;
+
+		/* NOTE: Get the pixel offset in the buffer. */
+		//const auto pixelOffset = pixel * 4;
+
+		//if ( pixelOffset >= m_localPixmap.size() )
+		//{
+		/* NOTE: The local pixmap is not yet ready. */
+		//	return false;
+		//}
+
+		/*if ( debug )
+		{
+			const auto blueValue = m_localPixmap[pixelOffset+0];
+			const auto greenValue = m_localPixmap[pixelOffset+1];
+			const auto redValue = m_localPixmap[pixelOffset+2];
+			const auto alphaValue = m_localPixmap[pixelOffset+3];
+
+			std::cout << "[B:" << static_cast< int >(blueValue) << ",G:" << static_cast< int >(greenValue) << ",R:" << static_cast< int >(redValue) << ",A:" << static_cast< int >(alphaValue) << "]" "\n";
+		}*/
+
+		//return static_cast< float >(m_localPixmap[pixelOffset + 3]) / 255.0F > m_alphaThreshold;
+
+		return true;
 	}
 
 	bool

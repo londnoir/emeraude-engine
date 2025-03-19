@@ -321,6 +321,13 @@ namespace EmEn::Saphir
 			return false;
 		}
 
+		if ( binaryCode.empty() )
+		{
+			TraceError{ClassId} << "The shader binary code from file '" << binaryIt->second << "' is empty !";
+
+			return false;
+		}
+
 		return true;
 	}
 
@@ -368,7 +375,9 @@ namespace EmEn::Saphir
 		/* Checks in cached binaries to prevent a compilation. */
 		if ( this->checkBinaryFromCache(shader, binaryCode) )
 		{
-			TraceSuccess{ClassId} << "The shader '" << shader.name() << "' loaded from binary cache !";
+			const auto bytes = binaryCode.size() * sizeof(uint32_t);
+
+			TraceSuccess{ClassId} << "The shader '" << shader.name() << "' (" << bytes << " bytes) loaded from binary cache !";
 		}
 		/* If not, we compile it. */
 		else

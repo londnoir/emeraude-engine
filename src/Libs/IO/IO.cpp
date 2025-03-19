@@ -389,7 +389,7 @@ namespace EmEn::Libs::IO
 	bool
 	fileGetContents (const std::filesystem::path & filepath, std::string & content) noexcept
 	{
-		std::ifstream file{filepath};
+		std::ifstream file{filepath, std::ios::ate};
 
 		if ( !file.is_open() )
 		{
@@ -399,10 +399,10 @@ namespace EmEn::Libs::IO
 		}
 
 		/* NOTE: Read the file size. */
-		const auto size = file.tellg();
-		file.seekg(0);
+		const auto bytes = file.tellg();
+		file.seekg(0, std::ifstream::beg);
 
-		content.resize(size);
+		content.resize(bytes);
 
 		file.read(content.data(), static_cast< std::streamsize >(content.size()));
 		file.close();

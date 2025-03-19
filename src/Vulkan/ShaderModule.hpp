@@ -52,14 +52,14 @@ namespace EmEn::Vulkan
 			 * @param device A reference to a device smart pointer.
 			 * @param shaderType The vulkan shader type.
 			 * @param binaryCode A reference to a binary data vector.
-			 * @param createFlags The create info flags. Default none.
+			 * @param createFlags The createInfo flags. Default none.
 			 */
 			ShaderModule (const std::shared_ptr< Device > & device, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode, VkShaderModuleCreateFlags createFlags = 0) noexcept;
 
 			/**
-			 * @brief Constructs a shader module with a create info.
+			 * @brief Constructs a shader module with a createInfo.
 			 * @param device A reference to a smart pointer of the device.
-			 * @param createInfo A reference to the create info.
+			 * @param createInfo A reference to the createInfo.
 			 * @param shaderType The vulkan shader type.
 			 * @param binaryCode A reference to a binary data vector.
 			 */

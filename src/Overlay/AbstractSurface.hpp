@@ -31,10 +31,10 @@
 #include <string>
 
 /* Local inclusions for inheritance. */
-#include "Graphics/TextureResource/Abstract.hpp"
 #include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
+#include "Graphics/TextureResource/Abstract.hpp"
 #include "FramebufferProperties.hpp"
 #include "Libs/Math/Matrix.hpp"
 #include "Libs/Math/Rectangle.hpp"
@@ -48,7 +48,7 @@ namespace EmEn::Vulkan
 namespace EmEn::Overlay
 {
 	/**
-	 * @brief The base class for all overlay surfaces.
+	 * @brief The base class for overlay UIScreen surfaces.
 	 * @exception Libraries::NameableTrait A surface have a name.
 	 */
 	class AbstractSurface : public Libs::NameableTrait
@@ -120,14 +120,83 @@ namespace EmEn::Overlay
 			}
 
 			/**
-			 * @brief Returns the transformation matrix to place the surface on screen.
+			 * @brief Returns the model matrix to place the surface on screen.
 			 * @return const Libraries::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Matrix< 4, float > &
-			transformationMatrix () const noexcept
+			modelMatrix () const noexcept
 			{
-				return m_transformationMatrix;
+				return m_modelMatrix;
+			}
+
+			/**
+			 * @brief Redefines the surface position and size in the screen.
+			 * @param rectangle A reference to a rectangle.
+			 * @return void
+			 */
+			void setGeometry (const Libs::Math::Rectangle< float > & rectangle) noexcept;
+
+			/**
+			 * @brief Sets the surface position in the screen.
+			 * @param xPosition The absolute X position.
+			 * @param yPosition The absolute Y position.
+			 * @return void
+			 */
+			void setPosition (float xPosition, float yPosition) noexcept;
+
+			/**
+			 * @brief Sets the surface size in the screen.
+			 * @param width A scalar value.
+			 * @param height A scalar value.
+			 * @return void
+			 */
+			void setSize (float width, float height) noexcept;
+
+			/**
+			 * @brief Sets the surface depth in the screen.
+			 * @param depth A scalar value.
+			 * @return void
+			 */
+			void setDepth (float depth) noexcept;
+
+			/**
+			 * @brief Moves the surface from a distance in the screen.
+			 * @param deltaX The distance to move in X axis.
+			 * @param deltaY The distance to move in Y axis.
+			 * @return void
+			 */
+			void move (float deltaX, float deltaY) noexcept;
+
+			/**
+			 * @brief Shows the web view.
+			 * @return void
+			 */
+			void
+			show () noexcept
+			{
+				m_flags[IsVisible] = true;
+			}
+
+			/**
+			 * @brief Hides the web view.
+			 * @return void
+			 */
+			void
+			hide () noexcept
+			{
+				m_flags[IsVisible] = false;
+			}
+
+			/**
+			 * @brief Returns whether the surface is visible.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isVisible () const noexcept
+			{
+				return m_flags[IsVisible];
 			}
 
 			/**
@@ -175,6 +244,28 @@ namespace EmEn::Overlay
 			}
 
 			/**
+			 * @brief Lock this listener when holding a mouse button to send all move events to it.
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			lockPointerMoveEvents (bool state) noexcept
+			{
+				m_flags[LockPointerMoveEvents] = state;
+			}
+
+			/**
+			 * @brief Returns whether the move events are tracked when a button is held.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isPointerMoveEventsLocked () const noexcept
+			{
+				return m_flags[LockPointerMoveEvents];
+			}
+
+			/**
 			 * @brief Sets the surface "pointer-over" state.
 			 * @param state The state.
 			 * @return void
@@ -217,6 +308,94 @@ namespace EmEn::Overlay
 			{
 				return m_flags[IsFocused];
 			}
+
+			/**
+			 * @brief Enables the event blocking system.
+			 * @note This enables only the surface area. See enableAlphaTest().
+			 * @param state The state.
+			 * @return void
+			 */
+			void
+			enableEventBlocking (bool state) noexcept
+			{
+				m_flags[IsOpaque] = state;
+			}
+
+			/**
+			 * @brief Returns whether the event blocking system is enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isBlockingEvent () const noexcept
+			{
+				return m_flags[IsOpaque];
+			}
+
+			/**
+			 * @brief Enables the event blocking system using alpha test.
+			 * @note The alpha value threshold is set to 10% by default.
+			 * @return void
+			 */
+			void
+			enableEventBlockingAlphaTest (bool state) noexcept
+			{
+				m_flags[IsAlphaTestEnabled] = state;
+			}
+
+			/**
+			 * @brief Returns whether the event blocking system using alpha test is enabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isBlockingEventWithAlphaTest () const noexcept
+			{
+				return m_flags[IsAlphaTestEnabled];
+			}
+
+			/**
+			 * @brief Sets a threshold below where the alpha test won't block the event.
+			 * @param threshold A value between 0.0 to 1.0
+			 * @return void
+			 */
+			void
+			setAlphaThreshold (float threshold) noexcept
+			{
+				if ( threshold > 1.0F )
+				{
+					m_alphaThreshold = 1.0F;
+				}
+				else if ( threshold < 0.0F )
+				{
+					m_alphaThreshold = 0.0F;
+				}
+				else
+				{
+					m_alphaThreshold = threshold;
+				}
+			}
+
+			/**
+			 * @brief Returns the current alpha threshold for event blocking test.
+			 * @return float
+			 */
+			[[nodiscard]]
+			float
+			alphaThreshold () const noexcept
+			{
+				return m_alphaThreshold;
+			}
+
+			/**
+			 * @brief Checks whether the pointer is blocked by something on the surface
+			 * to prevent to dispatch the related event below.
+			 * @param positionX The position in X on the screen.
+			 * @param positionY The position in y on the screen.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool isEventBlocked (float positionX, float positionY) const noexcept;
 
 			/**
 			 * @brief Checks whether the pointer coordinates intersects with the surface.
@@ -402,10 +581,10 @@ namespace EmEn::Overlay
 			AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
-			 * @brief Updates the transformation matrix to place the surface on screen.
+			 * @brief Updates the model matrix to place the surface on screen.
 			 * @return void
 			 */
-			void setTransformationMatrix () noexcept;
+			void updateModelMatrix () noexcept;
 
 			/**
 			 * @brief Creates the descriptor set for this surface.
@@ -433,28 +612,50 @@ namespace EmEn::Overlay
 			[[nodiscard]]
 			virtual bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept = 0;
 
+			/**
+			 * @brief Checks whether the event is blocked by performing an alpha test at position.
+			 * @param positionX
+			 * @param positionY
+			 * @param alphaThreshold
+			 * @return bool
+			 */
+			[[nodiscard]]
+			virtual bool isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept = 0;
+
 			/* Flag names */
 			static constexpr auto VideoMemoryUpdateRequested{0UL};
-			static constexpr auto IsListeningKeyboard{1UL};
-			static constexpr auto IsListeningPointer{2UL};
-			static constexpr auto LockPointerMoveEvents{3UL};
-			static constexpr auto IsPointerWasOver{4UL};
-			static constexpr auto IsFocused{5UL};
-			static constexpr auto IsOpaque{6UL};
+			static constexpr auto IsVisible{1UL};
+			static constexpr auto IsListeningKeyboard{2UL};
+			static constexpr auto IsListeningPointer{3UL};
+			static constexpr auto LockPointerMoveEvents{4UL};
+			static constexpr auto IsPointerWasOver{5UL};
+			static constexpr auto IsFocused{6UL};
+			static constexpr auto IsOpaque{7UL};
+			static constexpr auto IsAlphaTestEnabled{8UL};
+			static constexpr auto ProcessUnblockedPointerEvents{9UL};
 
 			const FramebufferProperties & m_framebufferProperties;
-			Libs::Math::Rectangle< float > m_rectangle;
-			Libs::Math::Matrix< 4, float > m_transformationMatrix;
-			float m_depth;
-			std::array< bool, 8 > m_flags{
+			Libs::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
+			Libs::Math::Matrix< 4, float > m_modelMatrix;
+			float m_depth{0.0F};
+			float m_alphaThreshold{0.1F};
+			std::array< bool, 16 > m_flags{
 				true/*VideoMemoryUpdateRequested*/,
+				true/*IsVisible*/,
 				false/*IsListeningKeyboard*/,
 				false/*IsListeningPointer*/,
 				false/*LockPointerMoveEvents*/,
 				false/*IsPointerWasOver*/,
 				false/*IsFocused*/,
 				false/*IsOpaque*/,
-				false/*IsAlphaTestEnabled*/
+				false/*IsAlphaTestEnabled*/,
+				false/*ProcessUnblockedPointerEvents*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
 			};
 	};
 }

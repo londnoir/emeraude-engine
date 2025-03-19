@@ -19,7 +19,7 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.3 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.31 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
@@ -28,7 +28,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
 set_property(GLOBAL PROPERTY USE_FOLDERS On)
 
 # Emeraude libraries project variables and options
-set(EMERAUDE_ENABLE_CROSS_PLATFORM_WARNINGS_MANAGEMENT On CACHE BOOL "Hide warnings produced by third-party libraries (Default On).")
 set(EMERAUDE_ENABLE_TESTS Off CACHE BOOL "Enable the Emeraude testing suite (Default Off).")
 set(EMERAUDE_INSTALL On CACHE BOOL "Install Emeraude as a system library (Default On).")
 set(EMERAUDE_INTERNET_CHECK_DOMAIN "google.com" CACHE STRING "Web domain to check internet connexion (Default google.com).")
@@ -37,8 +36,6 @@ set(EMERAUDE_USE_SYSTEM_LIBS Off CACHE BOOL "Use the system for common libraries
 set(EMERAUDE_ENABLE_OPENMP On CACHE BOOL "Enable 'libomp' library [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_SNDFILE On CACHE BOOL "Enable 'libsndfile' library. Adds the ability to read a wide range of sound formats [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_SAMPLERATE On CACHE BOOL "Enable 'libsamplerate' library. Adds the ability to resample a sound on the fly to meet OpenAL settings [SYSTEM|LOCAL] (Default On).")
-set(EMERAUDE_ENABLE_GLM Off CACHE BOOL "Enable 'libglm' library. Adds an alternate math library [SYSTEM|LOCAL] (Default Off).")
-set(EMERAUDE_ENABLE_EIGEN Off CACHE BOOL "Enable 'libeigen' library. Adds an alternate math library [SYSTEM|LOCAL] (Default Off).")
 set(EMERAUDE_ENABLE_ASIO On CACHE BOOL "Enable 'libasio' library. Adds the networking ability [SYSTEM|LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_CPUFEATURES On CACHE BOOL "Enable 'cpu_features' library. Adds the cpu identification ability [LOCAL] (Default On).")
 set(EMERAUDE_ENABLE_HWLOC On CACHE BOOL "Enable 'HWLOC' library. Adds the cpu cores/threads info ability [SYSTEM|LOCAL] (Default On).")
@@ -362,6 +359,8 @@ if ( EMERAUDE_ENABLE_IMGUI )
 endif ()
 
 if ( EMERAUDE_ENABLE_NATIVE_DIALOGS )
+	message("Enabling native dialogs ...")
+
 	if ( UNIX AND NOT APPLE )
 		include(SetupGTK3)
 	endif ()
@@ -370,14 +369,6 @@ endif()
 if ( EMERAUDE_ENABLE_BULLET )
 	include(SetupBullet)
 endif()
-
-if ( EMERAUDE_ENABLE_GLM )
-	include(SetupGLM)
-endif ()
-
-if ( EMERAUDE_ENABLE_EIGEN )
-	include(SetupEigen3)
-endif ()
 
 
 

@@ -44,7 +44,6 @@
 /* Local inclusions for usages. */
 #include "URI.hpp"
 
-
 namespace EmEn::Libs::Network
 {
 	/* Forward declarations. */

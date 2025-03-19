@@ -36,7 +36,9 @@ namespace EmEn::Vulkan
 	using namespace EmEn::Libs;
 
 	ShaderModule::ShaderModule (const std::shared_ptr< Device > & device, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode, VkShaderModuleCreateFlags createFlags) noexcept
-		: AbstractDeviceDependentObject(device), m_shaderType(shaderType), m_binaryCode(binaryCode)
+		: AbstractDeviceDependentObject(device),
+		m_shaderType(shaderType),
+		m_binaryCode(binaryCode)
 	{
 		m_createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
@@ -46,7 +48,10 @@ namespace EmEn::Vulkan
 	}
 
 	ShaderModule::ShaderModule (const std::shared_ptr< Device > & device, const VkShaderModuleCreateInfo & createInfo, VkShaderStageFlagBits shaderType, const std::vector< uint32_t > & binaryCode) noexcept
-		: AbstractDeviceDependentObject(device), m_createInfo(createInfo), m_shaderType(shaderType), m_binaryCode(binaryCode)
+		: AbstractDeviceDependentObject(device),
+		m_createInfo(createInfo),
+		m_shaderType(shaderType),
+		m_binaryCode(binaryCode)
 	{
 
 	}

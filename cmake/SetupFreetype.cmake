@@ -25,10 +25,23 @@ if ( NOT FREETYPE_ENABLED )
 			else ()
 				target_link_libraries(${PROJECT_NAME} PRIVATE ${LOCAL_LIB_DIR}/lib/libfreetype.a)
 			endif ()
+
+
 		endif ()
 	endif ()
 
 	set(FREETYPE_ENABLED On)
+
+	if ( UNIX AND NOT APPLE )
+		message("Enabling Fontconfig library from system ...")
+
+		find_package(Fontconfig REQUIRED)
+
+		target_include_directories(${PROJECT_NAME} PRIVATE ${Fontconfig_INCLUDE_DIRS})
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${Fontconfig_LIBRARIES})
+
+		set(FONTCONFIG_ENABLED On)
+	endif ()
 else ()
 	message("The FreeType library is already enabled.")
 endif ()

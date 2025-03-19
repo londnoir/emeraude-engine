@@ -26,54 +26,6 @@
 
 #pragma once
 
-/*
- * NOTE: Cross-platform compilation warnings management.
- *  - COMPILATION_SILENCE_WARNINGS/COMPILATION_RESTORE_WARNINGS tells the compiler to silent every incoming warnings and restore it.
- *	This is useful for third-party libraries inclusions.
- *	!!! DO NOT USE THIS FOR THE PROJECT CODE !!!
- *  - COMPILATION_WARNING(WARNING_MSG) produce a compiler warning.
- */
-#ifdef EMERAUDE_ENABLE_CROSS_PLATFORM_WARNINGS_MANAGEMENT
-	/* NOTE: Trick to get a macro expanded into a string for use in another macro. */
-	#define CWM_STRINGIFY(a) #a
-
-	#if defined(__GNUC__) || defined(__clang__)
-		/* Silence and restore warning macros.
-		 * NOTE: GCC/Clang compiler forces to explicitly set every item to ignore.
-		 * Add here every annoying warning coming from third-party libraries. */
-		#define COMPILATION_SILENCE_WARNINGS _Pragma("GCC diagnostic push") \
-			_Pragma("GCC diagnostic ignored \"-Wall\"") \
-			_Pragma("GCC diagnostic ignored \"-Wextra\"") \
-			_Pragma("GCC diagnostic ignored \"-Wpedantic\"") \
-			_Pragma("GCC diagnostic ignored \"-Wpadded\"") \
-			_Pragma("GCC diagnostic ignored \"-Weffc++\"") \
-			_Pragma("GCC diagnostic ignored \"-Wpragmas\"") \
-			_Pragma("GCC diagnostic ignored \"-Wdocumentation\"") \
-			_Pragma("GCC diagnostic ignored \"-Wdocumentation-unknown-command\"") \
-			_Pragma("GCC diagnostic ignored \"-Wold-style-cast\"") \
-			_Pragma("GCC diagnostic ignored \"-Wreserved-id-macro\"") \
-			_Pragma("GCC diagnostic ignored \"-Wunused\"")
-		#define COMPILATION_RESTORE_WARNINGS _Pragma("GCC diagnostic pop")
-
-		/* Cross-platform warning function macro. */
-		#define COMPILATION_WARNING(WARNING_MSG) _Pragma(CWM_STRINGIFY(GCC warning WARNING_MSG))
-	#elif defined(_MSC_VER)
-		/* Silence and restore warning macros. */
-		#define COMPILATION_SILENCE_WARNINGS _Pragma("warning( push, 0 )")
-		#define COMPILATION_RESTORE_WARNINGS _Pragma("warning( pop )")
-
-		/* Cross-platform warning function macro. */
-		#define COMPILATION_WARNING(WARNING_MSG) _Pragma(CWM_STRINGIFY(message(WARNING_MSG)))
-	#else
-		#error "Unable to determine the compiler ! Disable EMERAUDE_ENABLE_CROSS_PLATFORM_WARNINGS_MANAGEMENT to get rid of this message."
-	#endif
-#else
-	/* NOTE: These definitions will disable macro used in the code. */
-	#define COMPILATION_WARNING(WARNING_MSG)
-	#define COMPILATION_SILENCE_WARNINGS
-	#define COMPILATION_RESTORE_WARNINGS
-#endif
-
 #if defined(__i386__) || defined(_M_IX86) // Major detection of x86 32bit architecture.
 	#define IS_X86_ARCH 1
 	#define IS_ARM_ARCH 0

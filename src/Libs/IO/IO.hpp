@@ -190,7 +190,7 @@ namespace EmEn::Libs::IO
 	bool
 	fileGetContents (const std::filesystem::path & filepath, std::vector< data_t > & content) noexcept
 	{
-		std::ifstream file{filepath, std::ios::binary};
+		std::ifstream file{filepath, std::ios::binary | std::ios::ate};
 
 		if ( !file.is_open() )
 		{
@@ -200,12 +200,12 @@ namespace EmEn::Libs::IO
 		}
 
 		/* NOTE: Read the file size. */
-		const auto size = file.tellg();
-		file.seekg(0);
+		const auto bytes = file.tellg();
+		file.seekg(0, std::ifstream::beg);
 
-		content.resize(size / sizeof(data_t) + (size % (sizeof(data_t) ? 1U : 0U)));
+		content.resize(bytes / sizeof(data_t) + (bytes % (sizeof(data_t) ? 1U : 0U)));
 
-		file.read(reinterpret_cast< char * >(content.data()), size);
+		file.read(reinterpret_cast< char * >(content.data()), bytes);
 		file.close();
 
 		return true;

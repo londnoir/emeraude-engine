@@ -333,6 +333,23 @@ namespace EmEn::Graphics
 
 			/**
 			 * @brief Sets the clear value for the color buffer for the next rendering.
+			 * @param red A scalar value.
+			 * @param green A scalar value.
+			 * @param blue A scalar value.
+			 * @param alpha A scalar value. Default 1.
+			 * @return void
+			 */
+			void
+			setClearColor (float red, float green, float blue, float alpha = 1.0F) noexcept
+			{
+				m_clearColors[0].color.float32[0] = Libs::Math::clampToUnit(red);
+				m_clearColors[0].color.float32[1] = Libs::Math::clampToUnit(green);
+				m_clearColors[0].color.float32[2] = Libs::Math::clampToUnit(blue);
+				m_clearColors[0].color.float32[3] = Libs::Math::clampToUnit(alpha);
+			}
+
+			/**
+			 * @brief Sets the clear value for the color buffer for the next rendering.
 			 * @param clearColor A reference to a color.
 			 * @return void
 			 */

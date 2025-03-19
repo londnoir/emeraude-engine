@@ -31,12 +31,8 @@
 
 /* Third-party inclusions. */
 #ifdef TAGLIB_ENABLED
-	COMPILATION_SILENCE_WARNINGS
-
 	#include "taglib/tag.h"
 	#include "taglib/fileref.h"
-
-	COMPILATION_RESTORE_WARNINGS
 #endif
 
 /* Local inclusions. */

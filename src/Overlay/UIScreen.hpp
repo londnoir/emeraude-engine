@@ -154,14 +154,12 @@ namespace EmEn::Overlay
 			std::shared_ptr< surface_t >
 			createSurface (const std::string & name, ctor_args... args) noexcept requires (std::is_base_of_v< AbstractSurface, surface_t >)
 			{
-#ifdef DEBUG
 				if ( !m_framebufferProperties.isValid() )
 				{
 					TraceError{ClassId} << "The screen size are not initialized !";
 
 					return nullptr;
 				}
-#endif
 
 				if ( m_surfaces.contains(name) )
 				{
@@ -174,7 +172,9 @@ namespace EmEn::Overlay
 
 				if ( !surface->createOnHardware(m_graphicsRenderer) )
 				{
-					TraceError{ClassId} << "Unable to create the surface '" << name << "' on the GPU !";
+					TraceError{ClassId} <<
+						"Unable to create the surface '" << name << "' on the GPU !" "\n"
+						"Framebuffer : " << m_framebufferProperties;
 
 					return nullptr;
 				}
@@ -196,18 +196,16 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Resizes the surface textures resolution according to the new window size.
-			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
+			bool updatePhysicalRepresentation () noexcept;
 
 			/**
 			 * @brief Updates necessary data in video memory.
-			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
-			bool updateVideoMemory (Graphics::Renderer & renderer) noexcept;
+			bool updateVideoMemory () noexcept;
 
 			/**
 			 * @brief Destroys a surface by its name.

@@ -775,13 +775,11 @@ namespace EmEn::Libs::Math
 			std::ostream &
 			operator<< (std::ostream & out, const Rectangle & obj) noexcept
 			{
-				out << "Rectangle data :\n"
-					"X : " << obj.m_data[0] << "\n"
-					"Y : " << obj.m_data[1] << "\n"
-					"Xb : " << obj.offsetXb() << "\n"
-					"Yb : " << obj.offsetYb() << "\n"
-					"Width : " << obj.m_data[2] << "\n"
-					"Height : " << obj.m_data[3] << '\n';
+				out <<
+					"Rectangle data :" "\n"
+					"Position : X " << obj.m_data[0] << ", Y " << obj.m_data[1] << "\n"
+					"Position B : X " << obj.offsetXb() << ", Y " << obj.offsetYb() << "\n"
+					"Size : " << obj.m_data[2] << " X " << obj.m_data[3] << '\n';
 
 				return out;
 			}
@@ -804,6 +802,6 @@ namespace EmEn::Libs::Math
 
 		private:
 
-			std::array< data_t, 4 > m_data{};
+			std::array< data_t, 4 > m_data{0, 0, 1, 1};
 	};
 }

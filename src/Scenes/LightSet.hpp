@@ -65,7 +65,7 @@ namespace EmEn::Scenes
 {
 	/**
 	 * @brief This class hold lights from a whole scene.
-	 * Libraries::ObservableTrait The light set can be observed for light addition or removal.
+	 * @extends EmEn::Libs::ObservableTrait The light set can be observed for light addition or removal.
 	 */
 	class LightSet final : public Libs::ObservableTrait
 	{

@@ -388,25 +388,18 @@ namespace EmEn::Overlay
 			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
-			 * @brief Updates the overlay physical content.
+			 * @brief Updates the overlay physical content. This occurs when the window is created or resized.
 			 * @param fromResize Tells a resize occurred.
-			 * @return void
+			 * @return bool
 			 */
-			void updateContent (bool fromResize) noexcept;
+			bool updateContent (bool fromResize) noexcept;
 
 			/**
 			 * @brief Generates the overlay graphics pipeline.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool generateProgram () noexcept;
-
-			/**
-			 * @brief Updates the overlay graphics pipeline after a resize.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool updateProgram () const noexcept;
+			bool generateGraphicsPipeline () noexcept;
 
 #ifdef IMGUI_ENABLED
 

@@ -56,11 +56,11 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::updatePhysicalRepresentation (Renderer & renderer) noexcept
+	UIScreen::updatePhysicalRepresentation () noexcept
 	{
 		for ( const auto & [name, surface] : m_surfaces )
 		{
-			if ( !surface->updatePhysicalRepresentation(renderer) )
+			if ( !surface->updatePhysicalRepresentation(m_graphicsRenderer) )
 			{
 				TraceError{ClassId} << "The surface '" << name << "' physical update failed !";
 
@@ -72,7 +72,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::updateVideoMemory (Renderer & renderer) noexcept
+	UIScreen::updateVideoMemory () noexcept
 	{
 		if ( this->empty() )
 		{
@@ -83,7 +83,7 @@ namespace EmEn::Overlay
 
 		for ( const auto & surface : m_surfaces | std::views::values )
 		{
-			if ( !surface->updateVideoMemory(renderer) )
+			if ( !surface->updateVideoMemory(m_graphicsRenderer) )
 			{
 				errors++;
 			}

@@ -43,7 +43,7 @@ namespace EmEn
 	 * @brief The service interface.
 	 * @note A service cannot be duplicated and should act like a singleton.
 	 * @extends EmEn::Libs::NameableTrait Each service have a name.
-	 * Libraries::ObservableTrait Each service should be observable.
+	 * @extends EmEn::Libs::ObservableTrait Each service should be observable.
 	 */
 	class ServiceInterface : public Libs::NameableTrait, public Libs::ObservableTrait
 	{
@@ -121,13 +121,13 @@ namespace EmEn
 			explicit ServiceInterface (const std::string & serviceInstanceName) noexcept;
 
 			/**
-			 * @brief This method must be override by the final service on initialization.
+			 * @brief This method must be overridden by the final service on initialization.
 			 * @return bool
 			 */
 			virtual bool onInitialize () noexcept = 0;
 
 			/**
-			 * @brief This method must be override by the final service on termination.
+			 * @brief This method must be overridden by the final service on termination.
 			 * @return bool
 			 */
 			virtual bool onTerminate () noexcept = 0;
