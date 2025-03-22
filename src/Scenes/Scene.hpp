@@ -357,7 +357,8 @@ namespace EmEn::Scenes
 			void processLogics (size_t engineCycle) noexcept;
 
 			/**
-			 * @brief Update the video memory for a render target before the render.
+			 * @brief Updates the video memory just before rendering.
+			 * @note This should only update things which must be ready for rendering.
 			 * @return void
 			 */
 			void updateVideoMemory () const noexcept;

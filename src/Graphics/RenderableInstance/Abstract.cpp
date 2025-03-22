@@ -123,12 +123,10 @@ namespace EmEn::Graphics::RenderableInstance
 
 			return false;
 		}
-#endif
 
 		/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
 		const auto * geometry = m_renderable->geometry();
 
-#ifdef DEBUG
 		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
 		if ( geometry == nullptr )
 		{

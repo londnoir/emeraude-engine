@@ -67,10 +67,10 @@ namespace EmEn
 			return false;
 		}
 
-		m_pixelBuffer = m_screen->createSurface< Overlay::PixelBufferSurface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
-		m_pixelBuffer->pixmap().fill(Transparent);
+		m_surface = m_screen->createSurface< Overlay::Surface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
+		m_surface->pixmap().fill(Transparent);
 
-		m_processor.setPixmap(m_pixelBuffer->pixmap());
+		m_processor.setPixmap(m_surface->pixmap());
 
 		//auto font = Resources::Manager::instance()->fonts().getResource("old");
 
@@ -92,7 +92,7 @@ namespace EmEn
 		this->destroyTimers();
 
 		m_screen.reset();
-		m_pixelBuffer.reset();
+		m_surface.reset();
 
 		return true;
 	}
@@ -138,7 +138,7 @@ namespace EmEn
 	void
 	Notifier::displayNotifications () noexcept
 	{
-		m_pixelBuffer->pixmap().fill(Transparent);
+		m_surface->pixmap().fill(Transparent);
 
 		if ( !m_notifications.empty() )
 		{
@@ -159,7 +159,7 @@ namespace EmEn
 			}
 		}
 
-		m_pixelBuffer->requestVideoMemoryUpdate();
+		m_surface->setVideoMemoryOutdated();
 	}
 
 	void
@@ -175,9 +175,9 @@ namespace EmEn
 		}
 
 		/* NOTE: Clean up the screen. */
-		if ( m_pixelBuffer->pixmap().fill(Transparent) )
+		if ( m_surface->pixmap().fill(Transparent) )
 		{
-			m_pixelBuffer->requestVideoMemoryUpdate();
+			m_surface->setVideoMemoryOutdated();
 		}
 	}
 

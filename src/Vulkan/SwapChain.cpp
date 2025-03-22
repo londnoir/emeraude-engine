@@ -131,7 +131,7 @@ namespace EmEn::Vulkan
 			return;
 		}
 
-		this->device()->waitIdle();
+		this->device()->waitIdle("Destroying the swap chain");
 
 		this->destroyFramebuffer();
 

@@ -90,7 +90,7 @@ namespace EmEn::Libs::IO
 			bool
 			addFilepathToSources (const std::filesystem::path & path) noexcept
 			{
-				return this->addFilepathToSources(path, path.filename());
+				return this->addFilepathToSources(path, path.filename().string());
 			}
 
 			/**

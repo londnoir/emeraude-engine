@@ -29,7 +29,6 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <cmath>
-#include <array>
 #include <string>
 
 /* Local inclusions for usages. */

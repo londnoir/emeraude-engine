@@ -35,13 +35,28 @@ namespace EmEn::Vulkan
 {
 	using namespace EmEn::Libs;
 
-	CommandPool::CommandPool (const std::shared_ptr< Device > & device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags) noexcept
+	CommandPool::CommandPool (const std::shared_ptr< Device > & device, uint32_t queueFamilyIndex, bool transientCB, bool enableCBReset, bool enableProtectCB) noexcept
 		: AbstractDeviceDependentObject(device)
 	{
 		m_createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
-		m_createInfo.flags = createFlags;
+		m_createInfo.flags = 0;
 		m_createInfo.queueFamilyIndex = queueFamilyIndex;
+
+		if ( transientCB )
+		{
+			m_createInfo.flags |= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		}
+
+		if ( enableCBReset )
+		{
+			m_createInfo.flags |= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		}
+
+		if ( enableProtectCB )
+		{
+			m_createInfo.flags |= VK_COMMAND_POOL_CREATE_PROTECTED_BIT;
+		}
 	}
 
 	CommandPool::CommandPool (const std::shared_ptr< Device > & device, const VkCommandPoolCreateInfo & createInfo) noexcept
@@ -91,7 +106,7 @@ namespace EmEn::Vulkan
 
 		if ( m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying a command pool");
 
 			vkDestroyCommandPool(this->device()->handle(), m_handle, nullptr);
 
@@ -104,7 +119,7 @@ namespace EmEn::Vulkan
 	}
 
 	VkCommandBuffer
-	CommandPool::allocateCommandBuffer (bool primaryLevel) noexcept
+	CommandPool::allocateCommandBuffer (bool primaryLevel) const noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_allocationMutex};
 
@@ -134,11 +149,12 @@ namespace EmEn::Vulkan
 	}
 
 	void
-	CommandPool::freeCommandBuffer (VkCommandBuffer commandBufferHandle) noexcept
+	CommandPool::freeCommandBuffer (VkCommandBuffer commandBufferHandle) const noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_allocationMutex};
 
-		this->device()->waitIdle();
+		/* FIXME: This causes a VK_ERROR_DEVICE_LOST */
+		this->device()->waitIdle("Freeing command buffer from a command pool");
 
 		vkFreeCommandBuffers(
 			this->device()->handle(),

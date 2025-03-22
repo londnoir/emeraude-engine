@@ -107,7 +107,7 @@ namespace EmEn::Vulkan::Sync
 
 		if (  m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying a fence");
 
 			vkDestroyFence(this->device()->handle(), m_handle, nullptr);
 

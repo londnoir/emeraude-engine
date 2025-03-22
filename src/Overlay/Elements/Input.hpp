@@ -60,10 +60,10 @@ namespace EmEn::Overlay::Elements
 			 */
 			Input (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onKeyRelease() */
+			/** @copydoc EmEn::Overlay::Surface::onKeyRelease() */
 			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept override;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onCharacterType() */
+			/** @copydoc EmEn::Overlay::Surface::onCharacterType() */
 			bool onCharacterType (uint32_t unicode) noexcept override;
 
 			/**

@@ -463,7 +463,7 @@ namespace EmEn
 	}
 
 	void
-	Core::onMainLoopCycle () const noexcept
+	Core::onMainLoopCycle () noexcept
 	{
 		/* Makes nothing special here. */
 	}

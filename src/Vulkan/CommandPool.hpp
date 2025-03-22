@@ -56,15 +56,17 @@ namespace EmEn::Vulkan
 			/**
 			 * @brief Constructs a command pool.
 			 * @param device A reference to a smart pointer of a device.
-			 * @param queueFamilyIndex Set which family queue will used by the command pool.
-			 * @param createFlags The create info flags. Default none.
+			 * @param queueFamilyIndex Set which family queue will be used by the command pool.
+			 * @param transientCB Tells command buffer will be short-lived.
+			 * @param enableCBReset Enables the command buffer to be reset into initial state.
+			 * @param enableProtectCB Enables the protected memory (Request protectedMemory feature and Vulkan 1.1).
 			 */
-			CommandPool (const std::shared_ptr< Device > & device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = 0) noexcept;
+			CommandPool (const std::shared_ptr< Device > & device, uint32_t queueFamilyIndex, bool transientCB, bool enableCBReset, bool enableProtectCB) noexcept;
 
 			/**
-			 * @brief Constructs a command pool with create info.
+			 * @brief Constructs a command pool with createInfo.
 			 * @param device A reference to a smart pointer of a device.
-			 * @param createInfo A reference to a create info.
+			 * @param createInfo A reference to a createInfo.
 			 */
 			CommandPool (const std::shared_ptr< Device > & device, const VkCommandPoolCreateInfo & createInfo) noexcept;
 
@@ -142,14 +144,14 @@ namespace EmEn::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			VkCommandBuffer allocateCommandBuffer (bool primaryLevel) noexcept;
+			VkCommandBuffer allocateCommandBuffer (bool primaryLevel) const noexcept;
 
 			/**
 			 * @brief Frees one command buffer.
-			 * @param commandBuffer A command buffer handle.
+			 * @param commandBufferHandle A command buffer handle.
 			 * @return void
 			 */
-			void freeCommandBuffer (VkCommandBuffer commandBufferHandle) noexcept;
+			void freeCommandBuffer (VkCommandBuffer commandBufferHandle) const noexcept;
 
 		private:
 

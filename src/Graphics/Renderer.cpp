@@ -718,11 +718,7 @@ namespace EmEn::Graphics
 			auto & commandPool = m_commandPools[index];
 			auto & commandBuffer = m_commandBuffers[index];
 
-			commandPool = std::make_shared< CommandPool >(
-				m_device,
-				m_device->getGraphicsFamilyIndex(),
-				VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-			);
+			commandPool = std::make_shared< CommandPool >(m_device, m_device->getGraphicsFamilyIndex(), false, true, false);
 			commandPool->setIdentifier(ClassId, (std::stringstream{} << "Frame" << index).str(), "CommandPool");
 
 			if ( !commandPool->createOnHardware() )
@@ -743,11 +739,7 @@ namespace EmEn::Graphics
 			}
 		}
 
-		m_offScreenCommandPool = std::make_shared< CommandPool >(
-			m_device,
-			m_device->getGraphicsFamilyIndex(),
-			VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-		);
+		m_offScreenCommandPool = std::make_shared< CommandPool >(m_device, m_device->getGraphicsFamilyIndex(), true, true, false);
 		m_offScreenCommandPool->setIdentifier(ClassId, "offScreen", "CommandPool");
 
 		if ( !m_offScreenCommandPool->createOnHardware() )
@@ -763,7 +755,7 @@ namespace EmEn::Graphics
 	void
 	Renderer::destroyCommandSystem () noexcept
 	{
-		m_device->waitIdle();
+		m_device->waitIdle("Destroying the renderer command pool");
 
 		m_offScreenCommandPool.reset();
 

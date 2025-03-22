@@ -69,7 +69,7 @@ namespace EmEn::Scenes::Component
 		const auto emitterMatrix = emitterLocation.getModelMatrix();
 
 		/* Particle parameters. */
-		size_t activeInstanceCount = 0;
+		uint32_t activeInstanceCount = 0;
 		uint32_t newParticles = this->isEmitting() ? m_particleGeneratedPerCycle : 0;
 
 		for ( auto & particle : m_particles )

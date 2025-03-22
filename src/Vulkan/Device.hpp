@@ -240,9 +240,10 @@ namespace EmEn::Vulkan
 
 			/**
 			 * @brief Waits for a device to become idle.
-			 * @return bool
+			 * @param location A point to string.
+			 * @return void
 			 */
-			bool waitIdle () const noexcept;
+			void waitIdle (const char * location) const noexcept;
 
 			/**
 			 * @brief Finds the suitable memory type.

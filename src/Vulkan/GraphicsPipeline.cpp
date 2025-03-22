@@ -954,7 +954,7 @@ namespace EmEn::Vulkan
 
 		if ( m_handle != nullptr )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying a graphics pipeline");
 
 			vkDestroyPipeline(this->device()->handle(), m_handle, nullptr);
 

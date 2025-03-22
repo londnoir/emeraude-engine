@@ -127,7 +127,7 @@ namespace EmEn::Physics
 			return false;
 		}
 
-		m_commandPool = std::make_shared< CommandPool >(m_device, m_device->getComputeFamilyIndex(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		m_commandPool = std::make_shared< CommandPool >(m_device, m_device->getComputeFamilyIndex(), false, true, false);
 		m_commandPool->setIdentifier(ClassId, "Main", "CommandPool");
 
 		if ( !m_commandPool->createOnHardware() )
@@ -188,7 +188,7 @@ namespace EmEn::Physics
 			return;
 		}
 
-		m_device->waitIdle();
+		m_device->waitIdle("Clearing the command buffers");
 
 		// FIXME !!! Check with the bit flag a command pool creation.
 		//m_commandPool->freeCommandBuffers(static_cast< uint32_t >(m_commandBuffers.size()), m_commandBuffers.data());

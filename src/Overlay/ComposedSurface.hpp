@@ -33,7 +33,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "AbstractSurface.hpp"
+#include "Surface.hpp"
 
 /* Local inclusions for usages. */
 #include "Layouts/Main.hpp"
@@ -68,9 +68,9 @@ namespace EmEn::Overlay
 
 	/**
 	 * @brief The base class of all overlay surfaces.
-	 * @extends EmEn::Overlay::AbstractSurface This is a surface.
+	 * @extends EmEn::Overlay::Surface This is a surface.
 	 */
-	class ComposedSurface : public AbstractSurface
+	class ComposedSurface : public Surface
 	{
 		friend class UIScreen;
 
@@ -87,17 +87,6 @@ namespace EmEn::Overlay
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 */
 			ComposedSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::descriptorSet() const */
-			[[nodiscard]]
-			const Vulkan::DescriptorSet * descriptorSet () const noexcept final;
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::createOnHardware() */
-			[[nodiscard]]
-			bool createOnHardware (Graphics::Renderer & renderer) noexcept final;
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::destroyFromHardware() */
-			bool destroyFromHardware () noexcept final;
 
 			/**
 			 * @brief Sets the dimension of the surface.
@@ -123,7 +112,7 @@ namespace EmEn::Overlay
 			 * @param positionY
 			 * @return void
 			 */
-			void setPosition (float positionX, float positionY) noexcept;
+			//void setPosition (float positionX, float positionY) noexcept;
 
 			/**
 			 * @brief Integer version of the function that set the lower left point of the surface on screen in pixels.
@@ -220,18 +209,6 @@ namespace EmEn::Overlay
 			virtual bool onDrawFinished (Libs::PixelFactory::Pixmap< uint8_t > & pixmap) noexcept;
 
 		private:
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::createDescriptorSet() */
-			[[nodiscard]]
-			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept final;
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::onPhysicalRepresentationUpdate() */
-			[[nodiscard]]
-			bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept final;
-
-			/** @copydoc EmEn::Overlay::AbstractSurface::onVideoMemoryUpdate() */
-			[[nodiscard]]
-			bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept final;
 
 			/**
 			 * @brief Creates or updates the vertex data of the surface.

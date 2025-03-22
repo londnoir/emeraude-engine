@@ -36,7 +36,7 @@
 #include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "AbstractSurface.hpp"
+#include "Surface.hpp"
 #include "FramebufferProperties.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Tracer.hpp"
@@ -152,7 +152,7 @@ namespace EmEn::Overlay
 			 */
 			template< typename surface_t, typename... ctor_args >
 			std::shared_ptr< surface_t >
-			createSurface (const std::string & name, ctor_args... args) noexcept requires (std::is_base_of_v< AbstractSurface, surface_t >)
+			createSurface (const std::string & name, ctor_args... args) noexcept requires (std::is_base_of_v< Surface, surface_t >)
 			{
 				if ( !m_framebufferProperties.isValid() )
 				{
@@ -195,17 +195,11 @@ namespace EmEn::Overlay
 			}
 
 			/**
-			 * @brief Resizes the surface textures resolution according to the new window size.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool updatePhysicalRepresentation () noexcept;
-
-			/**
 			 * @brief Updates necessary data in video memory.
+			 * @param windowResized Tells the update come from a window resize.
 			 * @return bool
 			 */
-			bool updateVideoMemory () noexcept;
+			bool updateVideoMemory (bool windowResized) noexcept;
 
 			/**
 			 * @brief Destroys a surface by its name.
@@ -216,10 +210,10 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Returns the screen surfaces list.
-			 * @return const std::map< std::string, std::shared_ptr< AbstractSurface > > &
+			 * @return const std::map< std::string, std::shared_ptr< Surface > > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string, std::shared_ptr< AbstractSurface > > &
+			const std::map< std::string, std::shared_ptr< Surface > > &
 			surfaces () const noexcept
 			{
 				return m_surfaces;
@@ -228,18 +222,18 @@ namespace EmEn::Overlay
 			/**
 			 * @brief Returns a pointer to a named surface or nullptr.
 			 * @param name The name of the surface.
-			 * @return std::shared_ptr< const AbstractSurface >
+			 * @return std::shared_ptr< const Surface >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< const AbstractSurface > getSurface (const std::string & name) const noexcept;
+			std::shared_ptr< const Surface > getSurface (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Returns a pointer to a named surface or nullptr.
 			 * @param name The name of the surface.
-			 * @return std::shared_ptr< AbstractSurface >
+			 * @return std::shared_ptr< Surface >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractSurface > getSurface (const std::string & name) noexcept;
+			std::shared_ptr< Surface > getSurface (const std::string & name) noexcept;
 
 			/**
 			 * @brief Sets an exclusive surface to receive inputs.
@@ -273,10 +267,10 @@ namespace EmEn::Overlay
 			/**
 			 * @brief Returns the surface set as input exclusive.
 			 * @warning This can be nullptr.
-			 * @return std::shared_ptr< AbstractSurface >
+			 * @return std::shared_ptr< Surface >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractSurface >
+			std::shared_ptr< Surface >
 			inputExclusiveSurface () const noexcept
 			{
 				return m_inputExclusiveSurface;
@@ -355,8 +349,8 @@ namespace EmEn::Overlay
 
 			Graphics::Renderer & m_graphicsRenderer;
 			const FramebufferProperties & m_framebufferProperties;
-			std::map< std::string, std::shared_ptr< AbstractSurface > > m_surfaces;
-			std::shared_ptr< AbstractSurface > m_inputExclusiveSurface;
+			std::map< std::string, std::shared_ptr< Surface > > m_surfaces;
+			std::shared_ptr< Surface > m_inputExclusiveSurface;
 			std::array< bool, 8 > m_flags{
 				false/*IsVisible*/,
 				false/*IsListeningKeyboard*/,

@@ -107,7 +107,7 @@ namespace EmEn::Vulkan::Sync
 
 		if (  m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying an event");
 
 			vkDestroyEvent(this->device()->handle(), m_handle, nullptr);
 

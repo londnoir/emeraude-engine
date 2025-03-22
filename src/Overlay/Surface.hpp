@@ -1,5 +1,5 @@
 /*
- * src/Overlay/AbstractSurface.hpp
+ * src/Overlay/Surface.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -34,6 +34,7 @@
 #include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usages. */
+#include "Vulkan/DescriptorSet.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "FramebufferProperties.hpp"
 #include "Libs/Math/Matrix.hpp"
@@ -42,7 +43,6 @@
 namespace EmEn::Vulkan
 {
 	class LayoutManager;
-	class DescriptorSet;
 }
 
 namespace EmEn::Overlay
@@ -51,40 +51,52 @@ namespace EmEn::Overlay
 	 * @brief The base class for overlay UIScreen surfaces.
 	 * @exception Libraries::NameableTrait A surface have a name.
 	 */
-	class AbstractSurface : public Libs::NameableTrait
+	class Surface : public Libs::NameableTrait
 	{
 		public:
+
+			/** @brief Class identifier. */
+			static constexpr auto ClassId{"OverlaySurface"};
+
+			/**
+			 * @brief Constructs a surface.
+			 * @param framebufferProperties A reference to the overlay framebuffer properties.
+			 * @param name A reference to a string.
+			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
+			 * @param depth A depth value to order surface on the screen. Default 0.0.
+			 */
+			Surface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
 			/**
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			AbstractSurface (const AbstractSurface & copy) noexcept = delete;
+			Surface (const Surface & copy) noexcept = delete;
 
 			/**
 			 * @brief Move constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			AbstractSurface (AbstractSurface && copy) noexcept = delete;
+			Surface (Surface && copy) noexcept = delete;
 
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return SurfaceInterface &
 			 */
-			AbstractSurface & operator= (const AbstractSurface & copy) noexcept = delete;
+			Surface & operator= (const Surface & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return SurfaceInterface &
 			 */
-			AbstractSurface & operator= (AbstractSurface && copy) noexcept = delete;
+			Surface & operator= (Surface && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the surface.
 			 */
-			~AbstractSurface () noexcept override = default;
+			~Surface () noexcept override = default;
 
 			/**
 			 * @brief Returns the framebuffer properties from the overlay.
@@ -128,6 +140,13 @@ namespace EmEn::Overlay
 			modelMatrix () const noexcept
 			{
 				return m_modelMatrix;
+			}
+
+			[[nodiscard]]
+			Libs::PixelFactory::Pixmap< uint8_t > &
+			pixmap () noexcept
+			{
+				return m_localData;
 			}
 
 			/**
@@ -197,6 +216,49 @@ namespace EmEn::Overlay
 			isVisible () const noexcept
 			{
 				return m_flags[IsVisible];
+			}
+
+			/**
+			 * @brief Returns whether the surface is valid on GPU to draw in it.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isVideoMemorySizeValid () const noexcept
+			{
+				return m_flags[VideoMemorySizeValid];
+			}
+
+			/**
+			 * @brief Returns whether the surface is visible.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isVideoMemoryUpToDate () const noexcept
+			{
+				return m_flags[VideoMemoryUpToDate];
+			}
+
+			/**
+			 * @brief Declares the surface to be recreated on video memory.
+			 * @return void
+			 */
+			void
+			invalidate () noexcept
+			{
+				m_flags[VideoMemorySizeValid] = false;
+				m_flags[VideoMemoryUpToDate] = false;
+			}
+
+			/**
+			 * @brief Declares the video memory content outdated in order to re-upload it.
+			 * @return void
+			 */
+			void
+			setVideoMemoryOutdated () noexcept
+			{
+				m_flags[VideoMemoryUpToDate] = false;
 			}
 
 			/**
@@ -407,26 +469,32 @@ namespace EmEn::Overlay
 			bool isBelowPoint (float positionX, float positionY) const noexcept;
 
 			/**
-			 * @brief Updates the physical properties of a surface.
-			 * @note This occurs when the application window is resized.
+			 * @brief Returns the surface descriptor set.
+			 * @return const Vulkan::DescriptorSet *
+			 */
+			[[nodiscard]]
+			const Vulkan::DescriptorSet *
+			descriptorSet () const noexcept
+			{
+				return m_descriptorSet.get();
+			}
+			/**
+			 * @brief Creates the surface on the GPU.
 			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
-			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
+			[[nodiscard]]
+			bool createOnHardware (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Declares to update surface on the GPU.
-			 * @return void
+			 * @brief Destroys the surface from the GPU.
+			 * @return bool
 			 */
-			void
-			requestVideoMemoryUpdate () noexcept
-			{
-				m_flags[VideoMemoryUpdateRequested] = true;
-			}
+			bool destroyFromHardware () noexcept;
 
 			/**
 			 * @brief Updates the local data changes to the GPU.
-			 * @note The AbstractSurface::requestVideoMemoryUpdate() method must be called first for it to actually do anything.
+			 * @note Surface::setVideoMemoryOutdated() method must be called first for actually do something here.
 			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
@@ -548,43 +616,7 @@ namespace EmEn::Overlay
 				return m_flags[IsOpaque];
 			}
 
-			/**
-			 * @brief Returns the surface descriptor set.
-			 * @return const Vulkan::DescriptorSet *
-			 */
-			[[nodiscard]]
-			virtual const Vulkan::DescriptorSet * descriptorSet () const noexcept = 0;
-
-			/**
-			 * @brief Creates the surface on the GPU.
-			 * @param renderer A reference to the graphics renderer.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			virtual bool createOnHardware (Graphics::Renderer & renderer) noexcept = 0;
-
-			/**
-			 * @brief Destroys the surface from the GPU.
-			 * @return bool
-			 */
-			virtual bool destroyFromHardware () noexcept = 0;
-
-		protected:
-
-			/**
-			 * @brief Constructs a surface.
-			 * @param framebufferProperties A reference to the overlay framebuffer properties.
-			 * @param name A reference to a string.
-			 * @param geometry A reference to a rectangle for the surface geometry on screen. Default the whole screen.
-			 * @param depth A depth value to order surface on the screen. Default 0.0.
-			 */
-			AbstractSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
-
-			/**
-			 * @brief Updates the model matrix to place the surface on screen.
-			 * @return void
-			 */
-			void updateModelMatrix () noexcept;
+		private:
 
 			/**
 			 * @brief Creates the descriptor set for this surface.
@@ -592,25 +624,30 @@ namespace EmEn::Overlay
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool createDescriptorSet (Graphics::Renderer & renderer) noexcept = 0;
-
-		private:
+			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Event when the physical data is updating.
-			 * @param renderer A reference to the graphics renderer.
+			 * @brief Creates the Vulkan image.
+			 * @param renderer A reference to the renderer.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool onPhysicalRepresentationUpdate (Graphics::Renderer & renderer) noexcept = 0;
+			bool createImage (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Event when the video memory is updating.
-			 * @param renderer A reference to the graphics renderer.
+			 * @brief Creates the Vulkan image view.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool onVideoMemoryUpdate (Graphics::Renderer & renderer) noexcept = 0;
+			bool createImageView () noexcept;
+
+			/**
+			 * @brief Gets a Vulkan sampler.
+			 * @param renderer A reference to the renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool getSampler (Graphics::Renderer & renderer) noexcept;
 
 			/**
 			 * @brief Checks whether the event is blocked by performing an alpha test at position.
@@ -620,27 +657,59 @@ namespace EmEn::Overlay
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept = 0;
+			bool isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept;
+
+			/**
+			 * @brief Updates the model matrix to place the surface on screen.
+			 * @return void
+			 */
+			void updateModelMatrix () noexcept;
+
+			/**
+			 * @brief Updates the physical representation of the surface in video memory.
+			 * @param renderer A reference to the graphics renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
+
+			/**
+			 * @breif Event to override when the surface is ready.
+			 * @return void
+			 */
+			virtual
+			void
+			onSurfaceReadyForUsage () noexcept
+			{
+				/* Nothing to do here ... */
+			}
 
 			/* Flag names */
-			static constexpr auto VideoMemoryUpdateRequested{0UL};
-			static constexpr auto IsVisible{1UL};
-			static constexpr auto IsListeningKeyboard{2UL};
-			static constexpr auto IsListeningPointer{3UL};
-			static constexpr auto LockPointerMoveEvents{4UL};
-			static constexpr auto IsPointerWasOver{5UL};
-			static constexpr auto IsFocused{6UL};
-			static constexpr auto IsOpaque{7UL};
-			static constexpr auto IsAlphaTestEnabled{8UL};
-			static constexpr auto ProcessUnblockedPointerEvents{9UL};
+			static constexpr auto VideoMemorySizeValid{0UL};
+			static constexpr auto VideoMemoryUpToDate{1UL};
+			static constexpr auto IsVisible{2UL};
+			static constexpr auto IsListeningKeyboard{3UL};
+			static constexpr auto IsListeningPointer{4UL};
+			static constexpr auto LockPointerMoveEvents{5UL};
+			static constexpr auto IsPointerWasOver{6UL};
+			static constexpr auto IsFocused{7UL};
+			static constexpr auto IsOpaque{8UL};
+			static constexpr auto IsAlphaTestEnabled{9UL};
+			static constexpr auto ProcessUnblockedPointerEvents{10UL};
 
 			const FramebufferProperties & m_framebufferProperties;
 			Libs::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
 			Libs::Math::Matrix< 4, float > m_modelMatrix;
+			Libs::PixelFactory::Pixmap< uint8_t > m_localData; // pixel buffer
+			std::shared_ptr< Vulkan::Image > m_image;
+			std::shared_ptr< Vulkan::ImageView > m_imageView;
+			std::shared_ptr< Vulkan::Sampler > m_sampler;
+			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet;
 			float m_depth{0.0F};
 			float m_alphaThreshold{0.1F};
 			std::array< bool, 16 > m_flags{
-				true/*VideoMemoryUpdateRequested*/,
+				false/*VideoMemorySizeValid*/,
+				false/*VideoMemoryUpToDate*/,
 				true/*IsVisible*/,
 				false/*IsListeningKeyboard*/,
 				false/*IsListeningPointer*/,
@@ -650,7 +719,6 @@ namespace EmEn::Overlay
 				false/*IsOpaque*/,
 				false/*IsAlphaTestEnabled*/,
 				false/*ProcessUnblockedPointerEvents*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

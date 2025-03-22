@@ -367,7 +367,7 @@ namespace EmEn::Vulkan
 
 		if ( m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying an image");
 
 			vkDestroyImage(
 				this->device()->handle(),

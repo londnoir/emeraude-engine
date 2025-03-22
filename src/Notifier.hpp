@@ -38,7 +38,7 @@
 /* Local inclusions for usages */
 #include "Libs/PixelFactory/TextProcessor.hpp"
 #include "Overlay/Manager.hpp"
-#include "Overlay/PixelBufferSurface.hpp"
+#include "Overlay/Surface.hpp"
 
 namespace EmEn
 {
@@ -88,7 +88,7 @@ namespace EmEn
 			bool
 			usable () const noexcept override
 			{
-				return m_pixelBuffer != nullptr;
+				return m_surface != nullptr;
 			}
 
 			/**
@@ -137,7 +137,7 @@ namespace EmEn
 
 			Overlay::Manager & m_overlayManager;
 			std::shared_ptr< Overlay::UIScreen > m_screen;
-			std::shared_ptr< Overlay::PixelBufferSurface > m_pixelBuffer;
+			std::shared_ptr< Overlay::Surface > m_surface;
 			Libs::PixelFactory::TextProcessor< uint8_t > m_processor;
 			std::vector< std::pair< std::string, Libs::Time::TimerID > > m_notifications;
 			mutable std::mutex m_lock;

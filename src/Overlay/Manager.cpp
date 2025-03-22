@@ -613,6 +613,9 @@ namespace EmEn::Overlay
 	bool
 	Manager::updateVideoMemory () noexcept
 	{
+		/* NOTE: This can collide with the resize event from Manager::updatePhysicalRepresentation() in another thread. */
+		const std::lock_guard< std::mutex > lock{m_updateMutex};
+
 		if ( !this->isEnabled() || m_screens.empty() )
 		{
 			return true;
@@ -627,13 +630,60 @@ namespace EmEn::Overlay
 				continue;
 			}
 
-			if ( !screen->updateVideoMemory() )
+			if ( !screen->updateVideoMemory(false) )
 			{
 				errors++;
 			}
 		}
 
 		return errors == 0;
+	}
+
+	bool
+	Manager::updatePhysicalRepresentation () noexcept
+	{
+		/* NOTE: This can collide with the successive call to Manager::updateVideoMemory() the rendering loop. */
+		const std::lock_guard< std::mutex > lock{m_updateMutex};
+
+		const auto & settings = m_primaryServices.settings();
+		const auto forceScaleX = settings.get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
+		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
+		const auto & windowState = m_window.state();
+
+		/* NOTE: This structure is shared with all screens and surfaces. */
+		m_framebufferProperties.updateProperties(
+			windowState.framebufferWidth,
+			windowState.framebufferHeight,
+			forceScaleX > 0.0F ? forceScaleX : windowState.contentXScale,
+			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
+		);
+
+		if ( m_program == nullptr )
+		{
+			TraceError{ClassId} << "The program wasn't generated !";
+
+			return false;
+		}
+
+		if ( !m_program->graphicsPipeline()->recreateOnHardware(*m_graphicsRenderer.swapChain(), m_framebufferProperties.width(), m_framebufferProperties.height()) )
+		{
+			TraceError{ClassId} << "Unable to recreate the graphics pipeline with the new size !" "\n" << m_framebufferProperties;
+
+			return false;
+		}
+
+		/* NOTE: Update all screen according to the new framebuffer. */
+		for ( const auto & [name, screen] : m_screens )
+		{
+			if ( !screen->updateVideoMemory(true) )
+			{
+				TraceError{ClassId} << "The UI screen '" << name << "' physical representation update failed ! Disabling it ...";
+
+				screen->setVisibility(false);
+			}
+		}
+
+		return true;
 	}
 
 	void
@@ -730,60 +780,6 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	Manager::updateContent (bool fromResize) noexcept
-	{
-		const std::lock_guard< std::mutex > lock{m_updateMutex};
-
-		const auto & settings = m_primaryServices.settings();
-		const auto forceScaleX = settings.get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
-		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
-		const auto & windowState = m_window.state();
-
-		/* NOTE: This structure is shared with all screens and surfaces. */
-		m_framebufferProperties.updateProperties(
-			windowState.framebufferWidth,
-			windowState.framebufferHeight,
-			forceScaleX > 0.0F ? forceScaleX : windowState.contentXScale,
-			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
-		);
-
-		if ( m_program == nullptr )
-		{
-			TraceError{ClassId} << "The program wasn't generated !";
-
-			return false;
-		}
-
-		if ( m_program->graphicsPipeline()->recreateOnHardware(*m_graphicsRenderer.swapChain(), m_framebufferProperties.width(), m_framebufferProperties.height()) )
-		{
-			TraceError{ClassId} << "Unable to recreate the graphics pipeline with the new size !" "\n" << m_framebufferProperties;
-
-			return false;
-		}
-
-		/* NOTE: Update all screen according to the new framebuffer. */
-		for ( const auto & [name, screen] : m_screens )
-		{
-			if ( !screen->updatePhysicalRepresentation() )
-			{
-				TraceError{ClassId} << "The UI screen '" << name << "' physical representation update failed ! Disabling it ...";
-
-				screen->setVisibility(false);
-			}
-		}
-
-		if ( fromResize )
-		{
-			this->notify(OverlayResized, std::array< uint32_t, 2 >{
-			   windowState.framebufferWidth,
-			   windowState.framebufferHeight
-			});
-		}
-
-		return true;
-	}
-
-	bool
 	Manager::onNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{
 		if ( observable->is(Window::ClassUID) )
@@ -791,11 +787,19 @@ namespace EmEn::Overlay
 			switch ( notificationCode )
 			{
 				case Window::Created :
-					this->updateContent(false);
+					this->updatePhysicalRepresentation();
 					break;
 
 				case Window::OSNotifiesFramebufferResized :
-					this->updateContent(true);
+					if ( this->updatePhysicalRepresentation() )
+					{
+						const auto & windowState = m_window.state();
+
+						this->notify(OverlayResized, std::array< uint32_t, 2 >{
+						   windowState.framebufferWidth,
+						   windowState.framebufferHeight
+						});
+					}
 					break;
 
 				default :

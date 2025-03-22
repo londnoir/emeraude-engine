@@ -147,7 +147,7 @@ namespace EmEn::Vulkan
 
 		if ( m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying a buffer");
 
 			vkDestroyBuffer(
 				this->device()->handle(),

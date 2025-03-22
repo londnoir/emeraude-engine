@@ -58,16 +58,16 @@ namespace EmEn::Overlay::Elements
 			 */
 			Switch (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F) noexcept;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onPointerEnter() */
+			/** @copydoc EmEn::Overlay::Surface::onPointerEnter() */
 			void onPointerEnter (float positionX, float positionY) noexcept override;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onPointerLeave() */
+			/** @copydoc EmEn::Overlay::Surface::onPointerLeave() */
 			void onPointerLeave (float positionX, float positionY) noexcept override;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onButtonPress() */
+			/** @copydoc EmEn::Overlay::Surface::onButtonPress() */
 			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
-			/** @copydoc EmEn::Overlay::AbstractSurface::onButtonRelease() */
+			/** @copydoc EmEn::Overlay::Surface::onButtonRelease() */
 			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept override;
 
 			/**

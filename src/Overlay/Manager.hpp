@@ -385,14 +385,7 @@ namespace EmEn::Overlay
 
 			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
-
-			/**
-			 * @brief Updates the overlay physical content. This occurs when the window is created or resized.
-			 * @param fromResize Tells a resize occurred.
-			 * @return bool
-			 */
-			bool updateContent (bool fromResize) noexcept;
+			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Generates the overlay graphics pipeline.
@@ -400,6 +393,13 @@ namespace EmEn::Overlay
 			 */
 			[[nodiscard]]
 			bool generateGraphicsPipeline () noexcept;
+
+			/**
+			 * @brief Updates all overlay screens physical representation with a new framebuffer properties.
+			 * @note This is a 'super' Manager::updateVideoMemory() version.
+			 * @return bool
+			 */
+			bool updatePhysicalRepresentation () noexcept;
 
 #ifdef IMGUI_ENABLED
 

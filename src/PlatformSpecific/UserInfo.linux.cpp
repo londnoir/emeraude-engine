@@ -26,6 +26,9 @@
 
 #include "UserInfo.hpp"
 
+/* Project configuration files. */
+#include "platform.hpp"
+
 #if IS_LINUX
 
 /* STL inclusions. */

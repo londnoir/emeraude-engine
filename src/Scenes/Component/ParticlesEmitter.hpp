@@ -466,7 +466,7 @@ namespace EmEn::Scenes::Component
 			std::unique_ptr< Libs::Time::TimedEvent< uint64_t, std::micro > > m_timedEvent;
 			std::function< bool (Physics::Particle &) > m_customPhysicsSimulationSimpleFunction;
 			std::function< bool (const Physics::PhysicalEnvironmentProperties &, const Physics::PhysicalObjectProperties &, const Libs::Math::CartesianFrame< float > &, Physics::Particle & particle) > m_customPhysicsSimulationFullFunction;
-			size_t m_particleLimit;
+			uint32_t m_particleLimit;
 			uint32_t m_particleGeneratedPerCycle{1};
 			uint32_t m_minimumParticleLifetime{1};
 			uint32_t m_maximumParticleLifetime{1};

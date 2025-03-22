@@ -38,7 +38,7 @@
 #include "FramebufferProperties.hpp"
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "Libs/NameableTrait.hpp"
-#include "AbstractSurface.hpp"
+#include "Surface.hpp"
 #include "Tracer.hpp"
 
 namespace EmEn::Overlay
@@ -56,23 +56,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::updatePhysicalRepresentation () noexcept
-	{
-		for ( const auto & [name, surface] : m_surfaces )
-		{
-			if ( !surface->updatePhysicalRepresentation(m_graphicsRenderer) )
-			{
-				TraceError{ClassId} << "The surface '" << name << "' physical update failed !";
-
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool
-	UIScreen::updateVideoMemory () noexcept
+	UIScreen::updateVideoMemory (bool windowResized) noexcept
 	{
 		if ( this->empty() )
 		{
@@ -83,6 +67,11 @@ namespace EmEn::Overlay
 
 		for ( const auto & surface : m_surfaces | std::views::values )
 		{
+			if ( windowResized )
+			{
+				surface->invalidate();
+			}
+
 			if ( !surface->updateVideoMemory(m_graphicsRenderer) )
 			{
 				errors++;
@@ -111,7 +100,7 @@ namespace EmEn::Overlay
 		return true;
 	}
 
-	std::shared_ptr< const AbstractSurface >
+	std::shared_ptr< const Surface >
 	UIScreen::getSurface (const std::string & name) const noexcept
 	{
 		const auto surfaceIt = m_surfaces.find(name);
@@ -126,7 +115,7 @@ namespace EmEn::Overlay
 		return surfaceIt->second;
 	}
 
-	std::shared_ptr< AbstractSurface >
+	std::shared_ptr< Surface >
 	UIScreen::getSurface (const std::string & name) noexcept
 	{
 		const auto surfaceIt = m_surfaces.find(name);
@@ -159,7 +148,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
 	{
-		const auto dispatchEvent = [key, scancode, modifiers, repeat] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [key, scancode, modifiers, repeat] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
 			{
@@ -187,7 +176,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
 	{
-		const auto dispatchEvent = [key, scancode, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [key, scancode, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
 			{
@@ -215,7 +204,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onCharacterType (uint32_t unicode) noexcept
 	{
-		const auto dispatchEvent = [unicode] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [unicode] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( !surface->isListeningKeyboard() || !surface->isFocused() )
 			{
@@ -243,7 +232,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onPointerMove (float positionX, float positionY) noexcept
 	{
-		const auto dispatchEvent = [positionX, positionY] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			/* NOTE: Always check if the pointer is over the surface. */
 			const auto pointerOver = surface->isBelowPoint(positionX, positionY);
@@ -297,7 +286,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
 	{
-		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{
@@ -329,7 +318,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
 	{
-		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{
@@ -357,7 +346,7 @@ namespace EmEn::Overlay
 	bool
 	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
 	{
-		const auto dispatchEvent = [positionX, positionY, xOffset, yOffset] (const std::shared_ptr< AbstractSurface > & surface) -> bool
+		const auto dispatchEvent = [positionX, positionY, xOffset, yOffset] (const std::shared_ptr< Surface > & surface) -> bool
 		{
 			if ( surface->isListeningPointer() && surface->isBelowPoint(positionX, positionY) )
 			{

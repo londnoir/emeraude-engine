@@ -87,7 +87,7 @@ namespace EmEn::Vulkan
 			return false;
 		}
 
-		m_transferCommandPool = std::make_shared< CommandPool >(m_device, m_device->getTransferFamilyIndex());
+		m_transferCommandPool = std::make_shared< CommandPool >(m_device, m_device->getTransferFamilyIndex(), true, false, false);
 		m_transferCommandPool->setIdentifier(ClassId, "Transfer", "CommandPool");
 
 		if ( !m_transferCommandPool->createOnHardware() )
@@ -106,7 +106,7 @@ namespace EmEn::Vulkan
 		{
 			m_flags[SeparatedQueues] = true;
 
-			m_specificCommandPool = std::make_shared< CommandPool >(m_device, m_device->getGraphicsFamilyIndex());
+			m_specificCommandPool = std::make_shared< CommandPool >(m_device, m_device->getGraphicsFamilyIndex(), true, false, false);
 			m_specificCommandPool->setIdentifier(ClassId, "Specific", "CommandPool");
 
 			if ( !m_specificCommandPool->createOnHardware() )
@@ -136,7 +136,8 @@ namespace EmEn::Vulkan
 
 		m_flags[ServiceInitialized] = false;
 
-		m_device->waitIdle();
+		/* FIXME: Seems unnecessary */
+		m_device->waitIdle("Destroying a transfert manager");
 
 		m_specificCommandPool.reset();
 		m_transferCommandPool.reset();
@@ -396,6 +397,8 @@ namespace EmEn::Vulkan
 
 				return false;
 			}
+
+			/* FIXME: This causes a VK_ERROR_DEVICE_LOST (smart-pointer gone) */
 		}
 
 		/* NOTE: Work on graphics queue. */

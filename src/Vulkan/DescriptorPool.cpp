@@ -103,7 +103,7 @@ namespace EmEn::Vulkan
 
 		if ( m_handle != VK_NULL_HANDLE )
 		{
-			this->device()->waitIdle();
+			this->device()->waitIdle("Destroying descriptor pool");
 
 			vkDestroyDescriptorPool(
 				this->device()->handle(),
@@ -156,7 +156,7 @@ namespace EmEn::Vulkan
 	{
 		const std::lock_guard< std::mutex > lock{m_allocationMutex};
 
-		this->device()->waitIdle();
+		this->device()->waitIdle("Freeing descriptor set");
 
 		const auto result = vkFreeDescriptorSets(
 			this->device()->handle(),

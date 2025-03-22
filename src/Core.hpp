@@ -837,7 +837,7 @@ namespace EmEn
 			 * @brief Called in every main loop cycle.
 			 * @return void
 			 */
-			virtual void onMainLoopCycle () const noexcept;
+			virtual void onMainLoopCycle () noexcept;
 
 			/**
 			 * @brief Initializes the core level of the engine.

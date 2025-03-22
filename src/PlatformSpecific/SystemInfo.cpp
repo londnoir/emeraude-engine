@@ -26,6 +26,9 @@
 
 #include "SystemInfo.hpp"
 
+/* Project configuration files. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <iostream>
 #include <sstream>

@@ -126,7 +126,7 @@ namespace EmEn::Vulkan
 			return;
 		}
 
-		this->waitIdle();
+		this->waitIdle("Destroying the device !");
 
 		m_queueFamilyPerJob.clear();
 		m_queueFamilies.clear();
@@ -503,28 +503,28 @@ namespace EmEn::Vulkan
 		return queueFamilyIt->second->queue(deviceJobType, priority);
 	}
 
-	bool
-	Device::waitIdle () const noexcept
+	void
+	Device::waitIdle (const char * location) const noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_mutex};
 
 		if ( m_handle == VK_NULL_HANDLE )
 		{
-			Tracer::error(ClassId, "The device is gone !");
+			TraceError{ClassId} <<
+				"The device is gone !" "\n"
+				"Call location : " << location;
 
-			return false;
+			return;
 		}
 
 		const auto result = vkDeviceWaitIdle(m_handle);
 
 		if ( result != VK_SUCCESS )
 		{
-			TraceError{ClassId} << "Unable wait device " << m_handle << " : " << vkResultToCString(result) << " !";
-
-			return false;
+			TraceError{ClassId} <<
+				"Unable to wait the device " << m_handle << " : " << vkResultToCString(result) << " !" "\n"
+				"Call location : " << location;
 		}
-
-		return true;
 	}
 
 	uint32_t

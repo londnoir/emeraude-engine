@@ -32,7 +32,7 @@
 #include <memory>
 
 /* Local inclusions. */
-#include "AbstractSurface.hpp"
+#include "Surface.hpp"
 #include "Constants.hpp"
 #include "Manager.hpp"
 #include "Layouts/Main.hpp"
@@ -52,82 +52,9 @@ namespace EmEn::Overlay
 	using namespace Vulkan;
 
 	ComposedSurface::ComposedSurface (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
-		: AbstractSurface(framebufferProperties, name, geometry, depth)
+		: Surface(framebufferProperties, name, geometry, depth)
 	{
 
-	}
-
-	bool
-	ComposedSurface::createDescriptorSet (Renderer & renderer) noexcept
-	{
-		const auto descriptorSetLayout = Manager::getDescriptorSetLayout(renderer.layoutManager());
-
-		if ( descriptorSetLayout == nullptr )
-		{
-			Tracer::error(ClassId, "Unable to get the overlay descriptor set layout !");
-
-			return false;
-		}
-
-		m_descriptorSet = std::make_unique< DescriptorSet >(renderer.descriptorPool(), descriptorSetLayout);
-		m_descriptorSet->setIdentifier(ClassId, this->name(), "DescriptorSet");
-
-		if ( !m_descriptorSet->create() )
-		{
-			m_descriptorSet.reset();
-
-			Tracer::error(ClassId, "Unable to create the surface descriptor set !");
-
-			return false;
-		}
-
-		/*if ( !m_descriptorSet->writeCombinedImageSampler(0, *m_image, *m_imageView, *m_sampler) )
-		{
-			Tracer::error(ClassId, "Unable to write to the surface descriptor set !");
-
-			return false;
-		}*/
-
-		return true;
-	}
-
-	bool
-	ComposedSurface::onPhysicalRepresentationUpdate (Renderer & /*renderer*/) noexcept
-	{
-
-		return true;
-	}
-
-	const DescriptorSet *
-	ComposedSurface::descriptorSet () const noexcept
-	{
-		return m_descriptorSet.get();
-	}
-
-	bool
-	ComposedSurface::createOnHardware (Renderer & /*renderer*/) noexcept
-	{
-		return true;
-	}
-
-	bool
-	ComposedSurface::onVideoMemoryUpdate (Renderer & /*renderer*/) noexcept
-	{
-		/*if ( m_texture->isRequestingUpdate() )
-		{
-			if ( !m_texture->updateData(m_data) )
-				return false;
-
-			m_data.resetUpdatedRegion();
-		}*/
-
-		return true;
-	}
-
-	bool
-	ComposedSurface::destroyFromHardware () noexcept
-	{
-		return true;
 	}
 
 	void
@@ -157,12 +84,12 @@ namespace EmEn::Overlay
 		this->setGeometry(surfaceWidth, surfaceHeight);
 	}
 
-	void
+	/*void
 	ComposedSurface::setPosition (float positionX, float positionY) noexcept
 	{
 		m_rectangle.setOffsetX(positionX);
 		m_rectangle.setOffsetY(positionY);
-	}
+	}*/
 
 	void
 	ComposedSurface::setPosition (int positionX, int positionY) noexcept
@@ -172,7 +99,7 @@ namespace EmEn::Overlay
 		const auto surfaceX = static_cast< float >(windowSize[0]) / static_cast< float >(positionX);
 		const auto surfaceY = static_cast< float >(windowSize[1]) / static_cast< float >(positionY);
 
-		this->setPosition(surfaceX, surfaceY);
+		//this->setPosition(surfaceX, surfaceY);
 	}
 
 	void

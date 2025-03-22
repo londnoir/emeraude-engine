@@ -26,9 +26,6 @@
 
 #pragma once
 
-/* Project configuration files. */
-#include "platform.hpp"
-
 /* STL inclusions. */
 #include <string>
 #include <ostream>
