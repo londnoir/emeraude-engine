@@ -19,6 +19,7 @@ Others are submodules and compiled directly with the final binary.
  - A compiler compatible with C++20
  - CMake (3.25.1) to generate the projet
  - Python3
+ - Vulkan SDK from https://vulkan.lunarg.com/sdk/home
 
 This library is maintained from Debian 12 (stable) using G++ 12.2.
 On macOS, you need Xcode environment installed for the minimal SDK 12.
