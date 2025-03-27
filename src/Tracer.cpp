@@ -61,8 +61,10 @@ namespace EmEn
 
 	Tracer * Tracer::s_instance{nullptr};
 
-	Tracer::Tracer (const Arguments & arguments, Settings & settings) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_settings(settings)
+	Tracer::Tracer (const Arguments & arguments, Settings & settings, bool childProcess) noexcept
+		: ServiceInterface(ClassId),
+		m_arguments(arguments),
+		m_settings(settings)
 	{
 		if ( s_instance != nullptr )
 		{
@@ -72,6 +74,8 @@ namespace EmEn
 		}
 
 		s_instance = this;
+
+		m_flags[ChildProcess] = childProcess;
 	}
 
 	Tracer::~Tracer ()

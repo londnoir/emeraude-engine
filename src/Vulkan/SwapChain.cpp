@@ -28,7 +28,6 @@
 
 /* STL inclusions. */
 #include <cstddef>
-#include <iostream>
 #include <limits>
 #include <mutex>
 
@@ -44,6 +43,7 @@
 #include "Image.hpp"
 #include "ImageView.hpp"
 #include "Utility.hpp"
+#include "Window.hpp"
 #include "Tracer.hpp"
 
 namespace EmEn::Vulkan
@@ -59,9 +59,9 @@ namespace EmEn::Vulkan
 	{
 		m_window->surface()->update(device);
 
+		m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, DefaultVkShowInformation);
 		m_flags[VSyncEnabled] = settings.get< bool >(VideoEnableVSyncKey, DefaultVideoEnableVSync);
 		m_flags[TripleBufferingEnabled] = settings.get< bool >(VideoEnableTripleBufferingKey, DefaultVideoEnableTripleBuffering);
-		m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
 	}
 
 	void
@@ -175,7 +175,7 @@ namespace EmEn::Vulkan
 	{
 		m_flags[Ready] = false;
 
-		for ( auto & frame : m_frames )
+		for ( const auto & frame : m_frames )
 		{
 			/* Clear the framebuffer. */
 			frame.framebuffer->destroyFromHardware();

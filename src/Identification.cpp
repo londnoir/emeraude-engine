@@ -37,12 +37,15 @@ namespace EmEn
 	using namespace EmEn::Libs;
 
 	Identification::Identification (const char * name, const Version & version, const char * organization, const char * domain) noexcept
-		: m_applicationName(name), m_applicationVersion(version), m_applicationOrganization(organization), m_applicationDomain(domain)
+		: m_applicationName(name),
+		m_applicationVersion(version),
+		m_applicationOrganization(organization),
+		m_applicationDomain(domain)
 	{
 		/* NOTE: Engine identification string. */
 		{
 			std::stringstream stream;
-			stream << LibraryName << " (" << LibraryVersion << "; " << LibraryPlatform << "; " << LibraryCompilationDate << ") - " << LibraryAuthorName;
+			stream << LibraryName << " (" << LibraryVersion << "; " << LibraryPlatform << "; " << LibraryCompilationDate << ") LGPLv3 - " << LibraryAuthorName;
 
 			m_engineId = stream.str();
 		}

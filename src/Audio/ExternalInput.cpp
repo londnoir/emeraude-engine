@@ -77,7 +77,7 @@ namespace EmEn::Audio
 	bool
 	ExternalInput::onInitialize () noexcept
 	{
-		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(OpenALShowInformationKey, DefaultOpenALShowInformation);
 
 		if ( !Manager::instance()->usable() )
 		{

@@ -26,6 +26,9 @@
 
 #include "TrackMixer.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* Local inclusions. */
 #include "Manager.hpp"
 #include "Resources/Manager.hpp"

@@ -234,6 +234,34 @@ namespace EmEn::Libs::Math
 				return ia && ib;
 			}
 
+			/**
+			 * @brief Finds the intersection between two line.
+			 * @param ax
+			 * @param ay
+			 * @param bx
+			 * @param by
+			 * @param cx
+			 * @param cy
+			 * @param dx
+			 * @param dy
+			 * @return Vector< 2, data_t >
+			 */
+			static
+			Vector< 2, data_t >
+			findIntersection (data_t ax, data_t ay, data_t bx, data_t by, data_t cx, data_t cy, data_t dx, data_t dy) noexcept
+			{
+				Vector< 2, data_t > intersection{};
+
+				data_t a = (ax * by - ay * bx);
+				data_t b = (cx * dy - cy * dx);
+				data_t det = (ax - bx) * (cy - dy) - (ay - by) * (cx - dx);
+
+				intersection[X] = (a * (cx - dx) - (ax - bx) * b) / det;
+				intersection[Y] = (a * (cy - dy) - (ay - by) * b) / det;
+
+				return intersection;
+			}
+
 		private:
 
 			Vector< 2, data_t > m_start{};

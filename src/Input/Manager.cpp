@@ -26,6 +26,9 @@
 
 #include "Manager.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <algorithm>
 #include <iostream>
@@ -41,6 +44,7 @@
 #include "JoystickController.hpp"
 #include "PrimaryServices.hpp"
 #include "Window.hpp"
+#include "SettingKeys.hpp"
 
 namespace EmEn::Input
 {
@@ -653,7 +657,7 @@ namespace EmEn::Input
 	bool
 	Manager::onInitialize () noexcept
 	{
-		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(InputShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(InputShowInformationKey, DefaultInputShowInformation);
 
 		if ( !m_window.usable() )
 		{
@@ -673,34 +677,34 @@ namespace EmEn::Input
 
 			if ( !IO::fileExists(filepath) )
 			{
-				TraceInfo{ClassId} << "The file '" << filepath << "' is not present !";
+				TraceWarning{ClassId} << "The file " << filepath << " is not present !";
 
 				continue;
 			}
 
 			if ( !IO::fileGetContents(filepath, devicesDatabase) )
 			{
-				TraceError{ClassId} << "Unable to read '" << filepath << "' !";
+				TraceError{ClassId} << "Unable to read " << filepath << " !";
 
 				continue;
 			}
 
 			if ( glfwUpdateGamepadMappings(devicesDatabase.c_str()) == GLFW_FALSE )
 			{
-				TraceError{ClassId} << "Update input devices from '" << filepath << "' failed !";
+				TraceError{ClassId} << "Update input devices from " << filepath << " failed !";
 
 				continue;
 			}
 
 			if ( m_flags[ShowInformation] )
 			{
-				TraceSuccess{ClassId} << "Update input devices from '" << filepath << "' succeed !";
+				TraceSuccess{ClassId} << "Update input devices from " << filepath << " succeed !";
 			}
 		}
 
 		if ( devicesDatabase.empty() )
 		{
-			TraceWarning{ClassId} << "There was no '" << GameControllerDBFile << "' file available !";
+			TraceWarning{ClassId} << "There was no " << GameControllerDBFile << " file available !";
 		}
 
 		/* Checks every device connected. */

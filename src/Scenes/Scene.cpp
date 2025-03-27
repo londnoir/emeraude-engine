@@ -26,6 +26,9 @@
 
 #include "Scene.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <cstdlib>
 #include <algorithm>

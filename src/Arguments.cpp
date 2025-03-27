@@ -44,7 +44,7 @@ namespace EmEn
 	const size_t Arguments::ClassUID{getClassUID(ClassId)};
 	Arguments * Arguments::s_instance{nullptr};
 
-	Arguments::Arguments (int argc, char * * argv) noexcept
+	Arguments::Arguments (int argc, char * * argv, bool childProcess) noexcept
 		: ServiceInterface(ClassId)
 	{
 		if ( s_instance != nullptr )
@@ -55,6 +55,8 @@ namespace EmEn
 		}
 
 		s_instance = this;
+
+		m_flags[ChildProcess] = childProcess;
 
 		/* NOTE: Create a copy of main() arguments. */
 		if ( argc > 0 && argv != nullptr )
@@ -69,9 +71,11 @@ namespace EmEn
 	}
 
 #if IS_WINDOWS
-	Arguments::Arguments (int argc, wchar_t * * wargv) noexcept
+	Arguments::Arguments (int argc, wchar_t * * wargv, bool childProcess) noexcept
 		: ServiceInterface(ClassId)
 	{
+		m_flags[ChildProcess] = childProcess;
+
 		if ( s_instance != nullptr )
 		{
 			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
@@ -296,7 +300,13 @@ namespace EmEn
 			m_arguments.emplace(std::piecewise_construct, std::forward_as_tuple(value), std::forward_as_tuple(true));
 		}
 
-		if ( this->get("--verbose").isPresent() )
+		if ( !m_flags[ChildProcess] )
+		{
+			m_flags[ShowInformation] = this->get("--verbose").isPresent();
+		}
+
+		/* NOTE: At this point, the tracer is not yet initialized. */
+		if ( m_flags[ShowInformation] )
 		{
 			std::cout << *this << '\n';
 		}

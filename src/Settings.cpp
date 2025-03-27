@@ -49,8 +49,10 @@ namespace EmEn
 
 	Settings * Settings::s_instance{nullptr};
 
-	Settings::Settings (const Arguments & arguments, const FileSystem & fileSystem, bool readOnly) noexcept
-		: ServiceInterface(ClassId), m_arguments(arguments), m_fileSystem(fileSystem)
+	Settings::Settings (const Arguments & arguments, const FileSystem & fileSystem, bool childProcess) noexcept
+		: ServiceInterface(ClassId),
+		m_arguments(arguments),
+		m_fileSystem(fileSystem)
 	{
 		if ( s_instance != nullptr )
 		{
@@ -61,12 +63,116 @@ namespace EmEn
 
 		s_instance = this;
 
-		m_flags[ReadOnly] = readOnly;
+		m_flags[ChildProcess] = childProcess;
+
+		if ( !m_flags[ChildProcess] )
+		{
+			m_flags[SaveAtExit] = true;
+		}
 	}
 
 	Settings::~Settings ()
 	{
 		s_instance = nullptr;
+	}
+
+	bool
+	Settings::onInitialize () noexcept
+	{
+		/* NOTE: In read-only, settings service is a copy from another process. */
+		if ( !m_flags[ChildProcess] )
+		{
+			m_flags[ShowInformation] = m_arguments.get("--verbose").isPresent();
+		}
+
+		const auto argument = m_arguments.get("--settings-filepath");
+
+		if ( argument.isPresent() )
+		{
+			m_filepath = argument.value();
+		}
+		else
+		{
+			m_filepath = m_fileSystem.configDirectory(Settings::Filename);
+		}
+
+		if ( m_filepath.empty() )
+		{
+			TraceWarning{ClassId} << "The settings file path variable is not set !";
+
+			return false;
+		}
+
+		if ( m_flags[ShowInformation] )
+		{
+			TraceInfo{ClassId} << "Loading settings from file '" << m_filepath.string() << "' ...";
+		}
+
+		/* Checks the file presence, if not, it will be created and uses the default engine values. */
+		if ( !IO::fileExists(m_filepath) )
+		{
+			if ( !m_flags[ChildProcess] )
+			{
+				TraceWarning{ClassId} <<
+					"Settings file " << m_filepath << " doesn't exist." "\n"
+					"The file will be written at the application successful exit.";
+
+				this->saveAtExit(true);
+			}
+
+			return true;
+		}
+
+		/* Reading the file ... */
+		if ( !this->readFile(m_filepath) )
+		{
+			TraceError{ClassId} << "Unable to read settings file from '" << m_filepath.string() << "' path !";
+
+			this->saveAtExit(false);
+
+			return false;
+		}
+
+		if ( m_arguments.get("--disable-settings-autosave").isPresent() )
+		{
+			this->saveAtExit(false);
+		}
+
+		if ( m_flags[ShowInformation] )
+		{
+			TraceInfo{ClassId} << *this;
+		}
+
+		m_flags[ServiceInitialized] = true;
+
+		return true;
+	}
+
+	bool
+	Settings::onTerminate () noexcept
+	{
+		m_flags[ServiceInitialized] = false;
+
+		if ( this->isSaveAtExitEnabled() )
+		{
+			if ( m_filepath.empty() )
+			{
+				TraceError{ClassId} << "File path is empty. Unable to save this settings file !";
+
+				return false;
+			}
+
+			if ( !this->writeFile(m_filepath) )
+			{
+				TraceError{ClassId} << "Unable to write settings file to '" << m_filepath << "' !";
+
+				return false;
+			}
+
+			TraceSuccess{ClassId} << "Settings file saved to '" << m_filepath << "' !";
+		}
+
+		return true;
 	}
 
 	bool
@@ -414,8 +520,6 @@ namespace EmEn
 
 		if ( store == nullptr )
 		{
-			TraceWarning{ClassId} << "The key '" << key << "' doesn't exists in the settings file and won't be saved.";
-
 			return {};
 		}
 
@@ -442,91 +546,6 @@ namespace EmEn
 		}
 
 		return store->getArrayPointer(name)->empty();
-	}
-
-	bool
-	Settings::onInitialize () noexcept
-	{
-		const auto argument = m_arguments.get("--settings-filepath");
-
-		if ( argument.isPresent() )
-		{
-			m_filepath = argument.value();
-		}
-		else
-		{
-			m_filepath = m_fileSystem.configDirectory(Settings::Filename);
-		}
-
-		if ( m_filepath.empty() )
-		{
-			TraceWarning{ClassId} << "The settings file path variable is not set !";
-
-			return false;
-		}
-
-		TraceInfo{ClassId} << "Loading settings from file '" << m_filepath.string() << "' ...";
-
-		/* Checks the file presence, if not, it will be created and uses the default engine values. */
-		if ( !IO::fileExists(m_filepath) )
-		{
-			TraceWarning{ClassId} << "Settings file '" << m_filepath.string() << "' doesn't exist. Writing a new one ...";
-
-			this->saveAtExit(true);
-
-			return true;
-		}
-
-		/* Reading the file ... */
-		if ( !this->readFile(m_filepath) )
-		{
-			TraceError{ClassId} << "Unable to read settings file from '" << m_filepath.string() << "' path !";
-
-			this->saveAtExit(false);
-
-			return false;
-		}
-
-		if ( m_arguments.get("--disable-settings-autosave").isPresent() )
-		{
-			this->saveAtExit(false);
-		}
-
-		if ( m_arguments.get("--verbose").isPresent() )
-		{
-			std::cout << *this << '\n';
-		}
-
-		m_flags[ServiceInitialized] = true;
-
-		return true;
-	}
-
-	bool
-	Settings::onTerminate () noexcept
-	{
-		m_flags[ServiceInitialized] = false;
-
-		if ( this->isSaveAtExitEnabled() )
-		{
-			if ( m_filepath.empty() )
-			{
-				TraceError{ClassId} << "File path is empty. Unable to save this settings file !";
-
-				return false;
-			}
-
-			if ( !this->writeFile(m_filepath) )
-			{
-				TraceError{ClassId} << "Unable to write settings file to '" << m_filepath << "' !";
-
-				return false;
-			}
-
-			TraceSuccess{ClassId} << "Settings file saved to '" << m_filepath << "' !";
-		}
-
-		return true;
 	}
 
 	bool

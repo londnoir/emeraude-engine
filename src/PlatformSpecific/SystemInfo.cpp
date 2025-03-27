@@ -68,13 +68,13 @@ namespace EmEn::PlatformSpecific
 	#if IS_ARM_ARCH
 		const auto cpuInfo = cpu_features::GetAarch64Info();
 
-		m_cpu.vendorName = "Apple";
-		m_cpu.vendorID = cpuInfo.implementer;
-		m_cpu.deviceName = "Apple M?";
-		m_cpu.deviceID = cpuInfo.variant;
-		m_cpu.family = -1;
-		m_cpu.model = cpuInfo.part;
-		m_cpu.stepping = cpuInfo.revision;
+        m_CPUInformation.vendorName = "Apple";
+        m_CPUInformation.vendorID = cpuInfo.implementer;
+        m_CPUInformation.deviceName = "Apple M?";
+        m_CPUInformation.deviceID = cpuInfo.variant;
+        m_CPUInformation.family = -1;
+        m_CPUInformation.model = cpuInfo.part;
+        m_CPUInformation.stepping = cpuInfo.revision;
 	#else
 		const auto cpuInfo = cpu_features::GetX86Info();
 

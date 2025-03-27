@@ -26,6 +26,9 @@
 
 #include "Renderer.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <cstddef>
 #include <cstdint>
@@ -668,6 +671,7 @@ namespace EmEn::Graphics
 			{
 				/* Updates the handle surface information. */
 				case Window::OSNotifiesFramebufferResized :
+				case Window::OSRequestsToRescaleContentBy :
 				{
 					const auto device = this->device();
 

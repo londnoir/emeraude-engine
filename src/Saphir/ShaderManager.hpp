@@ -164,14 +164,14 @@ namespace EmEn::Saphir
 			}
 
 			/**
-			 * @brief Returns whether the print of generated shader in console is enabled.
+			 * @brief Returns whether the print of shader source code in console is enabled.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			showGeneratedSourceCode () const noexcept
+			showSourceCode () const noexcept
 			{
-				return m_flags[ShowGeneratedSourceCode];
+				return m_flags[ShowSourceCode];
 			}
 
 			/**
@@ -350,8 +350,8 @@ namespace EmEn::Saphir
 
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
-			static constexpr auto ShowGeneratedSourceCode{1UL};
-			static constexpr auto ShowLoadedSourceCode{2UL};
+			static constexpr auto ShowInformation{1UL};
+			static constexpr auto ShowSourceCode{2UL};
 			static constexpr auto SourceCodeCacheEnabled{3UL};
 			static constexpr auto BinaryCacheEnabled{4UL};
 			static constexpr auto ForceDefaultVersionAndProfile{5UL};
@@ -375,13 +375,13 @@ namespace EmEn::Saphir
 			EShMessages m_messageFilter{static_cast< EShMessages >(EShMsgDefault | EShMsgSpvRules | EShMsgVulkanRules | EShMsgDebugInfo)};
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
-				BOOLEAN_FOLLOWING_DEBUG/*ShowGeneratedSourceCode*/,
-				BOOLEAN_FOLLOWING_DEBUG/*ShowLoadedSourceCode*/,
-				!BOOLEAN_FOLLOWING_DEBUG/*SourceCodeCacheEnabled*/,
-				!BOOLEAN_FOLLOWING_DEBUG/*BinaryCacheEnabled*/,
+				false/*ShowInformation*/,
+				false/*ShowSourceCode*/,
+				false/*SourceCodeCacheEnabled*/,
+				false/*BinaryCacheEnabled*/,
 				false/*ForceDefaultVersionAndProfile*/,
 				false/*ForwardCompatible*/,
-				true/*UNUSED*/
+				false/*UNUSED*/
 			};
 	};
 }

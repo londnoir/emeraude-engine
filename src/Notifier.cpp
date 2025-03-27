@@ -26,9 +26,8 @@
 
 #include "Notifier.hpp"
 
-/* STL inclusions. */
-
 /* Local inclusions. */
+#include "Graphics/FontResource.hpp"
 #include "Resources/Manager.hpp"
 #include "Tracer.hpp"
 
@@ -70,16 +69,12 @@ namespace EmEn
 		m_surface = m_screen->createSurface< Overlay::Surface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
 		m_surface->pixmap().fill(Transparent);
 
-		m_processor.setPixmap(m_surface->pixmap());
-
-		//auto font = Resources::Manager::instance()->fonts().getResource("old");
-
-		const auto filepath = FileSystem::instance()->getFilepathFromDataDirectories("data-stores/Fonts", "Joystick.ttf");
-		const auto font = std::make_shared< Font< uint8_t > >();
-
-		if ( font->readFile(filepath, 24) )
 		{
-			m_processor.setFont(font);
+			//m_font = Resources::Manager::instance()->fonts().getResource("old", false);
+			m_font = Resources::Manager::instance()->fonts().getDefaultResource();
+
+			m_processor.setPixmap(m_surface->pixmap());
+			m_processor.setFont(&m_font->font());
 			m_processor.setFontColor(White);
 		}
 
@@ -90,6 +85,9 @@ namespace EmEn
 	Notifier::onTerminate () noexcept
 	{
 		this->destroyTimers();
+
+		m_processor.setFont(nullptr);
+		m_font.reset();
 
 		m_screen.reset();
 		m_surface.reset();

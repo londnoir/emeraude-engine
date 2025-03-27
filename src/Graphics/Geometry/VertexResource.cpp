@@ -206,7 +206,7 @@ namespace EmEn::Graphics::Geometry
 			return false;
 		}
 
-		if ( !FileIO::read(filepath, m_localData) )
+		if ( !VertexFactory::FileIO::read(filepath, m_localData) )
 		{
 			TraceError{ClassId} << "Unable to load geometry from '" << filepath << "' !";
 

@@ -108,11 +108,11 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Sets a font to write on the pixmap.
-			 * @param font A reference to a font smart point.
+			 * @param font A pointer to a font.
 			 * @return void
 			 */
 			void
-			setFont (const std::shared_ptr< Font< precision_t > > & font) noexcept
+			setFont (const Font< precision_t > * font) noexcept
 			{
 				m_font = font;
 
@@ -121,10 +121,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the font smart pointer.
-			 * @return const std::shared_ptr< Font< precision_t > > &
+			 * @return const Font< precision_t > *
 			 */
 			[[nodiscard]]
-			const std::shared_ptr< Font< precision_t > > &
+			const Font< precision_t > *
 			font () const noexcept
 			{
 				return m_font;
@@ -164,7 +164,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the mode to prind characters on the pixmap.
+			 * @brief Returns the mode to print characters on the pixmap.
 			 * @return DrawPixelMode
 			 */
 			[[nodiscard]]
@@ -244,7 +244,7 @@ namespace EmEn::Libs::PixelFactory
 						/* NOTE: Check for spaces special cases. */
 						if ( chr == ' ' )
 						{
-							/* NOTE: Do not print a space at a begining of a line. */
+							/* NOTE: Do not print a space at a beginning of a line. */
 							if ( currentColumn == 0 )
 							{
 								continue;
@@ -340,7 +340,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Computes line heigt and line available on the pixmap.
+			 * @brief Computes line height and line available on the pixmap.
 			 * @return void
 			 */
 			void
@@ -358,8 +358,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			Pixmap< precision_t > * m_pixmap{nullptr};
+			const Font< precision_t > * m_font{nullptr};
 			Area< size_t > m_area;
-			std::shared_ptr< Font< precision_t > > m_font;
 			Color< float > m_fontColor = White;
 			DrawPixelMode m_mode{DrawPixelMode::Normal};
 			TextMetrics m_textMetrics;

@@ -33,7 +33,6 @@
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/Device.hpp"
 #include "Vulkan/DescriptorPool.hpp"
-#include "Vulkan/DescriptorSetLayout.hpp"
 #include "Vulkan/CommandPool.hpp"
 #include "Vulkan/PipelineLayout.hpp"
 #include "Vulkan/ComputePipeline.hpp"
@@ -57,7 +56,7 @@ namespace EmEn::Physics
 	{
 		m_flags[AccelerationAvailable] =
 			!m_primaryServices.arguments().get("--disable-physics-acceleration").isPresent() &&
-			m_primaryServices.settings().get< bool >(EnablePhysicsAccelerationKey, false);
+			m_primaryServices.settings().get< bool >(EnablePhysicsAccelerationKey, DefaultEnablePhysicsAcceleration);
 
 		if ( !m_flags[AccelerationAvailable] )
 		{

@@ -39,6 +39,7 @@
 #include "Libs/NameableTrait.hpp"
 
 /* Local inclusions for usage. */
+#include "Settings.hpp"
 #include "Types.hpp"
 
 /* Forward declarations. */
@@ -68,8 +69,9 @@ namespace EmEn::Vulkan
 			/**
 			 * @brief Constructs a device.
 			 * @param physicalDevice A reference to a physical device smart pointer.
+			 * @param settings A reference to the settings.
 			 */
-			explicit Device (const std::shared_ptr< PhysicalDevice > & physicalDevice) noexcept;
+			explicit Device (const std::shared_ptr< PhysicalDevice > & physicalDevice, Settings & settings) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -138,28 +140,6 @@ namespace EmEn::Vulkan
 			}
 
 			/**
-			 * @brief Returns the Vulkan validation layer state.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isDebugModeEnabled () const noexcept
-			{
-				return m_flags[DebugMode];
-			}
-
-			/**
-			 * @brief Set the debug mode state.
-			 * @param state The state.
-			 * @return void
-			 */
-			void
-			enableDebugMode (bool state) noexcept
-			{
-				m_flags[DebugMode] = state;
-			}
-
-			/**
 			 * @brief Returns whether the device has only one family queue for all.
 			 * @return bool
 			 */
@@ -171,7 +151,7 @@ namespace EmEn::Vulkan
 			}
 
 			/**
-			 * @brief Returns whether the device has been setup for graphics.
+			 * @brief Returns whether the device has been set up for graphics.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -190,7 +170,7 @@ namespace EmEn::Vulkan
 			uint32_t getGraphicsFamilyIndex () const noexcept;
 
 			/**
-			 * @brief Returns whether the device has been setup for compute queues.
+			 * @brief Returns whether the device has been set up for compute queues.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -209,7 +189,7 @@ namespace EmEn::Vulkan
 			uint32_t getComputeFamilyIndex () const noexcept;
 
 			/**
-			 * @brief Returns whether the device has been setup to have separated transfer queue.
+			 * @brief Returns whether the device has been set up to have separated transfer queue.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -256,7 +236,7 @@ namespace EmEn::Vulkan
 
 			/**
 			 * @brief Finds a supported format from device.
-			 * @param candidates A reference to a format vector.
+			 * @param formats A reference to a format vector.
 			 * @param tiling
 			 * @param featureFlags
 			 * @return VkFormat
@@ -280,7 +260,7 @@ namespace EmEn::Vulkan
 			/**
 			 * @brief Prepares queues configuration from requirements.
 			 * @param requirements A reference to a device requirements.
-			 * @param queueCreateInfos A reference to a a list of CreateInfo for Vulkan queues to complete.
+			 * @param queueCreateInfos A reference to a list of CreateInfo for Vulkan queues to complete.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -315,7 +295,7 @@ namespace EmEn::Vulkan
 			bool createDevice (const DeviceRequirements & requirements, const std::vector< VkDeviceQueueCreateInfo > & queueCreateInfos, const std::vector< const char * > & extensions) noexcept;
 
 			/* Flag names. */
-			static constexpr auto DebugMode{0UL};
+			static constexpr auto ShowInformation{0UL};
 			static constexpr auto HasBasicSupport{1UL};
 
 			std::shared_ptr< PhysicalDevice > m_physicalDevice;
@@ -324,7 +304,7 @@ namespace EmEn::Vulkan
 			std::map< QueueJob, std::shared_ptr< QueueFamilyInterface > > m_queueFamilyPerJob;
 			mutable std::mutex m_mutex;
 			std::array< bool, 8 > m_flags{
-				false/*DebugMode*/,
+				false/*ShowInformation*/,
 				false/*HasBasicSupport*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

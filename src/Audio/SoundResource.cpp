@@ -46,7 +46,7 @@ namespace EmEn::Audio
 
 	const size_t SoundResource::ClassUID{getClassUID(ClassId)};
 
-	bool SoundResource::s_quietConversion{BOOLEAN_FOLLOWING_DEBUG};
+	bool SoundResource::s_quietConversion{true};
 
 	SoundResource::SoundResource (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)

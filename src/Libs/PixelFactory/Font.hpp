@@ -26,9 +26,6 @@
 
 #pragma once
 
-/* Engine configuration file. */
-#include "emeraude_config.hpp"
-
 /* STL inclusions. */
 #include <algorithm>
 #include <cmath>
@@ -53,22 +50,29 @@
 
 namespace EmEn::Libs::PixelFactory
 {
+	static constexpr auto DefaultFontSize{16UL};
+	static constexpr auto ASCIICount{256UL};
+	static constexpr auto FontMapDivisor{16UL};
+
+	/**
+	 * @brief Font format type.
+	 */
+	enum class FontType: uint8_t
+	{
+		None,
+		PixmapFont,
+		TrueTypeFont
+	};
+
 	/**
 	 * @brief The font class.
-	* @tparam precision_t The type of number for pixmap precision. Default uint8_t.
+	 * @tparam precision_t The type of number for pixmap precision. Default uint8_t.
 	 */
 	template< typename precision_t = uint8_t >
 	requires (std::is_arithmetic_v< precision_t >)
 	class Font final
 	{
 		public:
-
-			enum class FontType : uint8_t
-			{
-				None,
-				PixmapFont,
-				TrueTypeFont
-			};
 
 			/**
 			 * @brief Constructs a default font.
@@ -132,7 +136,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				m_size = size;
 
-				switch ( findFileType(filepath) )
+				switch ( Font::findFileType(filepath) )
 				{
 					case FontType::PixmapFont :
 						return this->readPixmapFile(filepath);
@@ -148,6 +152,108 @@ namespace EmEn::Libs::PixelFactory
 
 				return false;
 			}
+
+			/**
+			 * @brief STL streams printable object.
+			 * @param charsMap A reference to a pixmap.
+			 * @return std::ostream &
+			 */
+			[[nodiscard]]
+			bool
+			parsePixmap (const Pixmap< precision_t > & charsMap) noexcept
+			{
+				const auto glyphWidth = charsMap.width() / FontMapDivisor;
+				const auto glyphHeight = charsMap.height() / FontMapDivisor;
+
+				Area< size_t > clipping(0, 0, glyphWidth, glyphHeight);
+
+				const auto ratio = static_cast< float >(glyphWidth) / static_cast< float >(glyphHeight);
+				const auto rounded = std::round(static_cast< float >(m_size) * ratio);
+
+				m_maxWidth = static_cast< size_t >(rounded);
+				m_maxHeight = m_size;
+
+				for ( size_t charNum = 0; charNum < ASCIICount; charNum++ )
+				{
+					const auto coordX = charNum % FontMapDivisor;
+					//const auto coordY = 15 - ((charNum - coordX) / FontMapDivisor); // OpenGL
+					const auto coordY = std::floor(charNum / FontMapDivisor); // Vulkan
+
+					clipping.setOffsetX(coordX * glyphWidth);
+					clipping.setOffsetY(coordY * glyphHeight);
+
+					/* Crop the targeted char out of the bitmap and
+					 * resize it as the desired size to the char storage. */
+					const auto glyph = Processor< precision_t >::crop(charsMap, clipping);
+
+					if ( glyph.width() == m_maxWidth && glyph.height() == m_maxHeight )
+					{
+						m_glyphs.at(charNum) = glyph;
+					}
+					else
+					{
+						m_glyphs.at(charNum) = Processor< precision_t >::resize(glyph, m_maxWidth, m_maxHeight);
+					}
+				}
+
+				return true;
+			}
+
+			/*bool
+			parsePixmap (const Pixmap< uint8_t > & map, size_t desiredHeight) noexcept
+			{
+				using namespace PixelFactory;
+
+				auto fixedFont = true;
+
+				if ( map.bytes() == 0 )
+				{
+					Tracer::error(ClassId, BlobTrait() << "The Pixmap is empty !");
+
+					return false;
+				}
+
+				if ( map.width() % FontMapDivisor != 0 || map.height() % FontMapDivisor != 0 )
+				{
+					Tracer::error(ClassId, BlobTrait() << "Invalid glyphs map dimensions !");
+
+					return false;
+				}
+
+				// The available size in the chars map
+				const auto width = map.width() / FontMapDivisor;
+				const auto height = map.height() / FontMapDivisor;
+
+				Area clipping{width, height};
+
+				Pixmap rawGlyph{};
+
+				for ( auto glyphIt = m_glyphs.begin(); glyphIt != m_glyphs.end(); ++glyphIt )
+				{
+					const auto ASCIICode = std::distance(m_glyphs.begin(), glyphIt);
+
+					const auto coordX = ASCIICode % FontMapDivisor;
+
+					clipping.setOffsetX(coordX * width);
+					clipping.setOffsetY((FontMapDivisor - 1 - (ASCIICode - coordX) / FontMapDivisor) * height);
+
+					if ( fixedFont )
+					{
+						*glyphIt = Processor< uint8_t >::crop(map, clipping);
+					}
+					else
+					{
+						rawGlyph = Processor< uint8_t >::crop(map, clipping);
+
+						*glyphIt = Processor< uint8_t >::crop(rawGlyph, FontResource::getUsableWidth(rawGlyph));
+					}
+				}
+
+				m_lineHeight = height;
+				m_spacing = fixedFont ? m_lineHeight : m_lineHeight / 2;
+
+				return true;
+			}*/
 
 			/**
 			 * @brief STL streams printable object.
@@ -197,12 +303,81 @@ namespace EmEn::Libs::PixelFactory
 			 * @return integer_t
 			 */
 			template< typename integer_t = int32_t >
+			[[nodiscard]]
 			static
 			integer_t
 			charToInt (char ASCII) noexcept
 			{
 				/* NOTE: First convert to an unsigned char. */
 				return static_cast< integer_t >(static_cast< uint8_t >(ASCII));
+			}
+
+			[[nodiscard]]
+			static
+			Area< size_t >
+			getUsableWidth (const Pixmap< uint8_t > & glyph) noexcept
+			{
+				Area clip{};
+
+				clip.setHeight(glyph.height());
+
+				/* Gets the first column of pixels where a color changes. */
+				for ( size_t coordX = 0; coordX < glyph.width(); coordX++ )
+				{
+					auto goOn = true;
+
+					for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
+					{
+						const auto * pixels = glyph.pixelPointer(coordX, coordY);
+
+						if ( pixels[0] > 0 )
+						{
+							clip.setOffsetX(coordX);
+							//clip.setWidth(glyph.width() - x);
+
+							goOn = false;
+
+							break;
+						}
+					}
+
+					if ( !goOn )
+					{
+						break;
+					}
+				}
+
+				/* Gets the last column of pixels where a color is present. */
+				for ( size_t coordX = glyph.width() - 1; coordX > 0UL; coordX-- )
+				{
+					auto goOn = true;
+
+					for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
+					{
+						const auto * pixels = glyph.pixelPointer(coordX, coordY);
+
+						if ( pixels[0] > 0 )
+						{
+							clip.setWidth(coordX - clip.offsetX() + 1);
+
+							goOn = false;
+
+							break;
+						}
+					}
+
+					if ( !goOn )
+					{
+						break;
+					}
+				}
+
+				if ( !clip.isValid() )
+				{
+					return {clip.width(), clip.height()};
+				}
+
+				return clip;
 			}
 
 		private:
@@ -238,33 +413,7 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				/* The available size in the font map */
-				const auto charWidth = charsMap.width() / FontMapDivisor;
-				const auto charHeight = charsMap.height() / FontMapDivisor;
-
-				Area< size_t > clipping(0, 0, charWidth, charHeight);
-
-				const auto ratio = static_cast< float >(charWidth) / static_cast< float >(charHeight);
-				const auto rounded = std::round(static_cast< float >(m_size) * ratio);
-
-				m_maxWidth = static_cast< size_t >(rounded);
-				m_maxHeight = m_size;
-
-				for ( size_t charNum = 0; charNum < ASCIICount; charNum++ )
-				{
-					const auto coordX = charNum % FontMapDivisor;
-					//const auto coordY = 15 - ((charNum - coordX) / FontMapDivisor); // OpenGL
-					const auto coordY = std::floor(charNum / FontMapDivisor); // Vulkan
-
-					clipping.setOffsetX(coordX * charWidth);
-					clipping.setOffsetY(coordY * charHeight);
-
-					/* Crop the targeted char out of the bitmap and
-					 * resize it as the desired size to the char storage. */
-					m_glyphs.at(charNum) = Processor< precision_t >::resize(Processor< precision_t >::crop(charsMap, clipping), m_maxWidth, m_maxHeight);
-				}
-
-				return true;
+				return this->parsePixmap(charsMap);
 			}
 
 			/**
@@ -378,7 +527,8 @@ namespace EmEn::Libs::PixelFactory
 						if ( face->glyph->bitmap_top != face->glyph->bitmap.rows )
 							offsetY = (m_maxHeight - face->glyph->bitmap_top) / 2;
 						else
-							offsetY = m_maxHeight - face->glyph->bitmap.rows;*/
+							offsetY = m_maxHeight - face->glyph->bitmap.rows;
+						*/
 
 						auto & currentGlyph = m_glyphs.at(charNum);
 
@@ -405,6 +555,90 @@ namespace EmEn::Libs::PixelFactory
 
 				return true;
 			}
+
+			/*bool
+			FontResource::parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept
+			{
+				using namespace PixelFactory;
+
+				FT_Library library;
+				FT_Face face;
+
+				// Try to init FreeType 2.
+				if ( FT_Init_FreeType(&library) > 0 )
+				{
+					Tracer::error(ClassId, BlobTrait() << "FreeType 2 initialization failed !");
+
+					return false;
+				}
+
+				// Load the font face. Face index 0 (always available).
+				if ( FT_New_Face(library, filepath.string().c_str(), 0, &face) > 0 )
+				{
+					Tracer::error(ClassId, BlobTrait() << "Can't load '" << filepath << "' font file !");
+
+					return false;
+				}
+
+				// Prepare output sizes.
+				if ( FT_Set_Pixel_Sizes(face, 0, static_cast< FT_UInt >(desiredHeight)) > 0 )
+				{
+					Tracer::error(ClassId, BlobTrait() << "The size " << desiredHeight << " with this font is not available !");
+
+					return false;
+				}
+
+				for ( auto glyphIt = m_glyphs.begin(); glyphIt != m_glyphs.end(); ++glyphIt )
+				{
+					const auto ASCIICode = static_cast< size_t >(std::distance(m_glyphs.begin(), glyphIt));
+
+					// Gets the correct glyph index inside the font for the ascii code.
+					const auto glyphIndex = FT_Get_Char_Index(face, ASCIICode);
+
+					// Gets the glyph loaded.
+					// NOTE : Only one glyph can be loaded at a time. FT_LOAD_RENDER
+					if ( FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) > 0 )
+					{
+						Tracer::error(ClassId, BlobTrait() << "Glyph " << glyphIndex << " failed to load !");
+
+						break;
+					}
+
+					// Gets the font glyph size.
+					const auto width = face->glyph->bitmap.width;
+					const auto height = face->glyph->bitmap.rows;
+
+					Pixmap rawGlyph;
+
+					if ( !rawGlyph.initialize(width, height, ChannelMode::Grayscale) )
+					{
+						Tracer::error(ClassId, "Unable to prepare a temporary Pixmap !");
+
+						continue;
+					}
+
+					// Copy the buffer.
+					rawGlyph.fill(face->glyph->bitmap.buffer, width * height * sizeof(uint8_t));
+
+					if ( glyphIt->initialize(width, desiredHeight, ChannelMode::Grayscale) )
+					{
+						const auto coordY = desiredHeight - static_cast< size_t >(face->glyph->bitmap_top) - desiredHeight / 4;
+
+						Processor proc{*glyphIt};
+						proc.blit(rawGlyph, {0UL, coordY, width, height});
+						proc.mirror(MirrorMode::X);
+					}
+				}
+
+				FT_Done_Face(face);
+
+				FT_Done_FreeType(library);
+
+				m_lineHeight = desiredHeight;
+				m_spacing = m_lineHeight / 2;
+
+				return true;
+			}*/
 
 			/**
 			 * @brief Determines the type of the font file.
@@ -444,10 +678,6 @@ namespace EmEn::Libs::PixelFactory
 
 				return FontType::None;
 			}
-
-			static constexpr auto DefaultFontSize{24};
-			static constexpr auto ASCIICount{256};
-			static constexpr auto FontMapDivisor{16};
 
 			size_t m_size{DefaultFontSize};
 			size_t m_maxWidth{0};

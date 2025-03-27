@@ -98,8 +98,9 @@ namespace EmEn
 			 * @brief Constructs the tracer.
 			 * @param arguments A reference to Arguments.
 			 * @param settings A reference to core settings. Warning this can't be used at this time.
+			 * @param childProcess Declares a child process.
 			 */
-			Tracer (const Arguments & arguments, Settings & settings) noexcept;
+			Tracer (const Arguments & arguments, Settings & settings, bool childProcess) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -647,11 +648,12 @@ namespace EmEn
 
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
-			static constexpr auto PrintOnlyErrors{1UL};
-			static constexpr auto ShowLocation{2UL};
-			static constexpr auto ShowThreadInfos{3UL};
-			static constexpr auto EnableTracing{4UL};
-			static constexpr auto EnableLogging{5UL};
+			static constexpr auto ChildProcess{1UL};
+			static constexpr auto PrintOnlyErrors{2UL};
+			static constexpr auto ShowLocation{3UL};
+			static constexpr auto ShowThreadInfos{4UL};
+			static constexpr auto EnableTracing{5UL};
+			static constexpr auto EnableLogging{6UL};
 
 			static Tracer * s_instance;
 
@@ -664,12 +666,12 @@ namespace EmEn
 			int m_processID{-1};
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
+				false/*ChildProcess*/,
 				false/*PrintOnlyErrors*/,
 				false/*ShowLocation*/,
 				true/*ShowThreadInfos*/,
 				true/*EnableTracing*/,
 				false/*EnableLogging*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/
 			};
 	};

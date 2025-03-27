@@ -67,8 +67,9 @@ namespace EmEn
 			 * @param arguments A reference to arguments.
 			 * @param userInfo A reference to the user info.
 			 * @param identification A reference to the application identification.
+			 * @param childProcess Declares a child process.
 			 */
-			FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification) noexcept;
+			FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification, bool childProcess) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -375,7 +376,7 @@ namespace EmEn
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) noexcept;
+			bool checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) const noexcept;
 
 			/**
 			 * @brief Registers a directory when tested.
@@ -386,11 +387,13 @@ namespace EmEn
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) noexcept;
+			bool registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) const noexcept;
 
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
-			static constexpr auto StandAlone{1UL};
+			static constexpr auto ChildProcess{1UL};
+			static constexpr auto ShowInformation{2UL};
+			static constexpr auto StandAlone{3UL};
 
 			/** @brief Singleton pointer. */
 			static FileSystem * s_instance;
@@ -409,13 +412,13 @@ namespace EmEn
 			std::vector< std::filesystem::path > m_dataDirectories;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
+				false/*ChildProcess*/,
+				false/*ShowInformation*/,
 				false/*StandAlone*/,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
 			};
 	};
 }

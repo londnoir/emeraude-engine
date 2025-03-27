@@ -381,9 +381,10 @@ namespace EmEn::Vulkan
 			bool checkDeviceForRequiredExtensions (const std::shared_ptr< PhysicalDevice > & physicalDevice, const std::vector< const char * > & requiredExtensions, size_t & score) const noexcept;
 
 			/* Flag names. */
-			static constexpr auto DebugMode{0UL};
-			static constexpr auto UseDebugMessenger{1UL};
-			static constexpr auto DynamicStateExtensionEnabled{2UL};
+			static constexpr auto ShowInformation{0UL};
+			static constexpr auto DebugMode{1UL};
+			static constexpr auto UseDebugMessenger{2UL};
+			static constexpr auto DynamicStateExtensionEnabled{3UL};
 
 			PrimaryServices & m_primaryServices;
 			VkInstance m_instance{VK_NULL_HANDLE};
@@ -415,10 +416,10 @@ namespace EmEn::Vulkan
 #endif
 			};
 			std::array< bool, 8 > m_flags{
+				false/*ShowInformation*/,
 				false/*DebugMode*/,
 				false/*UseDebugMessenger*/,
 				false/*DynamicStateExtensionEnabled*/,
-				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

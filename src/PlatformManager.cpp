@@ -72,7 +72,7 @@ namespace EmEn
 	bool
 	PlatformManager::onInitialize () noexcept
 	{
-		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(GLFWShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(GLFWShowInformationKey, DefaultGLFWShowInformation);
 
 		glfwSetErrorCallback(Tracer::traceGLFW);
 

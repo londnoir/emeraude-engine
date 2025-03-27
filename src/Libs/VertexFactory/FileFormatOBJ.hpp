@@ -26,6 +26,9 @@
 
 #pragma once
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <algorithm>
 #include <array>
@@ -36,7 +39,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <ranges>
 
 /* Local inclusions for inheritances. */
 #include "FileFormatInterface.hpp"

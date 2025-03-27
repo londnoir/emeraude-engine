@@ -39,7 +39,6 @@
 #include "Color.hpp"
 #include "Libs/Math/Base.hpp"
 #include "Libs/Math/Circle.hpp"
-#include "Libs/Math/Line.hpp"
 #include "Libs/Math/Segment.hpp"
 #include "Libs/Math/Vector.hpp"
 #include "Pixmap.hpp"
@@ -617,7 +616,7 @@ namespace EmEn::Libs::PixelFactory
 				/* Simple copy if same size. */
 				if ( width == source.width() && height == source.height() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", resize target the same Pixmap sizes..." "\n";
+					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is already at good dimension !" "\n";
 
 					return source;
 				}
@@ -1688,7 +1687,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( pointA[Math::X] < 0 || pointA[Math::Y] < 0 )
 				{
-					auto intersection = Math::Line< float >::findIntersection(
+					auto intersection = Math::Segment< float >::findIntersection(
 						0.0F, 0.0F,
 						0.0F, height - 1.0F,
 						static_cast< float >(pointA[Math::X]), static_cast< float >(pointA[Math::Y]),
@@ -1706,7 +1705,7 @@ namespace EmEn::Libs::PixelFactory
 						return true;
 					}
 
-					intersection = Math::Line< float >::findIntersection(
+					intersection = Math::Segment< float >::findIntersection(
 						0.0F, 0.0F,
 						width - 1.0F, 0.0F,
 						static_cast< float >(pointA[Math::X]), static_cast< float >(pointA[Math::Y]),
@@ -1729,7 +1728,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( pointA[Math::X] > width || pointA[Math::Y] > height )
 				{
-					auto intersection = Math::Line< float >::findIntersection(
+					auto intersection = Math::Segment< float >::findIntersection(
 						0.0F, height - 1.0F,
 						width - 1.0F, height - 1.0F,
 						static_cast< float >(pointA[Math::X]), static_cast< float >(pointA[Math::Y]),
@@ -1747,7 +1746,7 @@ namespace EmEn::Libs::PixelFactory
 						return true;
 					}
 
-					intersection = Math::Line< float >::findIntersection(
+					intersection = Math::Segment< float >::findIntersection(
 						width - 1.0F, 0.0F,
 						width - 1.0F, height - 1.0F,
 						static_cast< float >(pointA[Math::X]), static_cast< float >(pointA[Math::Y]),

@@ -26,6 +26,9 @@
 
 #include "SoundEmitter.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <any>
 #include <memory>
@@ -33,13 +36,11 @@
 
 /* Local inclusions. */
 #include "Abstract.hpp"
-#include "Animations/Types.hpp"
 #include "Audio/Manager.hpp"
 #include "Audio/SoundResource.hpp"
 #include "Audio/Source.hpp"
 #include "Libs/Math/CartesianFrame.hpp"
 #include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
 #include "Physics/MovableTrait.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Scenes/AbstractEntity.hpp"

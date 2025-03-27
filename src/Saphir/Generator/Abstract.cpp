@@ -58,9 +58,9 @@ namespace EmEn::Saphir::Generator
 		: NameableTrait(name), m_renderTarget(renderTarget)
 	{
 		/* FIXME: This should not be done here, but rather in the Renderer */
-		m_flags[NormalMappingEnabled] = settings.get< bool >(NormalMappingEnabledKey, true);
-		m_flags[HighQualityLightEnabled] = settings.get< bool >(HighQualityLightEnabledKey, false);
-		m_flags[HighQualityReflectionEnabled] = settings.get< bool >(HighQualityReflectionEnabledKey, false);
+		m_flags[NormalMappingEnabled] = settings.get< bool >(NormalMappingEnabledKey, DefaultNormalMappingEnabled);
+		m_flags[HighQualityLightEnabled] = settings.get< bool >(HighQualityLightEnabledKey, DefaultHighQualityLightEnabled);
+		m_flags[HighQualityReflectionEnabled] = settings.get< bool >(HighQualityReflectionEnabledKey, DefaultHighQualityReflectionEnabled);
 	}
 
 	bool

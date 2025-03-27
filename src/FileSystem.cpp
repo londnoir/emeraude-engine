@@ -50,7 +50,7 @@ namespace EmEn
 	const size_t FileSystem::ClassUID{getClassUID(ClassId)};
 	FileSystem * FileSystem::s_instance{nullptr};
 
-	FileSystem::FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification) noexcept
+	FileSystem::FileSystem (const Arguments & arguments, const PlatformSpecific::UserInfo & userInfo, const Identification & identification, bool childProcess) noexcept
 		: ServiceInterface(ClassId),
 		m_arguments(arguments),
 		m_userInfo(userInfo),
@@ -66,6 +66,8 @@ namespace EmEn
 		}
 
 		s_instance = this;
+
+		m_flags[ChildProcess] = childProcess;
 	}
 
 	FileSystem::~FileSystem ()
@@ -76,6 +78,11 @@ namespace EmEn
 	bool
 	FileSystem::onInitialize () noexcept
 	{
+		if ( !m_flags[ChildProcess] )
+		{
+			m_flags[ShowInformation] = m_arguments.get("--verbose").isPresent();
+		}
+
 		m_flags[StandAlone] = m_arguments.get("--standalone").isPresent();
 
 		if ( m_organizationName.empty() || m_applicationName.empty() )
@@ -127,9 +134,9 @@ namespace EmEn
 			return false;
 		}
 
-		if ( m_arguments.get("--verbose").isPresent() )
+		if ( m_flags[ShowInformation] )
 		{
-			std::cout << *this << '\n';
+			TraceInfo{ClassId} << *this;
 		}
 
 		m_flags[ServiceInitialized] = true;
@@ -171,7 +178,10 @@ namespace EmEn
 	bool
 	FileSystem::checkUserDataDirectory () noexcept
 	{
-		Tracer::info(ClassId, "Looking for user data directories ...");
+		if ( m_flags[ShowInformation] )
+		{
+			Tracer::info(ClassId, "Looking for user data directories ...");
+		}
 
 		const auto & homePath = m_userInfo.homePath();
 
@@ -221,7 +231,10 @@ namespace EmEn
 	bool
 	FileSystem::checkConfigDirectory () noexcept
 	{
-		Tracer::info(ClassId, "Looking for config directories ...");
+		if ( m_flags[ShowInformation] )
+		{
+			Tracer::info(ClassId, "Looking for config directories ...");
+		}
 
 		/* Check for a forced config directory from command line arguments. */
 		const auto forcedPath = m_arguments.get("--config-directory").value();
@@ -280,7 +293,10 @@ namespace EmEn
 	bool
 	FileSystem::checkCacheDirectory () noexcept
 	{
-		Tracer::info(ClassId, "Looking for cache directories ...");
+		if ( m_flags[ShowInformation] )
+		{
+			Tracer::info(ClassId, "Looking for cache directories ...");
+		}
 
 		/* Check for a forced cache directory from command line arguments. */
 		const auto forcedPath = m_arguments.get("--cache-directory").value();
@@ -340,7 +356,10 @@ namespace EmEn
 	bool
 	FileSystem::checkDataDirectories () noexcept
 	{
-		Tracer::info(ClassId, "Looking for data directories ...");
+		if ( m_flags[ShowInformation] )
+		{
+			Tracer::info(ClassId, "Looking for data directories ...");
+		}
 
 		/* Check for a forced data directory from command line arguments. */
 		const auto forcedPath = m_arguments.get("--data-directory").value();
@@ -349,7 +368,7 @@ namespace EmEn
 		{
 			const std::filesystem::path tempDirectory{forcedPath};
 
-			if ( !checkDirectoryRequirements(tempDirectory, false, false) )
+			if ( !this->checkDirectoryRequirements(tempDirectory, false, false) )
 			{
 				return false;
 			}
@@ -375,7 +394,7 @@ namespace EmEn
 			auto directoryPath = m_binaryDirectory;
 			directoryPath.append("data");
 
-			if ( !checkDirectoryRequirements(directoryPath, true, false) )
+			if ( !this->checkDirectoryRequirements(directoryPath, true, false) )
 			{
 				return false;
 			}
@@ -433,7 +452,7 @@ namespace EmEn
 #endif
 			nextBinaryDirectory.append("data");
 
-			if ( checkDirectoryRequirements(nextBinaryDirectory, true, false) )
+			if ( this->checkDirectoryRequirements(nextBinaryDirectory, true, false) )
 			{
 				m_dataDirectories.emplace_back(nextBinaryDirectory);
 			}
@@ -445,7 +464,7 @@ namespace EmEn
 
 			const bool last = (it != paths.cend() && std::next(it) == paths.cend());
 
-			if ( checkDirectoryRequirements(tempDirectory, last, false) )
+			if ( this->checkDirectoryRequirements(tempDirectory, last, false) )
 			{
 				m_dataDirectories.emplace_back(tempDirectory);
 			}
@@ -455,7 +474,7 @@ namespace EmEn
 	}
 
 	bool
-	FileSystem::checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) noexcept
+	FileSystem::checkDirectoryRequirements (const std::filesystem::path & directory, bool createDirectory, bool writableRequested) const noexcept
 	{
 		/* If the directory doesn't exist, we skip it. */
 		if ( IO::directoryExists(directory) )
@@ -484,21 +503,27 @@ namespace EmEn
 			}
 			else
 			{
-				TraceInfo{ClassId} << "Trying to use directory '" << directory.string() << "', but doesn't exists ...";
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "Trying to use directory '" << directory.string() << "', but doesn't exists ...";
+				}
 
 				return false;
 			}
 		}
 
-		TraceSuccess{ClassId} << "The directory '" << directory.string() << "' is valid !";
+		if ( m_flags[ShowInformation] )
+		{
+			TraceSuccess{ClassId} << "The directory '" << directory.string() << "' is valid !";
+		}
 
 		return true;
 	}
 
 	bool
-	FileSystem::registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) noexcept
+	FileSystem::registerDirectory (const std::filesystem::path & directoryPath, bool createDirectory, bool writableRequested, std::filesystem::path & finalDirectoryPath) const noexcept
 	{
-		if ( !checkDirectoryRequirements(directoryPath, createDirectory, writableRequested) )
+		if ( !this->checkDirectoryRequirements(directoryPath, createDirectory, writableRequested) )
 		{
 			return false;
 		}

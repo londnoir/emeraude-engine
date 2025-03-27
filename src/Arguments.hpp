@@ -62,8 +62,9 @@ namespace EmEn
 			 * @brief Constructs the arguments service.
 			 * @param argc The argument count from the standard C/C++ main() function.
 			 * @param argv The argument values from the standard C/C++ main() function.
+			 * @param childProcess Declares a child process.
 			 */
-			Arguments (int argc, char * * argv) noexcept;
+			Arguments (int argc, char * * argv, bool childProcess) noexcept;
 
 #if IS_WINDOWS
 			/**
@@ -71,8 +72,9 @@ namespace EmEn
 			 * @note Windows version.
 			 * @param argc The argument count from the standard C/C++ main() function.
 			 * @param wargv The argument values from the standard C/C++ main() function.
+			 * @param childProcess Declares a child process.
 			 */
-			Arguments (int argc, wchar_t * * wargv) noexcept;
+			Arguments (int argc, wchar_t * * wargv, bool childProcess) noexcept;
 #endif
 
 			/**
@@ -272,6 +274,8 @@ namespace EmEn
 
 			/* Flag names */
 			static constexpr auto ServiceInitialized{0UL};
+			static constexpr auto ChildProcess{1UL};
+			static constexpr auto ShowInformation{2UL};
 
 			/** @brief Singleton pointer. */
 			static Arguments * s_instance;
@@ -283,8 +287,8 @@ namespace EmEn
 			std::map< std::string, Argument > m_arguments;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
+				false/*ChildProcess*/,
+				false/*ShowInformation*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

@@ -37,7 +37,8 @@ namespace EmEn::Vulkan
 	using namespace EmEn::Libs;
 
 	ImageView::ImageView (const std::shared_ptr< Image > & image, VkImageViewType viewType, VkImageSubresourceRange subresourceRange, VkComponentMapping components, VkImageViewCreateFlags createFlags) noexcept
-		: AbstractDeviceDependentObject(image->device()), m_image(image)
+		: AbstractDeviceDependentObject(image->device()),
+		m_image(image)
 	{
 		m_createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		m_createInfo.pNext = nullptr;
@@ -50,7 +51,9 @@ namespace EmEn::Vulkan
 	}
 
 	ImageView::ImageView (const std::shared_ptr< Image > & image, const VkImageViewCreateInfo & createInfo) noexcept
-		: AbstractDeviceDependentObject(image->device()), m_createInfo(createInfo), m_image(image)
+		: AbstractDeviceDependentObject(image->device()),
+		m_createInfo(createInfo),
+		m_image(image)
 	{
 
 	}

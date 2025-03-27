@@ -110,12 +110,13 @@ namespace EmEn::Saphir::Generator
 
 			/**
 			 * @brief Enables debugging. This will print stats and generated source code.
+			 * @param state The state
 			 * @return void
 			 */
 			void
-			enableDebugging () noexcept
+			enableDebugging (bool state) noexcept
 			{
-				m_flags[Debug] = true;
+				m_flags[Debug] = state;
 			}
 
 			/**

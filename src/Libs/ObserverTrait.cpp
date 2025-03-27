@@ -26,6 +26,9 @@
 
 #include "ObserverTrait.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 #include <iostream>

@@ -27,15 +27,13 @@
 #pragma once
 
 /* STL inclusions. */
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 
 /* Local inclusions. */
-#include "Libs/PixelFactory/Area.hpp"
-#include "Libs/PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Font.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/ResourceTrait.hpp"
 
@@ -57,10 +55,6 @@ namespace EmEn::Graphics
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static constexpr auto ASCIIGlyphCount{256UL};
-			static constexpr auto DefaultSize{32UL};
-			static constexpr auto BitmapSection{16UL};
-
 			/**
 			 * @brief Constructs a font resource.
 			 * @param name A reference to a string for resource name.
@@ -70,15 +64,27 @@ namespace EmEn::Graphics
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
@@ -90,32 +96,36 @@ namespace EmEn::Graphics
 			bool load (const Json::Value & data) noexcept override;
 
 			/**
-			 * @brief Returns a pixmap of the glyph.
-			 * @param ASCIICode The ascii code of the character.
-			 * @return const Libraries::PixelFactory::Pixmap< uint8_t > &
+			 * @brie Returns the font.
+			 * @return const Libs::PixelFactory::Font< uint8_t > &
 			 */
-			[[nodiscard]]
-			const Libs::PixelFactory::Pixmap< uint8_t > & glyph (uint8_t ASCIICode) const noexcept;
+			const Libs::PixelFactory::Font< uint8_t > &
+			font () const noexcept
+			{
+				return m_data;
+			}
 
 			/**
 			 * @brief Returns the spacing in pixel.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t spacing () const noexcept;
+			uint32_t
+			spacing () const noexcept
+			{
+				return m_spacing;
+			}
 
 			/**
 			 * @brief Returns the line height in pixel.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t lineHeight () const noexcept;
-
-			/**
-			 * @brief debug
-			 * @param debugPath
-			 */
-			void debug (const char * debugPath) const noexcept;
+			uint32_t
+			lineHeight () const noexcept
+			{
+				return m_lineHeight;
+			}
 
 			/**
 			 * @brief Returns a font resource by its name.
@@ -139,41 +149,9 @@ namespace EmEn::Graphics
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
-			/**
-			 * @brief getUsableWidth
-			 * @param glyph
-			 * @return Libraries::PixelFactory::Area< size_t >
-			 */
-			[[nodiscard]]
-			static Libs::PixelFactory::Area< size_t > getUsableWidth (const Libs::PixelFactory::Pixmap< uint8_t > & glyph) noexcept;
-
-			/**
-			 * @brief Parses a bitmap to create the font.
-			 * @param filepath A reference to filesystem path.
-			 * @param desiredHeight The height of the font.
-			 * @return bool
-			 */
-			bool parseBitmap (const std::filesystem::path & filepath, size_t desiredHeight) noexcept;
-
-			/**
-			 * @brief Parses a bitmap to create the font.
-			 * @param map A reference to a pixmap.
-			 * @param desiredHeight The height of the font.
-			 * @return bool
-			 */
-			bool parseBitmap (const Libs::PixelFactory::Pixmap< uint8_t > & map, size_t desiredHeight) noexcept;
-
-			/**
-			 * @brief Parses a font file to create the font.
-			 * @param filepath A reference to a filesystem path.
-			 * @param desiredHeight The height of the font.
-			 * @return bool
-			 */
-			bool parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept;
-
-			std::array< Libs::PixelFactory::Pixmap< uint8_t >, ASCIIGlyphCount > m_glyphs;
-			size_t m_lineHeight{0UL};
-			size_t m_spacing{0UL};
+			Libs::PixelFactory::Font< uint8_t > m_data{};
+			uint32_t m_spacing{0};
+			uint32_t m_lineHeight{0};
 	};
 }
 

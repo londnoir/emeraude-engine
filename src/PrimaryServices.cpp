@@ -38,6 +38,26 @@ namespace EmEn
 {
 	using namespace EmEn::Libs;
 
+	PrimaryServices::PrimaryServices (int argc, char * * argv, const Identification & identification, bool childProcess) noexcept
+		: m_arguments(argc, argv, childProcess),
+		m_tracer(m_arguments, m_settings, childProcess),
+		m_fileSystem(m_arguments, m_userInfo, identification, childProcess),
+		m_settings(m_arguments, m_fileSystem, childProcess)
+	{
+		m_flags[ChildProcess] = childProcess;
+
+		/* NOTE: This must be done immediately ! */
+		if ( !m_arguments.initialize(m_primaryServicesEnabled) )
+		{
+			std::cerr << ClassId << ", " << m_arguments.name() << " service failed to execute !";
+		}
+
+		if ( !childProcess && m_arguments.get("--verbose").isPresent() )
+		{
+			m_flags[ShowInformation] = true;
+		}
+	}
+
 #if IS_WINDOWS
 	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool readOnly) noexcept
 		: m_arguments(argc, wargv),
@@ -45,23 +65,17 @@ namespace EmEn
 		m_fileSystem(m_arguments, m_userInfo, identification),
 		m_settings(m_arguments, m_fileSystem, readOnly)
 	{
+		m_flags[ReadOnly] = readOnly;
+
 		/* NOTE: This must be done immediately ! */
 		if ( !m_arguments.initialize(m_primaryServicesEnabled) )
 		{
 			std::cerr << ClassId << ", " << m_arguments.name() << " service failed to execute !";
 		}
-	}
-#else
-	PrimaryServices::PrimaryServices (int argc, char * * argv, const Identification & identification, bool readOnly) noexcept
-		: m_arguments(argc, argv),
-		m_tracer(m_arguments, m_settings),
-		m_fileSystem(m_arguments, m_userInfo, identification),
-		m_settings(m_arguments, m_fileSystem, readOnly)
-	{
-		/* NOTE: This must be done immediately ! */
-		if ( !m_arguments.initialize(m_primaryServicesEnabled) )
+
+		if ( !readOnly && m_arguments.get("--verbose").isPresent() )
 		{
-			std::cerr << ClassId << ", " << m_arguments.name() << " service failed to execute !";
+			m_flags[ShowInformation] = true;
 		}
 	}
 #endif
@@ -81,8 +95,6 @@ namespace EmEn
 		if ( m_fileSystem.initialize(m_primaryServicesEnabled) )
 		{
 			TraceSuccess{ClassId} << m_fileSystem.name() << " service up !";
-
-			TraceInfo{ClassId} << m_fileSystem;
 
 			/* Creating some basic paths. */
 			const auto directory = m_fileSystem.userDataDirectory("captures");

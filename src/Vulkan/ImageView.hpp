@@ -57,14 +57,14 @@ namespace EmEn::Vulkan
 			 * @param viewType
 			 * @param subresourceRange
 			 * @param components Default unchanged.
-			 * @param createFlags The create info flags. Default none.
+			 * @param createFlags The createInfo flags. Default none.
 			 */
 			ImageView (const std::shared_ptr< Image > & image, VkImageViewType viewType, VkImageSubresourceRange subresourceRange, VkComponentMapping components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY}, VkImageViewCreateFlags createFlags = 0) noexcept;
 
 			/**
-			 * @brief Constructs an image view with a create info.
+			 * @brief Constructs an image view with a createInfo.
 			 * @param image A reference to an image smart pointer.
-			 * @param createInfo A reference to a create info.
+			 * @param createInfo A reference to a createInfo.
 			 */
 			ImageView (const std::shared_ptr< Image > & image, const VkImageViewCreateInfo & createInfo) noexcept;
 

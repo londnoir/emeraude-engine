@@ -26,9 +26,6 @@
 
 #pragma once
 
-/* Engine configuration file. */
-#include "emeraude_config.hpp"
-
 /* Third-party inclusions. */
 #include "AL/al.h"
 #include "AL/alc.h"

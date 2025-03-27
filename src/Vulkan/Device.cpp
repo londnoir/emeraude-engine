@@ -45,10 +45,11 @@ namespace EmEn::Vulkan
 	using namespace EmEn::Libs;
 	using namespace Graphics;
 
-	Device::Device (const std::shared_ptr< PhysicalDevice > & physicalDevice) noexcept
-		: NameableTrait(physicalDevice->properties().deviceName), m_physicalDevice(physicalDevice)
+	Device::Device (const std::shared_ptr< PhysicalDevice > & physicalDevice, Settings & settings) noexcept
+		: NameableTrait(physicalDevice->properties().deviceName),
+		m_physicalDevice(physicalDevice)
 	{
-		m_flags[DebugMode] = Settings::instance()->get< bool >(VkDeviceEnableDebugKey, BOOLEAN_FOLLOWING_DEBUG);
+		m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, DefaultVkShowInformation);
 	}
 
 	Device::~Device ()
@@ -59,7 +60,7 @@ namespace EmEn::Vulkan
 	bool
 	Device::create (const DeviceRequirements & requirements, const std::vector< const char * > & extensions) noexcept
 	{
-		if ( Settings::instance()->get< bool >(VkDeviceShowAvailableExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( m_flags[ShowInformation] )
 		{
 			TraceInfo{ClassId} << getItemListAsString("Device", m_physicalDevice->getExtensions(nullptr));
 		}
@@ -75,7 +76,7 @@ namespace EmEn::Vulkan
 			return false;
 		}
 
-		if ( m_flags[DebugMode] )
+		if ( m_flags[ShowInformation] )
 		{
 			TraceInfo info{ClassId};
 
@@ -86,9 +87,9 @@ namespace EmEn::Vulkan
 				info << "Queue family #" << queueFamily->index() << " enabled !" "\n";
 			}
 
-			for ( const auto & pair : m_queueFamilyPerJob )
+			for ( const auto & [job, queue] : m_queueFamilyPerJob )
 			{
-				info << "'" << to_cstring(pair.first) << "' job will be performed on queue family #" << pair.second->index() << "." "\n";
+				info << "'" << to_cstring(job) << "' job will be performed on queue family #" << queue->index() << "." "\n";
 			}
 		}
 
@@ -307,7 +308,7 @@ namespace EmEn::Vulkan
 	bool
 	Device::prepareQueues (const DeviceRequirements & requirements, std::vector< VkDeviceQueueCreateInfo > & queueCreateInfos) noexcept
 	{
-		if ( m_flags[DebugMode] )
+		if ( m_flags[ShowInformation] )
 		{
 			TraceInfo{ClassId} << requirements;
 		}
@@ -324,9 +325,12 @@ namespace EmEn::Vulkan
 		/* Check queue family requirements. */
 		if ( queueFamilyProperties.size() == 1 )
 		{
-			TraceInfo{ClassId} <<
-				"The physical device '" << this->name() << "' has a basic support. "
-				"There will be only one queue family and maybe only one queue at all.";
+			if ( m_flags[ShowInformation] )
+			{
+				TraceInfo{ClassId} <<
+				   "The physical device '" << this->name() << "' has a basic support. "
+				   "There will be only one queue family and maybe only one queue at all.";
+			}
 
 			if ( !this->declareQueuesFromSingleQueueFamily(requirements, queueFamilyProperties[0]) )
 			{
@@ -335,7 +339,10 @@ namespace EmEn::Vulkan
 		}
 		else
 		{
-			TraceInfo{ClassId} << "The physical device '" << this->name() << "' has an advanced support.";
+			if ( m_flags[ShowInformation] )
+			{
+				TraceInfo{ClassId} << "The physical device '" << this->name() << "' has an advanced support.";
+			}
 
 			if ( !this->declareQueuesFromMultipleQueueFamilies(requirements, queueFamilyProperties) )
 			{
@@ -405,7 +412,10 @@ namespace EmEn::Vulkan
 
 				if ( structure.empty() )
 				{
-					TraceInfo{ClassId} << "There is no queue required for queue family #" << queueFamily->index() << " !";
+					if ( m_flags[ShowInformation] )
+					{
+						TraceInfo{ClassId} << "There is no queue required for queue family #" << queueFamily->index() << " !";
+					}
 
 					continue;
 				}

@@ -44,7 +44,6 @@
 #include "Graphics/ViewMatrices2DUBO.hpp"
 #include "Libs/Math/CartesianFrame.hpp"
 #include "Settings.hpp"
-#include "Window.hpp"
 
 /* Forward declarations. */
 namespace EmEn::Vulkan
@@ -407,7 +406,7 @@ namespace EmEn::Vulkan
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createDepthStencilBuffer (const std::shared_ptr< Vulkan::Device > & device, std::shared_ptr< Vulkan::Image > & image, std::shared_ptr< Vulkan::ImageView > & depthImageView, std::shared_ptr< Vulkan::ImageView > & stencilImageView, const std::string & purposeId) noexcept override;
+			bool createDepthStencilBuffer (const std::shared_ptr< Device > & device, std::shared_ptr< Image > & image, std::shared_ptr< ImageView > & depthImageView, std::shared_ptr< ImageView > & stencilImageView, const std::string & purposeId) noexcept override;
 
 			/**
 			 * @brief Creates the synchronization primitives.
@@ -417,11 +416,11 @@ namespace EmEn::Vulkan
 			bool createSynchronizationPrimitives () noexcept;
 
 			/* Flag names. */
-			static constexpr auto Ready{0UL};
-			static constexpr auto TripleBufferingEnabled{1UL};
-			static constexpr auto VSyncEnabled{2UL};
-			static constexpr auto SwapChainRecreationRequested{3UL};
-			static constexpr auto ShowInformation{4UL};
+			static constexpr auto ShowInformation{0UL};
+			static constexpr auto Ready{1UL};
+			static constexpr auto TripleBufferingEnabled{2UL};
+			static constexpr auto VSyncEnabled{3UL};
+			static constexpr auto SwapChainRecreationRequested{4UL};
 
 			Window * m_window;
 			VkSwapchainKHR m_handle{VK_NULL_HANDLE};
@@ -431,11 +430,11 @@ namespace EmEn::Vulkan
 			std::vector< Frame > m_frames;
 			Graphics::ViewMatrices2DUBO m_viewMatrices;
 			std::array< bool, 8 > m_flags{
+				false/*ShowInformation*/,
 				false/*Ready*/,
 				false/*TripleBufferingEnabled*/,
 				false/*VSyncEnabled*/,
 				false/*SwapChainRecreationRequested*/,
-				false/*ShowInformation*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/

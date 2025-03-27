@@ -82,10 +82,10 @@ namespace EmEn
 
 		s_instance = this;
 
-		TraceInfo{ClassId} << "\n"
-			"Engine	   : " << m_identification.engineId() << "\n"
-			"Application  : " << m_identification.applicationId() << "\n"
-			"Reverse ID   : " << m_identification.applicationReverseId() << "\n";
+		std::cout << "\n"
+			"Engine      : " << m_identification.engineId() << "\n"
+			"Application : " << m_identification.applicationId() << "\n"
+			"Reverse ID  : " << m_identification.applicationReverseId() << "\n\n";
 
 		/* Registering core help. */
 		{
@@ -186,7 +186,7 @@ namespace EmEn
 		}
 
 		/* Print startup general information. */
-		if ( m_primaryServices.settings().get< bool >(CoreShowInformationKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( m_primaryServices.settings().get< bool >(CoreShowInformationKey, DefaultCoreShowInformation) )
 		{
 			Tracer::info(ClassId, m_primaryServices.information());
 		}
@@ -272,7 +272,7 @@ namespace EmEn
 			}
 		}
 
-		TraceInfo{ClassId} << "Logics loop ended !";
+		TraceSuccess{ClassId} << "Logics loop ended !";
 	}
 
 	void
@@ -312,7 +312,7 @@ namespace EmEn
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 
-		TraceInfo{ClassId} << "Rendering loop ended with " << frames << " frames rendered !";
+		TraceSuccess{ClassId} << "Rendering loop ended with " << frames << " frames rendered !";
 	}
 
 	bool
@@ -739,11 +739,10 @@ namespace EmEn
 	void
 	Core::stop () noexcept
 	{
-		Tracer::info(ClassId, "\n"
+		std::cout << "\n"
 			"*******************************" "\n"
 			"   Engine is about to stop !   " "\n"
-			"*******************************" "\n"
-		);
+			"*******************************" "\n\n";
 
 		/* Dispatch the stop event,
 		 * first by sending the event

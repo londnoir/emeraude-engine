@@ -83,10 +83,14 @@ namespace EmEn::Saphir
 	ShaderManager::onInitialize () noexcept
 	{
 		/* Read core settings. */
-		m_flags[ShowGeneratedSourceCode] = m_primaryServices.settings().get< bool >(ShowGeneratedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG);
-		m_flags[ShowLoadedSourceCode] = m_primaryServices.settings().get< bool >(ShowLoadedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG);
-		m_flags[SourceCodeCacheEnabled] = m_primaryServices.settings().get< bool >(SourceCodeCacheEnabledKey, !BOOLEAN_FOLLOWING_DEBUG);
-		m_flags[BinaryCacheEnabled] = m_primaryServices.settings().get< bool >(BinaryCacheEnabledKey, !BOOLEAN_FOLLOWING_DEBUG);
+		{
+			auto & settings = m_primaryServices.settings();
+
+			m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, DefaultVkShowInformation);
+			m_flags[ShowSourceCode] = settings.get< bool >(ShowSourceCodeKey, DefaultShowSourceCode);
+			m_flags[SourceCodeCacheEnabled] = settings.get< bool >(SourceCodeCacheEnabledKey, DefaultSourceCodeCacheEnabled);
+			m_flags[BinaryCacheEnabled] = settings.get< bool >(BinaryCacheEnabledKey, DefaultBinaryCacheEnabled);
+		}
 
 		/* Shader source cache directory. */
 		m_shadersSourcesDirectory = m_primaryServices.fileSystem().cacheDirectory(ShaderSourcesDirectoryName);
@@ -118,7 +122,10 @@ namespace EmEn::Saphir
 			this->readCache();
 		}
 
-		TraceInfo{ClassId} << "GLSLang GLSL version supported : " << glslang::GetGlslVersionString();
+		if ( m_flags[ShowInformation] )
+		{
+			TraceInfo{ClassId} << "GLSLang GLSL version supported : " << glslang::GetGlslVersionString();
+		}
 
 		if ( !glslang::InitializeProcess() )
 		{
@@ -352,7 +359,7 @@ namespace EmEn::Saphir
 			return {};
 		}
 
-		if ( m_flags[ShowLoadedSourceCode] )
+		if ( m_flags[ShowSourceCode] )
 		{
 			TraceInfo{ClassId} << "\n"
 				"****** START OF LOADED GLSL SHADER CODE ******" "\n" <<
@@ -732,12 +739,12 @@ namespace EmEn::Saphir
 			return chrA == '\n' && chrB == '\n';
 		}).begin(),preprocessedSource.end());
 
-		if ( m_primaryServices.settings().get< bool >(ShowPreprocessedSourceCodeKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( m_flags[ShowSourceCode] )
 		{
 			TraceInfo{ClassId} << "\n"
-				"****** START OF PREPROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n" <<
+				"****** START OF PRE-PROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n" <<
 				SourceCodeParser::parse(preprocessedSource) <<
-				"****** END OF PREPROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n";
+				"****** END OF PRE-PROCESSED GLSL SHADER CODE " << shaderIdentifier << " ******" "\n";
 		}
 
 		/* NOTE: Parse the final source code. */
@@ -766,14 +773,14 @@ namespace EmEn::Saphir
 		/* NOTE: Retrieve the binary data. */
 		spv::SpvBuildLogger logger;
 		glslang::SpvOptions spvOptions{
-			.generateDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
+			.generateDebugInfo = false,
 			.stripDebugInfo = false,
 			.disableOptimizer = true,
 			.optimizeSize = false,
 			.disassemble = false,
 			.validate = false,
-			.emitNonSemanticShaderDebugInfo = false,//BOOLEAN_FOLLOWING_DEBUG,
-			.emitNonSemanticShaderDebugSource = false,//BOOLEAN_FOLLOWING_DEBUG,
+			.emitNonSemanticShaderDebugInfo = false,
+			.emitNonSemanticShaderDebugSource = false,
 			//.compileOnly = false,
 			//.optimizerAllowExpandedIDBound = false
 		};

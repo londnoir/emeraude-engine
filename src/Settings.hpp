@@ -39,6 +39,7 @@
 
 /* Local inclusion for usages. */
 #include "SettingStore.hpp"
+#include "Tracer.hpp"
 
 /* Forward declarations. */
 namespace EmEn
@@ -76,9 +77,9 @@ namespace EmEn
 			 * @brief Constructs a settings manager.
 			 * @param arguments A reference to application arguments.
 			 * @param fileSystem A reference to file system.
-			 * @param readOnly Sets the settings file to read-only.
+			 * @param childProcess Declares a child process.
 			 */
-			Settings (const Arguments & arguments, const FileSystem & fileSystem, bool readOnly) noexcept;
+			Settings (const Arguments & arguments, const FileSystem & fileSystem, bool childProcess) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -172,14 +173,14 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Returns whether these settings are initialized in read-only mode.
+			 * @brief Returns whether the service is from a child process.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			isReadOnly () const noexcept
+			isChildProcess () const noexcept
 			{
-				return m_flags[ReadOnly];
+				return m_flags[ChildProcess];
 			}
 
 			/**
@@ -462,6 +463,11 @@ namespace EmEn
 							return std::any_cast< variable_t >(value);
 						}
 					}
+				}
+
+				if ( !m_flags[ChildProcess] )
+				{
+					TraceWarning{ClassId} << "The key '" << key << "' doesn't exists in the settings file and won't be saved because access is read-only.";
 				}
 
 				return defaultValue;
@@ -951,8 +957,9 @@ namespace EmEn
 
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
-			static constexpr auto SaveAtExit{1UL};
-			static constexpr auto ReadOnly{2UL};
+			static constexpr auto ChildProcess{1UL};
+			static constexpr auto ShowInformation{2UL};
+			static constexpr auto SaveAtExit{3UL};
 
 			const Arguments & m_arguments;
 			const FileSystem & m_fileSystem;
@@ -960,9 +967,9 @@ namespace EmEn
 			std::filesystem::path m_filepath;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
-				true/*SaveAtExit*/,
-				false/*ReadOnly*/,
-				false/*UNUSED*/,
+				false/*ChildProcess*/,
+				false/*ShowInformation*/,
+				false/*SaveAtExit*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,

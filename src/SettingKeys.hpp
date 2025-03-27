@@ -26,37 +26,34 @@
 
 #pragma once
 
-/* Project configuration. */
-#include "emeraude_config.hpp"
-
 namespace EmEn
 {
 	/* API */
 
 		/* GLFW */
-		static constexpr auto GLFWShowInformationKey{"API/GLFW/ShowInformation"};
+		static constexpr auto GLFWShowInformationKey{"API/GLFW/ShowInformation"}; // Logs
+		static constexpr auto DefaultGLFWShowInformation{false};
 
 		/* Vulkan */
-		static constexpr auto VkShowInformationKey{"API/Vulkan/ShowInformation"};
+		static constexpr auto VkShowInformationKey{"API/Vulkan/ShowInformation"}; // Logs
+		static constexpr auto DefaultVkShowInformation{false};
 		static constexpr auto VkCreateSurfaceWithGLFWKey{"API/Vulkan/CreateSurfaceWithGLFW"};
 		static constexpr auto DefaultVkCreateSurfaceWithGLFW{true};
 
 			/* Vulkan instance */
 			static constexpr auto VkInstanceEnableDebugKey{"API/Vulkan/Instance/EnableDebug"};
-			static constexpr auto VkInstanceShowAvailableValidationLayersKey{"API/Vulkan/Instance/ShowAvailableValidationLayers"};
-			static constexpr auto VkInstanceShowAvailableExtensionsKey{"API/Vulkan/Instance/ShowAvailableExtensions"};
+			static constexpr auto DefaultVkInstanceEnableDebug{false};
 			static constexpr auto VkInstanceRequestedValidationLayersKey{"API/Vulkan/Instance/RequestedValidationLayers"};
 			static constexpr auto VkInstanceAvailableValidationLayersKey{"API/Vulkan/Instance/AvailableValidationLayers"};
 			static constexpr auto VkInstanceUseDebugMessengerKey{"API/Vulkan/Instance/UseDebugMessenger"};
+			static constexpr auto DefaultVkInstanceUseDebugMessenger{true};
 
 			/* Vulkan device */
-			static constexpr auto VkDeviceEnableDebugKey{"API/Vulkan/Device/EnableDebug"};
-			static constexpr auto VkDeviceShowAvailableExtensionsKey{"API/Vulkan/Device/ShowAvailableExtensions"};
 			static constexpr auto VkDeviceForceGPUKey{"API/Vulkan/Device/ForceGPU"};
 
 		/* OpenAL */
-		static constexpr auto OpenALShowInformationKey{"API/OpenAL/ShowInformation"};
-		static constexpr auto DefaultOpenALShowInformation{BOOLEAN_FOLLOWING_DEBUG};
+		static constexpr auto OpenALShowInformationKey{"API/OpenAL/ShowInformation"}; // Logs
+		static constexpr auto DefaultOpenALShowInformation{false};
 		static constexpr auto OpenALUseEFXExtensionsKey{"API/OpenAL/UseEFXExtensions"};
 		static constexpr auto DefaultOpenALUseEFXExtensions{true};
 		static constexpr auto OpenALRefreshRateKey{"API/OpenAL/RefreshRate"};
@@ -69,7 +66,8 @@ namespace EmEn
 		static constexpr auto DefaultOpenALMaxStereoSourceCount{2};
 
 	/* Core */
-	static constexpr auto CoreShowInformationKey{"Core/ShowInformation"};
+	static constexpr auto CoreShowInformationKey{"Core/ShowInformation"}; // Logs
+	static constexpr auto DefaultCoreShowInformation{false};
 
 		/* Tracer */
 		static constexpr auto TracerPrintOnlyErrorsKey{"Core/Tracer/PrintOnlyErrors"};
@@ -77,17 +75,19 @@ namespace EmEn
 		static constexpr auto TracerShowLocationKey{"Core/Tracer/ShowLocation"};
 		static constexpr auto DefaultShowLocation{false};
 		static constexpr auto TracerShowThreadInfosKey{"Core/Tracer/ShowThreadInfos"};
-		static constexpr auto DefaultShowThreadInfos{true};
+		static constexpr auto DefaultShowThreadInfos{false};
 
-		/* Input */
-		static constexpr auto InputShowInformationKey{"Core/Input/ShowInformation"};
+		/* Input manager */
+		static constexpr auto InputShowInformationKey{"Core/Input/ShowInformation"}; // Logs
+		static constexpr auto DefaultInputShowInformation{false};
 
-		/* Resources */
-		static constexpr auto ResourcesShowInformationKey{"Core/Resources/ShowInformation"};
+		/* Resource manager */
+		static constexpr auto ResourcesShowInformationKey{"Core/Resources/ShowInformation"}; // Logs
+		static constexpr auto DefaultResourcesShowInformation{false};
 		static constexpr auto ResourcesDownloadEnabledKey{"Core/Resources/DownloadEnabled"};
 		static constexpr auto DefaultCoreResourcesDownloadEnabled{true};
 
-		/* Audio */
+		/* Audio layer */
 		static constexpr auto AudioEnableKey{"Core/Audio/Enable"};
 		static constexpr auto DefaultAudioEnable{true};
 		static constexpr auto AudioPlaybackFrequencyKey{"Core/Audio/PlaybackFrequency"};
@@ -100,8 +100,8 @@ namespace EmEn
 		static constexpr auto DefaultAudioMusicVolume{0.5F};
 		static constexpr auto AudioMusicChunkSizeKey{"Core/Audio/MusicChunkSize"};
 		static constexpr auto DefaultAudioMusicChunkSize{8192};
-		static constexpr auto AudioQuietConversionKey{"Core/Audio/QuietConversion"};
-		static constexpr auto DefaultAudioQuietConversion{BOOLEAN_FOLLOWING_RELEASE};
+		static constexpr auto AudioQuietConversionKey{"Core/Audio/QuietConversion"}; // Logs
+		static constexpr auto DefaultAudioQuietConversion{true};
 
 			/* Recorder */
 			static constexpr auto RecorderFrequencyKey{"Core/Audio/Recorder/Frequency"};
@@ -124,8 +124,8 @@ namespace EmEn
 		static constexpr auto DefaultEnableSRGB{false};
 
 			/* Window */
-			static constexpr auto VideoWindowShowInformationKey{"Core/Video/Window/ShowInformation"};
-			static constexpr auto DefaultVideoWindowShowInformation{BOOLEAN_FOLLOWING_DEBUG};
+			static constexpr auto VideoWindowShowInformationKey{"Core/Video/Window/ShowInformation"}; // Logs
+			static constexpr auto DefaultVideoWindowShowInformation{false};
 			static constexpr auto VideoWindowAlwaysCenterOnStartupKey{"Core/Video/Window/AlwaysCenterOnStartup"};
 			static constexpr auto DefaultVideoWindowAlwaysCenterOnStartup{false};
 			static constexpr auto VideoWindowFramelessKey{"Core/Video/Window/Frameless"};
@@ -195,7 +195,8 @@ namespace EmEn
 			static constexpr auto DefaultGraphicsTextureAnisotropy{0};
 
 			/* Shadow Mapping */
-			static constexpr auto GraphicsShadowMappingEnableKey{"Core/Graphics/ShadowMapping/Enable"};
+			static constexpr auto GraphicsShadowMappingEnabledKey{"Core/Graphics/ShadowMapping/Enabled"};
+			static constexpr auto DefaultGraphicsShadowMappingEnabled{true};
 			static constexpr auto GraphicsShadowMappingBaseResolutionKey{"Core/Graphics/ShadowMapping/BaseResolution"};
 			static constexpr auto DefaultGraphicsShadowMappingBaseResolution{512U};
 			static constexpr auto GraphicsShadowMappingPCFSampleKey{"Core/Graphics/ShadowMapping/PCFSample"};
@@ -206,15 +207,20 @@ namespace EmEn
 			static constexpr auto DefaultGraphicsShadowMappingMaxDistance{5000.0F}; /* NOTE: 5 Km */
 
 			/* Shader */
-			static constexpr auto ShowGeneratedSourceCodeKey{"Core/Graphics/Shader/ShowGeneratedSourceCode"};
-			static constexpr auto ShowLoadedSourceCodeKey{"Core/Graphics/Shader/ShowLoadedSourceCode"};
+			static constexpr auto ShowSourceCodeKey{"Core/Graphics/Shader/ShowSourceCode"}; // Logs
+			static constexpr auto DefaultShowSourceCode{false};
 			static constexpr auto SourceCodeCacheEnabledKey{"Core/Graphics/Shader/EnableSourceCodeCache"};
+			static constexpr auto DefaultSourceCodeCacheEnabled{false};
 			static constexpr auto BinaryCacheEnabledKey{"Core/Graphics/Shader/EnableBinaryCache"};
-			static constexpr auto ShowPreprocessedSourceCodeKey{"Core/Graphics/Shader/ShowPreprocessedSourceCode"};
+			static constexpr auto DefaultBinaryCacheEnabled{false};
 			static constexpr auto NormalMappingEnabledKey{"Core/Graphics/Shader/EnableNormalMapping"};
+			static constexpr auto DefaultNormalMappingEnabled{true};
 			static constexpr auto HighQualityLightEnabledKey{"Core/Graphics/Shader/EnabledHighQualityLight"};
+			static constexpr auto DefaultHighQualityLightEnabled{false};
 			static constexpr auto HighQualityReflectionEnabledKey{"Core/Graphics/Shader/EnableHighQualityReflection"};
+			static constexpr auto DefaultHighQualityReflectionEnabled{false};
 
 		/* Physics */
 		static constexpr auto EnablePhysicsAccelerationKey{"Core/Physics/EnableAcceleration"};
+		static constexpr auto DefaultEnablePhysicsAcceleration{false};
 }

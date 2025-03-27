@@ -452,12 +452,12 @@ namespace EmEn::Overlay
 			/**
 			 * @brief Checks whether the pointer is blocked by something on the surface
 			 * to prevent to dispatch the related event below.
-			 * @param positionX The position in X on the screen.
-			 * @param positionY The position in y on the screen.
+			 * @param screenX The position in X on the screen.
+			 * @param screenY The position in y on the screen.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isEventBlocked (float positionX, float positionY) const noexcept;
+			bool isEventBlocked (float screenX, float screenY) const noexcept;
 
 			/**
 			 * @brief Checks whether the pointer coordinates intersects with the surface.
@@ -648,16 +648,6 @@ namespace EmEn::Overlay
 			 */
 			[[nodiscard]]
 			bool getSampler (Graphics::Renderer & renderer) noexcept;
-
-			/**
-			 * @brief Checks whether the event is blocked by performing an alpha test at position.
-			 * @param positionX
-			 * @param positionY
-			 * @param alphaThreshold
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool isEventBlockedWithAlpha (float positionX, float positionY, float alphaThreshold) const noexcept;
 
 			/**
 			 * @brief Updates the model matrix to place the surface on screen.

@@ -26,9 +26,6 @@
 
 #include "Instance.hpp"
 
-/* Engine configuration file. */
-#include "emeraude_config.hpp"
-
 /* STL inclusions. */
 #include <cstring>
 #include <algorithm>
@@ -55,7 +52,8 @@ namespace EmEn::Vulkan
 	const size_t Instance::ClassUID{getClassUID(ClassId)};
 
 	Instance::Instance (PrimaryServices & primaryServices) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices)
 	{
 
 	}
@@ -63,16 +61,17 @@ namespace EmEn::Vulkan
 	void
 	Instance::readSettings () noexcept
 	{
-		/* Instance verbose mode */
+		m_flags[ShowInformation] = m_primaryServices.settings().get< bool >(VkShowInformationKey, DefaultVkShowInformation);
+
 		m_flags[DebugMode] =
 			m_primaryServices.arguments().get("--debug-vulkan").isPresent() ||
-			m_primaryServices.settings().get< bool >(VkInstanceEnableDebugKey, BOOLEAN_FOLLOWING_DEBUG);
+			m_primaryServices.settings().get< bool >(VkInstanceEnableDebugKey, DefaultVkInstanceEnableDebug);
 
 		/* NOTE: Only if the validation layer is enabled. */
 		if ( this->isDebugModeEnabled() )
 		{
 			/* Enable the vulkan debug messenger. */
-			m_flags[UseDebugMessenger] = m_primaryServices.settings().get< bool >(VkInstanceUseDebugMessengerKey, true);
+			m_flags[UseDebugMessenger] = m_primaryServices.settings().get< bool >(VkInstanceUseDebugMessengerKey, DefaultVkInstanceUseDebugMessenger);
 
 			if ( this->isUsingDebugMessenger() )
 			{
@@ -88,7 +87,10 @@ namespace EmEn::Vulkan
 
 		this->readSettings();
 
-		this->setRequiredValidationLayers();
+		if ( this->isDebugModeEnabled() )
+		{
+			this->setRequiredValidationLayers();
+		}
 
 		this->setRequiredExtensions();
 
@@ -264,7 +266,7 @@ namespace EmEn::Vulkan
 
 		m_physicalDevices.reserve(physicalDevices.size());
 
-		std::transform(physicalDevices.cbegin(), physicalDevices.cend(), std::back_inserter(m_physicalDevices), [] (const auto & physicalDevice) {
+		std::ranges::transform(std::as_const(physicalDevices), std::back_inserter(m_physicalDevices), [] (const auto & physicalDevice) {
 			return std::make_shared< PhysicalDevice >(physicalDevice);
 		});
 
@@ -274,76 +276,61 @@ namespace EmEn::Vulkan
 	void
 	Instance::setRequiredValidationLayers () noexcept
 	{
-		if ( !this->isDebugModeEnabled() )
-		{
-			return;
-		}
+		auto & settings = m_primaryServices.settings();
 
 		const auto availableValidationLayers = Instance::getValidationLayers();
 
 		/* NOTE: Save a copy of validation layers in settings for easy edition. */
-		if ( m_primaryServices.settings().isArrayEmpty(VkInstanceAvailableValidationLayersKey) )
+		if ( settings.isArrayEmpty(VkInstanceAvailableValidationLayersKey) )
 		{
 			for ( const auto & availableValidationLayer : availableValidationLayers )
 			{
-				m_primaryServices.settings().setInArray(VkInstanceAvailableValidationLayersKey, availableValidationLayer.layerName);
+				settings.setInArray(VkInstanceAvailableValidationLayersKey, availableValidationLayer.layerName);
 			}
 		}
 
 		/* NOTE: Show available validation layers on the current system. */
-		if ( m_primaryServices.settings().get< bool >(VkInstanceShowAvailableValidationLayersKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( m_flags[ShowInformation] )
 		{
 			TraceInfo{ClassId} << getItemListAsString(availableValidationLayers);
 		}
 
-		/* Read the settings to get a dynamic list of validation layers. */
-		if ( m_primaryServices.settings().isArrayEmpty(VkInstanceRequestedValidationLayersKey) )
+		/* Read the settings to get a dynamic list of requested validation layers. */
+		if ( settings.isArrayEmpty(VkInstanceRequestedValidationLayersKey) )
 		{
 			TraceInfo{ClassId} <<
-				"No validation layer requested in core settings ! Setting all validation layers available..." "\n"
-				"NOTE: You can change the validation layers selected in core settings at the key : '" << VkInstanceRequestedValidationLayersKey << "'.";
-
-			for ( const auto & availableValidationLayer : availableValidationLayers )
-			{
-				m_primaryServices.settings().setInArray(VkInstanceRequestedValidationLayersKey, availableValidationLayer.layerName);
-				m_requestedValidationLayers.emplace_back(availableValidationLayer.layerName);
-			}
+				"No validation layer is requested from settings !" "\n"
+				"NOTE: You can change the validation layers selected in settings at the array key : '" << VkInstanceRequestedValidationLayersKey << "'.";
 		}
 		else
 		{
 			m_requestedValidationLayers = m_primaryServices.settings().getArrayAs< std::string >(VkInstanceRequestedValidationLayersKey);
 
-			if ( this->isDebugModeEnabled() )
+			TraceInfo trace{ClassId};
+
+			trace << "Requested validation layers from settings :" "\n";
+
+			for ( const auto & requestedValidationLayer : m_requestedValidationLayers )
 			{
-				TraceInfo trace{ClassId};
-
-				trace << "Requested validation layers from settings :" "\n";
-
-				for ( const auto & requestedValidationLayer : m_requestedValidationLayers )
-				{
-					trace << "\t" << requestedValidationLayer << "\n";
-				}
+				trace << "\t" << requestedValidationLayer << "\n";
 			}
 		}
 
 		m_requiredValidationLayers = Instance::getSupportedValidationLayers(m_requestedValidationLayers, availableValidationLayers);
 
-		if ( this->isDebugModeEnabled() )
+		if ( m_requiredValidationLayers.empty() )
 		{
-			if ( m_requiredValidationLayers.empty() )
-			{
-				Tracer::warning(ClassId, "None of the validation layers requested are available on this system ! Check your Vulkan setup.");
-			}
-			else
-			{
-				TraceInfo trace{ClassId};
+			Tracer::warning(ClassId, "None of the validation layers requested are available on this system ! Check your Vulkan setup.");
+		}
+		else
+		{
+			TraceInfo trace{ClassId};
 
-				trace << "Final validation layers selected :" "\n";
+			trace << "Final validation layers selected :" "\n";
 
-				for ( const auto & requiredValidationLayer : m_requiredValidationLayers )
-				{
-					trace << "\t" << requiredValidationLayer << "\n";
-				}
+			for ( const auto & requiredValidationLayer : m_requiredValidationLayers )
+			{
+				trace << "\t" << requiredValidationLayer << "\n";
 			}
 		}
 	}
@@ -352,7 +339,7 @@ namespace EmEn::Vulkan
 	Instance::setRequiredExtensions () noexcept
 	{
 		/* NOTE: Show available extensions on the current system. */
-		if ( m_primaryServices.settings().get< bool >(VkInstanceShowAvailableExtensionsKey, BOOLEAN_FOLLOWING_DEBUG) )
+		if ( m_flags[ShowInformation] )
 		{
 			TraceInfo{ClassId} << getItemListAsString("Instance", Instance::getExtensions(nullptr));
 		}
@@ -379,11 +366,11 @@ namespace EmEn::Vulkan
 		 * the results of physical device enumeration. */
 		m_requiredInstanceExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
-		if ( this->isDebugModeEnabled() )
+		if ( m_flags[ShowInformation] )
 		{
 			if ( m_requiredInstanceExtensions.empty() )
 			{
-				Tracer::info(ClassId, "No extension required !");
+				Tracer::info(ClassId, "No extension required.");
 			}
 			else
 			{
@@ -573,7 +560,10 @@ namespace EmEn::Vulkan
 		{
 			size_t score = 0;
 
-			TraceInfo{ClassId} << physicalDevice->getPhysicalDeviceInformation();
+			if ( m_flags[ShowInformation] )
+			{
+				TraceInfo{ClassId} << physicalDevice->getPhysicalDeviceInformation();
+			}
 
 			if ( window != nullptr && window->usable() )
 			{
@@ -604,7 +594,10 @@ namespace EmEn::Vulkan
 
 			score += physicalDevice->getTotalQueueCount() * 100;
 
-			TraceInfo(ClassId) << "Physical device '" << physicalDevice->properties().deviceName << "' reached a score of " << score << " !";
+			if ( m_flags[ShowInformation] )
+			{
+				TraceInfo(ClassId) << "Physical device '" << physicalDevice->properties().deviceName << "' reached a score of " << score << " !";
+			}
 
 			graphicsDevices.emplace(score, physicalDevice);
 		}
@@ -638,11 +631,11 @@ namespace EmEn::Vulkan
 		{
 			TraceInfo{ClassId} << "Trying to force the GPU named '" << forceGPUName << "' ...";
 
-			for ( const auto & [score, device] : scoredDevices )
+			for ( const auto & physicalDevice: scoredDevices | std::views::values )
 			{
-				if ( device->deviceName() == forceGPUName )
+				if ( physicalDevice->deviceName() == forceGPUName )
 				{
-					selectedPhysicalDevice = device;
+					selectedPhysicalDevice = physicalDevice;
 
 					break;
 				}
@@ -656,11 +649,9 @@ namespace EmEn::Vulkan
 		}
 
 		/* NOTE: Logical device creation for graphics rendering and presentation. */
-		TraceSuccess{ClassId} <<
-			"Graphics capable physical device '" << selectedPhysicalDevice->properties().deviceName << "' selected ! "
-			"Creating the logical graphics device ...";
+		TraceSuccess{ClassId} << "The graphics capable physical device '" << selectedPhysicalDevice->properties().deviceName << "' selected ! ";
 
-		auto logicalDevice = std::make_shared< Device >(selectedPhysicalDevice);
+		auto logicalDevice = std::make_shared< Device >(selectedPhysicalDevice, m_primaryServices.settings());
 		logicalDevice->setIdentifier((std::stringstream{} << "VulkanInstance-" << selectedPhysicalDevice->properties().deviceName << "(Graphics)-Device").str());
 
 		DeviceRequirements requirements{DeviceJobHint::Graphics};
@@ -721,7 +712,10 @@ namespace EmEn::Vulkan
 				continue;
 			}
 
-			TraceInfo{ClassId} << "Physical device '" << physicalDevice->properties().deviceName << "' reached score of " << score;
+			if ( m_flags[ShowInformation] )
+			{
+				TraceInfo{ClassId} << "Physical device '" << physicalDevice->properties().deviceName << "' reached score of " << score;
+			}
 
 			scoredDevices.emplace(score, physicalDevice);
 		}
@@ -741,7 +735,7 @@ namespace EmEn::Vulkan
 			"Creating the logical compute device ...";
 
 		/* NOTE: Logical device creation for computing. */
-		auto logicalDevice = std::make_shared< Device >(selectedPhysicalDevice);
+		auto logicalDevice = std::make_shared< Device >(selectedPhysicalDevice, m_primaryServices.settings());
 		logicalDevice->setIdentifier((std::stringstream{} << "VulkanInstance-" << selectedPhysicalDevice->properties().deviceName << "(Physics)-Device").str());
 
 		DeviceRequirements requirements{DeviceJobHint::Compute};

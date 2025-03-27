@@ -29,6 +29,7 @@
 /* STL inclusions. */
 #include <vector>
 #include <string>
+#include <array>
 
 /* Local inclusions for usages. */
 #include "Identification.hpp"
@@ -51,24 +52,23 @@ namespace EmEn
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"PrimaryServices"};
 
-#if IS_WINDOWS
-			/**
-			 * @brief Constructs primary services manager.
-			 * @param argc The argument count from the standard C/C++ main() function.
-			 * @param wargv The argument values from the standard C/C++ main() function.
-			 * @param identification A reference to the application identification.
-			 * @param readOnly Set the settings as read-only mode.
-			 */
-			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool readOnly) noexcept;
-#else
 			/**
 			 * @brief Constructs primary services manager.
 			 * @param argc The argument count from the standard C/C++ main() function.
 			 * @param argv The argument values from the standard C/C++ main() function.
 			 * @param identification A reference to the application identification.
-			 * @param readOnly Set the settings as read-only mode.
+			 * @param childProcess Declares a child process.
 			 */
-			PrimaryServices (int argc, char * * argv, const Identification & identification, bool readOnly) noexcept;
+			PrimaryServices (int argc, char * * argv, const Identification & identification, bool childProcess) noexcept;
+
+#if IS_WINDOWS
+			/**
+			 * @brief Constructs primary services manager.
+			 * @param argc The argument count from the standard C/C++ main() function.
+			 * @param wargv The argument values from the standard C/C++ main() function.
+			 * @param childProcess Declares a child process.
+			 */
+			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool childProcess) noexcept;
 #endif
 
 			/**
@@ -234,6 +234,11 @@ namespace EmEn
 
 		private:
 
+			/* Flag names. */
+			static constexpr auto Initialized{0UL};
+			static constexpr auto ChildProcess{1UL};
+			static constexpr auto ShowInformation{2UL};
+
 			PlatformSpecific::SystemInfo m_systemInfo;
 			PlatformSpecific::UserInfo m_userInfo;
 			Arguments m_arguments;
@@ -241,5 +246,15 @@ namespace EmEn
 			FileSystem m_fileSystem;
 			Settings m_settings;
 			std::vector< ServiceInterface * > m_primaryServicesEnabled;
+			std::array< bool, 8 > m_flags{
+				false/*Initialized*/,
+				false/*ChildProcess*/,
+				false/*ShowInformation*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/
+			};
 	};
 }

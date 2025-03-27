@@ -26,7 +26,7 @@
 
 #pragma once
 
-/* Engine configuration file. */
+/* Emeraude-Engine configuration. */
 #include "emeraude_config.hpp"
 
 /* STL inclusions. */
@@ -46,7 +46,6 @@
 
 /* Local inclusions for usages. */
 #include "Vulkan/Surface.hpp"
-#include "SettingKeys.hpp"
 
 /* Forward declarations. */
 namespace EmEn
@@ -98,7 +97,7 @@ namespace EmEn
 				/* The window dimension expressed in the OS/desktop screen. */
 				uint32_t windowWidth{0};
 				uint32_t windowHeight{0};
-				/* The window borders sizes (Depend of the OS/desktop). */
+				/* The window borders sizes (Depend on the OS/desktop). */
 				int32_t borderLeftSize{0};
 				int32_t borderTopSize{0};
 				int32_t borderRightSize{0};

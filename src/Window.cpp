@@ -138,8 +138,8 @@ namespace EmEn
 		}
 		else
 		{
-			const auto windowWidth = m_primaryServices.settings().get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
-			const auto windowHeight = m_primaryServices.settings().get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+            const auto windowWidth = m_primaryServices.settings().get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+            const auto windowHeight = m_primaryServices.settings().get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
 			const auto frameless = m_primaryServices.settings().get< bool >(VideoWindowFramelessKey, DefaultVideoWindowFrameless);
 
 			/* GLFW_RESIZABLE specifies whether the windowed mode window
@@ -215,7 +215,7 @@ namespace EmEn
 #if IS_MACOS
 			/* GLFW_COCOA_RETINA_FRAMEBUFFER specifies whether to use full resolution framebuffers on Retina displays.
 			 * Possible values are GLFW_TRUE and GLFW_FALSE. This is ignored on other platforms. */
-			glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+			glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
 			/* GLFW_COCOA_FRAME_NAME specifies the UTF-8 encoded name to use for autosaving the window frame, or if
 			 * empty disables frame autosaving for the window. This is ignored on other platforms. */
 			glfwWindowHintString(GLFW_COCOA_FRAME_NAME, ENGINE_NAME);
@@ -317,7 +317,10 @@ namespace EmEn
 
 		if ( m_flags[SaveWindowPropertiesAtExit] )
 		{
-			Tracer::info(ClassId, "Saving the window properties ...");
+			if ( m_flags[ShowInformation] )
+			{
+				Tracer::info(ClassId, "Saving the window properties ...");
+			}
 
 			if ( this->isFullscreenMode() )
 			{
@@ -1098,7 +1101,7 @@ namespace EmEn
 		m_state.windowWidth = size[0];
 		m_state.windowHeight = size[1];
 
-		/* The window borders sizes (Depend of the OS/desktop). */
+		/* The window borders sizes (Depend on the OS/desktop). */
 		const auto borderSize = this->getBorderSize();
 
 		m_state.borderLeftSize = static_cast< int32_t >(borderSize[0]);

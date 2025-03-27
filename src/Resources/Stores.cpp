@@ -46,7 +46,7 @@ namespace EmEn::Resources
 	using namespace EmEn::Libs;
 
 	const size_t Stores::ClassUID{getClassUID(ClassId)};
-	bool Stores::s_operationVerboseEnabled{BOOLEAN_FOLLOWING_DEBUG};
+	bool Stores::s_operationVerboseEnabled{false};
 	bool Stores::s_downloadEnabled{true};
 
 	Stores::Stores (PrimaryServices & primaryServices) noexcept
@@ -98,7 +98,7 @@ namespace EmEn::Resources
 	bool
 	Stores::onInitialize () noexcept
 	{
-		s_operationVerboseEnabled = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		s_operationVerboseEnabled = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation);
 		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultCoreResourcesDownloadEnabled);
 
 		const auto indexes = this->getResourcesIndexFiles();
@@ -121,7 +121,7 @@ namespace EmEn::Resources
 			return false;
 		}
 
-		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation);
 
 		m_registeredResources = 0;
 
@@ -183,7 +183,7 @@ namespace EmEn::Resources
 	void
 	Stores::update (const Json::Value & root, const std::string & name) noexcept
 	{
-		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG);
+		const auto verbose = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation);
 
 		if ( !root.isObject() )
 		{

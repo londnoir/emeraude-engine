@@ -26,6 +26,9 @@
 
 #include "AbstractObject.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #ifdef VK_TRACKING_ENABLED
 #include <iostream>

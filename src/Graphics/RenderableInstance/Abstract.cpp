@@ -176,10 +176,7 @@ namespace EmEn::Graphics::RenderableInstance
 					scene
 				};
 
-				if ( renderer.shaderManager().showGeneratedSourceCode() )
-				{
-					generator.enableDebugging();
-				}
+				generator.enableDebugging(renderer.shaderManager().showSourceCode());
 
 				/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
 				if ( !generator.generateProgram(renderer.vertexBufferFormatManager()) )

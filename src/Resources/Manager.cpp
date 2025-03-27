@@ -119,7 +119,7 @@ namespace EmEn::Resources
 		{
 			TraceSuccess{ClassId} << m_stores.name() << " service up !";
 
-			if ( m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, BOOLEAN_FOLLOWING_DEBUG) )
+			if ( m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation) )
 			{
 				TraceInfo{ClassId} << m_stores;
 			}
