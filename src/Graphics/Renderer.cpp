@@ -668,6 +668,7 @@ namespace EmEn::Graphics
 			{
 				/* Updates the handle surface information. */
 				case Window::OSNotifiesFramebufferResized :
+				case Window::OSRequestsToRescaleContentBy :
 				{
 					const auto device = this->device();
 

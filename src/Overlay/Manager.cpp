@@ -610,6 +610,23 @@ namespace EmEn::Overlay
 		return screenIt->second;
 	}
 
+	void
+	Manager::updateFramebufferProperties () noexcept
+	{
+		const auto & settings = m_primaryServices.settings();
+		const auto forceScaleX = settings.get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
+		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
+		const auto & windowState = m_window.state();
+
+		/* NOTE: This structure is shared with all screens and surfaces. */
+		m_framebufferProperties.updateProperties(
+			windowState.framebufferWidth,
+			windowState.framebufferHeight,
+			forceScaleX > 0.0F ? forceScaleX : windowState.contentXScale,
+			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
+		);
+	}
+
 	bool
 	Manager::updateVideoMemory () noexcept
 	{
@@ -645,18 +662,7 @@ namespace EmEn::Overlay
 		/* NOTE: This can collide with the successive call to Manager::updateVideoMemory() the rendering loop. */
 		const std::lock_guard< std::mutex > lock{m_updateMutex};
 
-		const auto & settings = m_primaryServices.settings();
-		const auto forceScaleX = settings.get< float >(VideoOverlayForceScaleXKey, DefaultVideoOverlayForceScale);
-		const auto forceScaleY = settings.get< float >(VideoOverlayForceScaleYKey, DefaultVideoOverlayForceScale);
-		const auto & windowState = m_window.state();
-
-		/* NOTE: This structure is shared with all screens and surfaces. */
-		m_framebufferProperties.updateProperties(
-			windowState.framebufferWidth,
-			windowState.framebufferHeight,
-			forceScaleX > 0.0F ? forceScaleX : windowState.contentXScale,
-			forceScaleY > 0.0F ? forceScaleY : windowState.contentYScale
-		);
+		this->updateFramebufferProperties();
 
 		if ( m_program == nullptr )
 		{
@@ -787,10 +793,11 @@ namespace EmEn::Overlay
 			switch ( notificationCode )
 			{
 				case Window::Created :
-					this->updatePhysicalRepresentation();
+					this->updateFramebufferProperties();
 					break;
 
 				case Window::OSNotifiesFramebufferResized :
+				case Window::OSRequestsToRescaleContentBy :
 					if ( this->updatePhysicalRepresentation() )
 					{
 						const auto & windowState = m_window.state();

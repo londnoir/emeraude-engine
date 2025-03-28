@@ -388,6 +388,12 @@ namespace EmEn::Overlay
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
+			 * @brief Fetches framebuffer properties.
+			 * @return void
+			 */
+			void updateFramebufferProperties () noexcept;
+
+			/**
 			 * @brief Generates the overlay graphics pipeline.
 			 * @return bool
 			 */

@@ -19,7 +19,7 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.35 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.36 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
