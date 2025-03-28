@@ -616,7 +616,7 @@ namespace EmEn::Libs::PixelFactory
 				/* Simple copy if same size. */
 				if ( width == source.width() && height == source.height() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", resize target the same Pixmap sizes..." "\n";
+					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is already at good dimension !" "\n";
 
 					return source;
 				}

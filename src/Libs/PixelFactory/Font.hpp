@@ -184,7 +184,16 @@ namespace EmEn::Libs::PixelFactory
 
 					/* Crop the targeted char out of the bitmap and
 					 * resize it as the desired size to the char storage. */
-					m_glyphs.at(charNum) = Processor< precision_t >::resize(Processor< precision_t >::crop(charsMap, clipping), m_maxWidth, m_maxHeight);
+					const auto glyph = Processor< precision_t >::crop(charsMap, clipping);
+
+					if ( glyph.width() == m_maxWidth && glyph.height() == m_maxHeight )
+					{
+						m_glyphs.at(charNum) = glyph;
+					}
+					else
+					{
+						m_glyphs.at(charNum) = Processor< precision_t >::resize(glyph, m_maxWidth, m_maxHeight);
+					}
 				}
 
 				return true;
