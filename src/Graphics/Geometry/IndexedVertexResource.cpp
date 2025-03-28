@@ -225,7 +225,7 @@ namespace EmEn::Graphics::Geometry
 		options.requestTextureCoordinates = this->isFlagEnabled(EnablePrimaryTextureCoordinates) || this->isFlagEnabled(EnableSecondaryTextureCoordinates);
 		options.requestVertexColor = this->isFlagEnabled(EnableVertexColor);
 
-		if ( !FileIO::read(filepath, m_localData, options) )
+		if ( !VertexFactory::FileIO::read(filepath, m_localData, options) )
 		{
 			TraceError{ClassId} << "Unable to load geometry from '" << filepath << "' !";
 

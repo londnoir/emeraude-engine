@@ -412,7 +412,7 @@ namespace EmEn::Graphics
 					[[fallthrough]];
 
 				default :
-					nextWidth = static_cast< unsigned long >(m_font->glyph(ASCIICode).width() + static_cast< size_t >(m_spacing));
+					nextWidth = static_cast< unsigned long >(m_font->font().glyph(ASCIICode).width() + static_cast< size_t >(m_spacing));
 					break;
 			}
 
@@ -473,7 +473,7 @@ namespace EmEn::Graphics
 			case 127 : // DEL Delete[k][e]
 				if ( m_flags[AllCharactersEnabled] )
 				{
-					return this->renderGlyph(m_font->glyph(ASCIICode));
+					return this->renderGlyph(m_font->font().glyph(ASCIICode));
 				}
 
 				break;
@@ -505,7 +505,7 @@ namespace EmEn::Graphics
 
 			/* Printable character. */
 			default :
-				return this->renderGlyph(m_font->glyph(ASCIICode));
+				return this->renderGlyph(m_font->font().glyph(ASCIICode));
 		}
 
 		return true;

@@ -40,6 +40,11 @@
 #include "Overlay/Manager.hpp"
 #include "Overlay/Surface.hpp"
 
+namespace EmEn::Graphics
+{
+	class FontResource;
+}
+
 namespace EmEn
 {
 	/**
@@ -127,7 +132,7 @@ namespace EmEn
 
 			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
 			 * @brief Updates the notification area pixel buffer.
@@ -138,6 +143,7 @@ namespace EmEn
 			Overlay::Manager & m_overlayManager;
 			std::shared_ptr< Overlay::UIScreen > m_screen;
 			std::shared_ptr< Overlay::Surface > m_surface;
+			std::shared_ptr< Graphics::FontResource > m_font;
 			Libs::PixelFactory::TextProcessor< uint8_t > m_processor;
 			std::vector< std::pair< std::string, Libs::Time::TimerID > > m_notifications;
 			mutable std::mutex m_lock;
