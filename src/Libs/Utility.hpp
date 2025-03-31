@@ -26,20 +26,13 @@
 
 #pragma once
 
-/* Project configuration. */
-#include "platform.hpp"
-
 /* STL inclusions. */
 #include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
-#include <filesystem>
-#include <fstream>
 #include <functional>
-#include <iostream>
 #include <limits>
-#include <random>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -55,9 +48,9 @@ namespace EmEn::Libs::Utility
 	 */
 	inline
 	void
-	forCount (size_t count, const std::function< void () > & loopScope) noexcept
+	forCount (size_t count, const std::function< void () > & loopScope)
 	{
-		while ( count-- )
+		while ( count-- != 0 )
 		{
 			loopScope();
 		}
@@ -71,34 +64,30 @@ namespace EmEn::Libs::Utility
 	 */
 	inline
 	void
-	forCount (size_t count, const std::function< void (size_t) > & loopScope) noexcept
+	forCount (size_t count, const std::function< void (size_t) > & loopScope)
 	{
-		for ( size_t i = 0; i < count; ++i )
+		for ( size_t index = 0; index < count; ++index )
 		{
-			loopScope(i);
+			loopScope(index);
 		}
 	}
 
 	/**
 	 * @brief Contains method version for STL vector using a pair as key/value.
+	 * @tparam x_t The key and needle type.
+	 * @tparam y_t The value type.
 	 * @param haystack A reference to a vector of pairs.
 	 * @param needle A reference to the key.
 	 * @return bool
 	 */
-	template< typename t_x, typename t_y >
+	template< typename x_t, typename y_t >
 	[[nodiscard]]
 	bool
-	contains (const std::vector< std::pair< t_x, t_y > > & haystack, const t_x & needle) noexcept
+	contains (const std::vector< std::pair< x_t, y_t > > & haystack, const x_t & needle) noexcept(noexcept(needle == std::declval< x_t >()))
 	{
-		for ( const auto & item : haystack )
-		{
-			if ( needle == item.first )
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return std::any_of(haystack.cbegin(), haystack.cend(), [&needle] (const auto & item) {
+			return item.first == needle;
+		});
 	}
 
 	/**
@@ -110,6 +99,7 @@ namespace EmEn::Libs::Utility
 	 * @return number_t
 	 */
 	template< typename number_t = float >
+	[[deprecated("Use STL from C++17 : std::clamp(value, lowest, highest)")]]
 	[[nodiscard]]
 	number_t
 	between (number_t value, number_t lowest, number_t highest) noexcept requires (std::is_arithmetic_v< number_t >)
@@ -129,82 +119,99 @@ namespace EmEn::Libs::Utility
 
 	/**
 	 * @brief Gets the celled result of a division.
-	 * @tparam number_t The type of the number. Default float.
+	 * @tparam number_t The type of the number. Default uint32_t.
+	 * @note This function will return 0 if the divisor is 0.
 	 * @param dividend The dividend.
 	 * @param divisor The divisor.
 	 * @return number_t
 	 */
-	template< typename number_t = float >
+	template< typename number_t = uint32_t >
 	[[nodiscard]]
 	constexpr
 	number_t
-	ceilDivision (number_t dividend, number_t divisor) noexcept requires (std::is_arithmetic_v< number_t >)
+	ceilDivision (number_t dividend, number_t divisor) noexcept requires (std::is_integral_v< number_t >)
 	{
+		if ( divisor == 0 )
+		{
+			return 0;
+		}
+
 		return (dividend / divisor) + (dividend % divisor != 0);
 	}
 
 	/**
 	 * @brief Returns the ratio between two number.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param total The divisor.
 	 * @param part The dividend.
 	 * @param scale Scale the output number.
-	 * @return float_t
+	 * @return number_t
 	 */
-	template< typename float_t >
+	template< typename number_t >
 	[[nodiscard]]
 	constexpr
-	float_t
-	ratio (float_t total, float_t part, float_t scale) noexcept requires (std::is_floating_point_v< float_t >)
+	number_t
+	ratio (number_t total, number_t part, number_t scale) noexcept requires (std::is_floating_point_v< number_t >)
 	{
+		if ( total == 0 )
+		{
+			return 0;
+		}
+
 		return (part / total) * scale;
 	}
 
 	/**
 	 * @brief Returns the ratio between two number.
-	 * @tparam integral_t The type of integral number. Default int32_t.
+	 * @tparam number_t The type of integral number. Default int32_t.
 	 * @param total The divisor.
 	 * @param part The dividend.
 	 * @param scale Scale the output number.
-	 * @return integral_t
+	 * @return number_t
 	 */
-	template< typename integral_t = int32_t >
+	template< typename number_t = int32_t >
 	[[nodiscard]]
 	constexpr
-	integral_t
-	ratio (integral_t total, integral_t part, float scale = 1.0F) noexcept requires (std::is_integral_v< integral_t >)
+	number_t
+	ratio (number_t total, number_t part, float scale = 1.0F) noexcept requires (std::is_integral_v< number_t >)
 	{
-		return static_cast< integral_t >(static_cast< float >(part) / static_cast< float >(total) * scale);
+		if ( total == 0 )
+		{
+			return 0;
+		}
+
+		return static_cast< number_t >(static_cast< float >(part) / static_cast< float >(total) * scale);
 	}
 
 	/**
 	 * @brief Rounds up a number.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param value The number to round.
 	 * @param precision The number of decimal.
-	 * @return float_t
+	 * @return number_t
 	 */
-	template< typename float_t = float >
+	template< typename number_t = float >
 	[[nodiscard]]
-	float_t
-	round (float_t value, size_t precision = 0) noexcept requires (std::is_floating_point_v< float_t >)
+	number_t
+	round (number_t value, size_t precision = 0) requires (std::is_floating_point_v< number_t >)
 	{
-		auto scale = static_cast< float_t >(std::pow(10, precision));
+		auto scale = static_cast< number_t >(std::pow(10, precision));
 
 		return std::round(value * scale) / scale;
 	}
 
 	/**
 	 * @brief Returns a random integer between a specified range.
-	 * @note This version use the C rand() function.
+	 * @warning This function uses the rand() function from C, this old function is predictable and not thread-safe. Use EmEn::Libs::Randomizer class instead.
+	 * @tparam number_t The type of integer number. Default int32_t.
 	 * @param min The minimum number.
 	 * @param max The maximum number.
-	 * @return type_t
+	 * @return number_t
 	 */
-	template< typename type_t >
+	template< typename number_t = int32_t >
 	[[nodiscard]]
-	type_t
-	quickRandom (type_t min, type_t max) noexcept requires (std::is_integral_v< type_t >)
+	number_t
+	quickRandom (number_t min, number_t max) requires (std::is_integral_v< number_t >)
 	{
 		if ( min > max )
 		{
@@ -218,375 +225,125 @@ namespace EmEn::Libs::Utility
 			return min;
 		}
 
-		return (static_cast< type_t >(std::rand()) % delta) + min; // NOLINT(cert-msc50-cpp)
+		return (static_cast< number_t >(std::rand()) % delta) + min; // NOLINT
 	}
 
 	/**
 	 * @brief Returns a random float between a specified range.
-	 * @note This version use the C rand() function.
+	 * @warning This function uses the rand() function from C, this old function is predictable and not thread-safe. Use EmEn::Libs::Randomizer class instead.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param min The minimum number.
 	 * @param max The maximum number.
-	 * @return type_t
+	 * @return number_t
 	 */
-	template< typename type_t >
+	template< typename number_t = float >
 	[[nodiscard]]
-	type_t
-	quickRandom (type_t min, type_t max) noexcept requires (std::is_floating_point_v< type_t >)
+	number_t
+	quickRandom (number_t min, number_t max) requires (std::is_floating_point_v< number_t >)
 	{
 		if ( max < min )
 		{
 			std::swap(min, max);
 		}
 
-		const auto random = static_cast< type_t >(std::rand()) / static_cast< type_t >(RAND_MAX); // NOLINT(cert-msc50-cpp)
+		const auto random = static_cast< number_t >(std::rand()) / static_cast< number_t >(RAND_MAX); // NOLINT
 		const auto range = max - min;
 
 		return (random * range) + min;
 	}
 
 	/**
-	 * @brief Returns a random number between a specified range.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @return number_t
-	 */
-	template< typename number_t = int32_t >
-	[[nodiscard]]
-	number_t
-	random (number_t min, number_t max) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		std::random_device device{};
-
-		//std::default_random_engine generator{device()};
-		//std::knuth_b generator{device()};
-		std::mt19937 generator{device()};
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			return std::uniform_int_distribution< number_t >{min, max}(generator);
-		}
-		else
-		{
-			return std::uniform_real_distribution< number_t >{min, max}(generator);
-		}
-	}
-
-	/**
-	 * @brief Returns a random number between a specified range using a seed.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @param seed A fixed value.
-	 * @return number_t
-	 */
-	template< typename number_t = int32_t >
-	[[nodiscard]]
-	number_t
-	random (number_t min, number_t max, int seed) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		//std::knuth_b generator(seed);
-		std::mt19937 generator(seed);
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			return std::uniform_int_distribution< number_t >{min, max}(generator);
-		}
-		else
-		{
-			return std::uniform_real_distribution< number_t >{min, max}(generator);
-		}
-	}
-
-	/**
-	 * @brief Returns an STL vector of random number between a specified range.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param count The number of desired numbers.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @return std::vector< number_t >
-	 */
-	template< typename number_t = int32_t >
-	[[nodiscard]]
-	std::vector< number_t >
-	randomVector (size_t count, number_t min, number_t max) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		std::vector< number_t > range(count);
-
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		std::random_device device{};
-
-		//std::default_random_engine generator{device()};
-		//std::knuth_b generator{device()};
-		std::mt19937 generator{device()};
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			std::uniform_int_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-		else
-		{
-			std::uniform_real_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-
-		return range;
-	}
-
-	/**
-	 * @brief Returns an STL vector of random number between a specified range.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param count The number of desired numbers.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @param seed A fixed value.
-	 * @return std::vector< number_t >
-	 */
-	template< typename number_t = int32_t >
-	[[nodiscard]]
-	std::vector< number_t >
-	randomVector (size_t count, number_t min, number_t max, int seed) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		std::vector< number_t > range(count);
-
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		//std::knuth_b generator(seed);
-		std::mt19937 generator(seed);
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			std::uniform_int_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-		else
-		{
-			std::uniform_real_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-
-		return range;
-	}
-
-	/**
-	 * @brief Returns an STL array of random number between a specified range.
-	 * @tparam count_t The number of desired numbers.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @return number_t
-	 */
-	template< size_t count_t, typename number_t = int32_t >
-	[[nodiscard]]
-	std::array< number_t, count_t >
-	randomArray (number_t min, number_t max) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		std::array< number_t, count_t > range{};
-
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		std::random_device device{};
-
-		//std::default_random_engine generator{device()};
-		//std::knuth_b generator{device()};
-		std::mt19937 generator{device()};
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			std::uniform_int_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-		else
-		{
-			std::uniform_real_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-
-		return range;
-	}
-
-	/**
-	 * @brief Returns an STL array of random number between a specified range.
-	 * @tparam count_t The number of desired numbers.
-	 * @tparam number_t The type of integral number. Default int32_t.
-	 * @param min The minimum number.
-	 * @param max The maximum number.
-	 * @param seed A fixed value.
-	 * @return number_t
-	 */
-	template< size_t count_t, typename number_t = int32_t >
-	[[nodiscard]]
-	std::array< number_t, count_t >
-	randomArray (number_t min, number_t max, int seed) noexcept requires (std::is_arithmetic_v< number_t >)
-	{
-		std::array< number_t, count_t > range{};
-
-		if ( max < min )
-		{
-			std::swap(min, max);
-		}
-
-		//std::knuth_b generator(seed);
-		std::mt19937 generator(seed);
-
-		if constexpr ( std::is_integral_v< number_t > )
-		{
-			std::uniform_int_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-		else
-		{
-			std::uniform_real_distribution< number_t > distribution{min, max};
-
-			for ( auto & value : range )
-			{
-				value = distribution(generator);
-			}
-		}
-
-		return range;
-	}
-
-	/**
 	 * @brief Checks if two floating numbers are equal.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param operandA The first number.
 	 * @param operandB The second number.
-	 * @param epsilon The authorized error.
+	 * @param epsilon epsilon The floating point tolerance value. Default C++ epsilon.
 	 * @return bool
 	 */
-	template< typename float_t = float >
+	template< typename number_t = float >
 	[[nodiscard]]
 	bool
-	equal (float_t operandA, float_t operandB, float_t epsilon = std::numeric_limits< float_t >::epsilon()) noexcept requires (std::is_floating_point_v< float_t >)
+	equal (number_t operandA, number_t operandB, number_t epsilon = std::numeric_limits< number_t >::epsilon()) noexcept requires (std::is_floating_point_v< number_t >)
 	{
 		return std::abs(operandA - operandB) <= epsilon;
 	}
 
 	/**
 	 * @brief Checks if two floating numbers are different.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param operandA The first number.
 	 * @param operandB The second number.
-	 * @param epsilon The authorized error.
+	 * @param epsilon epsilon The floating point tolerance value. Default C++ epsilon.
 	 * @return bool
 	 */
-	template< typename float_t = float >
+	template< typename number_t = float >
 	[[nodiscard]]
 	bool
-	different (float_t operandA, float_t operandB, float_t epsilon = std::numeric_limits< float_t >::epsilon()) noexcept requires (std::is_floating_point_v< float_t >)
+	different (number_t operandA, number_t operandB, number_t epsilon = std::numeric_limits< number_t >::epsilon()) noexcept requires (std::is_floating_point_v< number_t >)
 	{
 		return std::abs(operandA - operandB) > epsilon;
 	}
 
 	/**
 	 * @brief Checks if a floating number is zero.
-	 * @tparam float_t The type of floating point number.
+	 * @tparam number_t The type of floating point number.
 	 * @param value The number to test.
-	 * @param epsilon The authorized error.
+	 * @param epsilon epsilon The floating point tolerance value. Default C++ epsilon.
 	 * @return bool
 	 */
-	template< typename float_t = float >
+	template< typename number_t = float >
 	[[nodiscard]]
 	bool
-	isZero (float_t value, float_t epsilon = std::numeric_limits< float_t >::epsilon()) noexcept requires (std::is_floating_point_v< float_t >)
+	isZero (number_t value, number_t epsilon = std::numeric_limits< number_t >::epsilon()) noexcept requires (std::is_arithmetic_v< number_t >)
 	{
+		if constexpr ( std::is_integral_v< number_t > )
+		{
+			return value == 0;
+		}
+
 		return std::abs(value) <= epsilon;
 	}
 
 	/**
 	 * @brief Replaces a number if it's a below the tolerated zero.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam number_t The type of floating point number. Default float.
 	 * @param value The number to test.
 	 * @param replacement The number to replace with if the test failed.
-	 * @param epsilon The authorized error.
-	 * @return type_t
+	 * @param epsilon epsilon The floating point tolerance value. Default C++ epsilon.
+	 * @return number_t
 	 */
-	template< typename float_t = float >
+	template< typename number_t = float >
 	[[nodiscard]]
-	float_t
-	ifZero (float_t value, float_t replacement, float_t epsilon = std::numeric_limits< float_t >::epsilon()) noexcept requires (std::is_floating_point_v< float_t >)
+	number_t
+	ifZero (number_t value, number_t replacement, number_t epsilon = std::numeric_limits< number_t >::epsilon()) noexcept requires (std::is_floating_point_v< number_t >)
 	{
 		return std::abs(value) <= epsilon ? replacement : value;
 	}
 
 	/**
-	 * @brief Returns a random seed for the perlin noise generator based on UNIX timestamp.
-	 * @return unsigned int
+	 * @brief Checks if a floating number is one.
+	 * @tparam number_t The type of floating point number.
+	 * @param value The number to test.
+	 * @param epsilon epsilon The floating point tolerance value. Default C++ epsilon.
+	 * @return bool
 	 */
+	template< typename number_t = float >
 	[[nodiscard]]
-	inline
-	unsigned int
-	timeBasedSeed () noexcept
+	bool
+	isOne (number_t value, number_t epsilon = std::numeric_limits< number_t >::epsilon()) noexcept requires (std::is_floating_point_v< number_t >)
 	{
-		return static_cast< unsigned int >(std::chrono::system_clock::now().time_since_epoch().count());
+		return equal(value, static_cast< number_t >(1), epsilon);
 	}
 
 	/**
-	 * @brief Utility function to test 'noexcept' behavior of an object.
-	 * @tparam data_t The type of tested object.
-	 * @param objectA A type of object.
-	 * @param objectB A type of object.
-	 * @param objectC A type of object.
+	 * @brief Returns a random seed for the perlin noise generator based on UNIX timestamp.
+	 * @return int32_t
 	 */
-	template< typename data_t >
-	void
-	checkNoexcept (data_t objectA, data_t objectB, data_t objectC)
+	[[nodiscard]]
+	inline
+	int32_t
+	timeBasedSeed () noexcept
 	{
-		std::cout <<
-			"Is constructor is noexcept : " << noexcept(data_t{}) << "\n"
-			"Is copy constructor is noexcept : " << noexcept(data_t(objectA)) << "\n"
-			"Is move constructor is noexcept : " << noexcept(data_t(std::move(objectA))) << "\n"
-			"Is assignment is noexcept : " << noexcept(objectB = objectC) << "\n"
-			"Is move-assignment is noexcept : " << noexcept(objectB = std::move(objectC)) << "\n";
+		return static_cast< int32_t >(std::chrono::system_clock::now().time_since_epoch().count());
 	}
 }

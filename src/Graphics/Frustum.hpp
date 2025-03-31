@@ -29,7 +29,6 @@
 /* STL inclusions. */
 #include <array>
 #include <cstdint>
-#include <ostream>
 #include <string>
 
 /* Local inclusions for usages. */
@@ -128,21 +127,6 @@ namespace EmEn::Graphics
 			Result isCollidingWith (float coordX, float coordY, float coordZ, float size) const noexcept;
 
 			/**
-			 * @brief STL streams printable object.
-			 * @param out A reference to the stream output.
-			 * @param obj A reference to the object to print.
-			 * @return std::ostream &
-			 */
-			friend std::ostream & operator<< (std::ostream & out, const Frustum & obj);
-
-			/**
-			 * @brief Stringifies the object.
-			 * @param obj A reference to the object to print.
-			 * @return std::string
-			 */
-			friend std::string to_string (const Frustum & obj) noexcept;
-
-			/**
 			 * @brief setTestState
 			 * @param state
 			 */
@@ -174,6 +158,21 @@ namespace EmEn::Graphics
 			{
 				return s_enableFrustumTest = !s_enableFrustumTest;
 			}
+
+			/**
+			 * @brief STL streams printable object.
+			 * @param out A reference to the stream output.
+			 * @param obj A reference to the object to print.
+			 * @return std::ostream &
+			 */
+			friend std::ostream & operator<< (std::ostream & out, const Frustum & obj);
+
+			/**
+			 * @brief Stringifies the object.
+			 * @param obj A reference to the object to print.
+			 * @return std::string
+			 */
+			friend std::string to_string (const Frustum & obj);
 
 		private:
 

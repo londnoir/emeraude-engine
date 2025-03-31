@@ -38,7 +38,8 @@ namespace EmEn::Scenes::Component
 	using namespace Graphics;
 
 	Camera::Camera (const std::string & name, const AbstractEntity & parentEntity, bool perspective) noexcept
-		: Abstract(name, parentEntity), AbstractVirtualVideoDevice(name, AVConsole::ConnexionType::Output)
+		: Abstract(name, parentEntity),
+		AbstractVirtualDevice(name, AVConsole::DeviceType::Video, AVConsole::ConnexionType::Output)
 	{
 		this->setFlag(PerspectiveProjection, perspective);
 	}
@@ -238,14 +239,12 @@ namespace EmEn::Scenes::Component
 
 		for ( const auto & output : this->outputs() )
 		{
-			const auto videoDevice = std::dynamic_pointer_cast< AbstractVirtualVideoDevice >(output);
-
-			videoDevice->updateProperties(isPerspectiveProjection, distance, fovOrNear);
+			output->updateProperties(isPerspectiveProjection, distance, fovOrNear);
 		}
 	}
 
 	void
-	Camera::onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept
+	Camera::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
 	{
 		/* Initialize the target device with coordinates and camera properties. */
 		targetDevice->updateDeviceFromCoordinates(this->getWorldCoordinates(), this->getWorldVelocity());

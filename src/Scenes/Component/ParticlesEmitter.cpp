@@ -27,7 +27,6 @@
 #include "ParticlesEmitter.hpp"
 
 /* Local inclusions. */
-#include "Scenes/AbstractEntity.hpp"
 #include "Scenes/Scene.hpp"
 
 namespace EmEn::Scenes::Component
@@ -38,9 +37,9 @@ namespace EmEn::Scenes::Component
 	using namespace Physics;
 	using namespace Graphics;
 
-	ParticlesEmitter::ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable, size_t instanceCount) noexcept
+	ParticlesEmitter::ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable, uint32_t instanceCount) noexcept
 		: Abstract(name, parentEntity),
-		m_renderableInstance(std::make_shared< RenderableInstance::Multiple >(renderable, instanceCount, renderable->isSprite() ? RenderableInstance::FacingCamera : 0)),
+		m_renderableInstance(std::make_shared< RenderableInstance::Multiple >(renderable, instanceCount, renderable->isSprite() ? RenderableInstance::FacingCamera : RenderableInstance::None)),
 		m_particleLimit(instanceCount)
 	{
 		/* NOTE: Prepare local data at the fixed size. */
@@ -168,7 +167,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	ParticlesEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	ParticlesEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

@@ -27,15 +27,14 @@
 #pragma once
 
 /* STL inclusions. */
-#include <array>
+#include <cstdint>
 #include <cstddef>
-#include <cstdlib>
-#include <iostream>
 #include <type_traits>
 #include <vector>
 
 /* Local inclusions for usages. */
-#include "../Utility.hpp"
+#include "Libs/Randomizer.hpp"
+#include "Libs/Math/Base.hpp"
 
 namespace EmEn::Libs::Algorithms
 {
@@ -43,31 +42,32 @@ namespace EmEn::Libs::Algorithms
 	 * @brief Class performing the diamond square algorithm for terrain generation.
 	 * @tparam number_t The type of number. Default float.
 	 */
-	template< typename number_t = float > requires (std::is_arithmetic_v< number_t >)
+	template< typename number_t = float > requires (std::is_floating_point_v< number_t >)
 	class DiamondSquare final
 	{
 		public:
 
 			/**
 			 * @brief Constructs a diamond square processor.
-			 * @param size The size of pattern.
-			 * @param useSameValueForCorner Use the same value for corner. Default false.
+			 * @param useSameValueForCorner Use the same value for corner.
 			 */
-			explicit DiamondSquare (size_t size, bool useSameValueForCorner = false) noexcept
-				: m_size(size)
+			explicit
+			DiamondSquare (bool useSameValueForCorner) noexcept
+				: m_useSameValueForCorner(useSameValueForCorner)
 			{
-				m_flags[UseSameValueForCorner] = useSameValueForCorner;
+
 			}
 
 			/**
-			 * @brief Returns the size of the diamond square pattern.
-			 * @return size_t
+			 * @brief Constructs a diamond square processor with a seed.
+			 * @param seed A seed value.
+			 * @param useSameValueForCorner Use the same value for corner.
 			 */
-			[[nodiscard]]
-			size_t
-			size () const noexcept
+			DiamondSquare (int32_t seed, bool useSameValueForCorner) noexcept
+				: m_randomizer(seed),
+				m_useSameValueForCorner(useSameValueForCorner)
 			{
-				return m_size;
+
 			}
 
 			/**
@@ -87,28 +87,28 @@ namespace EmEn::Libs::Algorithms
 			 * @param coordY The coordinate in Y.
 			 * @return type_t
 			 */
+			[[nodiscard]]
 			number_t
-			value (size_t coordX, size_t coordY) noexcept
+			value (size_t coordX, size_t coordY) const noexcept
 			{
 				return m_data[this->index(coordX, coordY)];
 			}
 
 			/**
 			 * @brief Generates the noise data.
-			 * @param seed seed The seed number. Default 1.
+			 * @param size The size of pattern.
+			 * @param roughness A value from 0 to 1 to controls the roughness.
 			 * @return bool
 			 */
 			bool
-			generate (unsigned int seed = 1) noexcept
+			generate (size_t size, number_t roughness) noexcept
 			{
-				if ( !this->initializeData() )
+				if ( !this->initializeData(size) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", invalid size !" "\n";
-
 					return false;
 				}
 
-				std::srand(seed);
+				roughness = Math::clampToUnit(roughness);
 
 				this->cornerStep();
 
@@ -119,10 +119,10 @@ namespace EmEn::Libs::Algorithms
 					auto halfSize = currentSize / 2;
 
 					/* Diamond step. The centers of each tile. */
-					this->diamondStep(currentSize, halfSize);
+					this->diamondStep(currentSize, halfSize, roughness);
 
 					/* Square step. The midpoints of the sides. */
-					this->squareStep(currentSize, halfSize);
+					this->squareStep(currentSize, halfSize, roughness);
 
 					currentSize = halfSize;
 				}
@@ -147,21 +147,23 @@ namespace EmEn::Libs::Algorithms
 
 			/**
 			 * @brief Initializes the data before noise generation.
+			 * @param size The size of pattern.
 			 * @return bool
 			 */
 			bool
-			initializeData () noexcept
+			initializeData (size_t size) noexcept
 			{
-				if ( m_size < 3 )
+				if ( size < 3 )
 				{
 					return false;
 				}
 
-				if ( m_size % 2 == 0 )
+				if ( size % 2 == 0 )
 				{
-					m_size++;
+					size++;
 				}
 
+				m_size = size;
 				m_data.resize(m_size * m_size);
 
 				return true;
@@ -176,9 +178,9 @@ namespace EmEn::Libs::Algorithms
 			{
 				const auto size = static_cast< number_t >(m_size);
 
-				if ( m_flags[UseSameValueForCorner] )
+				if ( m_useSameValueForCorner )
 				{
-					const auto randValue = Utility::random(-size, size);
+					const auto randValue = m_randomizer.value(-size, size);
 
 					m_data[0] = randValue;
 					m_data[m_size - 1] = randValue;
@@ -187,10 +189,10 @@ namespace EmEn::Libs::Algorithms
 				}
 				else
 				{
-					m_data[0] = Utility::random(-size, size);
-					m_data[m_size - 1] = Utility::random(-size, size);
-					m_data[m_size * (m_size - 1)] = Utility::random(-size, size);
-					m_data[(m_size * m_size) - 1] = Utility::random(-size, size);
+					m_data[0] = m_randomizer.value(-size, size);
+					m_data[m_size - 1] = m_randomizer.value(-size, size);
+					m_data[m_size * (m_size - 1)] = m_randomizer.value(-size, size);
+					m_data[(m_size * m_size) - 1] = m_randomizer.value(-size, size);
 				}
 			}
 
@@ -198,10 +200,11 @@ namespace EmEn::Libs::Algorithms
 			 * @brief Performs the diamond step.
 			 * @param size
 			 * @param halfSize
+			 * @param roughness
 			 * @return void
 			 */
 			void
-			diamondStep (size_t size, size_t halfSize) noexcept
+			diamondStep (size_t size, size_t halfSize, number_t roughness) noexcept
 			{
 				for ( size_t coordX = halfSize; coordX < m_size; coordX += size )
 				{
@@ -218,7 +221,10 @@ namespace EmEn::Libs::Algorithms
 						average += m_data[this->index(posX, negY)];
 						average *= 0.25;
 
-						m_data[this->index(coordX, coordY)] = average + Utility::random(-static_cast< number_t >(halfSize), static_cast< number_t >(halfSize));
+						m_data[this->index(coordX, coordY)] = average + m_randomizer.value(
+							-roughness * halfSize,
+							roughness * halfSize
+						);
 					}
 				}
 			}
@@ -227,10 +233,11 @@ namespace EmEn::Libs::Algorithms
 			 * @brief Performs the square step.
 			 * @param size
 			 * @param halfSize
+			 * @param roughness
 			 * @return void
 			 */
 			void
-			squareStep (size_t size, size_t halfSize) noexcept
+			squareStep (size_t size, size_t halfSize, number_t roughness) noexcept
 			{
 				size_t offset = 0;
 
@@ -274,20 +281,17 @@ namespace EmEn::Libs::Algorithms
 							count++;
 						}
 
-						m_data[this->index(coordX, coordY)] = (sum / count) + Utility::random< number_t >(-static_cast< number_t >(halfSize), static_cast< number_t >(halfSize));
+						m_data[this->index(coordX, coordY)] = (sum / count) + m_randomizer.value(
+							-roughness * halfSize,
+							roughness * halfSize
+						);
 					}
 				}
 			}
 
-			static constexpr auto UseSameValueForCorner = 0;
-
 			size_t m_size{0};
-			std::vector< number_t > m_data{};
-			std::array< bool, 4 > m_flags{
-				false/*UseSameValueForCorner*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/
-			};
+			std::vector< number_t > m_data;
+			Randomizer< number_t > m_randomizer;
+			bool m_useSameValueForCorner{false};
 	};
 }

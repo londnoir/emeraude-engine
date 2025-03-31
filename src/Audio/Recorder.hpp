@@ -30,7 +30,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualAudioDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 
 /* Local inclusions for usages. */
 #include "Libs/Math/CartesianFrame.hpp"
@@ -41,9 +41,9 @@ namespace EmEn::Audio
 {
 	/**
 	 * @brief The audio recorder class.
-	 * @extends EmEn::AVConsole::AbstractVirtualAudioDevice This is a virtual audio device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This is a virtual audio device.
 	 */
-	class Recorder final : public AVConsole::AbstractVirtualAudioDevice
+	class Recorder final : public AVConsole::AbstractVirtualDevice
 	{
 		public:
 

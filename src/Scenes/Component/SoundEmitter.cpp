@@ -183,8 +183,7 @@ namespace EmEn::Scenes::Component
 		if ( this->velocityDistortionEnabled() )
 		{
 			/* Copy current velocity to sound source for deforming effect. */
-			// FIXME: Remove the need of a dynamic cast.
-			const auto * movable = dynamic_cast< const Physics::MovableTrait * >(&this->parentEntity());
+			const auto * movable = this->parentEntity().getMovableTrait();
 
 			if ( movable != nullptr )
 			{

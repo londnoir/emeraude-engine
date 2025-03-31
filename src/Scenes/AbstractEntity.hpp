@@ -618,7 +618,6 @@ namespace EmEn::Scenes
 			/**
 			 * @brief Returns whether the entity is able to move.
 			 * @note If true, this should give access to a MovableTrait with AbstractEntity::getMovableTrait().
-			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -626,15 +625,20 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns whether the entity is moving.
-			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
 			 * @return Physics::MovableTrait *
 			 */
 			[[nodiscard]]
 			virtual Physics::MovableTrait * getMovableTrait () noexcept = 0;
 
 			/**
-			 * @brief Returns whether the entity is currently moving. This denotes the entity has a velocity.
-			 * @todo [Physics::MovableTrait] This must be removed and done by the object holding the entity.
+			 * @brief Returns whether the entity is moving.
+			 * @return Physics::MovableTrait *
+			 */
+			[[nodiscard]]
+			virtual const Physics::MovableTrait * getMovableTrait () const noexcept = 0;
+
+			/**
+			 * @brief Returns whether the entity is currently moving. This denotes the entity has a non-null velocity.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -696,6 +700,12 @@ namespace EmEn::Scenes
 			 */
 			virtual bool onProcessLogics (const Scene & scene) noexcept = 0;
 
+			/**
+			 * @brief Events when the entity content is modifier.
+			 * @return void
+			 */
+			virtual void onContentModified () noexcept = 0;
+
 		private:
 
 			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
@@ -708,13 +718,6 @@ namespace EmEn::Scenes
 			 * @return void
 			 */
 			void updateEntityProperties () noexcept;
-
-			/**
-			 * @brief Updates only the entity states.
-			 * @note This is useful when adding a non-physical component.
-			 * @return void
-			 */
-			void updateEntityStates () noexcept;
 
 			/**
 			 * @brief Before creating a new component, this function is called to know if the component name is available.

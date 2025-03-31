@@ -30,7 +30,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualAudioDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 #include "Abstract.hpp"
 
 namespace EmEn::Scenes::Component
@@ -39,9 +39,9 @@ namespace EmEn::Scenes::Component
 	 * @brief This class defines a physical point of capturing sound in the world.
 	 * Like ears from a creature or microphone from a camera.
 	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends EmEn::AVConsole::AbstractVirtualAudioDevice This is a virtual audio device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This is a virtual audio device.
 	 */
-	class Microphone final : public Abstract, public AVConsole::AbstractVirtualAudioDevice
+	class Microphone final : public Abstract, public AVConsole::AbstractVirtualDevice
 	{
 		public:
 
@@ -96,8 +96,8 @@ namespace EmEn::Scenes::Component
 			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
 			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualAudioDevice::onTargetConnected() */
-			void onTargetConnected (AbstractVirtualAudioDevice * targetDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onTargetConnected() */
+			void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept override;
 
 			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
 			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;

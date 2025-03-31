@@ -127,7 +127,7 @@ namespace EmEn::Graphics::TextureResource
 
 		if ( !disablePowerOfTwoCheck && !pixmap.isPowerOfTwo() )
 		{
-			Tracer::error(classId, "The pixmap size are not power of two !");
+			TraceError{classId} << "The pixmap size are not power of two (" << pixmap.width() << "X" << pixmap.height() << ") !";
 
 			return false;
 		}

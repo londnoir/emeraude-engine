@@ -34,7 +34,7 @@ namespace EmEn::Scenes::Component
 
 	AbstractLightEmitter::AbstractLightEmitter (const std::string & name, const AbstractEntity & parentEntity, uint32_t shadowMapResolution) noexcept
 		: Abstract(name, parentEntity),
-		AbstractVirtualVideoDevice(name, AVConsole::ConnexionType::Output),
+		AbstractVirtualDevice(name, AVConsole::DeviceType::Video, AVConsole::ConnexionType::Output),
 		m_shadowMapResolution(shadowMapResolution)
 	{
 		this->enableFlag(Enabled);
@@ -77,9 +77,7 @@ namespace EmEn::Scenes::Component
 
 		for ( const auto & output : this->outputs() )
 		{
-			const auto videoDevice = std::dynamic_pointer_cast< AVConsole::AbstractVirtualVideoDevice >(output);
-
-			videoDevice->updateProperties(isPerspectiveProjection, distance, fovOrNear);
+			output->updateProperties(isPerspectiveProjection, distance, fovOrNear);
 		}
 	}
 

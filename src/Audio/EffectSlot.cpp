@@ -148,7 +148,7 @@ namespace EmEn::Audio
 	{
 		alFlushErrors();
 
-		auto slotName = static_cast< ALint >(this->identifier());
+		const auto slotName = static_cast< ALint >(this->identifier());
 
 		if ( m_filter == nullptr )
 		{
@@ -156,7 +156,7 @@ namespace EmEn::Audio
 		}
 		else
 		{
-			auto filterName = static_cast< ALint >(m_filter->identifier());
+			const auto filterName = static_cast< ALint >(m_filter->identifier());
 
 			alSource3i(source->identifier(), AL_AUXILIARY_SEND_FILTER, slotName, 1, filterName);
 		}

@@ -393,6 +393,14 @@ namespace EmEn::Scenes
 				return nullptr;
 			}
 
+			/** @copydoc EmEn::Scenes::AbstractEntity::getMovableTrait() const */
+			[[nodiscard]]
+			const Physics::MovableTrait *
+			getMovableTrait () const noexcept override
+			{
+				return nullptr;
+			}
+
 			/**
 			 * @brief Returns the coordinates of the static renderable.
 			 * @return Libraries::Math::Matrix< 4, float >
@@ -444,6 +452,9 @@ namespace EmEn::Scenes
 
 			/** @copydoc EmEn::Scenes::AbstractEntity::onProcessLogics() */
 			bool onProcessLogics (const Scene & scene) noexcept override;
+
+			/** @copydoc EmEn::Scenes::AbstractEntity::onContentModified() */
+			void onContentModified () noexcept override;
 
 			Libs::Math::CartesianFrame< float > m_cartesianFrame;
 	};

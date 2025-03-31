@@ -134,7 +134,7 @@ namespace EmEn::Overlay::Elements
 
 		/* Creates a border to identify the input box. */
 		Processor proc{pixmap};
-		proc.drawSquare(pixmap.area(), White);
+		proc.drawSquare(pixmap.rectangle(), White);
 
 		/* Rewrite the content. */
 		if ( !m_text.empty() )

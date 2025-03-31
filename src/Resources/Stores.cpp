@@ -219,7 +219,7 @@ namespace EmEn::Resources
 	{
 		const auto & resourceStore = this->store(storeName);
 
-		const auto random = Utility::random< size_t >(0, resourceStore.size());
+		const auto random = Utility::quickRandom< size_t >(0, resourceStore.size());
 
 		return std::next(std::begin(resourceStore), static_cast< long >(random))->first;
 	}

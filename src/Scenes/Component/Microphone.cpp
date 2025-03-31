@@ -42,7 +42,8 @@ namespace EmEn::Scenes::Component
 	using namespace Audio;
 
 	Microphone::Microphone (const std::string & name, const AbstractEntity & parentEntity) noexcept
-		: Abstract(name, parentEntity), AVConsole::AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Output)
+		: Abstract(name, parentEntity),
+		AbstractVirtualDevice(name, AVConsole::DeviceType::Audio, AVConsole::ConnexionType::Output)
 	{
 
 	}
@@ -98,14 +99,14 @@ namespace EmEn::Scenes::Component
 	}
 
 	void
-	Microphone::onTargetConnected (AbstractVirtualAudioDevice * targetDevice) noexcept
+	Microphone::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
 	{
 		/* Initialize the target device with coordinates. */
 		targetDevice->updateDeviceFromCoordinates(this->getWorldCoordinates(), this->getWorldVelocity());
 	}
 
 	bool
-	Microphone::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	Microphone::playAnimation (uint8_t /*animationID*/, const Variant & /*value*/, size_t /*cycle*/) noexcept
 	{
 		return false;
 	}

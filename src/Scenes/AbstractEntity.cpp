@@ -60,14 +60,7 @@ namespace EmEn::Scenes
 			{
 				/* NOTE: This signal is used for late object creation. */
 				case Component::Abstract::ComponentContentModified :
-					if ( dynamic_cast< const Component::Abstract * >(observable)->isPhysicalPropertiesEnabled() )
-					{
-						this->updateEntityProperties();
-					}
-					else
-					{
-						this->updateEntityStates();
-					}
+					this->updateEntityProperties();
 					break;
 
 				default:
@@ -178,7 +171,7 @@ namespace EmEn::Scenes
 		/* NOTE: Update bounding primitive visual representations. */
 		this->updateVisualDebug();
 
-		this->notify(EntityContentModified, this);
+		this->onContentModified();
 	}
 
 	void
@@ -194,29 +187,12 @@ namespace EmEn::Scenes
 	}
 
 	void
-	AbstractEntity::updateEntityStates () noexcept
-	{
-		this->setRenderingAbilityState(false);
-
-		for ( const auto & component : std::ranges::views::values(m_components) )
-		{
-			/* Checks render ability. */
-			if ( component->isRenderable() )
-			{
-				this->setRenderingAbilityState(true);
-			}
-		}
-
-		this->notify(EntityContentModified, this);
-	}
-
-	void
 	AbstractEntity::onContainerMove (const CartesianFrame< float > & worldCoordinates) noexcept
 	{
 		const std::lock_guard< std::mutex > lockGuard{m_componentsAccess};
 
 		/* NOTE: Dispatch the move to every component. */
-		for ( const auto & [componentName, component] : m_components )
+		for ( const auto & component: m_components | std::views::values )
 		{
 			component->move(worldCoordinates);
 		}
@@ -268,14 +244,7 @@ namespace EmEn::Scenes
 		}
 
 		/* NOTE: First update properties before sending any signals. */
-		if ( component->isPhysicalPropertiesEnabled() )
-		{
-			this->updateEntityProperties();
-		}
-		else
-		{
-			this->updateEntityStates();
-		}
+		this->updateEntityProperties();
 
 		this->observe(component.get());
 		this->observe(&component->physicalObjectProperties()); // NOTE: Don't know if observing non-physical object is useful.

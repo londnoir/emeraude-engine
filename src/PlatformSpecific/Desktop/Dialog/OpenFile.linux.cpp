@@ -46,10 +46,8 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			this->title().c_str(),
 			window ? window->getGtkWindow() : nullptr,
 			GTK_FILE_CHOOSER_ACTION_OPEN,
-			"Cancel",
-			GTK_RESPONSE_CANCEL,
-			"Open",
-			GTK_RESPONSE_ACCEPT,
+			"Cancel", GTK_RESPONSE_CANCEL,
+			"Open", GTK_RESPONSE_ACCEPT,
 			nullptr
 		);
 

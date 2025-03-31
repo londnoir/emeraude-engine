@@ -32,13 +32,13 @@ namespace EmEn::Audio
 	using namespace EmEn::Libs::Math;
 
 	Speaker::Speaker (const std::string & name) noexcept
-		: AVConsole::AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Input)
+		: AbstractVirtualDevice(name, AVConsole::DeviceType::Audio, AVConsole::ConnexionType::Input)
 	{
 
 	}
 
 	void
-	Speaker::updateDeviceFromCoordinates (const CartesianFrame< float > &, const Vector< 3, float > &) noexcept
+	Speaker::updateDeviceFromCoordinates (const CartesianFrame< float > & /*worldCoordinates*/, const Vector< 3, float > & /*worldVelocity*/) noexcept
 	{
 		// Nothing to do for now ...
 	}

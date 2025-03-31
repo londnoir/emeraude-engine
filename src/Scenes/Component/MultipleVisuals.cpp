@@ -27,7 +27,6 @@
 #include "MultipleVisuals.hpp"
 
 /* Local inclusions. */
-#include "Scenes/AbstractEntity.hpp"
 #include "Scenes/Scene.hpp"
 
 namespace EmEn::Scenes::Component
@@ -40,7 +39,7 @@ namespace EmEn::Scenes::Component
 
 	MultipleVisuals::MultipleVisuals (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable, const std::vector< CartesianFrame< float > > & coordinates) noexcept
 		: Abstract(name, parentEntity),
-		m_renderableInstance(std::make_shared< RenderableInstance::Multiple >(renderable, coordinates, renderable->isSprite() ? RenderableInstance::FacingCamera : 0)),
+		m_renderableInstance(std::make_shared< RenderableInstance::Multiple >(renderable, coordinates, renderable->isSprite() ? RenderableInstance::FacingCamera : RenderableInstance::None)),
 		m_coordinates(coordinates)
 	{
 		this->observe(m_renderableInstance.get());
@@ -85,7 +84,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	MultipleVisuals::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	MultipleVisuals::playAnimation (uint8_t /*animationID*/, const Variant & /*value*/, size_t /*cycle*/) noexcept
 	{
 		return false;
 	}

@@ -26,6 +26,10 @@
 
 #include "Value.hpp"
 
+/* STL inclusions. */
+#include <sstream>
+#include <ostream>
+
 namespace EmEn::Graphics::Material::Component
 {
 	Value::Value (std::string variableName) noexcept
@@ -37,7 +41,8 @@ namespace EmEn::Graphics::Material::Component
 	std::ostream &
 	operator<< (std::ostream & out, const Value & obj)
 	{
-		return out << Value::ClassId << "." "\n"
+		return
+			out << Value::ClassId << "." "\n"
 			"Variable name: " << obj.m_variableName;
 	}
 

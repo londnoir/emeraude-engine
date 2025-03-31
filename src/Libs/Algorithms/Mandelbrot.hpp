@@ -31,7 +31,7 @@
 #include <type_traits>
 
 /* Local inclusions. */
-#include "../PixelFactory/Pixmap.hpp"
+#include "Libs/PixelFactory/Pixmap.hpp"
 
 namespace EmEn::Libs::Algorithms
 {
@@ -39,18 +39,18 @@ namespace EmEn::Libs::Algorithms
 	 * @brief The Mandelbrot algorithm class.
 	 * @tparam number_t The type of number. Default float.
 	 */
-	template< typename number_t = float >
-	requires (std::is_arithmetic_v< number_t >)
+	template< typename number_t = float, typename precision_t = uint8_t >
+	requires (std::is_floating_point_v< number_t > && std::is_arithmetic_v< precision_t >)
 	class Mandelbrot final
 	{
 		public:
 
-			using colorize = std::function< void (PixelFactory::Pixmap< number_t > &, unsigned int, unsigned int, int, int) >;
+			using colorize_fn = std::function< void (PixelFactory::Pixmap< precision_t > &, uint32_t, uint32_t, int32_t, int32_t) >;
 
 			/**
 			 * @brief Constructs the mandelbrot algorithm.
 			 * @param width The width of the pixmap.
-			 * @param height The height of the pixma.
+			 * @param height The height of the pixmap.
 			 * @param channels The number of color. Default RBG.
 			 */
 			Mandelbrot (size_t width, size_t height, PixelFactory::ChannelMode channels = PixelFactory::ChannelMode::RGB) noexcept
@@ -60,12 +60,23 @@ namespace EmEn::Libs::Algorithms
 			}
 
 			/**
+			 * @brief Returns the generated pixmap.
+			 * @return const PixelFactory::Pixmap< precision_t > &
+			 */
+			[[nodiscard]]
+			const PixelFactory::Pixmap< precision_t > &
+			pixmap () const noexcept
+			{
+				return m_pixmap;
+			}
+
+			/**
 			 * @brief
 			 * @param function
 			 * @return void
 			 */
 			void
-			setColorizationMethod (const colorize & function)
+			setColorizationMethod (const colorize_fn & function)
 			{
 				m_colorizationFunction = function;
 			}
@@ -80,7 +91,7 @@ namespace EmEn::Libs::Algorithms
 			 * @return void
 			 */
 			void
-			execute (float minReal = -1.5F, float maxReal = 0.7F, float minImaginary = -1.0F, float maxImaginary = 1.0F, unsigned int maxIterations = 1000) noexcept
+			execute (number_t minReal = -1.5, number_t maxReal = 0.7, number_t minImaginary = -1.0, number_t maxImaginary = 1.0, uint32_t maxIterations = 1000)
 			{
 				for ( size_t y = 0; y < m_pixmap.height(); y++ )
 				{
@@ -95,17 +106,6 @@ namespace EmEn::Libs::Algorithms
 				}
 			}
 
-			/**
-			 * @brief Returns the generated pixmap.
-			 * @return const PixelFactory::Pixmap< type_t > &
-			 */
-			[[nodiscard]]
-			const PixelFactory::Pixmap< number_t > &
-			get () noexcept
-			{
-				return m_pixmap;
-			}
-
 		private:
 
 			/**
@@ -113,29 +113,29 @@ namespace EmEn::Libs::Algorithms
 			 * @param cr
 			 * @param ci
 			 * @param maxIterations
-			 * @return int
+			 * @return int32_t
 			 */
 			static
-			int
-			findMandelbrot (float cr, float ci, int maxIterations) noexcept
+			int32_t
+			findMandelbrot (number_t cr, number_t ci, int32_t maxIterations) noexcept
 			{
-				auto i = 0;
+				int32_t index = 0;
 
-				auto zr = 0.0F;
-				auto zi = 0.0F;
+				number_t zr = 0;
+				number_t zi = 0;
 
-				while ( i < maxIterations && zr * zr + zi * zi < 4.0F )
+				while ( index < maxIterations && zr * zr + zi * zi < static_cast< number_t >(4.0) )
 				{
 					const auto tmp = zr * zr - zi * zi + cr;
 
-					zi = 2.0F * zr * zi + ci;
+					zi = static_cast< number_t >(2.0) * zr * zi + ci;
 
 					zr = tmp;
 
-					i++;
+					index++;
 				}
 
-				return i;
+				return index;
 			}
 
 			/**
@@ -144,21 +144,22 @@ namespace EmEn::Libs::Algorithms
 			 * @param dimension
 			 * @param min
 			 * @param max
-			 * @return float
+			 * @return number_t
 			 */
 			static
-			float
-			map (unsigned int offset, unsigned int dimension, float min, float max) noexcept
+			number_t
+			map (uint32_t offset, uint32_t dimension, number_t min, number_t max) noexcept
 			{
 				const auto range = max - min;
 
-				return static_cast< float >(offset) * (range / static_cast< float >(dimension)) + min;
+				return static_cast< number_t >(offset) * (range / static_cast< number_t >(dimension)) + min;
 			}
 
-			PixelFactory::Pixmap< number_t > m_pixmap;
-			colorize m_colorizationFunction{[] (PixelFactory::Pixmap< number_t > & pixmap, unsigned int x, unsigned int y, int n, int) {
-				auto cmp = static_cast< uint8_t>(n % 256);
-				pixmap.setPixel(x, y, {cmp, cmp, cmp});
+			PixelFactory::Pixmap< precision_t > m_pixmap;
+			colorize_fn m_colorizationFunction{[] (PixelFactory::Pixmap< precision_t > & pixmap, uint32_t x, uint32_t y, int32_t value, int32_t /*iteration*/) {
+				const auto cmp = static_cast< uint8_t >(value % 256);
+
+				pixmap.setPixel(x, y, PixelFactory::ColorFromInteger(cmp, cmp, cmp));
 			}};
 	};
 }

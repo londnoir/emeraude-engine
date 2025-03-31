@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 
 /* Local inclusions. */
+#include "Libs/Randomizer.hpp"
 #include "Libs/String.hpp"
 #include "Libs/Utility.hpp"
 
@@ -293,7 +294,9 @@ TEST(String, to_string)
 
 TEST(String, floatVectorSerialization)
 {
-	const auto sourceData = Utility::randomVector(20, -32000, 64000, 0);
+	Randomizer< int32_t > randomizer{0};
+
+	const auto sourceData = randomizer.vector(20, -32000, 64000);
 
 	const auto serialized = String::serializeVector(sourceData);
 
@@ -311,7 +314,9 @@ TEST(String, floatVectorSerialization)
 
 TEST(String, doubleVectorSerialization)
 {
-	const auto sourceData = Utility::randomVector(20, -32000.0F, 64000.0F, 0);
+	Randomizer< float > randomizer{0};
+
+	const auto sourceData = randomizer.vector(20, -32000.0F, 64000.0F);
 
 	const auto serialized = String::serializeVector(sourceData);
 

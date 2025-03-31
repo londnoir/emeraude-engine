@@ -38,7 +38,7 @@
 #include "Graphics/RenderTarget/Abstract.hpp"
 
 /* Local inclusions for usages. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 #include "AVConsole/Types.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/ViewMatrices2DUBO.hpp"
@@ -129,7 +129,7 @@ namespace EmEn::Vulkan
 				return true;
 			}
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() const */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::videoType() const */
 			[[nodiscard]]
 			AVConsole::VideoType
 			videoType () const noexcept override
@@ -266,14 +266,14 @@ namespace EmEn::Vulkan
 			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
 			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
-			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onSourceConnected() */
+			void onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
-			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onSourceDisconnected() */
+			void onSourceDisconnected (AbstractVirtualDevice * sourceDevice) noexcept override;
 
 			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::onCreate() */
 			[[nodiscard]]

@@ -51,7 +51,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	void
-	SpotLight::onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept
+	SpotLight::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
 	{
 		const auto maxDistance =
 			m_radius > 0.0F ?

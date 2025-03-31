@@ -63,6 +63,7 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief virtual destructor.
+			 * @note As a trait mechanism, 'virtual' keyword is useless here.
 			 */
 			virtual ~LockableTrait () = default;
 

@@ -101,6 +101,14 @@ namespace EmEn::Graphics::Material::Component
 				return nullptr;
 			}
 
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::getSampler() */
+			[[nodiscard]]
+			Saphir::Declaration::Sampler
+			getSampler (uint32_t materialSet) const noexcept override
+			{
+				return {0, 0, nullptr, nullptr};
+			}
+
 			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.

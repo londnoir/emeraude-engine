@@ -111,7 +111,7 @@ namespace EmEn::Graphics
 			{
 				using namespace EmEn::Libs::Math;
 
-				constexpr auto Rad2Deg = HalfRevolution< float > / Pi< float >;
+				constexpr auto Rad2Deg = HalfRevolution< float > / std::numbers::pi_v< float >;
 
 				return std::atan(1.0F / m_projection[M4x4Col1Row1]) * 2.0F * Rad2Deg;
 			}

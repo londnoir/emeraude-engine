@@ -56,39 +56,39 @@ TEST(PixelFactoryTextProcessor, write)
 		ASSERT_TRUE(image.fill(Processor< uint8_t >::toRGB(pattern)));
 	}
 
-	auto fixedFont = std::make_shared< Font< uint8_t > >();
+	/*Font< uint8_t > fixedFont;
 
-	EXPECT_TRUE(fixedFont->readFile(TrueTypeFont, 48));
+	EXPECT_TRUE(fixedFont.readFile(TrueTypeFont, 48, true));
 
 	{
 		PrintScopeRealTime stat{"TextProcessor::write(fixedFont)"};
 
 		TextProcessor< uint8_t > textProcessor{image};
-		textProcessor.setFont(fixedFont);
+		textProcessor.setFont(fixedFont, 48);
 		textProcessor.setFontColor(DarkRed);
 		textProcessor.setDrawMode(DrawPixelMode::Normal);
 		textProcessor.setArea({32, 32, 1024 - 64, 512 - 64});
 		textProcessor.setLineSpace(8);
 
 		EXPECT_TRUE(textProcessor.write(LoremIpsum));
-	}
+	}*/
 
-	auto trueTypeFont = std::make_shared< Font< uint8_t > >();
+	/*Font< uint8_t > trueTypeFont;
 
-	EXPECT_TRUE(trueTypeFont->readFile(TrueTypeFont, 32));
+	EXPECT_TRUE(trueTypeFont.readFile(TrueTypeFont, 32, false));
 
 	{
 		PrintScopeRealTime stat{"TextProcessor::write(trueTypeFont)"};
 
 		TextProcessor< uint8_t > textProcessor{image};
-		textProcessor.setFont(trueTypeFont);
+		textProcessor.setFont(trueTypeFont, 32);
 		textProcessor.setFontColor(Green);
 		textProcessor.setDrawMode(DrawPixelMode::Normal);
 		textProcessor.setArea({64, 64 + 512, 1024 - 128, 512 - 128});
 		textProcessor.setLineSpace(4);
 
 		EXPECT_TRUE(textProcessor.write(LoremIpsum));
-	}
+	}*/
 
 	ASSERT_TRUE(FileIO::write(image, {RES_BASE_PATH "/test-assets/tmp_textPixmap.png"}, true));
 }

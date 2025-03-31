@@ -82,49 +82,77 @@ namespace EmEn::AVConsole
 			 * @return const std::string &
 			 */
 			[[nodiscard]]
-			const std::string & id () const noexcept;
+			const std::string &
+			id () const noexcept
+			{
+				return m_id;
+			}
 
 			/**
 			 * @brief Returns the device type.
 			 * @return DeviceType
 			 */
 			[[nodiscard]]
-			DeviceType type () const noexcept;
+			DeviceType
+			deviceType () const noexcept
+			{
+				return m_type;
+			}
 
 			/**
 			 * @brief Returns the device allowed connexion type.
 			 * @return ConnexionType
 			 */
 			[[nodiscard]]
-			ConnexionType allowedConnexionType () const noexcept;
+			ConnexionType
+			allowedConnexionType () const noexcept
+			{
+				return m_allowedConnexionType;
+			}
 
 			/**
 			 * @brief Returns whether at least one virtual device is connected as input.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasInputConnected () const noexcept;
+			bool
+			hasInputConnected () const noexcept
+			{
+				return !m_inputs.empty();
+			}
 
 			/**
 			 * @brief Returns all virtual devices connected to input.
 			 * @return const std::set< std::shared_ptr< AbstractVirtualAudioDevice > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< AbstractVirtualDevice > > & inputs () const noexcept;
+			const std::set< std::shared_ptr< AbstractVirtualDevice > > &
+			inputs () const noexcept
+			{
+				return m_inputs;
+			}
 
 			/**
 			 * @brief Returns whether at least one virtual device is connected as output.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool hasOutputConnected () const noexcept;
+			bool
+			hasOutputConnected () const noexcept
+			{
+				return !m_outputs.empty();
+			}
 
 			/**
 			 * @brief Returns all virtual devices connected to output.
 			 * @return const std::set< std::shared_ptr< AbstractVirtualAudioDevice > > &
 			 */
 			[[nodiscard]]
-			const std::set< std::shared_ptr< AbstractVirtualDevice > > & outputs () const noexcept;
+			const std::set< std::shared_ptr< AbstractVirtualDevice > > &
+			outputs () const noexcept
+			{
+				return m_outputs;
+			}
 
 			/**
 			 * @brief Returns whether a device is connected.
@@ -186,8 +214,87 @@ namespace EmEn::AVConsole
 			 * @brief Updates the device from object coordinates in world space holding it.
 			 * @param worldCoordinates A reference to the coordinates of the device.
 			 * @param worldVelocity A reference to the velocity vector of the device.
+			 * @return void
 			 */
 			virtual void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept = 0;
+
+			/**
+			 * @brief Returns the video device type.
+			 * @note Ignored on audio device.
+			 * @todo This should not be here !
+			 * @return VideoType
+			 */
+			[[nodiscard]]
+			virtual
+			VideoType
+			videoType () const noexcept
+			{
+				/* NOTE: A video device should override this method ! */
+				assert(m_type == DeviceType::Audio);
+
+				return VideoType::NotVideoDevice;
+			}
+
+			/**
+			 * @brief Updates the video device properties.
+			 * @note Ignored on audio device.
+			 * @todo This should not be here !
+			 * @param isPerspectiveProjection Declares the perspective type of image.
+			 * @param distance The maximal distance of the view.
+			 * @param fovOrNear The field of view. Ignored if the projection is orthographic and can be used as near value override.
+			 * @return void
+			 */
+			virtual
+			void
+			updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept
+			{
+				/* NOTE: A video device should override this method ! */
+				assert(m_type == DeviceType::Audio);
+			}
+
+			/**
+			 * @brief Event fired when a virtual device is connected to input.
+			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
+			 * @param sourceDevice A pointer to the virtual device.
+			 * @return void
+			 */
+			virtual void onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept
+			{
+
+			}
+
+			/**
+			 * @brief Event fired when a virtual device is connected to output.
+			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
+			 * @param targetDevice A pointer to the virtual device.
+			 * @return void
+			 */
+			virtual void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
+			{
+
+			}
+
+			/**
+			 * @brief Event fired when a virtual device is disconnected to input.
+			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
+			 * @param sourceDevice A pointer to the virtual device.
+			 * @return void
+			 */
+			virtual void onSourceDisconnected (AbstractVirtualDevice * sourceDevice) noexcept
+			{
+
+			}
+
+			/**
+			 * @brief Event fired when a virtual device is disconnected to output.
+			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
+			 * @param targetDevice A pointer to the virtual device.
+			 * @return void
+			 */
+			virtual void onTargetDisconnected (AbstractVirtualDevice * targetDevice) noexcept
+			{
+
+			}
 
 		protected:
 
@@ -200,8 +307,6 @@ namespace EmEn::AVConsole
 			explicit AbstractVirtualDevice (const std::string & name, DeviceType type, ConnexionType allowedConnexionType) noexcept;
 
 		private:
-
-			static size_t s_deviceCount;
 
 			/**
 			 * @brief Builds a device id.
@@ -227,38 +332,12 @@ namespace EmEn::AVConsole
 			 */
 			bool disconnectBack (const std::shared_ptr< AbstractVirtualDevice > & sourceDevice, bool quietly) noexcept;
 
-			/**
-			 * @brief Event fired when a virtual device is connected to input.
-			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual device.
-			 */
-			virtual void onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept = 0;
-
-			/**
-			 * @brief Event fired when a virtual device is connected to output.
-			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param targetDevice A pointer to the virtual device.
-			 */
-			virtual void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept = 0;
-
-			/**
-			 * @brief Event fired when a virtual device is disconnected to input.
-			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param sourceDevice A pointer to the virtual device.
-			 */
-			virtual void onSourceDisconnected (AbstractVirtualDevice * sourceDevice) noexcept = 0;
-
-			/**
-			 * @brief Event fired when a virtual device is disconnected to output.
-			 * @note This method uses a pointer instead of reference to ease the dynamic cast. It will never be null.
-			 * @param targetDevice A pointer to the virtual device.
-			 */
-			virtual void onTargetDisconnected (AbstractVirtualDevice * targetDevice) noexcept = 0;
+			static size_t s_deviceCount;
 
 			std::string m_id;
 			DeviceType m_type;
 			ConnexionType m_allowedConnexionType;
-			std::set< std::shared_ptr< AbstractVirtualDevice > > m_inputs{};
-			std::set< std::shared_ptr< AbstractVirtualDevice > > m_outputs{};
+			std::set< std::shared_ptr< AbstractVirtualDevice > > m_inputs;
+			std::set< std::shared_ptr< AbstractVirtualDevice > > m_outputs;
 	};
 }

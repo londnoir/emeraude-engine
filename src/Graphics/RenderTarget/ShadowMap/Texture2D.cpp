@@ -67,13 +67,13 @@ namespace EmEn::Graphics::RenderTarget::ShadowMap
 	}
 
 	void
-	Texture2D::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Texture2D::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
-		m_viewMatrices.create(*Graphics::Renderer::instance(), this->id());
+		m_viewMatrices.create(*Renderer::instance(), this->id());
 	}
 
 	void
-	Texture2D::onSourceDisconnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Texture2D::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.destroy();
 	}

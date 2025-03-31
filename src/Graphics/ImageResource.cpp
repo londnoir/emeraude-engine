@@ -79,14 +79,14 @@ namespace EmEn::Graphics
 	bool
 	ImageResource::load () noexcept
 	{
+		constexpr size_t DefaultSize{32};
+
 		if ( !this->beginLoading() )
 		{
 			return false;
 		}
 
-		constexpr size_t size = 32;
-
-		if ( !m_data.initialize(size, size, PixelFactory::ChannelMode::RGB) )
+		if ( !m_data.initialize(DefaultSize, DefaultSize, PixelFactory::ChannelMode::RGB) )
 		{
 			Tracer::error(ClassId, "Unable to load the default pixmap !");
 
@@ -168,13 +168,13 @@ namespace EmEn::Graphics
 	uint32_t
 	ImageResource::width () const noexcept
 	{
-		return static_cast< uint32_t >(m_data.width());
+		return m_data.width();
 	}
 
 	uint32_t
 	ImageResource::height () const noexcept
 	{
-		return static_cast< uint32_t >(m_data.height());
+		return m_data.height();
 	}
 
 	bool

@@ -52,14 +52,14 @@ namespace EmEn::Overlay::Elements
 	{
 		pixmap.zeroFill();
 
-		Processor proc{pixmap};
-		proc.drawSquare(pixmap.area(), White);
+		Processor processor{pixmap};
+		processor.drawSquare(pixmap.rectangle(), White);
 
-		const auto width = static_cast< size_t >(static_cast< float >(pixmap.width() - 6UL) * m_value);
+		const auto width = static_cast< uint32_t >(static_cast< float >(pixmap.width() - 6U) * m_value);
 
 		if ( width > 0 )
 		{
-			if ( !proc.copy(Green, {3UL, 3UL, width, pixmap.height() - 6UL}) )
+			if ( !processor.copy(Green, {3U, 3U, width, pixmap.height() - 6U}) )
 			{
 				return false;
 			}
@@ -67,7 +67,7 @@ namespace EmEn::Overlay::Elements
 
 		if ( m_value < 1.0F )
 		{
-			if ( !proc.copy(TranslucentBlack, {3UL + width, 3UL, (pixmap.width() - 6UL) - width, pixmap.height() - 6UL}) )
+			if ( !processor.copy(TranslucentBlack, {3U + width, 3U, (pixmap.width() - 6U) - width, pixmap.height() - 6U}) )
 			{
 				return false;
 			}

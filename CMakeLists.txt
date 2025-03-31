@@ -1,7 +1,8 @@
 #######################################################################
 # CMake configuration
 cmake_minimum_required(VERSION 3.25.1)
-cmake_policy(VERSION 3.25.1)
+cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH is enabled by default.
+cmake_policy(SET CMP0091 NEW) # MSVC runtime library flags are selected by an abstraction.
 
 # Adds custom CMake scripts/modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -19,19 +20,21 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.36 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.4 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+
 set_property(GLOBAL PROPERTY USE_FOLDERS On)
 
 # Emeraude libraries project variables and options
 set(EMERAUDE_ENABLE_TESTS Off CACHE BOOL "Enable the Emeraude testing suite (Default Off).")
-set(EMERAUDE_INSTALL On CACHE BOOL "Install Emeraude as a system library (Default On).")
 set(EMERAUDE_INTERNET_CHECK_DOMAIN "google.com" CACHE STRING "Web domain to check internet connexion (Default google.com).")
-set(EMERAUDE_INSTALL_DEV_FILES Off CACHE BOOL "Installs Emeraude dev files (Default Off).")
+set(EMERAUDE_COMPILATION_DIR "" CACHE STRING "Declare where to project is compiled. For macOS this should point the 'package.app' in the compilation folder.")
+set(EMERAUDE_INSTALL_DIR "" CACHE STRING "Declare where to install the library. For macOS this should point the 'package.app'.")
 set(EMERAUDE_USE_SYSTEM_LIBS Off CACHE BOOL "Use the system for common libraries instead of the embedded ones (Default Off).")
 set(EMERAUDE_ENABLE_OPENMP On CACHE BOOL "Enable 'libomp' library [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_SNDFILE On CACHE BOOL "Enable 'libsndfile' library. Adds the ability to read a wide range of sound formats [SYSTEM] (Default On).")
@@ -54,16 +57,11 @@ option(POINTER_INPUT_DEBUG_ENABLED "Enable printing of events to the console fro
 option(WINDOW_EVENTS_DEBUG_ENABLED "Enable printing of events to the console from window events (Default Off)." Off)
 option(VK_TRACKING_ENABLED "Enable printing of Vulkan objects lifespan (Default Off)." Off)
 
-# On MacOS, we need to target inside the bundle structure.
-if ( APPLE )
-	set(OUTPUT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${PROJECT_NAME}.app/Contents/Resources" CACHE STRING "Where to put resource data.")
-	set(OUTPUT_BINARIES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${PROJECT_NAME}.app/Contents/MacOS" CACHE STRING "Where to put binary data.")
-	set(OUTPUT_LIBRARIES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${PROJECT_NAME}.app/Contents/Libraries" CACHE STRING "Where to put libraries.")
-	set(OUTPUT_FRAMEWORKS_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${PROJECT_NAME}.app/Contents/Frameworks" CACHE STRING "Where to put frameworks (macOS only).")
-else ()
-	set(OUTPUT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}" CACHE STRING "Where to put resource data.")
-	set(OUTPUT_BINARIES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}" CACHE STRING "Where to put binary data.")
-	set(OUTPUT_LIBRARIES_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}" CACHE STRING "Where to put libraries.")
+# Force the compilation directory for testing (Only if empty)
+if ( EMERAUDE_ENABLE_TESTS AND "${EMERAUDE_COMPILATION_DIR}" STREQUAL "" )
+	message(STATUS "EMERAUDE_ENABLE_TESTS has been enabled but the EMERAUDE_COMPILATION_DIR is not set. Forcing to : '${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}'.")
+
+	set(EMERAUDE_COMPILATION_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}" CACHE STRING "" FORCE)
 endif ()
 
 # Create constant variable for dependency inclusions
@@ -137,7 +135,6 @@ endif ()
 message("[${PROJECT_NAME}] Project directory : ${CMAKE_SOURCE_DIR}, current : ${CMAKE_CURRENT_SOURCE_DIR}")
 message("[${PROJECT_NAME}] Source directory : ${EMERAUDE_SOURCE_DIR}")
 message("[${PROJECT_NAME}] Binary directory : ${CMAKE_BINARY_DIR}, current : ${CMAKE_CURRENT_BINARY_DIR}")
-message("[${PROJECT_NAME}] Install directory : ${CMAKE_INSTALL_PREFIX}")
 
 
 
@@ -222,9 +219,21 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED On
 	CXX_EXTENSIONS On # "c++20" -> "gnu++20"
-	VERSION ${PROJECT_VERSION}
-	SOVERSION 1
 )
+
+if ( APPLE )
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		FRAMEWORK TRUE
+		FRAMEWORK_VERSION ${PROJECT_VERSION}
+		MACOSX_FRAMEWORK_IDENTIFIER org.ln-isle.emeraude
+		INSTALL_NAME_DIR "@rpath"
+		MACOSX_RPATH TRUE
+	)
+else ()
+	set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+endif ()
+
+
 
 if ( MSVC )
 	target_compile_options(${PROJECT_NAME} PRIVATE
@@ -267,7 +276,7 @@ else ( UNIX )
 			-Wall
 			-Wextra
 			-Wpedantic
-			#-Werror
+			-Werror
 		>
 		$<$<CONFIG:Relase>:
 			-O2
@@ -383,8 +392,6 @@ if ( EMERAUDE_ENABLE_TESTS )
 		CXX_STANDARD 20
 		CXX_STANDARD_REQUIRED On
 		CXX_EXTENSIONS On
-		VERSION ${PROJECT_VERSION}
-		SOVERSION 1
 	)
 
 	target_include_directories(EmeraudeTest PRIVATE ${EMERAUDE_SOURCE_DIR})
@@ -407,44 +414,60 @@ endif ()
 
 ###### Write the project C++ config file ######
 
-# Copy 'gamecontrollerdb.txt' in the compilation directory.
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt DESTINATION ${OUTPUT_RESOURCES_DIR}/data)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/emeraude_config.hpp.in ${CMAKE_BINARY_DIR}/include/emeraude_config.hpp)
 
-if ( CMAKE_BUILD_TYPE MATCHES Debug )
-	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources/vk_layer_settings.txt DESTINATION ${OUTPUT_RESOURCES_DIR})
-endif ()
+if ( NOT "${EMERAUDE_COMPILATION_DIR}" STREQUAL "" )
+	# Copy 'gamecontrollerdb.txt' in the compilation directory.
+	file(
+		COPY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
+		DESTINATION ${EMERAUDE_COMPILATION_DIR}/data
+	)
 
-if ( EMERAUDE_ENABLE_TESTS )
-	message("Copying test resources ...")
+	# Copy debug file
+	if ( CMAKE_BUILD_TYPE MATCHES Debug )
+		file(
+			COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources/vk_layer_settings.txt
+			DESTINATION ${EMERAUDE_COMPILATION_DIR}
+		)
+	endif ()
 
-	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources/test-assets DESTINATION ${OUTPUT_RESOURCES_DIR})
+	# Copy test files
+	if ( EMERAUDE_ENABLE_TESTS )
+		file(
+			COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources/test-assets
+			DESTINATION ${EMERAUDE_COMPILATION_DIR}
+		)
+	endif ()
+else ()
+	message(STATUS "EMERAUDE_COMPILATION_DIR is not set, the compilation directory won't have all files for development !")
 endif ()
 
 
 
 ###### Installing ######
 
-if ( EMERAUDE_INSTALL )
+# TODO: Make a dev version for linux
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 
-	if ( UNIX AND NOT APPLE )
-		include(GNUInstallDirs)
+if ( NOT "${EMERAUDE_INSTALL_DIR}" STREQUAL "" )
+	message("Install shared library to ${EMERAUDE_INSTALL_DIR} ...")
 
-		if ( EMERAUDE_INSTALL_DEV_FILES )
-			message("Install configuration for shared library binaries with headers ...")
+	install(TARGETS ${PROJECT_NAME}
+		LIBRARY DESTINATION ${EMERAUDE_INSTALL_DIR} COMPONENT Runtime
+		FRAMEWORK DESTINATION ${EMERAUDE_INSTALL_DIR} COMPONENT Runtime
+	)
 
-			install(TARGETS EmeraudeLibraries FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/EmeraudeLibraries)
-
-			install(TARGETS ${PROJECT_NAME} FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
-
-			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-		else ()
-			message("Install configuration for shared library binaries ...")
-
-			install(TARGETS ${PROJECT_NAME})
-		endif ()
+	if ( APPLE )
+		install(
+			FILES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
+			DESTINATION ${EMERAUDE_INSTALL_DIR}/Contents/Resources/data
+		)
+	else ()
+		install(
+			FILES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
+			DESTINATION ${EMERAUDE_INSTALL_DIR}/data
+		)
 	endif ()
-
-endif()
+else ()
+	message(STATUS "EMERAUDE_INSTALL_DIR is not set, the shared library installation will be disabled !")
+endif ()

@@ -31,8 +31,9 @@
 #include <cstddef>
 
 /* Local inclusions. */
-#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Libs/ParallelizableTrait.hpp"
+#include "Libs/Randomizer.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Libs/Utility.hpp"
 
 using namespace EmEn::Libs;
@@ -78,9 +79,11 @@ class Fibonnizzer final : public ParallelizableTrait< size_t >
 				std::cout << "[" << std::this_thread::get_id() << "] Launching the task ..." "\n";
 			}
 
+			Randomizer< size_t > randomizer;
+
 			for ( size_t job = 0; job < jobCount; job++ )
 			{
-				this->createTask(Utility::random(1, 47));
+				this->createTask(randomizer.value(1, 47));
 
 				if ( m_enableOutput )
 				{
@@ -194,8 +197,8 @@ TEST(ParallelizableProcess, DestructorWaitForJobDone)
 
 TEST(ParallelizableProcess, FibonnacciWorkload)
 {
-	const size_t jobCountA{48};
-	const size_t jobCountB{96};
+	constexpr size_t jobCountA{48};
+	constexpr size_t jobCountB{96};
 
 	Fibonnizzer fibonnizzer{std::thread::hardware_concurrency()};
 

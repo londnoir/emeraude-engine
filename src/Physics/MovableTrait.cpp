@@ -204,7 +204,7 @@ namespace EmEn::Physics
 			 */
 
 			/* Dispatch the final rotation to the entity according to the new angular speed. */
-			this->simulatedRotation(2.0F * Pi< float > / EngineUpdateCycleDurationS< float >, m_angularVelocity);
+			this->simulatedRotation(2.0F * std::numbers::pi_v< float > / EngineUpdateCycleDurationS< float >, m_angularVelocity);
 
 			isMoveOccurs = true;
 		}

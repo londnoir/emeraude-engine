@@ -179,7 +179,7 @@ namespace EmEn::Vulkan
 
 		if ( pipelineLayoutIt != m_pipelineLayouts.cend() )
 		{
-			TraceDebug{ClassId} << "Reusing pipeline layout named '" << pipelineLayoutUUID << "' ...";
+			//TraceDebug{ClassId} << "Reusing pipeline layout named '" << pipelineLayoutUUID << "' ...";
 
 			return pipelineLayoutIt->second;
 		}

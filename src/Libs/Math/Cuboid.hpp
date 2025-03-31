@@ -34,6 +34,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <algorithm>
 
 /* Local inclusions for inheritances. */
 #include "Shape3DInterface.hpp"
@@ -50,7 +51,7 @@ namespace EmEn::Libs::Math
 	 * @extends EmEn::Libs::Math::Shape3DInterface This is a 3D shape.
 	 */
 	template< typename data_t = float >
-	requires (std::is_arithmetic_v< data_t >)
+	requires (std::is_floating_point_v< data_t >)
 	class Cuboid : public Shape3DInterface< data_t >
 	{
 		public:
@@ -68,7 +69,8 @@ namespace EmEn::Libs::Math
 			explicit
 			constexpr
 			Cuboid (data_t value) noexcept
-				: m_maximum(value, value, value), m_minimum(-value, -value, -value)
+				: m_maximum(value, value, value),
+				m_minimum(-value, -value, -value)
 			{
 
 			}
@@ -80,103 +82,8 @@ namespace EmEn::Libs::Math
 			 */
 			constexpr
 			Cuboid (const Vector< 3, data_t > & maximum, const Vector< 3, data_t > & minimum) noexcept
-				: m_maximum(maximum), m_minimum(minimum)
 			{
-
-			}
-
-			/**
-			 * @brief Extends the volume of this box with another one.
-			 * @param other A reference to another cuboid.
-			 * @return Cuboid< type_t >
-			 */
-			Cuboid< data_t >
-			operator+ (const Cuboid< data_t > & other) const noexcept
-			{
-				if ( !this->isValid() )
-				{
-					return other;
-				}
-
-				if ( !other.isValid() )
-				{
-					return *this;
-				}
-
-				return {m_maximum + other.m_maximum, m_minimum + other.m_minimum};
-			}
-
-			/**
-			 * @brief Extends the volume of this box with another one.
-			 * @param operand A reference to a cuboid.
-			 * @return Cuboid< type_t >
-			 */
-			Cuboid< data_t > &
-			operator+= (const Cuboid< data_t > & operand) noexcept
-			{
-				/* Guard self assignment */
-				if ( this != &operand )
-				{
-					if ( operand.isValid() )
-					{
-						if ( this->isValid() )
-						{
-							m_maximum += operand.m_maximum;
-							m_minimum += operand.m_minimum;
-						}
-						else
-						{
-							m_maximum = operand.m_maximum;
-							m_minimum = operand.m_minimum;
-						}
-					}
-				}
-
-				return *this;
-			}
-
-			/**
-			 * @brief Reduces the volume of this box with another one.
-			 * @warning  This can lead to an invalid volume.
-			 * @param other A reference to another cuboid.
-			 * @return Cuboid< type_t >
-			 */
-			Cuboid< data_t >
-			operator- (const Cuboid< data_t > & other) const noexcept
-			{
-				if ( !this->isValid() )
-				{
-					return other;
-				}
-
-				if ( !other.isValid() )
-				{
-					return *this;
-				}
-
-				return {m_maximum - other.m_maximum, m_minimum - other.m_minimum};
-			}
-
-			/**
-			 * @brief Reduces the volume of this box with another one.
-			 * @warning  This can lead to an invalid volume.
-			 * @param operand A reference to a cuboid.
-			 * @return Cuboid< type_t > &
-			 */
-			Cuboid< data_t > &
-			operator-= (const Cuboid< data_t > & operand) noexcept
-			{
-				/* Guard self assignment */
-				if ( this != &operand )
-				{
-					if ( this->isValid() && operand.isValid() )
-					{
-						m_maximum -= operand.m_maximum;
-						m_minimum -= operand.m_minimum;
-					}
-				}
-
-				return *this;
+				this->set(maximum, minimum);
 			}
 
 			/** @copydoc EmEn::Libs::Math::Shape3DInterface::getVolume() */
@@ -193,7 +100,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			set (data_t value)
+			set (data_t value) noexcept
 			{
 				m_maximum[X] = value;
 				m_maximum[Y] = value;
@@ -516,7 +423,7 @@ namespace EmEn::Libs::Math
 			Vector< 3, data_t >
 			centroid () const noexcept
 			{
-				return (m_maximum + m_minimum) * 0.5F;
+				return (m_maximum + m_minimum) * static_cast< data_t >(0.5);
 			}
 
 			/**
@@ -525,7 +432,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			merge (const Cuboid< data_t > & other) noexcept
+			merge (const Cuboid & other) noexcept
 			{
 				/* If the other box is the same or is invalid, we skip it. */
 				if ( this == &other || !other.isValid() )
@@ -669,7 +576,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isCollidingWith (const Cuboid< data_t > & cuboid) const noexcept
+			isCollidingWith (const Cuboid & cuboid) const noexcept
 			{
 				if ( this == &cuboid || !this->isValid() || !cuboid.isValid() )
 				{
@@ -703,24 +610,15 @@ namespace EmEn::Libs::Math
 			bool
 			isCollidingWith (const Sphere< data_t > & sphere) const noexcept
 			{
-				const auto & point = sphere.position();
+				const Vector< 3, data_t > closestPoint{
+					std::max(m_minimum[X], std::min(sphere.position()[X], m_maximum[X])),
+					std::max(m_minimum[Y], std::min(sphere.position()[Y], m_maximum[Y])),
+					std::max(m_minimum[Z], std::min(sphere.position()[Z], m_maximum[Z]))
+				};
 
-				if ( point[X] + sphere.radius() < m_minimum[X] || point[X] - sphere.radius() > m_maximum[X] )
-				{
-					return false;
-				}
+				const Vector< 3, data_t > delta = sphere.position() - closestPoint;
 
-				if ( point[Y] + sphere.radius() < m_minimum[Y] || point[Y] - sphere.radius() > m_maximum[Y] )
-				{
-					return false;
-				}
-
-				if ( point[Z] + sphere.radius() < m_minimum[Z] || point[Z] - sphere.radius() > m_maximum[Z] )
-				{
-					return false;
-				}
-
-				return true;
+				return delta.lengthSquared() <= sphere.radius() * sphere.radius();
 			}
 
 			/**
@@ -763,6 +661,42 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
+			 * @brief Returns the penetration distance vector from a point.
+			 * @param lhs A reference to a cuboid.
+			 * @param point A reference to a vector.
+			 * @return Vector< 3, type_t >
+			 */
+			[[nodiscard]]
+			static
+			Vector< 3, data_t >
+			getPointPenetrationDepth (const Cuboid & lhs, const Vector< 3, data_t > & point) noexcept
+			{
+				if (
+					!lhs.isValid() ||
+					point[X] < lhs.minimum()[X] || point[X] > lhs.maximum()[X] ||
+					point[Y] < lhs.minimum()[Y] || point[Y] > lhs.maximum()[Y] ||
+					point[Z] < lhs.minimum()[Z] || point[Z] > lhs.maximum()[Z] )
+				{
+					return {};
+				}
+
+				const data_t distToMaxX = lhs.maximum()[X] - point[X];
+				const data_t distToMinX = point[X] - lhs.minimum()[X];
+
+				const data_t distToMaxY = lhs.maximum()[Y] - point[Y];
+				const data_t distToMinY = point[Y] - lhs.minimum()[Y];
+
+				const data_t distToMaxZ = lhs.maximum()[Z] - point[Z];
+				const data_t distToMinZ = point[Z] - lhs.minimum()[Z];
+
+				return {
+					std::min(distToMaxX, distToMinX),
+					std::min(distToMaxY, distToMinY),
+					std::min(distToMaxZ, distToMinZ)
+				};
+			}
+
+			/**
 			 * @brief Returns the overlap distance vector from the intersection with another cuboid.
 			 * @param lhs A reference to a cuboid.
 			 * @param rhs A reference to a cuboid.
@@ -771,9 +705,9 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			static
 			Vector< 3, data_t >
-			getIntersectionOverlap (const Cuboid< data_t > & lhs, const Cuboid< data_t > & rhs) noexcept
+			getIntersectionOverlap (const Cuboid & lhs, const Cuboid & rhs) noexcept
 			{
-				if ( &lhs == &rhs || !lhs->isValid() || !rhs.isValid() )
+				if ( &lhs == &rhs || !lhs.isValid() || !rhs.isValid() )
 				{
 					return {};
 				}
@@ -814,45 +748,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			static
 			Vector< 3, data_t >
-			getIntersectionOverlap (const Cuboid< data_t > & lhs, const Vector< 3, data_t > & point) noexcept
-			{
-				if ( point[X] < lhs.m_minimum[X] || point[X] > lhs.m_maximum[X] )
-				{
-					return {};
-				}
-
-				if ( point[Y] < lhs.m_minimum[Y] || point[Y] > lhs.m_maximum[Y] )
-				{
-					return {};
-				}
-
-				if ( point[Z] < lhs.m_minimum[Z] || point[Z] > lhs.m_maximum[Z] )
-				{
-					return {};
-				}
-
-				const auto maxX = std::min(lhs.m_maximum[X], point[X]);
-				const auto minX = std::max(lhs.m_minimum[X], point[X]);
-
-				const auto maxY = std::min(lhs.m_maximum[Y], point[Y]);
-				const auto minY = std::max(lhs.m_minimum[Y], point[Y]);
-
-				const auto maxZ = std::min(lhs.m_maximum[Z], point[Z]);
-				const auto minZ = std::max(lhs.m_minimum[Z], point[Z]);
-
-				return {maxX - minX, maxY - minY, maxZ - minZ};
-			}
-
-			/**
-			 * @brief Returns the overlap distance vector from the intersection with a point.
-			 * @param lhs A reference to a cuboid.
-			 * @param point A reference to a vector.
-			 * @return Vector< 3, type_t >
-			 */
-			[[nodiscard]]
-			static
-			Vector< 3, data_t >
-			getIntersectionOverlap (const Cuboid< data_t > & lhs, const Vector< 4, data_t > & point) noexcept
+			getIntersectionOverlap (const Cuboid & lhs, const Vector< 4, data_t > & point) noexcept
 			{
 				return Cuboid::getIntersectionOverlap(lhs, Vector< 3, data_t >(point));
 			}
@@ -861,12 +757,12 @@ namespace EmEn::Libs::Math
 			 * @brief Returns the intersection cuboid.
 			 * @param lhs A reference to a cuboid.
 			 * @param rhs A reference to a cuboid.
-			 * @return Cuboid< type_t >
+			 * @return Cuboid
 			 */
 			[[nodiscard]]
 			static
-			Cuboid< data_t >
-			getIntersectionCuboid (const Cuboid< data_t > & lhs, const Cuboid< data_t > & rhs) noexcept
+			Cuboid
+			getIntersectionCuboid (const Cuboid & lhs, const Cuboid & rhs) noexcept
 			{
 				if ( &lhs == &rhs || !lhs.isValid() || !rhs.isValid())
 				{
@@ -924,7 +820,7 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::ostream &
-			operator<< (std::ostream & out, const Cuboid & obj) noexcept
+			operator<< (std::ostream & out, const Cuboid & obj)
 			{
 				return out <<
 					"Cuboid volume data :\n"
@@ -939,7 +835,7 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::string
-			to_string (const Cuboid & obj) noexcept
+			to_string (const Cuboid & obj)
 			{
 				std::stringstream output;
 

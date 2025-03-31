@@ -166,7 +166,8 @@ namespace EmEn::Overlay::Elements
 			return false;
 		}
 
-		const auto quarterHeight = pixmap.height() / 4;
+		// FIXME
+		/*const auto quarterHeight = pixmap.height() / 4;
 
 		const auto xOffset = static_cast< int >((pixmap.width() / 2) - (m_textWriter.widthRequest(m_label) / 2));
 		const auto yBaseOffset = (quarterHeight / 2) - (m_textWriter.font()->lineHeight() / 2);
@@ -183,7 +184,7 @@ namespace EmEn::Overlay::Elements
 
 				break;
 			}
-		}
+		}*/
 
 		return true;
 	}

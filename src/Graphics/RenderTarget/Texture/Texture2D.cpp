@@ -90,13 +90,13 @@ namespace EmEn::Graphics::RenderTarget::Texture
 	}
 
 	void
-	Texture2D::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Texture2D::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.create(*Renderer::instance(), this->id());
 	}
 
 	void
-	Texture2D::onSourceDisconnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Texture2D::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.destroy();
 	}

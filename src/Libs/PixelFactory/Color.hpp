@@ -30,7 +30,6 @@
 #include <array>
 #include <cstdint>
 #include <iomanip>
-#include <iostream>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -45,10 +44,10 @@ namespace EmEn::Libs::PixelFactory
 {
 	/**
 	 * @brief Defines a color which using an internal floating point data.
-	 * @tparam float_t The type of floating point number. Default float.
+	 * @tparam data_t The type of floating point number. Default float.
 	 */
-	template< typename float_t = float >
-	requires (std::is_floating_point_v< float_t >)
+	template< typename data_t = float >
+	requires (std::is_floating_point_v< data_t >)
 	class Color final
 	{
 		public:
@@ -75,7 +74,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param alpha Alpha component. Default 1.0.
 			 */
 			constexpr
-			Color (float_t red, float_t green, float_t blue, float_t alpha = 1) noexcept
+			Color (data_t red, data_t green, data_t blue, data_t alpha = 1) noexcept
 				: m_components{Math::clampToUnit(red), Math::clampToUnit(green), Math::clampToUnit(blue), Math::clampToUnit(alpha)}
 			{
 
@@ -87,7 +86,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param alpha Alpha component.
 			 */
 			constexpr
-			Color (const Color & color, float_t alpha) noexcept
+			Color (const Color & color, data_t alpha) noexcept
 				: Color(color.m_components[R], color.m_components[G], color.m_components[B], Math::clampToUnit(alpha))
 			{
 
@@ -99,7 +98,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			constexpr
 			explicit
-			Color (const std::array< float_t, 4 > & data) noexcept
+			Color (const std::array< data_t, 4 > & data) noexcept
 				: m_components(data)
 			{
 
@@ -111,7 +110,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			constexpr
 			explicit
-			Color (const std::array< float_t, 3 > & data) noexcept
+			Color (const std::array< data_t, 3 > & data) noexcept
 				: Color(data[0], data[1], data[2])
 			{
 
@@ -123,7 +122,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			constexpr
 			explicit
-			Color (const Math::Vector< 4, float_t > & data) noexcept
+			Color (const Math::Vector< 4, data_t > & data) noexcept
 				: Color(data[Math::X], data[Math::Y], data[Math::Z], data[Math::W])
 			{
 
@@ -135,7 +134,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			constexpr
 			explicit
-			Color (const Math::Vector< 3, float_t > & data) noexcept
+			Color (const Math::Vector< 3, data_t > & data) noexcept
 				: Color(data[Math::X], data[Math::Y], data[Math::Z])
 			{
 
@@ -170,7 +169,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Performs an addition on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs an addition on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color
 			 */
@@ -182,33 +181,31 @@ namespace EmEn::Libs::PixelFactory
 					Math::clampToUnit(m_components[R] + operand.m_components[R]),
 					Math::clampToUnit(m_components[G] + operand.m_components[G]),
 					Math::clampToUnit(m_components[B] + operand.m_components[B]),
-					m_components[A] * operand.m_components[A]
+					Math::clampToUnit(m_components[A] + operand.m_components[A])
 				};
 			}
 
 			/**
-			 * @brief Performs an addition on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs an addition on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator+= (const Color & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] + operand.m_components[R]);
 					m_components[G] = Math::clampToUnit(m_components[G] + operand.m_components[G]);
 					m_components[B] = Math::clampToUnit(m_components[B] + operand.m_components[B]);
-					m_components[A] = m_components[A] * operand.m_components[A];
+					m_components[A] = Math::clampToUnit(m_components[A] + operand.m_components[A]);
 				}
 
 				return *this;
 			}
 
 			/**
-			 * @brief Performs a subtraction on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a subtraction on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color
 			 */
@@ -220,33 +217,31 @@ namespace EmEn::Libs::PixelFactory
 					Math::clampToUnit(m_components[R] - operand.m_components[R]),
 					Math::clampToUnit(m_components[G] - operand.m_components[G]),
 					Math::clampToUnit(m_components[B] - operand.m_components[B]),
-					m_components[A] * operand.m_components[A]
+					Math::clampToUnit(m_components[A] - operand.m_components[A])
 				};
 			}
 
 			/**
-			 * @brief Performs a subtraction on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a subtraction on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator-= (const Color & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] - operand.m_components[R]);
 					m_components[G] = Math::clampToUnit(m_components[G] - operand.m_components[G]);
 					m_components[B] = Math::clampToUnit(m_components[B] - operand.m_components[B]);
-					m_components[A] = m_components[A] * operand.m_components[A];
+					m_components[A] = Math::clampToUnit(m_components[A] - operand.m_components[A]);
 				}
 
 				return *this;
 			}
 
 			/**
-			 * @brief Performs a multiplication on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a multiplication on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color
 			 */
@@ -263,15 +258,13 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Performs a multiplication on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a multiplication on all channels (RGBA).
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator*= (const Color & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = m_components[R] * operand.m_components[R];
@@ -284,7 +277,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Performs a division on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a division on color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand A reference to a color.
 			 * @return Color
 			 */
@@ -296,26 +290,24 @@ namespace EmEn::Libs::PixelFactory
 					operand.m_components[R] <= 0.0F ? 0.0F : m_components[R] / operand.m_components[R],
 					operand.m_components[G] <= 0.0F ? 0.0F : m_components[G] / operand.m_components[G],
 					operand.m_components[B] <= 0.0F ? 0.0F : m_components[B] / operand.m_components[B],
-					m_components[A] * operand.m_components[A]
+					m_components[A]
 				};
 			}
 
 			/**
-			 * @brief Performs a division on color channels (RGB) and multiply alpha channel (A).
+			 * @brief Performs a division on color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator/= (const Color & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = operand.m_components[R] <= 0.0F ? 0.0F : m_components[R] / operand.m_components[R];
 					m_components[G] = operand.m_components[G] <= 0.0F ? 0.0F : m_components[G] / operand.m_components[G];
 					m_components[B] = operand.m_components[B] <= 0.0F ? 0.0F : m_components[B] / operand.m_components[B];
-					m_components[A] = m_components[A] * operand.m_components[A];
 				}
 
 				return *this;
@@ -323,12 +315,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Adds a value to color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand The value to add.
 			 * @return Color
 			 */
 			[[nodiscard]]
 			Color
-			operator+ (float_t operand) const noexcept
+			operator+ (data_t operand) const noexcept
 			{
 				return {
 					Math::clampToUnit(m_components[R] + operand),
@@ -340,14 +333,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Adds a value to color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand The value to add.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
-			operator+= (float_t operand) noexcept
+			operator+= (data_t operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] + operand);
@@ -360,12 +352,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Subtracts a value from color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand The value to subtract.
 			 * @return Color
 			 */
 			[[nodiscard]]
 			Color
-			operator- (float_t operand) const noexcept
+			operator- (data_t operand) const noexcept
 			{
 				return {
 					Math::clampToUnit(m_components[R] - operand),
@@ -377,14 +370,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Subtracts a value from color channels (RGB).
+			 * @note This won't affect alpha channel.
 			 * @param operand The value to subtract.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
-			operator-= (float_t operand) noexcept
+			operator-= (data_t operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] - operand);
@@ -397,55 +389,50 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Multiplies color channels (RGB) by a value.
+			 * @note The alpha channel won't be affected.
 			 * @param operand The value to multiply.
 			 * @return Color
 			 */
 			[[nodiscard]]
 			Color
-			operator* (float_t operand) const noexcept
+			operator* (data_t operand) const noexcept
 			{
-				if ( operand < 0.0F && operand >= 1.0F )
-				{
-					return *this;
-				}
-
 				return {
-					m_components[R] * operand,
-					m_components[G] * operand,
-					m_components[B] * operand,
+					Math::clampToUnit(m_components[R] * operand),
+					Math::clampToUnit(m_components[G] * operand),
+					Math::clampToUnit(m_components[B] * operand),
 					m_components[A]
 				};
 			}
 
 			/**
 			 * @brief Multiplies color channels (RGB) by a value.
+			 * @note The alpha channel won't be affected.
 			 * @param operand The value to multiply.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
-			operator*= (float_t operand) noexcept
+			operator*= (data_t operand) noexcept
 			{
-				if ( operand >= 0.0F && operand < 1.0F )
-				{
-					m_components[R] = m_components[R] * operand;
-					m_components[G] = m_components[G] * operand;
-					m_components[B] = m_components[B] * operand;
-				}
+				m_components[R] = Math::clampToUnit(m_components[R] * operand);
+				m_components[G] = Math::clampToUnit(m_components[G] * operand);
+				m_components[B] = Math::clampToUnit(m_components[B] * operand);
 
 				return *this;
 			}
 
 			/**
 			 * @brief Divides color channels (RGB) by a value.
+			 * @note Division by zero will be ignored and leave the base color unmodified.
+			 * @note This won't affect alpha channel.
 			 * @param operand The value for the division.
 			 * @return Color
 			 */
 			[[nodiscard]]
 			Color
-			operator/ (float_t operand) const noexcept
+			operator/ (data_t operand) const noexcept
 			{
-				if ( operand <= 0.0F )
+				if ( operand <= static_cast< data_t >(0) )
 				{
 					return *this;
 				}
@@ -460,22 +447,19 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Divides color channels (RGB) by a value.
+			 * @note Division by zero will be ignored and leave the base color unmodified.
+			 * @note This won't affect alpha channel.
 			 * @param operand The value for the division.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
-			operator/= (float_t operand) noexcept
+			operator/= (data_t operand) noexcept
 			{
-				if ( !Utility::isZero(operand) )
+				if ( operand > static_cast< data_t >(0) )
 				{
 					m_components[R] = m_components[R] / operand;
 					m_components[G] = m_components[G] / operand;
 					m_components[B] = m_components[B] / operand;
-				}
-				else
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", division by zero !" "\n";
 				}
 
 				return *this;
@@ -532,7 +516,7 @@ namespace EmEn::Libs::PixelFactory
 			template< typename output_t = uint8_t >
 			[[nodiscard]]
 			Math::Vector< 4, output_t >
-			toVector3 () const noexcept requires (std::is_integral_v< output_t >)
+			toVector4 () const noexcept requires (std::is_integral_v< output_t >)
 			{
 				return {
 					this->redInteger< output_t >(),
@@ -548,7 +532,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setRed (float_t value) noexcept
+			setRed (data_t value) noexcept
 			{
 				m_components[R] = Math::clampToUnit(value);
 			}
@@ -563,7 +547,7 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setRed (input_t value) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[R] = static_cast< float_t >(value) / std::numeric_limits< input_t >::max();
+				m_components[R] = static_cast< data_t >(value) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -572,7 +556,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setGreen (float_t value) noexcept
+			setGreen (data_t value) noexcept
 			{
 				m_components[G] = Math::clampToUnit(value);
 			}
@@ -587,7 +571,7 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setGreen (input_t value) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[G] = static_cast< float_t >(value) / std::numeric_limits< input_t >::max();
+				m_components[G] = static_cast< data_t >(value) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -596,7 +580,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setBlue (float_t value) noexcept
+			setBlue (data_t value) noexcept
 			{
 				m_components[B] = Math::clampToUnit(value);
 			}
@@ -611,7 +595,7 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setBlue (input_t value) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[B] = static_cast< float_t >(value) / std::numeric_limits< input_t >::max();
+				m_components[B] = static_cast< data_t >(value) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -620,7 +604,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setAlpha (float_t value) noexcept
+			setAlpha (data_t value) noexcept
 			{
 				m_components[A] = Math::clampToUnit(value);
 			}
@@ -635,7 +619,7 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setAlpha (input_t value) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[A] = static_cast< float_t >(value) / std::numeric_limits< input_t >::max();
+				m_components[A] = static_cast< data_t >(value) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -646,7 +630,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setRGB (float_t redValue, float_t greenValue, float_t blueValue) noexcept
+			setRGB (data_t redValue, data_t greenValue, data_t blueValue) noexcept
 			{
 				m_components[R] = Math::clampToUnit(redValue);
 				m_components[G] = Math::clampToUnit(greenValue);
@@ -665,9 +649,9 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setRGB (input_t redValue, input_t greenValue, input_t blueValue) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[R] = static_cast< float_t >(redValue) / std::numeric_limits< input_t >::max();
-				m_components[G] = static_cast< float_t >(greenValue) / std::numeric_limits< input_t >::max();
-				m_components[B] = static_cast< float_t >(blueValue) / std::numeric_limits< input_t >::max();
+				m_components[R] = static_cast< data_t >(redValue) / std::numeric_limits< input_t >::max();
+				m_components[G] = static_cast< data_t >(greenValue) / std::numeric_limits< input_t >::max();
+				m_components[B] = static_cast< data_t >(blueValue) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -679,7 +663,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setRGBA (float_t redValue, float_t greenValue, float_t blueValue, float_t alphaValue) noexcept
+			setRGBA (data_t redValue, data_t greenValue, data_t blueValue, data_t alphaValue) noexcept
 			{
 				m_components[R] = Math::clampToUnit(redValue);
 				m_components[G] = Math::clampToUnit(greenValue);
@@ -700,10 +684,10 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setRGBA (input_t redValue, input_t greenValue, input_t blueValue, input_t alphaValue) noexcept requires (std::is_integral_v< input_t >)
 			{
-				m_components[R] = static_cast< float_t >(redValue) / std::numeric_limits< input_t >::max();
-				m_components[G] = static_cast< float_t >(greenValue) / std::numeric_limits< input_t >::max();
-				m_components[B] = static_cast< float_t >(blueValue) / std::numeric_limits< input_t >::max();
-				m_components[A] = static_cast< float_t >(alphaValue) / std::numeric_limits< input_t >::max();
+				m_components[R] = static_cast< data_t >(redValue) / std::numeric_limits< input_t >::max();
+				m_components[G] = static_cast< data_t >(greenValue) / std::numeric_limits< input_t >::max();
+				m_components[B] = static_cast< data_t >(blueValue) / std::numeric_limits< input_t >::max();
+				m_components[A] = static_cast< data_t >(alphaValue) / std::numeric_limits< input_t >::max();
 			}
 
 			/**
@@ -712,7 +696,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setHue (float_t degree) noexcept
+			setHue (data_t degree) noexcept
 			{
 				this->updateFromHSV(std::fmod(degree, 360.0F), this->saturation(), this->value());
 			}
@@ -734,7 +718,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setSaturation (float_t saturation) noexcept
+			setSaturation (data_t saturation) noexcept
 			{
 				this->updateFromHSV(this->hue(), Math::clamp(saturation, 0.0F, 100.0F), this->value());
 			}
@@ -753,7 +737,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else
 				{
-					this->updateFromHSV(this->hue(), static_cast< float_t >(saturation), this->value());
+					this->updateFromHSV(this->hue(), static_cast< data_t >(saturation), this->value());
 				}
 			}
 
@@ -763,7 +747,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setValue (float_t value) noexcept
+			setValue (data_t value) noexcept
 			{
 				this->updateFromHSV(this->hue(), this->saturation(), Math::clamp(value, 0.0F, 100.0F));
 			}
@@ -782,7 +766,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else
 				{
-					this->updateFromHSV(this->hue(), this->saturation(), static_cast< float_t >(value));
+					this->updateFromHSV(this->hue(), this->saturation(), static_cast< data_t >(value));
 				}
 			}
 
@@ -791,7 +775,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return const data_t *
 			 */
 			[[nodiscard]]
-			const float_t *
+			const data_t *
 			data () const noexcept
 			{
 				return m_components.data();
@@ -799,10 +783,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the red component.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			red () const noexcept
 			{
 				return m_components[R];
@@ -810,10 +794,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the red component multiplied by alpha.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			redA () const noexcept
 			{
 				return m_components[R] * m_components[A];
@@ -847,10 +831,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the green component.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			green () const noexcept
 			{
 				return m_components[G];
@@ -858,10 +842,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the green component multiplied by alpha.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			greenA () const noexcept
 			{
 				return m_components[G] * m_components[A];
@@ -895,10 +879,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the blue component.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			blue () const noexcept
 			{
 				return m_components[B];
@@ -906,10 +890,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the value of the blue component multiplied by alpha.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			blueA () const noexcept
 			{
 				return m_components[B] * m_components[A];
@@ -943,10 +927,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the alpha component.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			alpha () const noexcept
 			{
 				return m_components[A];
@@ -967,10 +951,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the average RGB as gray component.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			gray () const noexcept
 			{
 				return (m_components[R] + m_components[G] + m_components[B]) / 3.0F;
@@ -993,10 +977,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns the RGB luminance.
 			 * @param mode The conversion mode. Default LumaRec709.
 			 * @param option Additional parameter for specific mode. Default 0.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			luminance (GrayscaleConversionMode mode = GrayscaleConversionMode::LumaRec709, int option = 0) const noexcept
 			{
 				return Color::computeLuminance(m_components[R], m_components[G], m_components[B], mode, option);
@@ -1019,10 +1003,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the color hue [0-360] from HSV model.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			hue () const noexcept
 			{
 				/* Minimum intensity over color component. */
@@ -1075,10 +1059,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the color saturation [0-100] from HSV model.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			saturation () const noexcept
 			{
 				/* Minimum intensity over color component. */
@@ -1096,10 +1080,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the color value [0-100] from HSV model.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
-			float_t
+			data_t
 			value () const noexcept
 			{
 				/* Compute the value component. */
@@ -1113,12 +1097,12 @@ namespace EmEn::Libs::PixelFactory
 			 * @param blue The value of blue component.
 			 * @param mode The conversion mode. Default LumaRec709.
 			 * @param option Additional parameter for specific mode. Default 0.
-			 * @return float_t
+			 * @return data_t
 			 */
 			[[nodiscard]]
 			static
-			float_t
-			computeLuminance (float_t red, float_t green, float_t blue, GrayscaleConversionMode mode = GrayscaleConversionMode::LumaRec709, int option = 0) noexcept
+			data_t
+			computeLuminance (data_t red, data_t green, data_t blue, GrayscaleConversionMode mode = GrayscaleConversionMode::LumaRec709, int option = 0) noexcept
 			{
 				switch ( mode )
 				{
@@ -1161,7 +1145,7 @@ namespace EmEn::Libs::PixelFactory
 					case GrayscaleConversionMode::ShadesScale :
 					{
 						const auto average = (red + blue + green) / 3.0F;
-						const auto range = static_cast< float_t >(option);
+						const auto range = static_cast< data_t >(option);
 
 						return std::round(average / range) * range;
 					}
@@ -1179,7 +1163,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			[[nodiscard]]
 			static
-			float_t
+			data_t
 			alphaBlending (const Color & colorA, const Color & colorB, bool premultipliedAlpha = false)
 			{
 				if ( premultipliedAlpha )
@@ -1204,9 +1188,9 @@ namespace EmEn::Libs::PixelFactory
 			screenBlending (const Color & colorA, const Color & colorB, bool premultipliedAlpha = false)
 			{
 				return {
-					static_cast< float_t >(1) - (static_cast< float_t >(1) - colorA.red()) * (static_cast< float_t >(1) - colorB.red()),
-					static_cast< float_t >(1) - (static_cast< float_t >(1) - colorA.green()) * (static_cast< float_t >(1) - colorB.green()),
-					static_cast< float_t >(1) - (static_cast< float_t >(1) - colorA.blue()) * (static_cast< float_t >(1) - colorB.blue()),
+					static_cast< data_t >(1) - (static_cast< data_t >(1) - colorA.red()) * (static_cast< data_t >(1) - colorB.red()),
+					static_cast< data_t >(1) - (static_cast< data_t >(1) - colorA.green()) * (static_cast< data_t >(1) - colorB.green()),
+					static_cast< data_t >(1) - (static_cast< data_t >(1) - colorA.blue()) * (static_cast< data_t >(1) - colorB.blue()),
 					Color::alphaBlending(colorA, colorB, premultipliedAlpha)
 				};
 			}
@@ -1225,15 +1209,15 @@ namespace EmEn::Libs::PixelFactory
 			overlayBlending (const Color & colorA, const Color & colorB, bool premultipliedAlpha = false)
 			{
 				return {
-					colorA.red() < static_cast< float_t >(0.5) ?
-						static_cast< float_t >(2) * colorA.red() * colorB.red() :
-						static_cast< float_t >(1) - static_cast< float_t >(2) * (static_cast< float_t >(1) - colorA.red()) * (static_cast< float_t >(1) - colorB.red()),
-					colorA.green() < static_cast< float_t >(0.5) ?
-						static_cast< float_t >(2) * colorA.green() * colorB.green() :
-						static_cast< float_t >(1) - static_cast< float_t >(2) * (static_cast< float_t >(1) - colorA.green()) * (static_cast< float_t >(1) - colorB.green()),
-					colorA.blue() < static_cast< float_t >(0.5) ?
-						static_cast< float_t >(2) * colorA.blue() * colorB.blue() :
-						static_cast< float_t >(1) - static_cast< float_t >(2) * (static_cast< float_t >(1) - colorA.blue()) * (static_cast< float_t >(1) - colorB.blue()),
+					colorA.red() < static_cast< data_t >(0.5) ?
+						static_cast< data_t >(2) * colorA.red() * colorB.red() :
+						static_cast< data_t >(1) - static_cast< data_t >(2) * (static_cast< data_t >(1) - colorA.red()) * (static_cast< data_t >(1) - colorB.red()),
+					colorA.green() < static_cast< data_t >(0.5) ?
+						static_cast< data_t >(2) * colorA.green() * colorB.green() :
+						static_cast< data_t >(1) - static_cast< data_t >(2) * (static_cast< data_t >(1) - colorA.green()) * (static_cast< data_t >(1) - colorB.green()),
+					colorA.blue() < static_cast< data_t >(0.5) ?
+						static_cast< data_t >(2) * colorA.blue() * colorB.blue() :
+						static_cast< data_t >(1) - static_cast< data_t >(2) * (static_cast< data_t >(1) - colorA.blue()) * (static_cast< data_t >(1) - colorB.blue()),
 					Color::alphaBlending(colorA, colorB, premultipliedAlpha)
 				};
 			}
@@ -1312,7 +1296,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			blend (const Color & colorA, const Color & colorB, DrawPixelMode mode, float_t opacity = 1) noexcept
+			blend (const Color & colorA, const Color & colorB, DrawPixelMode mode, data_t opacity = 1) noexcept
 			{
 				switch ( mode )
 				{
@@ -1355,7 +1339,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns a random color.
-			 * @note This version use the C rand() function.
+			 * @warning This version use the unreliable old C rand() function. Color::random method instead.
 			 * @param min The minimum value for the RGB component.
 			 * @param max The maximum value for the RGB component.
 			 * @return Color
@@ -1363,7 +1347,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			quickRandom (float_t min = 0, float_t max = 1) noexcept
+			quickRandom (data_t min = 0, data_t max = 1) noexcept
 			{
 				min = Math::clampToUnit(min);
 				max = Math::clampToUnit(max);
@@ -1372,29 +1356,30 @@ namespace EmEn::Libs::PixelFactory
 					Utility::quickRandom(min, max),
 					Utility::quickRandom(min, max),
 					Utility::quickRandom(min, max),
-					static_cast< float_t >(1)
+					static_cast< data_t >(1)
 				};
 			}
 
 			/**
 			 * @brief Returns a random color.
-			 * @param min The minimum value for the RGB component.
-			 * @param max The maximum value for the RGB component.
+			 * @param randomizer A reference to a randomizer.
+			 * @param min The minimum value for the RGB component. Default 0.
+			 * @param max The maximum value for the RGB component. Default 1.
 			 * @return Color
 			 */
 			[[nodiscard]]
 			static
 			Color
-			random (float_t min = 0, float_t max = 1) noexcept
+			random (Randomizer< data_t > & randomizer, data_t min = 0, data_t max = 1) noexcept
 			{
 				min = Math::clampToUnit(min);
 				max = Math::clampToUnit(max);
 
 				return {
-					Utility::random(min, max),
-					Utility::random(min, max),
-					Utility::random(min, max),
-					static_cast< float_t >(1)
+					randomizer.value(min, max),
+					randomizer.value(min, max),
+					randomizer.value(min, max),
+					static_cast< data_t >(1)
 				};
 			}
 
@@ -1408,7 +1393,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			linearInterpolation (const Color & colorA, const Color & colorB, float_t factor) noexcept
+			linearInterpolation (const Color & colorA, const Color & colorB, data_t factor) noexcept
 			{
 				if ( &colorA == &colorB )
 				{
@@ -1433,7 +1418,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			cosineInterpolation (const Color & colorA, const Color & colorB, float_t factor) noexcept
+			cosineInterpolation (const Color & colorA, const Color & colorB, data_t factor) noexcept
 			{
 				if ( &colorA == &colorB )
 				{
@@ -1461,7 +1446,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			bilinearInterpolation (const Color & bottomLeft, const Color & bottomRight, const Color & topLeft, const Color & topRight, float_t factorX, float_t factorY) noexcept
+			bilinearInterpolation (const Color & bottomLeft, const Color & bottomRight, const Color & topLeft, const Color & topRight, data_t factorX, data_t factorY) noexcept
 			{
 				return Color::linearInterpolation(
 					Color::linearInterpolation(bottomLeft, bottomRight, factorX),
@@ -1483,7 +1468,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			Color
-			bicosineInterpolation (const Color & bottomLeft, const Color & bottomRight, const Color & topLeft, const Color & topRight, float_t factorX, float_t factorY) noexcept
+			biCosineInterpolation (const Color & bottomLeft, const Color & bottomRight, const Color & topLeft, const Color & topRight, data_t factorX, data_t factorY) noexcept
 			{
 				return Color::cosineInterpolation(
 					Color::cosineInterpolation(bottomLeft, bottomRight, factorX),
@@ -1499,7 +1484,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			copy (float_t * target) const noexcept
+			copy (data_t * target) const noexcept
 			{
 				target[0] = m_components[R];
 				target[1] = m_components[G];
@@ -1570,47 +1555,13 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename integer_t >
 			integer_t
-			convertFloatToInteger (float_t value) const noexcept
+			convertFloatToInteger (data_t value) const noexcept
 			{
-				/* Internal type is 'float' */
-				if constexpr ( sizeof(float_t) == 4 )
-				{
-					if constexpr ( sizeof(integer_t) == 8 )
-					{
-						return static_cast< integer_t >(static_cast< long double >(value) * std::numeric_limits<integer_t>::max());
-					}
-					else if constexpr ( sizeof(integer_t) == 4 )
-					{
-						return static_cast< integer_t >(static_cast< double >(value) * std::numeric_limits<integer_t>::max());
-					}
-					else
-					{
-						return static_cast< integer_t >(value * std::numeric_limits<integer_t>::max());
-					}
-				}
+				value = std::max(data_t{0}, std::min(data_t{1}, value));
 
-				/* Internal type is 'double' */
-				if constexpr ( sizeof(float_t) == 8 )
-				{
-					if constexpr ( sizeof(integer_t) == 8 )
-					{
-						return static_cast< integer_t >(static_cast< long double >(value) * std::numeric_limits<integer_t>::max());
-					}
-					else
-					{
-						return static_cast< integer_t >(value * std::numeric_limits<integer_t>::max());
-					}
-				}
-
-				/* Internal type is 'long double' */
-				if constexpr ( sizeof(float_t) == 16 )
-				{
-					return static_cast< integer_t >(value * std::numeric_limits< integer_t >::max());
-				}
-				else
-				{
-					return 0;
-				}
+				return static_cast< integer_t >(
+					static_cast< data_t >(value) * std::numeric_limits< integer_t >::max() + static_cast< data_t >(0.5)
+				);
 			}
 
 			/**
@@ -1621,10 +1572,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			updateFromHSV (float_t hue, float_t saturation, float_t value) noexcept
+			updateFromHSV (data_t hue, data_t saturation, data_t value) noexcept
 			{
-				constexpr auto Min = static_cast< float_t >(0.01);
-				constexpr auto Max = static_cast< float_t >(100);
+				constexpr auto Min = static_cast< data_t >(0.01);
+				constexpr auto Max = static_cast< data_t >(100);
 
 				/* If there is no saturation, so there is no color, and we only use value. */
 				if ( Utility::isZero(saturation) )
@@ -1637,7 +1588,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else
 				{
-					const auto tmp = std::round(hue / static_cast< float_t >(60));
+					const auto tmp = std::round(hue / static_cast< data_t >(60));
 
 					/* Sector 0 to 5 */
 					const auto sector = static_cast< unsigned int >(tmp) % 6;
@@ -1679,7 +1630,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 			}
 
-			std::array< float_t, 4 > m_components{0, 0, 0, 1};
+			std::array< data_t, 4 > m_components{0, 0, 0, 1};
 	};
 
 	using ColorF = Color< float >;
@@ -1737,7 +1688,7 @@ namespace EmEn::Libs::PixelFactory
 	 * @note With signed integer, negative number will count for 0.
 	 * @tparam input_t The type of integer data. Default uint8_t.
 	 * @tparam output_t The color data type. Default float.
-	 * @param color A reference to a STL array.
+	 * @param color A reference to an STL array.
 	 * @return Color< output_t >
 	 */
 	template< typename input_t = uint8_t, typename output_t = float >
@@ -1758,7 +1709,7 @@ namespace EmEn::Libs::PixelFactory
 	 * @note With signed integer, negative number will count for 0.
 	 * @tparam input_t The type of integer data. Default uint8_t.
 	 * @tparam output_t The color data type. Default float.
-	 * @param color A reference to a STL array.
+	 * @param color A reference to an STL array.
 	 * @return Color< output_t >
 	 */
 	template< typename input_t = uint8_t, typename output_t = float >

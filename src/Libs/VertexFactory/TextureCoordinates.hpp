@@ -29,6 +29,7 @@
 /* STL inclusions. */
 #include <cmath>
 #include <type_traits>
+#include <numbers>
 
 /* Local inclusions for usages. */
 #include "Libs/Math/Base.hpp"
@@ -90,9 +91,9 @@ namespace EmEn::Libs::VertexFactory::TextureCoordinates
 	{
 		return {
 			/* S angle (longitude). */
-			std::atan2(position[Math::X], position[Math::Z]) + Math::Pi< float_t >,
+			std::atan2(position[Math::X], position[Math::Z]) + std::numbers::pi_v< float_t >,
 			/* T angle (latitude). */
-			static_cast< float_t >(1.0) - std::acos(position[Math::Y] / radius) / Math::Pi< float_t >,
+			static_cast< float_t >(1.0) - std::acos(position[Math::Y] / radius) / std::numbers::pi_v< float_t >,
 			static_cast< float_t >(0)
 		};
 	}

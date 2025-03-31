@@ -61,12 +61,20 @@ namespace EmEn
 
 		if ( m_screen == nullptr )
 		{
-			Tracer::error(ClassId, "Unable to get a screen to display the notifier !");
+			Tracer::error(ClassId, "Unable to create a screen !");
 
 			return false;
 		}
 
 		m_surface = m_screen->createSurface< Overlay::Surface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
+
+		if ( m_surface == nullptr )
+		{
+			Tracer::error(ClassId, "Unable to create a surface !");
+
+			return false;
+		}
+
 		m_surface->pixmap().fill(Transparent);
 
 		{
@@ -74,7 +82,7 @@ namespace EmEn
 			m_font = Resources::Manager::instance()->fonts().getDefaultResource();
 
 			m_processor.setPixmap(m_surface->pixmap());
-			m_processor.setFont(&m_font->font());
+			m_processor.setFont(m_font->font(), 16U);
 			m_processor.setFontColor(White);
 		}
 
@@ -86,7 +94,6 @@ namespace EmEn
 	{
 		this->destroyTimers();
 
-		m_processor.setFont(nullptr);
 		m_font.reset();
 
 		m_screen.reset();

@@ -66,6 +66,7 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Destructs a named item.
+			 * @note As a trait mechanism, 'virtual' keyword is useless here.
 			 */
 			virtual ~NameableTrait () = default;
 

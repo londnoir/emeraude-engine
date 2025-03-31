@@ -42,8 +42,7 @@
 
 /* Local inclusions for usages. */
 #include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
-#include "Physics/PhysicalObjectProperties.hpp"
+#include "Physics/MovableTrait.hpp"
 
 /* Forward declarations. */
 namespace EmEn
@@ -122,11 +121,19 @@ namespace EmEn::Scenes::Component
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/**
 			 * @brief Sets the physical properties application state.
@@ -156,7 +163,11 @@ namespace EmEn::Scenes::Component
 			 * @return const AbstractEntity &
 			 */
 			[[nodiscard]]
-			const AbstractEntity & parentEntity () const noexcept;
+			const AbstractEntity &
+			parentEntity () const noexcept
+			{
+				return m_parentEntity;
+			}
 
 			/**
 			 * @brief Returns whether the parent entity has the movable trait.
@@ -166,26 +177,15 @@ namespace EmEn::Scenes::Component
 			bool isParentEntityMovable () const noexcept;
 
 			/**
-			 * @brief Initializes that entity from JSON rules.
-			 * @param jsonData A native json value from project JsonCpp.
-			 * @return bool
-			 */
-			virtual bool initialize (const Json::Value & jsonData) noexcept;
-
-			/**
 			 * @brief Returns true if the component is renderable.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool isRenderable () const noexcept;
-
-			/**
-			 * @brief Returns to the renderable instance, if component is visual.
-			 * @warning Can be null !
-			 * @return std::shared_ptr< Graphics::RenderableInstance::Abstract >
-			 */
-			[[nodiscard]]
-			virtual std::shared_ptr< Graphics::RenderableInstance::Abstract > getRenderableInstance () const noexcept;
+			bool
+			isRenderable () const noexcept
+			{
+				return this->getRenderableInstance() != nullptr;
+			}
 
 			/**
 			 * @brief Returns to the renderable, if component is visual.
@@ -200,14 +200,22 @@ namespace EmEn::Scenes::Component
 			 * @return const Physics::PhysicalObjectProperties &
 			 */
 			[[nodiscard]]
-			const Physics::PhysicalObjectProperties & physicalObjectProperties () const noexcept;
+			const Physics::PhysicalObjectProperties &
+			physicalObjectProperties () const noexcept
+			{
+				return m_physicalObjectProperties;
+			}
 
 			/**
 			 * @brief Returns physical properties of the component.
 			 * @return Physics::PhysicalObjectProperties &
 			 */
 			[[nodiscard]]
-			Physics::PhysicalObjectProperties & physicalObjectProperties () noexcept;
+			Physics::PhysicalObjectProperties &
+			physicalObjectProperties () noexcept
+			{
+				return m_physicalObjectProperties;
+			}
 
 			/**
 			 * @brief Returns the absolute coordinates of this component using parent node.
@@ -222,6 +230,26 @@ namespace EmEn::Scenes::Component
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept;
+
+			/**
+			 * @brief Initializes that entity from JSON rules.
+			 * @param jsonData A native json value from project JsonCpp.
+			 * @return bool
+			 */
+			virtual bool initialize (const Json::Value & jsonData) noexcept;
+
+			/**
+			 * @brief Returns to the renderable instance, if component is visual.
+			 * @warning Can be null !
+			 * @return std::shared_ptr< Graphics::RenderableInstance::Abstract >
+			 */
+			[[nodiscard]]
+			virtual
+			std::shared_ptr< Graphics::RenderableInstance::Abstract >
+			getRenderableInstance () const noexcept
+			{
+				return nullptr;
+			}
 
 			/**
 			 * @brief Returns the type of component.

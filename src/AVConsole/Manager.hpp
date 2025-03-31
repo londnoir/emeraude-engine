@@ -43,8 +43,7 @@
 #include "Libs/ObservableTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "AbstractVirtualAudioDevice.hpp"
-#include "AbstractVirtualVideoDevice.hpp"
+#include "AbstractVirtualDevice.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Abstract.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Cubemap.hpp"
@@ -126,39 +125,39 @@ namespace EmEn::AVConsole
 			/**
 			 * @brief Returns a video device by its name.
 			 * @param deviceId A reference to a string.
-			 * @return std::shared_ptr< AbstractVirtualVideoDevice >
+			 * @return std::shared_ptr< AbstractVirtualDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualVideoDevice > getVideoDevice (const std::string & deviceId) const noexcept;
+			std::shared_ptr< AbstractVirtualDevice > getVideoDevice (const std::string & deviceId) const noexcept;
 
 			/**
-			 * @brief Returns a audio device by its name.
+			 * @brief Returns an audio device by its name.
 			 * @param deviceId A reference to a string.
-			 * @return std::shared_ptr< AbstractVirtualAudioDevice >
+			 * @return std::shared_ptr< AbstractVirtualDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualAudioDevice > getAudioDevice (const std::string & deviceId) const noexcept;
+			std::shared_ptr< AbstractVirtualDevice > getAudioDevice (const std::string & deviceId) const noexcept;
 
 			/**
 			 * @brief Returns a list of video sources.
-			 * @return std::vector< std::shared_ptr< AbstractVirtualVideoDevice > >
+			 * @return std::vector< std::shared_ptr< AbstractVirtualDevice > >
 			 */
 			[[nodiscard]]
-			std::vector< std::shared_ptr< AbstractVirtualVideoDevice > > getVideoDeviceSources () const noexcept;
+			std::vector< std::shared_ptr< AbstractVirtualDevice > > getVideoDeviceSources () const noexcept;
 
 			/**
 			 * @brief Returns a list of audio sources.
-			 * @return std::vector< std::shared_ptr< AbstractVirtualAudioDevice > >
+			 * @return std::vector< std::shared_ptr< AbstractVirtualDevice > >
 			 */
 			[[nodiscard]]
-			std::vector< std::shared_ptr< AbstractVirtualAudioDevice > > getAudioDeviceSources () const noexcept;
+			std::vector< std::shared_ptr< AbstractVirtualDevice > > getAudioDeviceSources () const noexcept;
 
 			/**
 			 * @brief Returns the primary video device.
-			 * @return std::shared_ptr< AbstractVirtualVideoDevice >
+			 * @return std::shared_ptr< AbstractVirtualDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualVideoDevice >
+			std::shared_ptr< AbstractVirtualDevice >
 			getPrimaryVideoDevice () const noexcept
 			{
 				if ( m_primaryOutputVideoDeviceId.empty() )
@@ -171,10 +170,10 @@ namespace EmEn::AVConsole
 
 			/**
 			 * @brief Returns the primary audio device.
-			 * @return std::shared_ptr< AbstractVirtualAudioDevice >
+			 * @return std::shared_ptr< AbstractVirtualDevice >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< AbstractVirtualAudioDevice >
+			std::shared_ptr< AbstractVirtualDevice >
 			getPrimaryAudioDevice () const noexcept
 			{
 				if ( m_primaryOutputAudioDeviceId.empty() )
@@ -187,8 +186,8 @@ namespace EmEn::AVConsole
 
 			/**
 			 * @brief Returns a printable device List.
-			 * @param deviceType
-			 * @param directionType
+			 * @param deviceType The type of devices. Default both.
+			 * @param directionType The direction of connexion. Default both.
 			 * @return std::string
 			 */
 			[[nodiscard]]
@@ -233,7 +232,7 @@ namespace EmEn::AVConsole
 			 * @param primaryDevice Set the device as primary for its connexion type. Default false.
 			 * @return bool
 			 */
-			bool addVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device, bool primaryDevice = false) noexcept;
+			bool addVideoDevice (const std::shared_ptr< AbstractVirtualDevice > & device, bool primaryDevice = false) noexcept;
 
 			/**
 			 * @brief Adds a virtual audio device.
@@ -241,21 +240,21 @@ namespace EmEn::AVConsole
 			 * @param primaryDevice Set the device as primary for its connexion type. Default false.
 			 * @return bool
 			 */
-			bool addAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device, bool primaryDevice = false) noexcept;
+			bool addAudioDevice (const std::shared_ptr< AbstractVirtualDevice > & device, bool primaryDevice = false) noexcept;
 
 			/**
 			 * @brief Removes a virtual video device.
 			 * @param device A reference to a virtual video device smart pointer.
 			 * @return bool
 			 */
-			bool removeVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device) noexcept;
+			bool removeVideoDevice (const std::shared_ptr< AbstractVirtualDevice > & device) noexcept;
 
 			/**
 			 * @brief Removes a virtual audio device.
 			 * @param device A reference to a virtual audio device smart pointer.
 			 * @return bool
 			 */
-			bool removeAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device) noexcept;
+			bool removeAudioDevice (const std::shared_ptr< AbstractVirtualDevice > & device) noexcept;
 
 			/**
 			 * @brief Creates a render to shadow map (Texture2D) device.
@@ -384,6 +383,7 @@ namespace EmEn::AVConsole
 
 			/**
 			 * @brief Clears all device from the console.
+			 * @return void
 			 */
 			void clear () noexcept;
 
@@ -410,8 +410,8 @@ namespace EmEn::AVConsole
 			 */
 			bool autoSelectPrimaryInputAudioDevice () noexcept;
 
-			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualVideoDevice > > m_virtualVideoDevices;
-			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualAudioDevice > > m_virtualAudioDevices;
+			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualDevice > > m_virtualVideoDevices;
+			std::unordered_map< std::string, std::shared_ptr< AbstractVirtualDevice > > m_virtualAudioDevices;
 			std::set< std::shared_ptr< Graphics::RenderTarget::ShadowMap::Abstract > > m_renderToShadowMaps;
 			std::set< std::shared_ptr< Graphics::RenderTarget::Texture::Abstract > > m_renderToTextures;
 			std::set< std::shared_ptr< Graphics::RenderTarget::View::Abstract > > m_renderToViews;

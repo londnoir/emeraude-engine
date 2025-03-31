@@ -94,14 +94,14 @@ namespace EmEn::Graphics::RenderTarget::ShadowMap
 			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
 			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceConnected() */
-			void onSourceConnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onSourceConnected() */
+			void onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onSourceDisconnected() */
-			void onSourceDisconnected (AbstractVirtualVideoDevice * sourceDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onSourceDisconnected() */
+			void onSourceDisconnected (AbstractVirtualDevice * sourceDevice) noexcept override;
 
 			ViewMatrices3DUBO m_viewMatrices;
 	};

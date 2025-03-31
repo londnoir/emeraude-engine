@@ -30,7 +30,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 
 /* Local inclusions for usages. */
 
@@ -38,9 +38,9 @@ namespace EmEn::Graphics::RenderTarget
 {
 	/**
 	 * @brief The base class for all render target filters.
-	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This is a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This is a virtual video device.
 	 */
-	class AbstractFilter : public AVConsole::AbstractVirtualVideoDevice
+	class AbstractFilter : public AVConsole::AbstractVirtualDevice
 	{
 		protected:
 

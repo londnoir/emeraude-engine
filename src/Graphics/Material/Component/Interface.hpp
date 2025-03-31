@@ -31,8 +31,7 @@
 #include <memory>
 #include <string>
 
-/* Local inclusions for usages. */
-#include "Graphics/Types.hpp"
+#include "Saphir/Declaration/Sampler.hpp"
 
 namespace EmEn::Graphics
 {
@@ -135,7 +134,16 @@ namespace EmEn::Graphics::Material::Component
 			 * @return std::shared_ptr< TextureResource::Abstract >
 			 */
 			[[nodiscard]]
-			virtual std::shared_ptr< TextureResource::Abstract > textureResource () const noexcept = 0;
+			virtual std::shared_ptr<TextureResource::Abstract> textureResource() const noexcept = 0;
+
+			/**
+			 * @brief Returns a sample declaration for the GLSL code.
+			 * @warning Check for the component type being a texture before !
+			 * @param materialSet The material descriptor set index.
+			 * @return Saphir::Declaration::Sampler
+			 */
+			[[nodiscard]]
+			virtual Saphir::Declaration::Sampler getSampler (uint32_t materialSet) const noexcept = 0;
 
 		protected:
 

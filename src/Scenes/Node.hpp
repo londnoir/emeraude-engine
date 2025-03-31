@@ -315,6 +315,14 @@ namespace EmEn::Scenes
 				return this;
 			}
 
+			/** @copydoc EmEn::Scenes::AbstractEntity::getMovableTrait() const */
+			[[nodiscard]]
+			const MovableTrait *
+			getMovableTrait () const noexcept override
+			{
+				return this;
+			}
+
 			/** @copydoc EmEn::Physics::MovableTrait::getWorldVelocity() const */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept override;
@@ -623,6 +631,9 @@ namespace EmEn::Scenes
 
 			/** @copydoc EmEn::Scenes::AbstractEntity::onProcessLogics() */
 			bool onProcessLogics (const Scene & scene) noexcept override;
+
+			/** @copydoc EmEn::Scenes::AbstractEntity::onContentModified() */
+			void onContentModified () noexcept override;
 
 			/* Flag names. */
 			static constexpr auto IsDiscardable{NextFlag + 0UL};

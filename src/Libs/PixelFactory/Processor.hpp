@@ -27,51 +27,46 @@
 #pragma once
 
 /* STL inclusions. */
-#include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
+#include <cmath>
+#include <cassert>
 #include <limits>
 #include <type_traits>
 
 /* Local inclusions. */
-#include "Area.hpp"
-#include "Color.hpp"
-#include "Libs/Math/Base.hpp"
 #include "Libs/Math/Circle.hpp"
 #include "Libs/Math/Segment.hpp"
-#include "Libs/Math/Vector.hpp"
 #include "Pixmap.hpp"
-#include "Types.hpp"
 
 namespace EmEn::Libs::PixelFactory
 {
 	/**
 	 * @brief The pixmap processor is used to performs operations to a targeted pixmap.
 	 * @TODO Use swap buffer to optimize some of operations.
-	 * @tparam precision_t A numeric type to define the depth precision of pixel.
+	 * @note For further addition look with : https://github.com/podgorskiy/EnvMapTooL
+	 * @tparam pixel_data_t The pixel component type for the pixmap depth precision. Default uint8_t.
+	 * @tparam dimension_t The type of unsigned integer used for pixmap dimension. Default uint32_t.
 	 */
-	template< typename precision_t = uint8_t >
-	requires (std::is_arithmetic_v< precision_t >)
+	template< typename pixel_data_t = uint8_t, typename dimension_t = uint32_t >
+	requires (std::is_arithmetic_v< pixel_data_t > && std::is_unsigned_v< dimension_t >)
 	class Processor final
 	{
 		public:
 
-			/* https://github.com/podgorskiy/EnvMapTooL */
 			/**
 			 * @brief Constructs a processor on a pixmap.
 			 * @param target A reference to a target pixmap.
-			 * @param filteringMode Which filter mode to use when resizing occurs. Default FilteringMode::Linear.
 			 */
 			explicit
-			Processor (Pixmap< precision_t > & target, FilteringMode filteringMode = FilteringMode::Linear) noexcept
-				: m_target(target), m_filteringMode(filteringMode)
+			Processor (Pixmap< pixel_data_t, dimension_t > & target) noexcept
+				: m_target(target)
 			{
 
 			}
 
 			/**
-			 * @brief Multiplies the pixels value by a scalar.
+			 * @brief Multiplies pixels value by a scalar.
 			 * @tparam scale_t The type of scalar. Default float.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param scalar A scalar value.
@@ -79,7 +74,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename scale_t = float, typename color_data_t = float >
 			bool
-			scale (scale_t scalar) noexcept requires (std::is_floating_point_v< scale_t >)
+			scaleValue (scale_t scalar) noexcept requires (std::is_floating_point_v< scale_t >)
 			{
 				if ( !this->checkPixmap() )
 				{
@@ -87,18 +82,18 @@ namespace EmEn::Libs::PixelFactory
 				}
 
 				m_target.template forEachPixel< color_data_t >([scalar] (Color< color_data_t > & pixel) {
-					pixel * scalar;
+					pixel *= scalar;
 
 					return true;
 				});
 
-				m_target.setOverallUpdated();
+				m_target.markEverythingUpdated();
 
 				return true;
 			}
 
 			/**
-			 * @brief Multiplies the value of sub-channel pixel by a scalar.
+			 * @brief Multiplies pixels sub-channel value by a scalar.
 			 * @tparam scale_t The type of scalar. Default float.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param scalar A scalar value.
@@ -107,7 +102,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename scale_t = float, typename color_data_t = float >
 			bool
-			scale (scale_t scalar, Channel channel) noexcept requires (std::is_floating_point_v< scale_t >)
+			scaleValue (scale_t scalar, Channel channel) noexcept requires (std::is_floating_point_v< scale_t >)
 			{
 				if ( !this->checkPixmap() )
 				{
@@ -137,31 +132,33 @@ namespace EmEn::Libs::PixelFactory
 					return true;
 				});
 
-				m_target.setOverallUpdated();
+				m_target.markEverythingUpdated();
 
 				return true;
 			}
 
 			/**
-			 * @brief Draws a line between two point on the pixmap.
-			 * @tparam vectorData_t The vector data type. Default int.
-			 * @tparam dataColor_t The color data type. Default float.
+			 * @brief Draws a line (Bresenham algorithm) between two point on the pixmap.
+			 * @todo Check for "Cohen-Sutherland" or "Liang-Barsky" algorithms for speed efficiency.
+			 * @tparam vector_data_t The vector data type. Default int32_t.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param pointA A reference to a vector for the execute coordinates of the line.
 			 * @param pointB A reference to a vector for the end coordinates of the line.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename vectorData_t = int, typename dataColor_t = float >
+			template< typename vector_data_t = int32_t, typename color_data_t = float >
 			bool
-			drawSegment (Math::Vector< 2, vectorData_t > pointA, Math::Vector< 2, vectorData_t > pointB, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawSegment (Math::Vector< 2, vector_data_t > pointA, Math::Vector< 2, vector_data_t > pointB, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				if ( !this->checkPixmap() )
 				{
 					return false;
 				}
 
-				const auto width = static_cast< vectorData_t >(m_target.width());
-				const auto height = static_cast< vectorData_t >(m_target.height());
+				const auto width = static_cast< vector_data_t >(m_target.width());
+				const auto height = static_cast< vector_data_t >(m_target.height());
 
 				/* Checks if segment are inside the Pixmap. */
 				if
@@ -170,8 +167,6 @@ namespace EmEn::Libs::PixelFactory
 					( pointA[Math::Y] < 0 && pointB[Math::Y] < 0 ) || ( pointA[Math::Y] > height && pointB[Math::Y] > height )
 				)
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the segment is completely outside the pixmap" "\n";
-
 					return false;
 				}
 
@@ -205,15 +200,15 @@ namespace EmEn::Libs::PixelFactory
 				const auto yStep = (pointA[Math::Y] < pointB[Math::Y] ) ? 1 : -1;
 				auto y = pointA[Math::Y];
 
-				for( auto x = pointA[Math::X]; x <= pointB[Math::X]; ++x )
+				for ( auto x = pointA[Math::X]; x <= pointB[Math::X]; ++x )
 				{
 					if ( steep )
 					{
-						m_target.blendPixel(static_cast< size_t >(y), static_cast< size_t >(x), color, mode);
+						m_target.blendFreePixel(static_cast< dimension_t >(y), static_cast< dimension_t >(x), color, mode);
 					}
 					else
 					{
-						m_target.blendPixel(static_cast< size_t >(x), static_cast< size_t >(y), color, mode);
+						m_target.blendFreePixel(static_cast< dimension_t >(x), static_cast< dimension_t >(y), color, mode);
 					}
 
 					error -= deltaY;
@@ -230,79 +225,82 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Draws a line between two point on the pixmap.
-			 * @tparam dataSegment_t The segment data type. Default int.
-			 * @tparam dataColor_t The color data type. Default float.
+			 * @tparam segment_data_t The segment data type. Default int32_t.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param segment A reference to a segment.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataSegment_t = int, typename dataColor_t = float >
+			template< typename segment_data_t = int32_t, typename color_data_t = float >
 			bool
-			drawSegment (const Math::Segment< dataSegment_t > & segment, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataSegment_t >)
+			drawSegment (const Math::Segment< segment_data_t > & segment, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< segment_data_t >)
 			{
 				return this->drawSegment(segment.start(), segment.end(), color, mode);
 			}
 
 			/**
 			 * @brief Draws a circle on the pixmap.
-			 * @tparam dataColor_t The color data type. Default float.
+			 * @todo Check boundary before calling blendFreePixel() and use blendPixel().
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param center The center of the circle.
 			 * @param radius The radius of the circle.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataColor_t = float >
+			template< typename vector_data_t = int32_t, typename color_data_t = float >
 			bool
-			drawCircle (const Math::Vector< 2, int > & center, size_t radius, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawCircle (const Math::Vector< 2, vector_data_t > & center, vector_data_t radius, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				if ( !this->checkPixmap() )
 				{
 					return false;
 				}
 
-				auto x = 0UL;
-				auto y = radius;
-				auto delta = radius - 1;
+				vector_data_t x = 0;
+				vector_data_t y = radius;
+				vector_data_t delta = radius - 1;
 
 				while ( y >= x )
 				{
-					const auto signedX = static_cast< int >(x);
-					const auto signedY = static_cast< int >(y);
+					const auto signedX = static_cast< int32_t >(x);
+					const auto signedY = static_cast< int32_t >(y);
 
 					/* Quadrant 1 */
-					m_target.blendPixel(signedX + center.x(), signedY + center.y(), color, mode);
-					m_target.blendPixel(signedY + center.x(), signedX + center.y(), color, mode);
+					m_target.blendFreePixel(signedX + center.x(), signedY + center.y(), color, mode);
+					m_target.blendFreePixel(signedY + center.x(), signedX + center.y(), color, mode);
 
 					/* Quadrant 2 */
-					m_target.blendPixel(-signedX + center.x(), signedY + center.y(), color, mode);
-					m_target.blendPixel(-signedY + center.x(), signedX + center.y(), color, mode);
+					m_target.blendFreePixel(-signedX + center.x(), signedY + center.y(), color, mode);
+					m_target.blendFreePixel(-signedY + center.x(), signedX + center.y(), color, mode);
 
 					/* Quadrant 3 */
-					m_target.blendPixel(signedX + center.x(), -signedY + center.y(), color, mode);
-					m_target.blendPixel(signedY + center.x(), -signedX + center.y(), color, mode);
+					m_target.blendFreePixel(signedX + center.x(), -signedY + center.y(), color, mode);
+					m_target.blendFreePixel(signedY + center.x(), -signedX + center.y(), color, mode);
 
 					/* Quadrant 4 */
-					m_target.blendPixel(-signedX + center.x(), -signedY + center.y(), color, mode);
-					m_target.blendPixel(-signedY + center.x(), -signedX + center.y(), color, mode);
+					m_target.blendFreePixel(-signedX + center.x(), -signedY + center.y(), color, mode);
+					m_target.blendFreePixel(-signedY + center.x(), -signedX + center.y(), color, mode);
 
 					if ( delta >= 2 * x )
 					{
 						delta -= (2 * x) - 1;
 
-						x++;
+						++x;
 					}
 					else if ( delta <= 2 * (radius - y) )
 					{
 						delta += (2 * y) - 1;
 
-						y--;
+						--y;
 					}
 					else
 					{
 						delta += 2 * (y - x - 1);
 
-						y--;
-						x++;
+						--y;
+						++x;
 					}
 				}
 
@@ -311,85 +309,89 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Draws a circle on the pixmap.
-			 * @tparam dataColor_t The color data type. Default float.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param circle A reference to a circle.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataColor_t = float >
+			template< typename color_data_t = float >
 			bool
-			drawCircle (const Math::Circle< float > & circle, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawCircle (const Math::Circle< float > & circle, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				return this->drawCircle(circle.position(), static_cast< size_t >(circle.radius()), color, mode);
 			}
 
 			/**
 			 * @brief Draws a square on the pixmap.
-			 * @tparam dataColor_t The color data type. Default float.
-			 * @param area A reference to a area.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param rectangle A reference to a rectangle.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataColor_t = float >
+			template< typename color_data_t = float >
 			bool
-			drawSquare (const Area< size_t > & area, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawSquare (const Math::Rectangle< int32_t > & rectangle, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				if ( !this->checkPixmapClipping(m_target, area) )
+				if ( !this->checkPixmapClipping(m_target, rectangle) )
 				{
 					return false;
 				}
 
-				this->drawSegment(area.bottomLeft< int >(), area.bottomRight< int >(), color, mode);
-				this->drawSegment(area.bottomRight< int >(), area.topRight< int >(), color, mode);
-				this->drawSegment(area.topLeft< int >(), area.topRight< int >(), color, mode);
-				this->drawSegment(area.topLeft< int >(), area.bottomLeft< int >(), color, mode);
+				this->drawSegment(rectangle.bottomLeft(), rectangle.bottomRight(), color, mode);
+				this->drawSegment(rectangle.bottomRight(), rectangle.topRight(), color, mode);
+				this->drawSegment(rectangle.topLeft(), rectangle.topRight(), color, mode);
+				this->drawSegment(rectangle.topLeft(), rectangle.bottomLeft(), color, mode);
 
 				return true;
 			}
 
 			/**
 			 * @brief Draws a cross on the pixmap.
-			 * @tparam dataColor_t The color data type. Default float.
-			 * @param area A reference to a area.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param rectangle A reference to a rectangle.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataColor_t = float >
+			template< typename color_data_t = float >
 			bool
-			drawCross (const Area< size_t > & area, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawCross (const Math::Rectangle< int32_t > & rectangle, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				if ( !this->checkPixmapClipping(m_target, area) )
+				if ( !this->checkPixmapClipping(m_target, rectangle) )
 				{
 					return false;
 				}
 
-				this->drawSegment(area.topLeft< int >(), area.bottomRight< int >(), color, mode);
-				this->drawSegment(area.bottomLeft< int >(), area.topRight< int >(), color, mode);
+				this->drawSegment(rectangle.topLeft(), rectangle.bottomRight(), color, mode);
+				this->drawSegment(rectangle.bottomLeft(), rectangle.topRight(), color, mode);
 
 				return true;
 			}
 
 			/**
 			 * @brief Draws a straight cross on the pixmap.
-			 * @tparam dataColor_t The color data type. Default float.
-			 * @param area A reference to a area.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param rectangle A reference to a rectangle.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
+			 * @return bool
 			 */
-			template< typename dataColor_t = float >
+			template< typename color_data_t = float >
 			bool
-			drawStraightCross (const Area< size_t > & area, const Color< dataColor_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< dataColor_t >)
+			drawStraightCross (const Math::Rectangle< int32_t > & rectangle, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				if ( !this->checkPixmapClipping(m_target, area) )
+				if ( !this->checkPixmapClipping(m_target, rectangle) )
 				{
 					return false;
 				}
 
-				const auto midX = static_cast< int >(area.offsetX() + (area.width() / 2));
-				const auto midY = static_cast< int >(area.offsetY() + (area.height() / 2));
+				const auto midX = rectangle.left() + (rectangle.width() / 2);
+				const auto midY = rectangle.top() + (rectangle.height() / 2);
 
-				this->drawSegment({midX, static_cast< int >(area.offsetY())}, {midX, static_cast< int >(area.offsetYb())}, color, mode);
-				this->drawSegment({static_cast< int >(area.offsetX()), midY}, {static_cast< int >(area.offsetXb()), midY}, color, mode);
+				this->drawSegment({midX, rectangle.top()}, {midX, rectangle.bottom()}, color, mode);
+				this->drawSegment({rectangle.left(), midY}, {rectangle.right(), midY}, color, mode);
 
 				return true;
 			}
@@ -402,7 +404,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			move (int xDirection, int yDirection) noexcept
+			move (int32_t xDirection, int32_t yDirection) noexcept
 			{
 				if ( !this->checkPixmap() )
 				{
@@ -421,7 +423,7 @@ namespace EmEn::Libs::PixelFactory
 				if ( std::abs(xDirection) < m_target.width() && std::abs(yDirection) < m_target.height() )
 				{
 					const auto rowSize = m_target.pitch();
-					const auto xShift = xDirection * static_cast< int >(m_target.colorCount());
+					const auto xShift = xDirection * static_cast< int32_t >(m_target.colorCount());
 
 					/* NOTE : Defines chunk sizes to move. */
 					const auto xLimit = rowSize - std::abs(xShift);
@@ -454,7 +456,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				m_target.setOverallUpdated();
+				m_target.markEverythingUpdated();
 
 				return this->swapBuffers();
 			}
@@ -466,7 +468,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			move (const Math::Vector< 2, int > & direction) noexcept
+			move (const Math::Vector< 2, int32_t > & direction) noexcept
 			{
 				return this->move(direction[Math::X], direction[Math::Y]);
 			}
@@ -479,7 +481,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			shift (int xDirection, int yDirection) noexcept
+			shift (int32_t xDirection, int32_t yDirection) noexcept
 			{
 				if ( !this->checkPixmap() )
 				{
@@ -538,7 +540,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				m_target.setOverallUpdated();
+				m_target.markEverythingUpdated();
 
 				return this->swapBuffers();
 			}
@@ -550,7 +552,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			shift (const Math::Vector< 2, int > & direction) noexcept
+			shift (const Math::Vector< 2, int32_t > & direction) noexcept
 			{
 				return this->shift(direction[Math::X], direction[Math::Y]);
 			}
@@ -561,7 +563,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			shiftTextArea (int distance) noexcept
+			shiftTextArea (int32_t distance) noexcept
 			{
 				if ( !this->checkPixmap() )
 				{
@@ -588,7 +590,7 @@ namespace EmEn::Libs::PixelFactory
 					std::memcpy(m_swapBuffer.data(), m_target.rowPointer(std::abs(distance)), bufferSize);
 				}
 
-				m_target.setOverallUpdated();
+				m_target.markEverythingUpdated();
 
 				return this->swapBuffers();
 			}
@@ -599,156 +601,38 @@ namespace EmEn::Libs::PixelFactory
 			 * @param width The new width.
 			 * @param height The new height.
 			 * @param filteringMode The filtering mode to apply during the resize. Default FilteringMode::Linear.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			resize (const Pixmap< precision_t > & source, size_t width, size_t height, FilteringMode filteringMode = FilteringMode::Linear) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			resize (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, FilteringMode filteringMode = FilteringMode::Linear) noexcept
 			{
 				if ( !source.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is invalid !" "\n";
-
 					return {};
 				}
 
 				/* Simple copy if same size. */
 				if ( width == source.width() && height == source.height() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is already at good dimension !" "\n";
-
 					return source;
 				}
 
-				Pixmap< precision_t > output{width, height, source.channelMode()};
-
-				const auto colorCount = source.colorCount();
-				const auto xRatio = static_cast< float >(source.width() - 1) / static_cast< float >(width);
-				const auto yRatio = static_cast< float >(source.height() - 1) / static_cast< float >(height);
-				const auto & pixels = source.data();
-				auto & data = output.data();
+				Pixmap< pixel_data_t, dimension_t > output{width, height, source.channelMode()};
 
 				switch ( filteringMode )
 				{
 					case FilteringMode::Cubic :
-						std::cerr << __PRETTY_FUNCTION__ << ", the cubic sampling is not yet implemented ! Using linear filtering instead." "\n";
-
-						[[fallthrough]];
+						resizeCubic(source, width, height, output);
+						break;
 
 					case FilteringMode::Linear :
-					{
-						size_t dstIndex = 0;
-
-						/* Y (row) on the destination */
-						for ( size_t y = 0; y < height; y++ )
-						{
-							const auto realY = yRatio * static_cast< float >(y);
-
-							const auto yFloor = static_cast< size_t >(std::floor(realY));
-							const auto yCeil = static_cast< size_t >(std::ceil(realY));
-
-							/* Source row of pixels */
-							const auto srcRowA = yFloor * source.width();
-							const auto srcRowB = yCeil * source.width();
-
-							const auto yFactor = realY - static_cast< float >(yFloor);
-
-							/* X (column) on the destination */
-							for ( size_t x = 0; x < width; x++ )
-							{
-								const auto realX = static_cast< float >(x) * xRatio;
-
-								const auto xFloor = static_cast< size_t >(std::floor(realX));
-								const auto xCeil = static_cast< size_t >(std::ceil(realX));
-
-								/* Source pixel */
-								const auto srcIndexA = (srcRowA + xFloor) * colorCount;
-								const auto srcIndexB = (srcRowA + xCeil) * colorCount;
-								const auto srcIndexC = (srcRowB + xFloor) * colorCount;
-								const auto srcIndexD = (srcRowB + xCeil) * colorCount;
-
-								const auto xFactor = realX - static_cast< float >(xFloor);
-
-								/* FIXME: provoke "invalid read of size 1" */
-								switch ( source.channelMode() )
-								{
-									case ChannelMode::Grayscale :
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA], pixels[srcIndexB], pixels[srcIndexC], pixels[srcIndexD], xFactor, yFactor);
-										break;
-
-									case ChannelMode::GrayscaleAlpha :
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA], pixels[srcIndexB], pixels[srcIndexC], pixels[srcIndexD], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+1], pixels[srcIndexB+1], pixels[srcIndexC+1], pixels[srcIndexD+1], xFactor, yFactor);
-										break;
-
-									case ChannelMode::RGB :
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA], pixels[srcIndexB], pixels[srcIndexC], pixels[srcIndexD], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+1], pixels[srcIndexB+1], pixels[srcIndexC+1], pixels[srcIndexD+1], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+2], pixels[srcIndexB+2], pixels[srcIndexC+2], pixels[srcIndexD+2], xFactor, yFactor);
-										break;
-
-									case ChannelMode::RGBA :
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA], pixels[srcIndexB], pixels[srcIndexC], pixels[srcIndexD], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+1], pixels[srcIndexB+1], pixels[srcIndexC+1], pixels[srcIndexD+1], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+2], pixels[srcIndexB+2], pixels[srcIndexC+2], pixels[srcIndexD+2], xFactor, yFactor);
-										data[dstIndex++] = Processor::bilinearFiltering(pixels[srcIndexA+3], pixels[srcIndexB+3], pixels[srcIndexC+3], pixels[srcIndexD+3], xFactor, yFactor);
-										break;
-
-									default:
-										break;
-								}
-							}
-						}
-					}
+						resizeLinear(source, width, height, output);
 						break;
 
 					case FilteringMode::Nearest :
-					{
-						size_t destinationIndex = 0;
-
-						/* Y (row) on the destination */
-						for ( size_t destinationY = 0; destinationY < height; destinationY++ )
-						{
-							const auto sourceY = static_cast< size_t >(std::round(yRatio * static_cast< float >(destinationY)));
-							const auto sourceRowIndex = sourceY * source.width() * colorCount;
-
-							/* X (column) on the destination */
-							for ( size_t destinationX = 0; destinationX < width; destinationX++ )
-							{
-								const auto sourceX = static_cast< size_t >(std::round(xRatio * static_cast< float >(destinationX)));
-								const auto sourceIndex = sourceRowIndex + (sourceX * colorCount);
-
-								switch ( source.channelMode() )
-								{
-									case ChannelMode::Grayscale :
-										data[destinationIndex++] = pixels[sourceIndex];
-										break;
-
-									case ChannelMode::GrayscaleAlpha :
-										data[destinationIndex++] = pixels[sourceIndex];
-										data[destinationIndex++] = pixels[sourceIndex+1];
-										break;
-
-									case ChannelMode::RGB :
-										data[destinationIndex++] = pixels[sourceIndex];
-										data[destinationIndex++] = pixels[sourceIndex+1];
-										data[destinationIndex++] = pixels[sourceIndex+2];
-										break;
-
-									case ChannelMode::RGBA :
-										data[destinationIndex++] = pixels[sourceIndex];
-										data[destinationIndex++] = pixels[sourceIndex+1];
-										data[destinationIndex++] = pixels[sourceIndex+2];
-										data[destinationIndex++] = pixels[sourceIndex+3];
-										break;
-
-									default:
-										break;
-								}
-							}
-						}
-					}
+						resizeNearest(source, width, height, output);
 						break;
 				}
 
@@ -760,51 +644,42 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a pixmap to resize.
 			 * @param ratio The scale ratio.
 			 * @param filteringMode The filtering mode to apply during the resize. Default FilteringMode::Linear.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			resize (const Pixmap< precision_t > & source, float ratio, FilteringMode filteringMode = FilteringMode::Linear) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			resize (const Pixmap< pixel_data_t, dimension_t > & source, float ratio, FilteringMode filteringMode = FilteringMode::Linear) noexcept
 			{
 				return Processor::resize(source, static_cast< size_t >(source.width() * ratio), static_cast< size_t >(source.height() * ratio), filteringMode);
 			}
 
 			/**
 			 * @brief Returns a cropped version of the Pixmap.
-			 * @param source A reference to a pixmap to resize.
-			 * @param area A reference to an area.
-			 * @return Pixmap< data_t >
+			 * @param source A reference to a pixmap.
+			 * @param rectangle A reference to a rectangle.
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			crop (const Pixmap< precision_t > & source, const Area< size_t > & area) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			crop (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & rectangle) noexcept
 			{
-				if ( !source.isValid() )
+				if ( !source.isValid() || !rectangle.isValid() || !rectangle.isIntersect(source.width(), source.height()) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmap is invalid !" "\n";
-
 					return {};
 				}
 
-				if ( !area.isValid() || !area.isIntersect(source.width(), source.height()) )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the area is invalid or do not intersect the pixmap !" "\n";
-
-					return {};
-				}
-
-				Pixmap< precision_t > output{area.width(), area.height(), source.channelMode()};
+				Pixmap< pixel_data_t, dimension_t > output{rectangle.width(), rectangle.height(), source.channelMode()};
 
 				const auto rowBytes = output.pitch();
-				const auto pixelBytes = source.colorCount() * sizeof(precision_t);
+				const auto pixelBytes = source.colorCount() * sizeof(pixel_data_t);
 
-				for ( size_t rowIndex = 0; rowIndex < area.height(); rowIndex++ )
+				for ( size_t rowIndex = 0; rowIndex < rectangle.height(); rowIndex++ )
 				{
-					const auto baseY = rowIndex + area.offsetY();
+					const auto baseY = rowIndex + rectangle.top();
 					const auto destinationIndex = rowIndex * rowBytes;
-					const auto sourceIndex = (baseY * source.width() + area.offsetX()) * pixelBytes;
+					const auto sourceIndex = (baseY * source.width() + rectangle.left()) * pixelBytes;
 
 					std::memcpy(output.data().data() + destinationIndex, source.data().data() + sourceIndex, rowBytes);
 				}
@@ -813,15 +688,120 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
+			 * @brief Returns an extended version of the pixmap. Borders will be black.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param source A reference to a pixmap.
+			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			template < typename color_data_t = float >
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			extend (const Pixmap< pixel_data_t, dimension_t > & source, const std::array< dimension_t, 4 > & borders) noexcept requires (std::is_floating_point_v< color_data_t >)
+			{
+				Pixmap< pixel_data_t, dimension_t > target{
+					source.width() + borders[0] + borders[2],
+					source.height() + borders[1] + borders[3],
+					source.channelMode()
+				};
+
+				Processor processor{target};
+				processor.blit(source, {
+					borders[0],
+					borders[1],
+					source.width(),
+					source.height()
+				});
+
+				return target;
+			}
+
+			/**
+			 * @brief Returns a cropped version of the Pixmap.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param source A reference to a pixmap.
+			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
+			 * @param color A reference to a color.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			template < typename color_data_t = float >
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			extend (const Pixmap< pixel_data_t, dimension_t > & source, const std::array< dimension_t, 4 > & borders, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
+			{
+				Pixmap< pixel_data_t, dimension_t > target{
+					source.width() + borders[0] + borders[2],
+					source.height() + borders[1] + borders[3],
+					source.channelMode()
+				};
+
+				Processor processor{target};
+				processor.blit(source, {
+					borders[0],
+					borders[1],
+					source.width(),
+					source.height()
+				});
+
+				/* Top */
+				if ( borders[1] > 0 )
+				{
+					processor.copy(color, {
+						0,
+						0,
+						target.width(),
+						borders[1]
+					});
+				}
+
+				/* Bottom */
+				if ( borders[3] > 0 )
+				{
+					processor.copy(color, {
+						0,
+						target.height() - borders[3],
+						target.width(),
+						borders[3]
+					});
+				}
+
+				/* Right */
+				if ( borders[0] > 0 )
+				{
+					processor.copy(color, {
+						0,
+						borders[1],
+						borders[0],
+						source.height()
+					});
+				}
+
+				/* Left */
+				if ( borders[2] > 0 )
+				{
+					processor.copy(color, {
+						target.width() - borders[2],
+						borders[1],
+						borders[2],
+						source.height()
+					});
+				}
+
+				return target;
+			}
+
+			/**
 			 * @brief Returns one channel of the pixmap as a new grayscale pixmap.
 			 * @param source A reference to a pixmap.
 			 * @param channel The desired channel to extract.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			extractChannel (const Pixmap< precision_t > & source, Channel channel) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			extractChannel (const Pixmap< pixel_data_t, dimension_t > & source, Channel channel) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -864,7 +844,7 @@ namespace EmEn::Libs::PixelFactory
 						break;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), ChannelMode::Grayscale};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), ChannelMode::Grayscale};
 
 				const auto pixelCount = source.pixelCount();
 
@@ -881,12 +861,12 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a pixmap.
 			 * @param mode The conversion mode. Default LumaRec709.
 			 * @param option Additional parameter for specific mode. Default 0.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			toGrayscale (const Pixmap< precision_t > & source, GrayscaleConversionMode mode = GrayscaleConversionMode::Average, int option = 0) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			toGrayscale (const Pixmap< pixel_data_t, dimension_t > & source, GrayscaleConversionMode mode = GrayscaleConversionMode::Average, int option = 0) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -898,19 +878,19 @@ namespace EmEn::Libs::PixelFactory
 					return source;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), ChannelMode::Grayscale};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), ChannelMode::Grayscale};
 
 				const auto pixelCount = source.pixelCount();
 
 				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
 				{
-					if constexpr ( std::is_floating_point_v< precision_t > )
+					if constexpr ( std::is_floating_point_v< pixel_data_t > )
 					{
 						*output.pixelPointer(pixelIndex) = source.pixel(pixelIndex).luminance(mode, option);
 					}
 					else
 					{
-						*output.pixelPointer(pixelIndex) = source.pixel(pixelIndex).template luminanceInteger<precision_t>(mode, option);
+						*output.pixelPointer(pixelIndex) = source.pixel(pixelIndex).template luminanceInteger< pixel_data_t >(mode, option);
 					}
 				}
 
@@ -920,12 +900,12 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns a pixmap in RGB mode.
 			 * @param source A reference to a pixmap.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			toRGB (const Pixmap< precision_t > & source) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			toRGB (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -937,7 +917,7 @@ namespace EmEn::Libs::PixelFactory
 					return source;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), ChannelMode::RGB};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), ChannelMode::RGB};
 
 				const auto pixelCount = source.pixelCount();
 
@@ -953,12 +933,12 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns a pixmap in RGBA mode.
 			 * @param source A reference to a pixmap.
 			 * @param opacity Alpha default value. Default 1.0.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			toRGBA (const Pixmap< precision_t > & source, float opacity = 1.0F) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			toRGBA (const Pixmap< pixel_data_t, dimension_t > & source, float opacity = 1.0F) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -970,7 +950,7 @@ namespace EmEn::Libs::PixelFactory
 					return source;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), ChannelMode::RGBA};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), ChannelMode::RGBA};
 
 				const auto pixelCount = source.pixelCount();
 
@@ -999,7 +979,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 
 				/* Gets a copy. */
-				Pixmap< precision_t > pixmap{m_target};
+				Pixmap< pixel_data_t, dimension_t > pixmap{m_target};
 
 				switch ( mode )
 				{
@@ -1029,21 +1009,19 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Mirrors the pixmap on X axis, Y axis or both axis.
 			 * @param base A reference to a pixmap.
 			 * @param mode The mirror mode desired.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			mirror (const Pixmap< precision_t > & base, MirrorMode mode) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			mirror (const Pixmap< pixel_data_t, dimension_t > & base, MirrorMode mode) noexcept
 			{
 				if ( !base.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", base Pixmap is invalid !" "\n";
-
 					return {};
 				}
 
-				Pixmap< precision_t > output{base.width(), base.height(), base.channelMode()};
+				Pixmap< pixel_data_t, dimension_t > output{base.width(), base.height(), base.channelMode()};
 
 				switch ( mode )
 				{
@@ -1070,15 +1048,159 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Inverses the colors.
-			 * @note This leave the alpha channel untouched.
+			 * @brief Rotates orthogonally a pixmap with an angle of +90°.
 			 * @param source A reference to a pixmap.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< precision_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			inverseColors (const Pixmap< precision_t > & source) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			rotateQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< pixel_data_t, dimension_t > target{source.height(), source.width(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the last column of the target (top to bottom). */
+				size_t coordX = target.width() - 1;
+				size_t coordY = 0;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY >= target.height() - 1 )
+					{
+						--coordX;
+						coordY = 0;
+					}
+					else
+					{
+						++coordY;
+					}
+				}
+
+				return target;
+			}
+
+			/**
+			 * @brief Rotates orthogonally a pixmap with an angle of +180°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			rotateHalfTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< pixel_data_t, dimension_t > target{source.width(), source.height(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the last row of the target (right to left). */
+				size_t coordX = target.width() - 1;
+				size_t coordY = target.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordX == 0 )
+					{
+						coordX = target.width() - 1;
+						--coordY;
+					}
+					else
+					{
+						--coordX;
+					}
+				}
+
+				return target;
+			}
+
+			/**
+			 * @brief Rotates orthogonally a pixmap with an angle of +270°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			rotateThreeQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< pixel_data_t, dimension_t > target{source.height(), source.width(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the first column of the target (bottom to top). */
+				size_t coordX = 0;
+				size_t coordY = target.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY == 0 )
+					{
+						++coordX;
+						coordY = target.height() - 1;
+					}
+					else
+					{
+						--coordY;
+					}
+				}
+
+				return target;
+			}
+
+			/**
+			 * @brief Inverses the colors.
+			 * @note This leave the alpha channel untouched.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			inverseColors (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -1090,7 +1212,7 @@ namespace EmEn::Libs::PixelFactory
 					return source;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), source.channelMode()};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
 
 				const auto pixelCount = source.pixelCount();
 
@@ -1099,9 +1221,9 @@ namespace EmEn::Libs::PixelFactory
 					const auto * pixelSrc = source.pixelPointer(pixelIndex);
 					auto pixelDst = output.pixelPointer(pixelIndex);
 
-					pixelDst[0] = std::numeric_limits< precision_t >::max() - pixelSrc[0];
-					pixelDst[1] = std::numeric_limits< precision_t >::max() - pixelSrc[1];
-					pixelDst[2] = std::numeric_limits< precision_t >::max() - pixelSrc[2];
+					pixelDst[0] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[0];
+					pixelDst[1] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[1];
+					pixelDst[2] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[2];
 				}
 
 				return output;
@@ -1112,12 +1234,12 @@ namespace EmEn::Libs::PixelFactory
 			 * @note If swapAlpha is active, ARGB -> BGRA.
 			 * @param source A reference to a pixmap.
 			 * @param swapAlpha Set to swap alpha channel too.
-			 * @return Pixmap< data_t >
+			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
 			static
-			Pixmap< precision_t >
-			swapChannels (const Pixmap< precision_t > & source, bool swapAlpha = false) noexcept
+			Pixmap< pixel_data_t, dimension_t >
+			swapChannels (const Pixmap< pixel_data_t, dimension_t > & source, bool swapAlpha = false) noexcept
 			{
 				if ( !source.isValid() )
 				{
@@ -1129,7 +1251,7 @@ namespace EmEn::Libs::PixelFactory
 					return source;
 				}
 
-				Pixmap< precision_t > output{source.width(), source.height(), source.channelMode()};
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
 
 				const auto elementCount = source.elementCount();
 				const auto stride = source.colorCount();
@@ -1190,14 +1312,14 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
-			 * @warning Pixmaps involved must have the same color count.
+			 * @warning Pixmap involved must have the same color count.
 			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to an area on source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param sourceClip A reference to a rectangle on source pixmap.
+			 * @param destinationClip A reference to a rectangle on target pixmap.
 			 * @return bool
 			 */
 			bool
-			blit (const Pixmap< precision_t > & source, const Area< size_t > & sourceClip, const Area< size_t > & destinationClip) const noexcept
+			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
 			{
 				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
 				{
@@ -1207,23 +1329,21 @@ namespace EmEn::Libs::PixelFactory
 				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
 				if ( source.channelMode() != m_target.channelMode() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmaps must have the same channel mode in order to make a blit operation !" "\n";
-
 					return false;
 				}
 
-				const auto pixelSize = m_target.colorCount() * sizeof(precision_t);
+				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
 				const auto rowSize = destinationClip.width() * pixelSize;
 
 				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
 				{
-					const auto sourceIndex = ((sourceClip.offsetY() + destinationY) * source.width() + sourceClip.offsetX()) * pixelSize;
-					const auto destinationIndex = ((destinationClip.offsetY() + destinationY) * m_target.width() + destinationClip.offsetX()) * pixelSize;
+					const auto sourceIndex = ((sourceClip.top() + destinationY) * source.width() + sourceClip.left()) * pixelSize;
+					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
 
 					std::memcpy(m_target.data().data() + destinationIndex, source.data().data() + sourceIndex, rowSize);
 				}
 
-				m_target.setRegionAsUpdated(destinationClip);
+				m_target.markRectangleUpdated(destinationClip);
 
 				return true;
 			}
@@ -1233,7 +1353,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a source pixmap.
 			 */
 			bool
-			blit (const Pixmap< precision_t > & source) const noexcept
+			blit (const Pixmap< pixel_data_t, dimension_t > & source) const noexcept
 			{
 				const auto sourceArea = source.area();
 
@@ -1242,13 +1362,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @warning Pixmaps involved must have the same color count.
+			 * @warning Pixmap involved must have the same color count.
 			 * @param source A reference to a source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param destinationClip A reference to a rectangle. on target pixmap.
 			 * @return bool
 			 */
 			bool
-			blit (const Pixmap< precision_t > & source, const Area< size_t > & destinationClip) const noexcept
+			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
 			{
 				return this->blit(source, {source.width(), source.height()}, destinationClip);
 			}
@@ -1257,16 +1377,16 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Copies raw data to a clipped area of the target pixmap.
 			 * @warning Be sure to have enough data in the pointer.
 			 * @param rawData A reference to a structure of raw data.
-			 * @param sourceClip A reference to an area on source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param sourceClip A reference to a rectangle. on source pixmap.
+			 * @param destinationClip A reference to a rectangle. on target pixmap.
 			 * @return bool
 			 */
 			bool
-			blit (const RawPixmapData< precision_t > & rawData, const Area< size_t > & sourceClip, const Area< size_t > & destinationClip) const noexcept
+			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
 			{
 				if ( sourceClip.isOutside(rawData.width, rawData.height) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is outside the pixmap !" "\n";
+					assert("The clipping area is outside the pixmap !");
 
 					return false;
 				}
@@ -1279,23 +1399,21 @@ namespace EmEn::Libs::PixelFactory
 				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
 				if ( rawData.colorCount != m_target.colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmaps must have the same channel mode in order to make a blit operation !" "\n";
-
 					return false;
 				}
 
-				const auto pixelSize = m_target.colorCount() * sizeof(precision_t);
+				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
 				const auto rowSize = destinationClip.width() * pixelSize;
 
 				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
 				{
-					const auto sourceIndex = ((sourceClip.offsetY() + destinationY) * rawData.width + sourceClip.offsetX()) * pixelSize;
-					const auto destinationIndex = ((destinationClip.offsetY() + destinationY) * m_target.width() + destinationClip.offsetX()) * pixelSize;
+					const auto sourceIndex = ((sourceClip.top() + destinationY) * rawData.width + sourceClip.left()) * pixelSize;
+					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
 
 					std::memcpy(m_target.data().data() + destinationIndex, rawData.pointer + sourceIndex, rowSize);
 				}
 
-				m_target.setRegionAsUpdated(destinationClip);
+				m_target.markRectangleUpdated(destinationClip);
 
 				return true;
 			}
@@ -1304,11 +1422,11 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Copies raw data to a clipped area of the target pixmap.
 			 * @warning Be sure to have enough data in the pointer.
 			 * @param rawData A reference to a structure of raw data.
-			 * @param clip A reference to an area on target pixmap. This will be used as the source clip and the destination clip.
+			 * @param clip A reference to a rectangle. on target pixmap. This will be used as the source clip and the destination clip.
 			 * @return bool
 			 */
 			bool
-			blit (const RawPixmapData< precision_t > & rawData, const Area< size_t > & clip) const noexcept
+			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & clip) const noexcept
 			{
 				return this->blit(rawData, clip, clip);
 			}
@@ -1316,14 +1434,14 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
 			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to an area on source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param sourceClip A reference to a rectangle. on source pixmap.
+			 * @param destinationClip A reference to a rectangle. on target pixmap.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @param opacity A global opacity. Default 1.0.
 			 * @return bool
 			 */
 			bool
-			copy (const Pixmap< precision_t > & source, Area< size_t > sourceClip, Area< size_t > destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
 				/* NOTE: Check if we can replace the copy operation by a blit operation (much faster). */
 				if (
@@ -1343,19 +1461,19 @@ namespace EmEn::Libs::PixelFactory
 
 				for ( size_t y = 0; y < destinationClip.height(); y++ )
 				{
-					const auto sourceY = sourceClip.offsetY() + y;
-					const auto destinationY = destinationClip.offsetY() + y;
+					const auto sourceY = sourceClip.top() + y;
+					const auto destinationY = destinationClip.top() + y;
 
 					for ( size_t x = 0; x < destinationClip.width(); x++ )
 					{
-						const auto sourceX = sourceClip.offsetX() + x;
-						const auto destinationX = destinationClip.offsetX() + x;
+						const auto sourceX = sourceClip.left() + x;
+						const auto destinationX = destinationClip.left() + x;
 
 						m_target.blendPixel(destinationX, destinationY, source.pixel(sourceX, sourceY), mode, opacity);
 					}
 				}
 
-				m_target.setRegionAsUpdated(destinationClip);
+				m_target.markRectangleUpdated(destinationClip);
 
 				return true;
 			}
@@ -1369,24 +1487,24 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			copy (const Pixmap< precision_t > & source, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
-				const auto sourceArea = source.area();
+				const auto sourceClip = source.template rectangle< dimension_t >();
 
-				return this->copy(source, sourceArea, sourceArea, mode, opacity);
+				return this->copy(source, sourceClip, sourceClip, mode, opacity);
 			}
 
 			/**
 			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
 			 * @note The source pixmap will be used from top-left corner.
 			 * @param source A reference to a source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param destinationClip A reference to a rectangle. on target pixmap.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @param opacity A global opacity. Default 1.0.
 			 * @return bool
 			 */
 			bool
-			copy (const Pixmap< precision_t > & source, const Area< size_t > & destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
 				return this->copy(source, source.area(), destinationClip, mode, opacity);
 			}
@@ -1402,10 +1520,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			copy (const Pixmap< precision_t > & source, int xPosition, int yPosition, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, int32_t xPosition, int32_t yPosition, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
-				Area< size_t > sourceClip;
-				Area< size_t > destinationClip;
+				Math::Rectangle< dimension_t > sourceClip;
+				Math::Rectangle< dimension_t > destinationClip;
 
 				if ( xPosition < 0 )
 				{
@@ -1413,14 +1531,14 @@ namespace EmEn::Libs::PixelFactory
 
 					if ( shiftSize >= source.width() )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", the source pixmap do not lie in target pixmap on X axis !" "\n";
+						assert("The source pixmap do not lie in target pixmap on X axis !");
 
 						return false;
 					}
 
 					const auto newWidth = source.width() - shiftSize;
 
-					sourceClip.setOffsetX(shiftSize);
+					sourceClip.setLeft(shiftSize);
 					sourceClip.setWidth(newWidth);
 
 					destinationClip.setWidth(newWidth);
@@ -1429,7 +1547,7 @@ namespace EmEn::Libs::PixelFactory
 				{
 					sourceClip.setWidth(source.width());
 
-					destinationClip.setOffsetX(static_cast< size_t >(xPosition));
+					destinationClip.setLeft(static_cast< size_t >(xPosition));
 					destinationClip.setWidth(source.width());
 				}
 
@@ -1439,14 +1557,14 @@ namespace EmEn::Libs::PixelFactory
 
 					if ( shiftSize >= source.height() )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", the source pixmap do not lie in target pixmap on Y axis !" "\n";
+						assert("The source pixmap do not lie in target pixmap on Y axis !");
 
 						return false;
 					}
 
 					const auto newHeight = source.height() - shiftSize;
 
-					sourceClip.setOffsetY(shiftSize);
+					sourceClip.setTop(shiftSize);
 					sourceClip.setHeight(newHeight);
 
 					destinationClip.setHeight(newHeight);
@@ -1455,7 +1573,7 @@ namespace EmEn::Libs::PixelFactory
 				{
 					sourceClip.setHeight(source.height());
 
-					destinationClip.setOffsetY(static_cast< size_t >(yPosition));
+					destinationClip.setTop(static_cast< size_t >(yPosition));
 					destinationClip.setHeight(source.height());
 				}
 
@@ -1472,23 +1590,23 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			copy (const Pixmap< precision_t > & source, const Math::Vector< 2, int > & position, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Vector< 2, int32_t > & position, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
 				return this->copy(source, source.area(), position.x(), position.y(), mode, opacity);
 			}
 
 			/**
 			 * @brief Copies a colored area to the target pixmap.
-			 * @tparam colorData_t The color data type. Default float.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param color A reference to a color.
-			 * @param clip A reference to an area.
+			 * @param clip A reference to a rectangle.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @param opacity A global opacity. Default 1.0.
 			 * @return bool
 			 */
-			template< typename colorData_t = float >
+			template< typename color_data_t = float >
 			bool
-			copy (const Color< colorData_t > & color, const Area< size_t > & clip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			copy (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
 				if ( !Processor::checkPixmapClipping(m_target, clip) )
 				{
@@ -1497,17 +1615,17 @@ namespace EmEn::Libs::PixelFactory
 
 				for ( size_t y = 0; y < clip.height(); y++ )
 				{
-					const auto destinationY = clip.offsetY() + y;
+					const auto destinationY = clip.top() + y;
 
 					for ( size_t x = 0; x < clip.width(); x++ )
 					{
-						const auto destinationX = clip.offsetX() + x;
+						const auto destinationX = clip.left() + x;
 
 						m_target.blendPixel(destinationX, destinationY, color, mode, opacity);
 					}
 				}
 
-				m_target.setRegionAsUpdated(clip);
+				m_target.markRectangleUpdated(clip);
 
 				return true;
 			}
@@ -1517,24 +1635,17 @@ namespace EmEn::Libs::PixelFactory
 			 * @note The source pixmap will be used from top-left corner.
 			 * @warning The mask pixmap must be a grayscale.
 			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to an area on source pixmap.
-			 * @param destinationClip A reference to an area on target pixmap.
+			 * @param sourceClip A reference to a rectangle. on source pixmap.
+			 * @param destinationClip A reference to a rectangle. on target pixmap.
 			 * @param mask A reference to a pixmap to act as the stencil mask.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @return bool
 			 */
 			bool
-			stencil (const Pixmap< precision_t > & source, Area< size_t > sourceClip, Area< size_t > destinationClip, const Pixmap< precision_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace) const noexcept
+			stencil (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace) const noexcept
 			{
-				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
+				if ( !mask.isValid() || !mask.isGrayScale() || !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
 				{
-					return false;
-				}
-
-				if ( !mask.isValid() || !mask.isGrayScale() )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", mask pixmap is invalid !" "\n";
-
 					return false;
 				}
 
@@ -1542,8 +1653,8 @@ namespace EmEn::Libs::PixelFactory
 
 				for ( size_t row = 0; row < destinationClip.height(); row++ )
 				{
-					const auto sourceIndex = (((sourceClip.offsetY() + row) * source.width()) + sourceClip.offsetX());
-					const auto destinationIndex = (((destinationClip.offsetY() + row) * m_target.width()) + destinationClip.offsetX());
+					const auto sourceIndex = (((sourceClip.top() + row) * source.width()) + sourceClip.left());
+					const auto destinationIndex = (((destinationClip.top() + row) * m_target.width()) + destinationClip.left());
 
 					/* FIXME: Check the value of the mask. */
 					for ( size_t pixel = 0; pixel < rowPixelCount; ++pixel )
@@ -1552,7 +1663,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				m_target.setRegionAsUpdated(destinationClip);
+				m_target.markRectangleUpdated(destinationClip);
 
 				return true;
 			}
@@ -1562,36 +1673,36 @@ namespace EmEn::Libs::PixelFactory
 			 * @note The source pixmap will be used from top-left corner.
 			 * @warning The mask pixmap must be a grayscale.
 			 * @param source A reference to a source pixmap.
-			 * @param clip A reference to an area on target pixmap.
+			 * @param clip A reference to a rectangle. on target pixmap.
 			 * @param mask A reference to a pixmap to act as the stencil mask.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @param opacity A global opacity. Default 1.0.
 			 * @return bool
 			 */
 			bool
-			stencil (const Pixmap< precision_t > & source, const Area< size_t > & clip, const Pixmap< precision_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			stencil (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & clip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
 				return this->stencil(source, {source.width(), source.height()}, clip, mask, mode, opacity);
 			}
 
 			/**
 			 * @brief Copies a colored area with a stencil mask to the target pixmap.
-			 * @tparam colorData_t The color data type. Default float.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param color A reference to a color.
-			 * @param clip A reference to an area.
+			 * @param clip A reference to a rectangle.
 			 * @param mode Set the copy technic. Default: Replace.
 			 * @param mask A reference to a pixmap to act as the stencil mask.
 			 * @param opacity A global opacity. Default 1.0.
 			 * @return bool
 			 */
-			template< typename colorData_t = float >
+			/*template< typename color_data_t = float >
 			bool
-			stencil (const Color< colorData_t > & /*color*/, const Area< size_t > & /*clip*/, const Pixmap< precision_t > & /*mask*/, DrawPixelMode /*mode*/ = DrawPixelMode::Replace, float /*opacity*/ = 1.0F) const noexcept
+			stencil (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, const Pixmap< precision_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
 			{
-				// FIXME: TODO ...
+				// TODO ...
 
 				return false;
-			}
+			}*/
 
 		private:
 
@@ -1605,7 +1716,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !m_target.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", target pixmap is invalid !" "\n";
+					assert("Target pixmap is invalid !");
 
 					return false;
 				}
@@ -1615,32 +1726,34 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Checks the clipping area within a pixmap.
+			 * @tparam rectangle_data_t The rectangle integer type. Default uint32_t.
 			 * @param pixmap A reference to a pixmap.
-			 * @param clip A reference to an area.
+			 * @param clip A reference to a rectangle.
 			 * @return bool
 			 */
+			template< typename rectangle_data_t = uint32_t >
 			[[nodiscard]]
 			static
 			bool
-			checkPixmapClipping (const Pixmap< precision_t > & pixmap, const Area< size_t > & clip) noexcept
+			checkPixmapClipping (const Pixmap< pixel_data_t, dimension_t > & pixmap, const Math::Rectangle< rectangle_data_t > & clip) noexcept
 			{
 				if ( !pixmap.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmap is invalid !" "\n";
+					assert("Target pixmap is invalid !");
 
 					return false;
 				}
 
 				if ( !clip.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is invalid !" "\n";
+					assert("The clipping area is invalid !");
 
 					return false;
 				}
 
 				if ( clip.isOutside(pixmap.width(), pixmap.height()) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is outside the pixmap !" "\n";
+					assert("The clipping area is outside the pixmap !");
 
 					return false;
 				}
@@ -1650,25 +1763,39 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Checks the clipping area within a pixmap and clamps it on overlapping.
+			 * @tparam rectangle_data_t The rectangle integer type. Default uint32_t.
 			 * @param pixmap A reference to a pixmap.
-			 * @param clip A reference to an area.
+			 * @param clip A reference to a rectangle.
 			 * @return bool
 			 */
+			template< typename rectangle_data_t = uint32_t >
 			[[nodiscard]]
 			static
 			bool
-			checkPixmapClipping (const Pixmap< precision_t > & pixmap, Area< size_t > & clip) noexcept
+			checkPixmapClipping (const Pixmap< pixel_data_t, dimension_t > & pixmap, Math::Rectangle< rectangle_data_t > & clip) noexcept
 			{
-				if ( !Processor::checkPixmapClipping(pixmap, static_cast< const Area< size_t > & >(clip)) )
+				if ( !pixmap.isValid() )
 				{
+					assert("Target pixmap is invalid !");
+
 					return false;
 				}
 
-				/* NOTE: Crop the width and height if overflow the source pixmap. */
-				if ( clip.cropOnOverflow(pixmap.width(), pixmap.height()) )
+				if ( !clip.isValid() )
 				{
-					std::cout << __PRETTY_FUNCTION__ << ", source area overflow fixed to " << clip << " !" "\n";
+					assert("The clipping area is invalid !");
+
+					return false;
 				}
+
+				if ( clip.isOutside(pixmap.width(), pixmap.height()) )
+				{
+					assert("The clipping area is outside the pixmap !");
+
+					return false;
+				}
+
+				clip.cropOnOverflow(pixmap.width(), pixmap.height());
 
 				return true;
 			}
@@ -1680,10 +1807,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			clampSegmentPoint (Math::Vector< 2, int > & pointA, const Math::Vector< 2, int > & pointB) const noexcept
+			clampSegmentPoint (Math::Vector< 2, int32_t > & pointA, const Math::Vector< 2, int32_t > & pointB) const noexcept
 			{
-				const auto width = static_cast< int >(m_target.width());
-				const auto height = static_cast< int >(m_target.height());
+				const auto width = static_cast< int32_t >(m_target.width());
+				const auto height = static_cast< int32_t >(m_target.height());
 
 				if ( pointA[Math::X] < 0 || pointA[Math::Y] < 0 )
 				{
@@ -1694,8 +1821,8 @@ namespace EmEn::Libs::PixelFactory
 						static_cast< float >(pointB[Math::X]), static_cast< float >(pointB[Math::Y])
 					);
 
-					auto x = static_cast< int >(std::roundf(intersection[Math::X]));
-					auto y = static_cast< int >(std::roundf(intersection[Math::Y]));
+					auto x = static_cast< int32_t >(std::roundf(intersection[Math::X]));
+					auto y = static_cast< int32_t >(std::roundf(intersection[Math::Y]));
 
 					if ( x >= 0 && y >= 0 && x < width && y < height )
 					{
@@ -1712,8 +1839,8 @@ namespace EmEn::Libs::PixelFactory
 						static_cast< float >(pointB[Math::X]), static_cast< float >(pointB[Math::Y])
 					);
 
-					x = static_cast< int >(std::roundf(intersection[Math::X]));
-					y = static_cast< int >(std::roundf(intersection[Math::Y]));
+					x = static_cast< int32_t >(std::roundf(intersection[Math::X]));
+					y = static_cast< int32_t >(std::roundf(intersection[Math::Y]));
 
 					if ( x >= 0 && y >= 0 && x < width && y < height )
 					{
@@ -1735,8 +1862,8 @@ namespace EmEn::Libs::PixelFactory
 						static_cast< float >(pointB[Math::X]), static_cast< float >(pointB[Math::Y])
 					);
 
-					auto x = static_cast< int >(std::roundf(intersection[Math::X]));
-					auto y = static_cast< int >(std::roundf(intersection[Math::Y]));
+					auto x = static_cast< int32_t >(std::roundf(intersection[Math::X]));
+					auto y = static_cast< int32_t >(std::roundf(intersection[Math::Y]));
 
 					if ( x >= 0 && y >= 0 && x < width && y < height )
 					{
@@ -1753,8 +1880,8 @@ namespace EmEn::Libs::PixelFactory
 						static_cast< float >(pointB[Math::X]), static_cast< float >(pointB[Math::Y])
 					);
 
-					x = static_cast< int >(std::roundf(intersection[Math::X]));
-					y = static_cast< int >(std::roundf(intersection[Math::Y]));
+					x = static_cast< int32_t >(std::roundf(intersection[Math::X]));
+					y = static_cast< int32_t >(std::roundf(intersection[Math::Y]));
 
 					if ( x >= 0 && y >= 0 && x < width && y < height )
 					{
@@ -1770,7 +1897,10 @@ namespace EmEn::Libs::PixelFactory
 				return true;
 			}
 
-			/** @brief Prepares the swap buffer for copy operations. */
+			/**
+			 * @brief Prepares the swap buffer for copy operations.
+			 * @return void
+			 */
 			void
 			prepareSwapBuffer () noexcept
 			{
@@ -1778,7 +1908,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( m_swapBuffer.size() != size )
 				{
-					m_swapBuffer.resize(size);
+					m_swapBuffer.resize(size, 0);
 				}
 			}
 
@@ -1806,6 +1936,315 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
+			 * @brief Performs the nearest version of Processor::resize().
+			 * @todo Check for SIMD/parralelization
+			 * @param source A reference to a pixmap.
+			 * @param width The new width.
+			 * @param height The new height.
+			 * @param target A writable reference to a pixmap.
+			 * @return void
+			 */
+			static
+			void
+			resizeNearest (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, Pixmap< pixel_data_t, dimension_t > & target) noexcept
+			{
+				const auto colorCount = source.colorCount();
+				const auto xRatio = static_cast< float >(source.width() - 1) / static_cast< float >(width);
+				const auto yRatio = static_cast< float >(source.height() - 1) / static_cast< float >(height);
+
+				const auto & sourceData = source.data();
+				auto & targetData = target.data();
+
+				size_t dstIndex = 0;
+
+				/* Y (row) on the destination */
+				for ( size_t destinationY = 0; destinationY < height; destinationY++ )
+				{
+					const auto sourceY = static_cast< size_t >(std::round(yRatio * static_cast< float >(destinationY)));
+					const auto sourceRowIndex = sourceY * source.width() * colorCount;
+
+					/* X (column) on the destination */
+					for ( size_t destinationX = 0; destinationX < width; destinationX++ )
+					{
+						const auto sourceX = static_cast< size_t >(std::round(xRatio * static_cast< float >(destinationX)));
+						const auto sourceIndex = sourceRowIndex + (sourceX * colorCount);
+
+						switch ( source.channelMode() )
+						{
+							case ChannelMode::Grayscale :
+								targetData[dstIndex++] = sourceData[sourceIndex];
+								break;
+
+							case ChannelMode::GrayscaleAlpha :
+								targetData[dstIndex++] = sourceData[sourceIndex];
+								targetData[dstIndex++] = sourceData[sourceIndex+1];
+								break;
+
+							case ChannelMode::RGB :
+								targetData[dstIndex++] = sourceData[sourceIndex];
+								targetData[dstIndex++] = sourceData[sourceIndex+1];
+								targetData[dstIndex++] = sourceData[sourceIndex+2];
+								break;
+
+							case ChannelMode::RGBA :
+								targetData[dstIndex++] = sourceData[sourceIndex];
+								targetData[dstIndex++] = sourceData[sourceIndex+1];
+								targetData[dstIndex++] = sourceData[sourceIndex+2];
+								targetData[dstIndex++] = sourceData[sourceIndex+3];
+								break;
+
+							default:
+								break;
+						}
+					}
+				}
+			}
+
+			/**
+			 * @brief Performs the linear version of Processor::resize().
+			 * @todo Check for SIMD/parralelization
+			 * @param source A reference to a pixmap.
+			 * @param width The new width.
+			 * @param height The new height.
+			 * @param target A writable reference to a pixmap.
+			 * @return void
+			 */
+			static
+			void
+			resizeLinear (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, Pixmap< pixel_data_t, dimension_t > & target) noexcept
+			{
+				const auto colorCount = source.colorCount();
+				const auto xRatio = static_cast< float >(source.width() - 1) / static_cast< float >(width);
+				const auto yRatio = static_cast< float >(source.height() - 1) / static_cast< float >(height);
+
+				const auto & sourceData = source.data();
+				auto & targetData = target.data();
+
+				size_t dstIndex = 0;
+
+				/* Y (row) on the destination */
+				for ( size_t y = 0; y < height; y++ )
+				{
+					const auto realY = yRatio * static_cast< float >(y);
+
+					const auto yFloor = static_cast< size_t >(std::floor(realY));
+					const auto yCeil = static_cast< size_t >(std::ceil(realY));
+
+					/* Source row of pixels */
+					const auto srcRowA = yFloor * source.width();
+					const auto srcRowB = yCeil * source.width();
+
+					const auto yFactor = realY - static_cast< float >(yFloor);
+
+					/* X (column) on the destination */
+					for ( size_t x = 0; x < width; x++ )
+					{
+						const auto realX = static_cast< float >(x) * xRatio;
+
+						const auto xFloor = static_cast< size_t >(std::floor(realX));
+						const auto xCeil = static_cast< size_t >(std::ceil(realX));
+
+						/* Source pixel */
+						const auto srcIndexA = (srcRowA + xFloor) * colorCount;
+						const auto srcIndexB = (srcRowA + xCeil) * colorCount;
+						const auto srcIndexC = (srcRowB + xFloor) * colorCount;
+						const auto srcIndexD = (srcRowB + xCeil) * colorCount;
+
+						const auto xFactor = realX - static_cast< float >(xFloor);
+
+						switch ( source.channelMode() )
+						{
+							case ChannelMode::Grayscale :
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA], sourceData[srcIndexB], sourceData[srcIndexC], sourceData[srcIndexD], xFactor, yFactor);
+								break;
+
+							case ChannelMode::GrayscaleAlpha :
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA], sourceData[srcIndexB], sourceData[srcIndexC], sourceData[srcIndexD], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+1], sourceData[srcIndexB+1], sourceData[srcIndexC+1], sourceData[srcIndexD+1], xFactor, yFactor);
+								break;
+
+							case ChannelMode::RGB :
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA], sourceData[srcIndexB], sourceData[srcIndexC], sourceData[srcIndexD], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+1], sourceData[srcIndexB+1], sourceData[srcIndexC+1], sourceData[srcIndexD+1], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+2], sourceData[srcIndexB+2], sourceData[srcIndexC+2], sourceData[srcIndexD+2], xFactor, yFactor);
+								break;
+
+							case ChannelMode::RGBA :
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA], sourceData[srcIndexB], sourceData[srcIndexC], sourceData[srcIndexD], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+1], sourceData[srcIndexB+1], sourceData[srcIndexC+1], sourceData[srcIndexD+1], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+2], sourceData[srcIndexB+2], sourceData[srcIndexC+2], sourceData[srcIndexD+2], xFactor, yFactor);
+								targetData[dstIndex++] = Processor::bilinearFiltering(sourceData[srcIndexA+3], sourceData[srcIndexB+3], sourceData[srcIndexC+3], sourceData[srcIndexD+3], xFactor, yFactor);
+								break;
+
+							default:
+								break;
+						}
+					}
+				}
+			}
+
+			/**
+			 * @brief Used during cubic resize.
+			 * @param value The value to clamp
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			static
+			pixel_data_t
+			clampValue (float value) noexcept
+			{
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
+				{
+					return std::max(0.0F, std::min(1.0F, value));
+				}
+				else
+				{
+					constexpr auto maxValue = std::numeric_limits< float >::max();
+
+					return static_cast< pixel_data_t >(std::max(0.0F, std::min(maxValue, value * maxValue + 0.5F)));
+				}
+			}
+
+			/**
+			 * @brief Performs the cubic version of Processor::resize().
+			 * @todo Check for SIMD/parralelization
+			 * @param source A reference to a pixmap.
+			 * @param width The new width.
+			 * @param height The new height.
+			 * @param target A writable reference to a pixmap.
+			 * @return void
+			 */
+			static
+			void
+			resizeCubic (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, Pixmap< pixel_data_t, dimension_t > & target) noexcept
+			{
+				const auto colorCount = source.colorCount();
+				const auto xRatio = static_cast< float >(source.width() - 1) / static_cast< float >(width);
+				const auto yRatio = static_cast< float >(source.height() - 1) / static_cast< float >(height);
+
+				const auto & sourceData = source.data();
+				auto & targetData = target.data();
+
+				size_t dstIndex = 0;
+
+				for ( size_t y = 0; y < height; ++y )
+				{
+					const float realY = yRatio * static_cast< float >(y);
+					const auto yFloor = static_cast< int32_t >(std::floor(realY));
+					const float tY = realY - static_cast< float >(yFloor);
+
+					for ( size_t x = 0; x < width; ++x )
+					{
+						const float realX = xRatio * static_cast< float >(x);
+						const auto xFloor = static_cast< int32_t >(std::floor(realX));
+						const float tX = realX - static_cast< float >(xFloor);
+
+						float interpolatedValues[4] = {0.0F, 0.0F, 0.0F, 0.0F};
+
+						const auto numChannels = static_cast< size_t >(source.colorCount());
+
+						for ( size_t channel = 0; channel < numChannels; ++channel )
+						{
+							float intermediate[4];
+
+							for ( int j = 0; j < 4; ++j )
+							{
+								const int currentY = yFloor - 1 + j;
+
+								float pixel[4];
+
+								for ( int i = 0; i < 4; ++i )
+								{
+									const int currentX = xFloor - 1 + i;
+									const auto color = source.safePixel(currentX, currentY);
+
+									switch ( source.channelMode() )
+									{
+										case ChannelMode::Grayscale:
+											pixel[i] = color.red();
+											break;
+
+										case ChannelMode::GrayscaleAlpha:
+											pixel[i] = channel == 0 ? color.red() : color.alpha();
+											break;
+
+										case ChannelMode::RGB:
+											if ( channel == 0 )
+											{
+												pixel[i] = color.red();
+											}
+											else if ( channel == 1 )
+											{
+												pixel[i] = color.green();
+											}
+											else
+											{
+												pixel[i] = color.blue();
+											}
+											break;
+
+										case ChannelMode::RGBA:
+											if ( channel == 0 )
+											{
+												pixel[i] = color.red();
+											}
+											else if ( channel == 1 )
+											{
+												pixel[i] = color.green();
+											}
+											else if ( channel == 2 )
+											{
+												pixel[i] = color.blue();
+											}
+											else
+											{
+												pixel[i] = color.alpha();
+											}
+											break;
+
+										default:
+											break;
+									}
+								}
+
+								intermediate[j] = Math::cubicInterpolationCatmullRom(pixel[0], pixel[1], pixel[2], pixel[3], tX);
+							}
+
+							interpolatedValues[channel] = Math::cubicInterpolationCatmullRom(intermediate[0], intermediate[1], intermediate[2], intermediate[3], tY);
+						}
+
+						switch ( source.channelMode() )
+						{
+							case ChannelMode::Grayscale :
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[0]);
+								break;
+
+							case ChannelMode::GrayscaleAlpha :
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[0]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[1]);
+								break;
+
+							case ChannelMode::RGB :
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[0]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[1]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[2]);
+								break;
+
+							case ChannelMode::RGBA :
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[0]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[1]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[2]);
+								targetData[dstIndex++] = Processor::clampValue(interpolatedValues[3]);
+								break;
+
+							default:
+								break;
+						}
+					}
+				}
+			}
+
+			/**
 			 * @brief Used during linear resize.
 			 * @param bottomLeft
 			 * @param bottomRight
@@ -1813,14 +2252,14 @@ namespace EmEn::Libs::PixelFactory
 			 * @param topRight
 			 * @param xFactor
 			 * @param yFactor
-			 * @return uint8_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
 			static
-			uint8_t
-			bilinearFiltering (uint8_t bottomLeft, uint8_t bottomRight, uint8_t topLeft, uint8_t topRight, float xFactor, float yFactor) noexcept
+			pixel_data_t
+			bilinearFiltering (pixel_data_t bottomLeft, pixel_data_t bottomRight, pixel_data_t topLeft, pixel_data_t topRight, float xFactor, float yFactor) noexcept
 			{
-				return static_cast< uint8_t >(Math::linearInterpolation(
+				return static_cast< pixel_data_t >(Math::linearInterpolation(
 					Math::linearInterpolation(static_cast< float >(bottomLeft), static_cast< float >(bottomRight), xFactor),
 					Math::linearInterpolation(static_cast< float >(topLeft), static_cast< float >(topRight), xFactor),
 					yFactor
@@ -1835,22 +2274,23 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			static
 			void
-			mirrorX (const Pixmap< precision_t > & source, Pixmap< precision_t > & output) noexcept
+			mirrorX (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & output) noexcept
 			{
 				const auto rowElementCount = source.pitch();
 				const auto rowCount = source.height();
 
 				/* Copy rows in reversed order to new pixmap. */
-				for ( size_t row = 0; row < rowCount; row++ )
+				for ( size_t rowIndex = 0; rowIndex < rowCount; rowIndex++ )
 				{
-					const auto invertedRow = rowCount - (row + 1);
+					const auto invertedRow = rowCount - (rowIndex + 1);
 
-					std::memcpy(output.data().data() + (invertedRow * rowElementCount), source.data().data() + (row * rowElementCount), rowElementCount);
+					std::memcpy(output.data().data() + (invertedRow * rowElementCount), source.data().data() + (rowIndex * rowElementCount), rowElementCount);
 				}
 			}
 
 			/**
 			 * @brief Mirrors the pixmap in Y-Axis.
+			 * @todo Can be optimize with bloc copy (first attempt failed).
 			 * @param source A reference to the input pixmap.
 			 * @param output A reference to the output pixmap.
 			 * @return bool
@@ -1858,7 +2298,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			bool
-			mirrorY (const Pixmap< precision_t > & source, Pixmap< precision_t > & output) noexcept
+			mirrorY (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & output) noexcept
 			{
 				const auto rowCount = source.height();
 				const auto width = source.width();
@@ -1951,7 +2391,7 @@ namespace EmEn::Libs::PixelFactory
 			[[nodiscard]]
 			static
 			bool
-			mirrorBoth (const Pixmap< precision_t > & source, Pixmap< precision_t > & output) noexcept
+			mirrorBoth (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & output) noexcept
 			{
 				const auto componentCount = source.elementCount();
 				const auto stride = source.colorCount();
@@ -1964,7 +2404,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::Grayscale :
 						for ( size_t component = 0; component < componentCount; component++ )
 						{
-							auto invertedComponent = componentCount - (component + 1);
+							const auto invertedComponent = componentCount - (component + 1);
 
 							data[component] = baseData[invertedComponent];
 						}
@@ -1973,7 +2413,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::GrayscaleAlpha :
 						for ( size_t component = 0; component < componentCount; component += stride )
 						{
-							auto invertedComponent = componentCount - (component + stride);
+							const auto invertedComponent = componentCount - (component + stride);
 
 							data[component] = baseData[invertedComponent];
 							data[component+1] = baseData[invertedComponent+1];
@@ -1983,7 +2423,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::RGB :
 						for ( size_t component = 0; component < componentCount; component += stride )
 						{
-							auto invertedComponent = componentCount - (component + stride);
+							const auto invertedComponent = componentCount - (component + stride);
 
 							data[component] = baseData[invertedComponent];
 							data[component+1] = baseData[invertedComponent+1];
@@ -1994,7 +2434,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::RGBA :
 						for ( size_t component = 0; component < componentCount; component += stride )
 						{
-							auto invertedComponent = componentCount - (component + stride);
+							const auto invertedComponent = componentCount - (component + stride);
 
 							data[component] = baseData[invertedComponent];
 							data[component+1] = baseData[invertedComponent+1];
@@ -2010,8 +2450,7 @@ namespace EmEn::Libs::PixelFactory
 				return true;
 			}
 
-			Pixmap< precision_t > & m_target;
-			std::vector< precision_t > m_swapBuffer{};
-			FilteringMode m_filteringMode;
+			Pixmap< pixel_data_t, dimension_t > & m_target;
+			std::vector< pixel_data_t > m_swapBuffer;
 	};
 }

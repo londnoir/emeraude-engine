@@ -51,7 +51,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	void
-	PointLight::onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept
+	PointLight::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
 	{
 		const auto maxDistance =
 			m_radius > 0.0F ?

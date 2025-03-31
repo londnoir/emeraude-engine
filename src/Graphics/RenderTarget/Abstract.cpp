@@ -31,15 +31,12 @@
 #include <string>
 
 /* Local inclusions. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
-#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/Renderer.hpp"
-#include "Graphics/Types.hpp"
-#include "Tracer.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Instance.hpp"
+#include "Tracer.hpp"
 
 namespace EmEn::Graphics::RenderTarget
 {
@@ -49,7 +46,7 @@ namespace EmEn::Graphics::RenderTarget
 	static constexpr auto TracerTag{"RenderTarget"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, AVConsole::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept
-		: AbstractVirtualVideoDevice(name, allowedConnexionType),
+		: AbstractVirtualDevice(name, AVConsole::DeviceType::Video, allowedConnexionType),
 		m_precisions(precisions),
 		m_extent(extent),
 		m_renderArea({

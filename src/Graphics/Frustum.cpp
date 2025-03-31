@@ -40,7 +40,7 @@ namespace EmEn::Graphics
 	using namespace EmEn::Libs;
 	using namespace EmEn::Libs::Math;
 
-	bool Frustum::s_enableFrustumTest = true;
+	bool Frustum::s_enableFrustumTest{true};
 
 	void
 	Frustum::updateProperties (float /*farDistance*/) noexcept
@@ -51,17 +51,44 @@ namespace EmEn::Graphics
 	void
 	Frustum::update (const Matrix< 4, float > & viewProjectionMatrix) noexcept
 	{
-		const auto rowA = viewProjectionMatrix.row(0);
-		const auto rowB = viewProjectionMatrix.row(1);
-		const auto rowC = viewProjectionMatrix.row(2);
-		const auto rowD = viewProjectionMatrix.row(3);
+	    const auto rowA = viewProjectionMatrix.row(0); // X
+	    const auto rowB = viewProjectionMatrix.row(1); // Y
+	    const auto rowC = viewProjectionMatrix.row(2); // Z
+	    const auto rowD = viewProjectionMatrix.row(3); // W
 
-		m_planes[Right].setData((rowD - rowA).normalize());
-		m_planes[Left].setData((rowD + rowA).normalize());
-		m_planes[Bottom].setData((rowD + rowB).normalize());
-		m_planes[Top].setData((rowD - rowB).normalize());
-		m_planes[Far].setData((rowD - rowC).normalize());
-		m_planes[Near].setData((rowD + rowC).normalize());
+	    auto createPlane = [] (const Vector< 4, float > & planeVec) -> Plane< float >
+		{
+	        const auto normal3D = planeVec.toVector3();
+	        const auto magnitude = normal3D.length();
+
+	    	if ( magnitude < std::numeric_limits< float >::epsilon() * 100.0F )
+	    	{
+	            return {};
+	        }
+
+	        const auto normalizedNormal = normal3D / magnitude;
+	        const auto normalizedDistance = planeVec[3] / magnitude;
+
+	        return {normalizedNormal, normalizedDistance};
+	    };
+
+	    // Left Plane (w' + x' >= 0)
+	    m_planes[Left] = createPlane(rowD + rowA);
+
+	    // Right Plane (w' - x' >= 0)
+	    m_planes[Right] = createPlane(rowD - rowA);
+
+	    // Bottom Plane (w' - y' >= 0) --- +Y = Down
+	    m_planes[Bottom] = createPlane(rowD - rowB);
+
+	    // Top Plane (w' + y' >= 0) --- +Y = Down
+	    m_planes[Top] = createPlane(rowD + rowB);
+
+	    // Near Plane (z' >= 0) --- Z in [0, 1]
+	    m_planes[Near] = createPlane(rowC);
+
+	    // Far Plane (w' - z' >= 0) --- Z in [0, 1]
+	    m_planes[Far] = createPlane(rowD - rowC);
 	}
 
 	Frustum::Result
@@ -74,14 +101,14 @@ namespace EmEn::Graphics
 
 		for ( const auto & plane : m_planes )
 		{
-			const auto & data = plane.data();
+			const auto & normal = plane.normal();
 
 			/* Dot product */
-			const auto coordX = data[X] * point[X];
-			const auto coordY = data[Y] * point[Y];
-			const auto coordZ = data[Z] * point[Z];
+			const auto coordX = normal[X] * point[X];
+			const auto coordY = normal[Y] * point[Y];
+			const auto coordZ = normal[Z] * point[Z];
 
-			if ( coordX + coordY + coordZ + data[W] <= 0.0F )
+			if ( coordX + coordY + coordZ + plane.distance() <= 0.0F )
 			{
 				return Result::Outside;
 			}
@@ -104,14 +131,14 @@ namespace EmEn::Graphics
 
 		for ( const auto & plane : m_planes )
 		{
-			const auto & data = plane.data();
+			const auto & normal = plane.normal();
 
 			/* Dot product */
-			const auto coordX = data[X] * position[X];
-			const auto coordY = data[Y] * position[Y];
-			const auto coordZ = data[Z] * position[Z];
+			const auto coordX = normal[X] * position[X];
+			const auto coordY = normal[Y] * position[Y];
+			const auto coordZ = normal[Z] * position[Z];
 
-			const auto distance = coordX + coordY + coordZ + data[W];
+			const auto distance = coordX + coordY + coordZ + plane.distance();
 
 			if ( distance < -radius )
 			{
@@ -201,53 +228,53 @@ namespace EmEn::Graphics
 
 		for ( const auto & plane : m_planes )
 		{
-			const auto & data = plane.data();
+			const auto & normal = plane.normal();
 
-			const auto posX = data[X] * (coordX + size);
-			const auto negX = data[X] * (coordX - size);
+			const auto posX = normal[X] * (coordX + size);
+			const auto negX = normal[X] * (coordX - size);
 
-			const auto posY = data[Y] * (coordY + size);
-			const auto negY = data[Y] * (coordY - size);
+			const auto posY = normal[Y] * (coordY + size);
+			const auto negY = normal[Y] * (coordY - size);
 
-			const auto posZ = data[Z] * (coordZ + size);
-			const auto negZ = data[Z] * (coordZ - size);
+			const auto posZ = normal[Z] * (coordZ + size);
+			const auto negZ = normal[Z] * (coordZ - size);
 
-			if ( negX +  negY +  negZ +  data[W] > 0.0F )
+			if ( negX +  negY +  negZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( posX +  negY +  negZ +  data[W] > 0.0F )
+			if ( posX +  negY +  negZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( negX +  posY +  negZ +  data[W] > 0.0F )
+			if ( negX +  posY +  negZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( posX +  posY +  negZ +  data[W] > 0.0F )
+			if ( posX +  posY +  negZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( negX +  negY +  posZ +  data[W] > 0.0F )
+			if ( negX +  negY +  posZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( posX +  negY +  posZ +  data[W] > 0.0F )
+			if ( posX +  negY +  posZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( negX +  posY +  posZ +  data[W] > 0.0F )
+			if ( negX +  posY +  posZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
 
-			if ( posX +  posY +  posZ +  data[W] > 0.0F )
+			if ( posX +  posY +  posZ + plane.distance() > 0.0F )
 			{
 				continue;
 			}
@@ -271,7 +298,7 @@ namespace EmEn::Graphics
 	}
 
 	std::string
-	to_string (const Frustum & obj) noexcept
+	to_string (const Frustum & obj)
 	{
 		std::stringstream output;
 

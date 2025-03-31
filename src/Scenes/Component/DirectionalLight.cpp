@@ -51,7 +51,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	void
-	DirectionalLight::onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept
+	DirectionalLight::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
 	{
 		const auto maxDistance = Settings::instance()->get< float >(GraphicsShadowMappingMaxDistanceKey, DefaultGraphicsShadowMappingMaxDistance);
 

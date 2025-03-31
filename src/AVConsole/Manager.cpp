@@ -37,16 +37,12 @@
 #include <vector>
 
 /* Local inclusions. */
-#include "AbstractVirtualAudioDevice.hpp"
-#include "AbstractVirtualVideoDevice.hpp"
+#include "AbstractVirtualDevice.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
-#include "Graphics/RenderTarget/ShadowMap/Abstract.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Cubemap.hpp"
 #include "Graphics/RenderTarget/ShadowMap/Texture2D.hpp"
-#include "Graphics/RenderTarget/Texture/Abstract.hpp"
 #include "Graphics/RenderTarget/Texture/Cubemap.hpp"
 #include "Graphics/RenderTarget/Texture/Texture2D.hpp"
-#include "Graphics/RenderTarget/View/Abstract.hpp"
 #include "Graphics/RenderTarget/View/Cubemap.hpp"
 #include "Graphics/RenderTarget/View/Texture2D.hpp"
 #include "Graphics/Renderer.hpp"
@@ -160,8 +156,15 @@ namespace EmEn::AVConsole
 	}
 
 	bool
-	Manager::addVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device, bool primaryDevice) noexcept
+	Manager::addVideoDevice (const std::shared_ptr< AbstractVirtualDevice > & device, bool primaryDevice) noexcept
 	{
+		if ( device->deviceType() != DeviceType::Video )
+		{
+			TraceWarning{ClassId} << "The virtual device '" << device->id() << "' is not a video device !";
+
+			return false;
+		}
+
 		if ( !m_virtualVideoDevices.contains(device->id()) )
 		{
 			if ( !m_virtualVideoDevices.emplace(device->id(), device).second )
@@ -257,8 +260,15 @@ namespace EmEn::AVConsole
 	}
 
 	bool
-	Manager::addAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device, bool primaryDevice) noexcept
+	Manager::addAudioDevice (const std::shared_ptr< AbstractVirtualDevice > & device, bool primaryDevice) noexcept
 	{
+		if ( device->deviceType() != DeviceType::Audio )
+		{
+			TraceWarning{ClassId} << "The virtual device '" << device->id() << "' is not an audio device !";
+
+			return false;
+		}
+
 		if ( !m_virtualAudioDevices.contains(device->id()) )
 		{
 			if ( !m_virtualAudioDevices.emplace(device->id(), device).second )
@@ -301,11 +311,18 @@ namespace EmEn::AVConsole
 	}
 
 	bool
-	Manager::removeVideoDevice (const std::shared_ptr< AbstractVirtualVideoDevice > & device) noexcept
+	Manager::removeVideoDevice (const std::shared_ptr< AbstractVirtualDevice > & device) noexcept
 	{
+		if ( device->deviceType() != DeviceType::Video )
+		{
+			TraceWarning{ClassId} << "The virtual device '" << device->id() << "' is not a video device !";
+
+			return false;
+		}
+
 		/* FIXME: This is clearly shit ! */
 		{
-			const auto abstractView = std::dynamic_pointer_cast< RenderTarget::View::Abstract >(device);
+			const auto abstractView = std::static_pointer_cast< RenderTarget::View::Abstract >(device);
 
 			if ( abstractView != nullptr )
 			{
@@ -313,7 +330,7 @@ namespace EmEn::AVConsole
 			}
 			else
 			{
-				const auto abstractTextures = std::dynamic_pointer_cast< RenderTarget::Texture::Abstract >(device);
+				const auto abstractTextures = std::static_pointer_cast< RenderTarget::Texture::Abstract >(device);
 
 				if ( abstractTextures != nullptr )
 				{
@@ -321,7 +338,7 @@ namespace EmEn::AVConsole
 				}
 				else
 				{
-					const auto abstractShadowMaps = std::dynamic_pointer_cast< RenderTarget::ShadowMap::Abstract >(device);
+					const auto abstractShadowMaps = std::static_pointer_cast< RenderTarget::ShadowMap::Abstract >(device);
 
 					if ( abstractShadowMaps != nullptr )
 					{
@@ -346,8 +363,15 @@ namespace EmEn::AVConsole
 	}
 
 	bool
-	Manager::removeAudioDevice (const std::shared_ptr< AbstractVirtualAudioDevice > & device) noexcept
+	Manager::removeAudioDevice (const std::shared_ptr< AbstractVirtualDevice > & device) noexcept
 	{
+		if ( device->deviceType() != DeviceType::Audio )
+		{
+			TraceWarning{ClassId} << "The virtual device '" << device->id() << "' is not an audio device !";
+
+			return false;
+		}
+
 		if ( m_virtualAudioDevices.erase(device->id()) <= 0 )
 		{
 			TraceInfo{ClassId} << "There is no virtual audio device '" << device->id() << "' registered !";
@@ -507,19 +531,19 @@ namespace EmEn::AVConsole
 		/* Create the render target. */
 		auto renderTarget = std::make_shared< RenderTarget::ShadowMap::Texture2D >(name, resolution);
 
-		/*if ( !renderTarget->create(renderer) )
+		if ( !renderTarget->create(renderer) )
 		{
 			TraceError{ClassId} << "Unable to create the render to shadow map '" << name << "' !";
 
 			return {};
-		}*/
+		}
 
-		/*if ( !this->addVideoDevice(renderTarget) )
+		if ( !this->addVideoDevice(renderTarget) )
 		{
 			TraceError{ClassId} << "Unable to add the render to shadow map '" << name << "' as a virtual video device !";
 
 			return {};
-		}*/
+		}
 
 		return renderTarget;
 	}
@@ -556,7 +580,7 @@ namespace EmEn::AVConsole
 		return renderTarget;
 	}
 
-	std::shared_ptr< AbstractVirtualVideoDevice >
+	std::shared_ptr< AbstractVirtualDevice >
 	Manager::getVideoDevice (const std::string & deviceId) const noexcept
 	{
 		const auto deviceIt = m_virtualVideoDevices.find(deviceId);
@@ -569,7 +593,7 @@ namespace EmEn::AVConsole
 		return deviceIt->second;
 	}
 
-	std::shared_ptr< AbstractVirtualAudioDevice >
+	std::shared_ptr< AbstractVirtualDevice >
 	Manager::getAudioDevice (const std::string & deviceId) const noexcept
 	{
 		const auto deviceIt = m_virtualAudioDevices.find(deviceId);
@@ -582,10 +606,10 @@ namespace EmEn::AVConsole
 		return deviceIt->second;
 	}
 
-	std::vector< std::shared_ptr< AbstractVirtualVideoDevice > >
+	std::vector< std::shared_ptr< AbstractVirtualDevice > >
 	Manager::getVideoDeviceSources () const noexcept
 	{
-		std::vector< std::shared_ptr< AbstractVirtualVideoDevice > > list{};
+		std::vector< std::shared_ptr< AbstractVirtualDevice > > list{};
 		list.reserve(m_virtualVideoDevices.size());
 
 		for ( const auto & device : std::ranges::views::values(m_virtualVideoDevices) )
@@ -599,10 +623,10 @@ namespace EmEn::AVConsole
 		return list;
 	}
 
-	std::vector< std::shared_ptr< AbstractVirtualAudioDevice > >
+	std::vector< std::shared_ptr< AbstractVirtualDevice > >
 	Manager::getAudioDeviceSources () const noexcept
 	{
-		std::vector< std::shared_ptr< AbstractVirtualAudioDevice > > list{};
+		std::vector< std::shared_ptr< AbstractVirtualDevice > > list{};
 		list.reserve(m_virtualAudioDevices.size());
 
 		for ( const auto & device : std::ranges::views::values(m_virtualAudioDevices) )
@@ -702,7 +726,7 @@ namespace EmEn::AVConsole
 	}
 
 	bool
-	Manager::createDefaultSpeaker (Audio::Manager & audioManager, Settings & settings) noexcept
+	Manager::createDefaultSpeaker (Audio::Manager & audioManager, Settings & /*settings*/) noexcept
 	{
 		const auto deviceIt = m_virtualAudioDevices.find(DefaultSpeakerName);
 
@@ -772,7 +796,7 @@ namespace EmEn::AVConsole
 	std::string
 	Manager::getConnexionStates () const noexcept
 	{
-		std::stringstream string{};
+		std::stringstream string;
 
 		string << "Video routes :" "\n";
 
@@ -794,7 +818,7 @@ namespace EmEn::AVConsole
 	std::string
 	Manager::getDeviceList (DeviceType deviceType, ConnexionType directionType) const noexcept
 	{
-		std::stringstream string{};
+		std::stringstream string;
 
 		if ( deviceType == DeviceType::Video || deviceType == DeviceType::Both )
 		{

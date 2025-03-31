@@ -26,20 +26,7 @@
 
 #include "Visual.hpp"
 
-/* STL inclusions. */
-#include <any>
-#include <memory>
-#include <string>
-
 /* Local inclusions. */
-#include "Abstract.hpp"
-#include "Animations/Types.hpp"
-#include "Graphics/RenderableInstance/Unique.hpp"
-#include "Libs/Math/CartesianFrame.hpp"
-#include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
-#include "Libs/ObserverTrait.hpp"
-#include "Libs/Variant.hpp"
 #include "Scenes/Scene.hpp"
 
 namespace EmEn::Scenes::Component
@@ -52,12 +39,12 @@ namespace EmEn::Scenes::Component
 
 	Visual::Visual (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable) noexcept
 		: Abstract(name, parentEntity),
-		m_renderableInstance(std::make_shared< RenderableInstance::Unique >(renderable, this->getWorldCoordinates(), renderable->isSprite() ? RenderableInstance::FacingCamera : 0))
+		m_renderableInstance(std::make_shared< RenderableInstance::Unique >(renderable, this->getWorldCoordinates(), renderable->isSprite() ? RenderableInstance::FacingCamera : RenderableInstance::None))
 	{
 		this->observe(m_renderableInstance.get());
 	}
 
-	std::shared_ptr< Graphics::RenderableInstance::Abstract >
+	std::shared_ptr< RenderableInstance::Abstract >
 	Visual::getRenderableInstance () const noexcept
 	{
 		return m_renderableInstance;
@@ -110,7 +97,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	Visual::playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept
+	Visual::playAnimation (uint8_t /*animationID*/, const Variant & /*value*/, size_t /*cycle*/) noexcept
 	{
 		return false;
 	}

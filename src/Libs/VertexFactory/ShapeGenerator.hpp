@@ -720,8 +720,8 @@ namespace EmEn::Libs::VertexFactory::ShapeGenerator
 			radius = 1;
 		}
 
-		const auto dRHO = Math::Pi< float_t > / static_cast< float_t >(stacks);
-		const auto dTheta = (2 * Math::Pi< float_t >) / static_cast< float_t >(slices);
+		const auto dRHO = std::numbers::pi_v< float_t > / static_cast< float_t >(stacks);
+		const auto dTheta = (2 * std::numbers::pi_v< float_t >) / static_cast< float_t >(slices);
 
 		const auto deltaU = static_cast< float_t >(1) / static_cast< float_t >(slices);
 		const auto deltaV = static_cast< float_t >(1) / static_cast< float_t >(stacks);
@@ -964,7 +964,7 @@ namespace EmEn::Libs::VertexFactory::ShapeGenerator
 		ShapeBuilder< float_t > builder{shape, options};
 
 		const auto radiusStep = (topRadius - baseRadius) / static_cast< float_t >(stacks);
-		const auto stepSizeSlice = (2 * Math::Pi< float_t >) / static_cast< float_t >(slices);
+		const auto stepSizeSlice = (2 * std::numbers::pi_v< float_t >) / static_cast< float_t >(slices);
 
 		/* Texture coordinates */
 		const auto deltaU = static_cast< float_t >(1.0) / static_cast< float_t >(slices);
@@ -1127,7 +1127,7 @@ namespace EmEn::Libs::VertexFactory::ShapeGenerator
 		}
 
 		const auto stepSizeRadial = std::abs(outerRadius - innerRadius) / stacks;
-		const auto stepSizeSlice = (2 * Math::Pi< float_t >) / slices;
+		const auto stepSizeSlice = (2 * std::numbers::pi_v< float_t >) / slices;
 		const auto radialScale = static_cast< float_t >(1) / outerRadius;
 
 		std::array< Math::Vector< 3, float_t >, 4 > positions{};
@@ -1227,8 +1227,8 @@ namespace EmEn::Libs::VertexFactory::ShapeGenerator
 		const auto stacksF = static_cast< float_t >(stacks);
 		const auto slicesF = static_cast< float_t >(slices);
 
-		const auto majorStep = (2 * Math::Pi< float_t >) / stacksF;
-		const auto minorStep = (2 * Math::Pi< float_t >) / slicesF;
+		const auto majorStep = (2 * std::numbers::pi_v< float_t >) / stacksF;
+		const auto minorStep = (2 * std::numbers::pi_v< float_t >) / slicesF;
 
 		std::array< Math::Vector< 3, float_t >, 4 > positions{};
 		std::array< Math::Vector< 3, float_t >, 4 > normals{};

@@ -154,8 +154,8 @@ namespace EmEn::Scenes::Component
 
 		private:
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onTargetConnected() */
-			void onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onTargetConnected() */
+			void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept override;
 
 			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
 			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;

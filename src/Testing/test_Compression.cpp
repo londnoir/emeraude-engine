@@ -30,11 +30,12 @@
 #include <cstring>
 
 /* Local inclusions. */
-#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
-#include "Libs/Compression/ZLIB.hpp"
 #include "Libs/Compression/LZMA.hpp"
 #include "Libs/Compression/LZMA/Compressor.hpp"
 #include "Libs/Compression/LZMA/Decompressor.hpp"
+#include "Libs/Compression/ZLIB.hpp"
+#include "Libs/Randomizer.hpp"
+#include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Libs/Utility.hpp"
 
 using namespace EmEn::Libs;
@@ -47,7 +48,9 @@ createSource (size_t size) noexcept
 {
 	std::string source;
 
-	const auto coordinates = Utility::randomVector< float >(512 * 3 * size, -32000.0F, 32000.0F);
+	Randomizer< float > randomizer;
+
+	const auto coordinates = randomizer.vector(512 * 3 * size, -32000.0F, 32000.0F);
 
 	const auto bytes = coordinates.size() * sizeof(float);
 

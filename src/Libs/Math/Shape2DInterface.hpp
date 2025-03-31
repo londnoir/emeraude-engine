@@ -50,14 +50,14 @@ namespace EmEn::Libs::Math
 			 * @return data_t
 			 */
 			[[nodiscard]]
-			virtual data_t getPerimeter () const noexcept = 0;
+			virtual constexpr data_t getPerimeter () const noexcept = 0;
 
 			/**
 			 * @brief Returns the area of the 2D shape.
 			 * @return data_t
 			 */
 			[[nodiscard]]
-			virtual data_t getArea () const noexcept = 0;
+			virtual constexpr data_t getArea () const noexcept = 0;
 
 		protected:
 

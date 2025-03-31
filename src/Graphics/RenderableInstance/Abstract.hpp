@@ -87,6 +87,7 @@ namespace EmEn::Graphics::RenderableInstance
 	/** @brief Renderable instance flag bits. */
 	enum RenderableInstanceFlagBits : uint32_t
 	{
+		None = 0,
 		/**
 		 * @brief This flag is set when the renderable instance is ready to be rendered in a 3D scene.
 		 * @warning This is different from the renderable flag "IsReadyForInstantiation" !

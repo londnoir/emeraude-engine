@@ -68,13 +68,13 @@ namespace EmEn::Graphics::RenderTarget::View
 	}
 
 	void
-	Cubemap::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Cubemap::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.create(*Graphics::Renderer::instance(), this->id());
 	}
 
 	void
-	Cubemap::onSourceDisconnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Cubemap::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.destroy();
 	}

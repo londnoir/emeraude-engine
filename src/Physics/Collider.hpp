@@ -28,6 +28,7 @@
 
 /* STL inclusions. */
 #include <vector>
+#include <algorithm>
 
 /* Local inclusions for usages. */
 #include "Libs/Math/Vector.hpp"

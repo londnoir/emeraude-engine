@@ -32,15 +32,18 @@
 #include <memory>
 #include <string>
 
+/* Local inclusions for inheritances. */
+#include "Resources/ResourceTrait.hpp"
+
 /* Local inclusions. */
 #include "Libs/PixelFactory/Font.hpp"
 #include "Resources/Container.hpp"
-#include "Resources/ResourceTrait.hpp"
 
 namespace EmEn::Graphics
 {
 	/**
 	 * @brief The font resource class.
+	 * This is a wrapper around PixelFactory's Font class to make it a loadable resource.
 	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class FontResource final : public Resources::ResourceTrait
@@ -106,28 +109,6 @@ namespace EmEn::Graphics
 			}
 
 			/**
-			 * @brief Returns the spacing in pixel.
-			 * @return uint32_t
-			 */
-			[[nodiscard]]
-			uint32_t
-			spacing () const noexcept
-			{
-				return m_spacing;
-			}
-
-			/**
-			 * @brief Returns the line height in pixel.
-			 * @return uint32_t
-			 */
-			[[nodiscard]]
-			uint32_t
-			lineHeight () const noexcept
-			{
-				return m_lineHeight;
-			}
-
-			/**
 			 * @brief Returns a font resource by its name.
 			 * @param resourceName A reference to a string.
 			 * @param directLoad Use the direct loading mode. Default false.
@@ -149,9 +130,7 @@ namespace EmEn::Graphics
 			[[nodiscard]]
 			bool onDependenciesLoaded () noexcept override;
 
-			Libs::PixelFactory::Font< uint8_t > m_data{};
-			uint32_t m_spacing{0};
-			uint32_t m_lineHeight{0};
+			Libs::PixelFactory::Font< uint8_t > m_data;
 	};
 }
 

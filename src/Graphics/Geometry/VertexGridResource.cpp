@@ -405,7 +405,7 @@ namespace EmEn::Graphics::Geometry
 
 				case VertexColorGenMode::UseRandom :
 				{
-					const auto randomColor = Color< float >::random();
+					const auto randomColor = Color< float >::quickRandom();
 
 					buffer.emplace_back(randomColor.red());
 					buffer.emplace_back(randomColor.green());

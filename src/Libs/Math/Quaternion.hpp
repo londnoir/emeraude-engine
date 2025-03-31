@@ -29,7 +29,6 @@
 /* STL inclusions. */
 #include <array>
 #include <cmath>
-#include <iostream>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -40,9 +39,11 @@
 
 namespace EmEn::Libs::Math
 {
-	/** Class defining a Quaternion. */
-	template< typename data_t = float >
-	requires (std::is_arithmetic_v< data_t >)
+	/**
+	 * @brief Class defining a Quaternion.
+	 */
+	template< typename precision_t = float >
+	requires (std::is_floating_point_v< precision_t >)
 	class Quaternion final
 	{
 		public:
@@ -54,90 +55,125 @@ namespace EmEn::Libs::Math
 			/* Real part */
 			static constexpr auto W = 3UL;
 
-			/** Default constructor. */
+			/**
+			 * @brief Constructs a default quaternion.
+			 */
+			constexpr
 			Quaternion () noexcept = default;
 
-			/** Construct from STL array. */
-			explicit Quaternion (const std::array< data_t, 4 > & data) noexcept
+			/**
+			 * @brief Constructs a quaternion from an STL array.
+			 * @param data A reference to an array.
+			 */
+			explicit
+			constexpr
+			Quaternion (const std::array< precision_t, 4 > & data) noexcept
 				: m_data(data)
 			{
 
 			}
 
-			/** Construct from C array.
-			 * @warning  Unsafe ! */
-			explicit Quaternion (const data_t * data) noexcept
-				: m_data(data[0], data[1], data[2], data[3])
-			{
-
-			}
-
-			/** Construct from raw values. */
-			Quaternion (data_t x, data_t y, data_t z, data_t w) noexcept
+			/**
+			 * @brief Constructs a quaternion from values.
+			 * @param x
+			 * @param y
+			 * @param z
+			 * @param w
+			 */
+			constexpr
+			Quaternion (precision_t x, precision_t y, precision_t z, precision_t w) noexcept
 				: m_data{x, y, z, w}
 			{
 
 			}
 
-			/** Construct from euclidian angles. */
-			Quaternion (data_t x, data_t y, data_t z) noexcept
+			/**
+			 * @brief Constructs a quaternion from euler's angle.
+			 * @param x Angle on X-axis expressed in radians.
+			 * @param y Angle on Y-axis expressed in radians.
+			 * @param z Angle on Z-axis expressed in radians.
+			 */
+			Quaternion (precision_t x, precision_t y, precision_t z)
 			{
-				this->setEulerAngles(x, y, z);
+				this->setFromEulerAngles(x, y, z);
 			}
 
-			/** Construct from euclidian angles. */
-			explicit Quaternion (const Vector< 3, data_t > & euler) noexcept
+			/**
+			 * @brief Constructs a quaternion from euler's angle.
+			 * @param vector A reference to a vector of angles X/Y/Z expressed in radians.
+			 */
+			explicit
+			Quaternion (const Vector< 3, precision_t > & vector)
 			{
-				this->setEulerAngles(euler);
+				this->setFromEulerAngles(vector);
 			}
 
-			/** Construct from a vector3. */
-			explicit Quaternion (const Vector< 3, data_t > & vector, data_t real) noexcept
+			/**
+			 * @brief Constructs a quaternion from vector 3.
+			 * @param vector A reference to a vector.
+			 * @param real
+			 */
+			explicit
+			constexpr
+			Quaternion (const Vector< 3, precision_t > & vector, precision_t real) noexcept
 				: m_data{vector[X], vector[Y], vector[Z], real}
 			{
 
 			}
 
-			/** Construct from a vector4. */
-			explicit Quaternion (const Vector< 4, data_t > & vector) noexcept
-				: m_data{vector[Vector< 4, data_t >::X], vector[Vector< 4, data_t >::Y], vector[Vector< 4, data_t >::Z], vector[Vector< 4, data_t >::W]}
+			/**
+			 * @brief Constructs a quaternion from vector 4.
+			 * @param vector A reference to a vector.
+			 */
+			explicit
+			constexpr
+			Quaternion (const Vector< 4, precision_t > & vector) noexcept
+				: m_data{vector[X], vector[Y], vector[Z], vector[W]}
 			{
 
 			}
 
-			explicit Quaternion (const Matrix< 4, data_t > & matrix) noexcept
+			/**
+			 * @brief Constructs a quaternion from matrix.
+			 * @param matrix A reference to a matrix.
+			 */
+			explicit
+			Quaternion (const Matrix< 4, precision_t > & matrix)
 			{
-				(*this) = matrix;
+				*this = matrix;
 			}
 
+			/**
+			 * @brief Copy assignment operator from matrix.
+			 * @param matrix The copied matrix.
+			 * @return Vector
+			 */
 			Quaternion &
-			operator= (const Matrix< 4, data_t > & matrix) noexcept
+			operator= (const Matrix< 4, precision_t > & matrix)
 			{
 				const auto diag = matrix[0] + matrix[5] + matrix[10] + 1;
 
-				if ( diag > 0.0 )
+				if ( diag > static_cast< precision_t >(0) )
 				{
 					/* Det scale from diagonal. */
-					const auto scale = std::sqrt(diag) * 2.0;
+					const auto scale = std::sqrt(diag) * static_cast< precision_t >(2);
 
-					/* FIXME: speed this up. */
 					m_data = {
 						(matrix[6] - matrix[9]) / scale,
 						(matrix[8] - matrix[2]) / scale,
 						(matrix[1] - matrix[4]) / scale,
-						0.25F * scale
+						static_cast< precision_t >(0.25) * scale
 					};
 				}
 				else
 				{
 					if ( matrix[0] > matrix[5] && matrix[0] > matrix[10] )
 					{
-						/* 1st element of diag is the greatest value find scale according to 1st element, and data_t it. */
-						const auto scale = std::sqrt(1.0 + matrix[0] - matrix[5] - matrix[10]) * 2.0;
+						/* 1st element of diag is the greatest value find scale according to 1st element, and precision_t it. */
+						const auto scale = std::sqrt(1.0 + matrix[0] - matrix[5] - matrix[10]) * static_cast< precision_t >(2);
 
-						/* FIXME: speed this up. */
 						m_data = {
-							0.25F * scale,
+							static_cast< precision_t >(0.25) * scale,
 							(matrix[4] + matrix[1]) / scale,
 							(matrix[2] + matrix[8]) / scale,
 							(matrix[6] - matrix[9]) / scale
@@ -145,27 +181,25 @@ namespace EmEn::Libs::Math
 					}
 					else if ( matrix[5] > matrix[10] )
 					{
-						/* 2nd element of diag is the greatest value find scale according to 2nd element, and data_t it. */
-						const auto scale = std::sqrt(1.0 + matrix[5] - matrix[0] - matrix[10]) * 2.0;
+						/* 2nd element of diag is the greatest value find scale according to 2nd element, and precision_t it. */
+						const auto scale = std::sqrt(1.0 + matrix[5] - matrix[0] - matrix[10]) * static_cast< precision_t >(2);
 
-						/* FIXME: speed this up. */
 						m_data = {
 							(matrix[4] + matrix[1]) / scale,
-							0.25F * scale,
+							static_cast< precision_t >(0.25) * scale,
 							(matrix[9] + matrix[6]) / scale,
 							(matrix[8] - matrix[2]) / scale
 						};
 					}
 					else
 					{
-						/* 3rd element of diag is the greatest value find scale according to 3rd element, and data_t it. */
-						const auto scale = std::sqrt(1.0 + matrix[10] - matrix[0] - matrix[5]) * 2.0;
+						/* 3rd element of diag is the greatest value find scale according to 3rd element, and precision_t it. */
+						const auto scale = std::sqrt(1.0 + matrix[10] - matrix[0] - matrix[5]) * static_cast< precision_t >(2);
 
-						/* FIXME: speed this up. */
 						m_data = {
 							(matrix[8] + matrix[2]) / scale,
 							(matrix[9] + matrix[6]) / scale,
-							0.25F * scale,
+							static_cast< precision_t >(0.25) * scale,
 							(matrix[1] - matrix[4]) / scale
 						};
 					}
@@ -176,55 +210,81 @@ namespace EmEn::Libs::Math
 				return *this;
 			}
 
-			/** Equality operator. */
+			/**
+			 * @brief Returns a copy of the quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
+			Quaternion
+			operator+ () const noexcept
+			{
+				return *this;
+			}
+
+			/**
+			 * @brief Returns the negated quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
+			Quaternion
+			operator- () const
+			{
+				return {-m_data[X], -m_data[Y], -m_data[Z], -m_data[W]};
+			}
+
+			/**
+			 * @brief Performs an equality comparison between quaternion.
+			 * @param operand A reference to another quaternion.
+			 * @return bool
+			 */
+			[[nodiscard]]
 			bool
 			operator== (const Quaternion & operand) const noexcept
 			{
-				if ( this != &operand )
+				if ( !Utility::equal(m_data[X], operand.m_data[X]) )
 				{
-					if ( !Utility::equal(m_data[X], operand.m_data[X]) )
-					{
-						return false;
-					}
+					return false;
+				}
 
-					if ( !Utility::equal(m_data[Y], operand.m_data[Y]) )
-					{
-						return false;
-					}
+				if ( !Utility::equal(m_data[Y], operand.m_data[Y]) )
+				{
+					return false;
+				}
 
-					if ( !Utility::equal(m_data[Z], operand.m_data[Z]) )
-					{
-						return false;
-					}
+				if ( !Utility::equal(m_data[Z], operand.m_data[Z]) )
+				{
+					return false;
+				}
 
-					if ( !Utility::equal(m_data[W], operand.m_data[W]) )
-					{
-						return false;
-					}
+				if ( !Utility::equal(m_data[W], operand.m_data[W]) )
+				{
+					return false;
 				}
 
 				return true;
 			}
 
-			/** Inequality operator. */
+			/**
+			 * @brief Performs an inequality comparison between quaternion.
+			 * @param operand A reference to another quaternion.
+			 * @return bool
+			 */
+			[[nodiscard]]
 			bool
 			operator!= (const Quaternion & operand) const noexcept
 			{
 				return !this->operator==(operand);
 			}
 
-			/** Unary negation. */
-			Quaternion
-			operator- () const noexcept
-			{
-				return {
-					-m_data[X],
-					-m_data[Y],
-					-m_data[Z],
-					-m_data[W]
-				};
-			}
-
+			/**
+			 * @brief Returns the addition between two quaternions.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
 			Quaternion
 			operator+ (const Quaternion & operand) const noexcept
 			{
@@ -236,10 +296,15 @@ namespace EmEn::Libs::Math
 				};
 			}
 
-			Quaternion
+			/**
+			 * @brief Returns the addition with another quaternion.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion &
+			 */
+			constexpr
+			Quaternion &
 			operator+= (const Quaternion & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_data[X] += operand.m_data[X];
@@ -251,6 +316,13 @@ namespace EmEn::Libs::Math
 				return *this;
 			}
 
+			/**
+			 * @brief Returns the subtraction between two quaternions.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
 			Quaternion
 			operator- (const Quaternion & operand) const noexcept
 			{
@@ -262,10 +334,15 @@ namespace EmEn::Libs::Math
 				};
 			}
 
-			Quaternion
-			operator-= (const Quaternion & operand) const noexcept
+			/**
+			 * @brief Returns the subtraction with another quaternion.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion &
+			 */
+			constexpr
+			Quaternion &
+			operator-= (const Quaternion & operand) noexcept
 			{
-				/* Guard self assignment */
 				if ( this != &operand )
 				{
 					m_data[X] -= operand.m_data[X];
@@ -277,52 +354,28 @@ namespace EmEn::Libs::Math
 				return *this;
 			}
 
+			/**
+			 * @brief Returns the product between two quaternions.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
 			Quaternion
 			operator* (const Quaternion & operand) const noexcept
 			{
 				return Quaternion::product(*this, operand);
 			}
 
+			/**
+			 * @brief Returns the quaternion component multiplied by a scalar.
+			 * @param operand A scalar.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
 			Quaternion
-			operator*= (const Quaternion & operand) const noexcept
-			{
-				/* Guard self assignment */
-				if ( this != &operand )
-				{
-					*this = Quaternion::product(*this, operand);
-				}
-
-				return *this;
-			}
-
-			Quaternion
-			operator/ (const Quaternion & operand) const noexcept
-			{
-				return {
-					m_data[X] / operand.m_data[X],
-					m_data[Y] / operand.m_data[Y],
-					m_data[Z] / operand.m_data[Z],
-					m_data[W] / operand.m_data[W]
-				};
-			}
-
-			Quaternion
-			operator/= (const Quaternion & operand) const noexcept
-			{
-				/* Guard self assignment */
-				if ( this != &operand )
-				{
-					m_data[X] /= operand.m_data[X];
-					m_data[Y] /= operand.m_data[Y];
-					m_data[Z] /= operand.m_data[Z];
-					m_data[W] /= operand.m_data[W];
-				}
-
-				return *this;
-			}
-
-			Quaternion
-			operator* (data_t operand) const noexcept
+			operator* (precision_t operand) const noexcept
 			{
 				return {
 					m_data[X] * operand,
@@ -332,8 +385,69 @@ namespace EmEn::Libs::Math
 				};
 			}
 
+			/**
+			 * @brief Multiplication operator with a vector.
+			 * @param operand A reference to a vector.
+			 * @return Vector< 3, precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Vector< 3, precision_t >
+			operator* (const Vector< 3, precision_t > & operand) const noexcept
+			{
+				const Vector< 3, precision_t > qVector{m_data[X], m_data[Y], m_data[Z]};
+
+				auto uv = Vector< 3, precision_t >::crossProduct(qVector, operand);
+				auto uuv = Vector< 3, precision_t >::crossProduct(qVector, uv);
+
+				uv *= 2.0 * m_data[W];
+				uuv *= 2.0;
+
+				return operand + uv + uuv;
+			}
+
+			/**
+			 * @brief Multiplication operator with a vector.
+			 * @param operand A reference to a vector.
+			 * @return Vector< 4, precision_t >
+			 */
+			constexpr
+			Vector< 4, precision_t >
+			operator* (const Vector< 4, precision_t > & operand) const noexcept
+			{
+				Vector< 4, precision_t > qVector{m_data[X], m_data[Y], m_data[Z]};
+
+				auto uv = Vector< 4, precision_t >::crossProduct(qVector, operand);
+				auto uuv = Vector< 4, precision_t >::crossProduct(qVector, uv);
+
+				uv *= 2.0 * m_data[W];
+				uuv *= 2.0;
+
+				return operand + uv + uuv;
+			}
+
+			/**
+			 * @brief Returns the product with another quaternion.
+			 * @param operand A reference to another quaternion.
+			 * @return Quaternion &
+			 */
+			constexpr
 			Quaternion &
-			operator*= (data_t operand) const noexcept
+			operator*= (const Quaternion & operand) noexcept
+			{
+				*this = Quaternion::product(*this, operand);
+
+				return *this;
+			}
+
+			/**
+			 * @brief Returns the quaternion component multiplied by a scalar.
+			 * @param operand A scalar.
+			 * @return Quaternion &
+			 */
+			constexpr
+			Quaternion &
+			operator*= (precision_t operand) noexcept
 			{
 				m_data[X] *= operand;
 				m_data[Y] *= operand;
@@ -344,63 +458,38 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * Multiplication operator with a vector.
-			 *
-			 * @note nVidia SDK implementation.
+			 * @brief Quaternion scalar division operator.
+			 * @warning Will return an identity quaternion on division by 0.
+			 * @param operand A scalar.
+			 * @return Quaternion
 			 */
-			Vector< 3, data_t >
-			operator* (const Vector< 3, data_t > & operand) const noexcept
-			{
-				Vector< 3, data_t > qvec(m_data[X], m_data[Y], m_data[Z]);
-
-				auto uv = Vector< 3, data_t >::cross(qvec, operand);
-				auto uuv = Vector< 3, data_t >::cross(qvec, uv);
-
-				uv *= 2.0 * m_data[W];
-				uuv *= 2.0;
-
-				return operand + uv + uuv;
-			}
-
-			/**
-			 * Multiplication operator with a vector.
-			 *
-			 * @note nVidia SDK implementation.
-			 */
-			Vector< 4, data_t >
-			operator* (const Vector< 4, data_t > & operand) const noexcept
-			{
-				Vector< 4, data_t > qvec(m_data[X], m_data[Y], m_data[Z]);
-
-				auto uv = Vector< 4, data_t >::cross(qvec, operand);
-				auto uuv = Vector< 4, data_t >::cross(qvec, uv);
-
-				uv *= 2.0 * m_data[W];
-				uuv *= 2.0;
-
-				return operand + uv + uuv;
-			}
-
-			/** Quaternion scalar division operator. */
+			[[nodiscard]]
+			constexpr
 			Quaternion
-			operator/ (data_t operand) const noexcept
+			operator/ (precision_t operand) const noexcept
 			{
 				if ( Utility::isZero(operand) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", division by zero !" "\n";
-
 					return {};
 				}
 
 				return {
-					this->complex() / operand,
-					this->real() / operand
+					m_data[X] / operand,
+					m_data[Y] / operand,
+					m_data[Z] / operand,
+					m_data[W] / operand
 				};
 			}
 
-			/** Quaternion scalar division operator. */
+			/**
+			 * @brief Quaternion scalar division operator.
+			 * @warning The quaternion will remain unchanged on division by zero.
+			 * @param operand A scalar.
+			 * @return Quaternion
+			 */
+			constexpr
 			Quaternion &
-			operator/= (data_t operand) const noexcept
+			operator/= (precision_t operand) noexcept
 			{
 				if ( !Utility::isZero(operand) )
 				{
@@ -409,37 +498,99 @@ namespace EmEn::Libs::Math
 					m_data[Z] /= operand;
 					m_data[W] /= operand;
 				}
-				else
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", division by zero !" "\n";
-				}
 
 				return *this;
 			}
 
-			Quaternion &
-			set (data_t x, data_t y, data_t z, data_t w) noexcept
+			/**
+			 * @breif Sets the complex part of the quaternion.
+			 * @param x
+			 * @param y
+			 * @param z
+			 * @return void
+			 */
+			void
+			setComplex (precision_t x, precision_t y, precision_t z) noexcept
 			{
 				m_data[X] = x;
 				m_data[Y] = y;
 				m_data[Z] = z;
-				m_data[W] = w;
-
-				return *this;
 			}
 
-			Quaternion &
-			setEulerAngles (data_t x, data_t y, data_t z) noexcept
+			/**
+			 * @brief Sets the complex part of the quaternion.
+			 * @param vector a reference to vector.
+			 * @return void
+			 */
+			void
+			setComplex (const Vector< 3, precision_t > & vector) noexcept
 			{
-				auto angle = x * 0.5F;
+				m_data[X] = vector[X];
+				m_data[Y] = vector[Y];
+				m_data[Z] = vector[Z];
+			}
+
+			/**
+			 * @brief Sets the real part of the quaternion.
+			 * @param value A scalar.
+			 * @return void
+			 */
+			void
+			setReal (precision_t value) noexcept
+			{
+				m_data[W] = value;
+			}
+
+			/**
+			 * @brief Sets the data of the quaternion.
+			 * @param complex a reference to vector.
+			 * @param real A scalar.
+			 * @return void
+			 */
+			void
+			set (const Vector< 3, precision_t > & complex, precision_t real) noexcept
+			{
+				m_data[X] = complex[X];
+				m_data[Y] = complex[Y];
+				m_data[Z] = complex[Z];
+				m_data[W] = real;
+			}
+
+			/**
+			 * @brief Sets the data of the quaternion.
+			 * @param vector a reference to vector.
+			 * @return void
+			 */
+			void
+			set (const Vector< 4, precision_t > & vector) noexcept
+			{
+				m_data[X] = vector[X];
+				m_data[Y] = vector[Y];
+				m_data[Z] = vector[Z];
+				m_data[W] = vector[W];
+			}
+
+			/**
+			 * @brief Sets the quaternion data from euler's angles (ZYX Tait-Bryan).
+			 * @param x Angle on X-axis expressed in radians.
+			 * @param y Angle on Y-axis expressed in radians.
+			 * @param z Angle on Z-axis expressed in radians.
+			 * @return void
+			 */
+			void
+			setFromEulerAngles (precision_t x, precision_t y, precision_t z)
+			{
+				constexpr auto Half{static_cast< precision_t >(0.5)};
+
+				auto angle = x * Half;
 				const auto sr = std::sin(angle);
 				const auto cr = std::cos(angle);
 
-				angle = y * 0.5F;
+				angle = y * Half;
 				const auto sp = std::sin(angle);
 				const auto cp = std::cos(angle);
 
-				angle = z * 0.5F;
+				angle = z * Half;
 				const auto sy = std::sin(angle);
 				const auto cy = std::cos(angle);
 
@@ -453,56 +604,92 @@ namespace EmEn::Libs::Math
 				m_data[Z] = cr * cpsy - sr * spcy;
 				m_data[W] = cr * cpcy + sr * spsy;
 
-				return this->normalize();
+				this->normalize();
 			}
 
-			inline
-			Quaternion &
-			setEulerAngles (const Vector< 3, data_t > & euler) noexcept
-			{
-				return this->setEulerAngles(euler[X], euler[Y], euler[Z]);
-			}
-
+			/**
+			 * @brief Sets the quaternion data from euler's angles (ZYX Tait-Bryan).
+			 * @param vector A reference to a vector of angles X/Y/Z expressed in radians.
+			 * @return void
+			 */
 			void
-			setComplex (const Vector< 3, data_t > & complex) noexcept
+			setFromEulerAngles (const Vector< 3, precision_t > & vector)
 			{
-				m_data[X] = complex[X];
-				m_data[Y] = complex[Y];
-				m_data[Z] = complex[Z];
+				this->setFromEulerAngles(vector[X], vector[Y], vector[Z]);
 			}
 
-			Vector< 3, data_t >
+			[[nodiscard]]
+			Vector< 3, precision_t >
 			complex () const noexcept
 			{
 				return {m_data[X], m_data[Y], m_data[Z]};
 			}
 
-			void
-			setReal (data_t real) noexcept
-			{
-				m_data[W] = real;
-			}
-
-			data_t
+			[[nodiscard]]
+			precision_t
 			real () const noexcept
 			{
 				return m_data[W];
 			}
 
-			Vector< 4, data_t >
-			toVector4 () const noexcept
+			/**
+			 * @brief Returns an equivalent euler angles representation (radians) of this quaternion (ZYX Tait-Bryan).
+			 * @return Vector< 3, precision_t >.
+			 */
+			[[nodiscard]]
+			Vector< 3, precision_t >
+			eulerAngles () const noexcept
+			{
+				constexpr auto PiOver2 = std::numbers::pi_v< precision_t > / 2;
+
+				Vector< 3, precision_t > vector;
+
+				// Quick conversion to Euler angles to give tilt to user.
+				auto sqw = m_data[3] * m_data[3];
+				auto sqx = m_data[0] * m_data[0];
+				auto sqy = m_data[1] * m_data[1];
+				auto sqz = m_data[2] * m_data[2];
+
+				vector[Y] = std::asin(2.0 * (m_data[3] * m_data[1] - m_data[0] * m_data[2]));
+
+				if ( PiOver2 - std::abs(vector[Y]) > std::numeric_limits< precision_t >::epsilon() )
+				{
+					vector[Z] = std::atan2(2.0 * (m_data[0] * m_data[1] + m_data[3] * m_data[2]), sqx - sqy - sqz + sqw);
+					vector[X] = std::atan2(2.0 * (m_data[3] * m_data[0] + m_data[1] * m_data[2]), sqw - sqx - sqy + sqz);
+				}
+				else
+				{
+					// Compute heading from local 'down' vector.
+					vector[Z] = std::atan2(2 * m_data[1] * m_data[2] - 2 * m_data[0] * m_data[3], 2 * m_data[0] * m_data[2] + 2 * m_data[1] * m_data[3]);
+					vector[X] = 0.0;
+
+					// If facing down, reverse yaw.
+					if ( vector[X] < 0 )
+					{
+						vector[Z] = std::numbers::pi_v< precision_t > - vector[Z];
+					}
+				}
+
+				return vector;
+			}
+
+			/**
+			 * @brief Returns the quaternion as a vector without any conversion.
+			 * @return Vector< 4, precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Vector< 4, precision_t >
+			getAsVector4 () const noexcept
 			{
 				return {m_data[X], m_data[Y], m_data[Z], m_data[W]};
 			}
 
-			Quaternion &
-			loadIdentity () noexcept
-			{
-				m_data = {0.0, 0.0, 0.0, 1.0};
-
-				return *this;
-			}
-
+			/**
+			 * @brief Conjugates the quaternion.
+			 * @return Quaternion &
+			 */
+			constexpr
 			Quaternion &
 			conjugate () noexcept
 			{
@@ -513,59 +700,169 @@ namespace EmEn::Libs::Math
 				return *this;
 			}
 
+			/**
+			 * @brief Returns a conjugated quaternion.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			constexpr
 			Quaternion
 			conjugated () const noexcept
 			{
-				return {this->complex().inverse(), this->real()};
+				return {-m_data[X], -m_data[Y], -m_data[Z], m_data[W]};
 			}
 
-			/** Computes the inverse of this quaternion.
-			 * @note This is a general inverse. If you know a priori that you're using a unit quaternion (i.e., norm() == 1), it will be significantly faster to use conjugate() instead.
-			 * @return The quaternion q such that q * (*this) == (*this) * q == [ 0 0 0 1 ]. */
-			Quaternion
-			inversed () const noexcept
+			/**
+			 * @brief Returns the length (norm or magnitude) of the quaternion.
+			 * @return precision_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			squaredLength () const noexcept
 			{
-				return this->conjugate() / this->length();
+				return
+					(m_data[X] * m_data[X]) +
+					(m_data[Y] * m_data[Y]) +
+					(m_data[Z] * m_data[Z]) +
+					(m_data[W] * m_data[W]);
 			}
 
-			/** Returns the inverse of this quaternion. */
+			/**
+			 * @brief Returns the length (norm or magnitude) of the quaternion.
+			 * @return precision_t
+			 */
+			[[nodiscard]]
+			precision_t
+			length () const
+			{
+				return std::sqrt(this->squaredLength());
+			}
+
+			/**
+			 * @brief Returns the inverse of this quaternion.
+			 * @brief The quaternion will remain unchanged on division by zero.
+			 * @return Quaternion &
+			 */
 			Quaternion &
-			inverse () noexcept
+			inverse ()
 			{
-				*this = this->conjugate() / this->length();
+				const auto normal = this->squaredLength();
 
-				return *this;
-			}
-
-			Quaternion &
-			normalize () noexcept
-			{
-				const auto normal = (m_data[X] * m_data[X]) + (m_data[Y] * m_data[Y]) + (m_data[Z] * m_data[Z]) + (m_data[W] * m_data[W]);
-
-				if ( !Utility::equal(normal, 1.0) )
+				if ( !Utility::isZero(normal) )
 				{
-					*this *= reciprocalSquareRoot(normal);
+					m_data[X] = -m_data[X] / normal;
+					m_data[Y] = -m_data[Y] / normal;
+					m_data[Z] = -m_data[Z] / normal;
+					m_data[W] /= normal;
 				}
 
 				return *this;
 			}
 
-			/** Returns the length (norm or magnitude) of the quaternion. */
-			data_t
-			length () const noexcept
+			/**
+			 * @brief Computes the inverse of this quaternion.
+			 * @brief The returned quaternion will be identity on division by zero.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			Quaternion
+			inversed () const
 			{
-				return std::sqrt((m_data[X] * m_data[X]) + (m_data[Y] * m_data[Y]) + (m_data[Z] * m_data[Z]) + (m_data[W] * m_data[W]));
+				const auto normal = this->squaredLength();
+
+				if ( Utility::isZero(normal) )
+				{
+					return {};
+				}
+
+				return {
+					-m_data[X] / normal,
+					-m_data[Y] / normal,
+					-m_data[Z] / normal,
+					 m_data[W] / normal
+				};
 			}
 
-			static
-			data_t
-			dot (const Quaternion & qA, const Quaternion & qB) noexcept
+			/**
+			 * @brief Normalizes the quaternion.
+			 * @warning The quaternion will remain unchanged if normal is zero.
+			 * @return Quaternion &
+			 */
+			Quaternion &
+			normalize ()
 			{
-				return (qA.m_data[0] * qB.m_data[0]) + (qA.m_data[1] * qB.m_data[1]) + (qA.m_data[2] * qB.m_data[2]) + (qA.m_data[3] * qB.m_data[3]);
+				const auto normal = this->squaredLength();
+
+				if ( !Utility::isZero(normal) && !Utility::isOne(normal) )
+				{
+					const auto r = reciprocalSquareRoot(normal);
+
+					m_data[X] *= r;
+					m_data[Y] *= r;
+					m_data[Z] *= r;
+					m_data[W] *= r;
+				}
+
+				return *this;
 			}
 
-			/** Computes the product of this quaternion with the quaternion 'rhs'. */
+			/**
+			 * @brief Returns a normalized quaternion.
+			 * @warning The returned quaternion will be identity if normal is zero.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			Quaternion
+			normalized () const
+			{
+				const auto normal = this->squaredLength();
+
+				if ( Utility::isZero(normal) )
+				{
+					return {};
+				}
+
+				if ( Utility::isOne(normal) )
+				{
+					return *this;
+				}
+
+				const auto r = reciprocalSquareRoot(normal);
+
+				return {
+					m_data[X] * r,
+					m_data[Y] * r,
+					m_data[Z] * r,
+					m_data[W] * r
+				};
+			}
+
+			/**
+			 * @breif Computes the dot-product between two quaternions.
+			 * @param qA A reference to a quaternion.
+			 * @param qB A reference to a quaternion.
+			 * @return precision_t
+			 */
 			static
+			constexpr
+			precision_t
+			dotProduct (const Quaternion & qA, const Quaternion & qB) noexcept
+			{
+				return
+					(qA.m_data[0] * qB.m_data[0]) +
+					(qA.m_data[1] * qB.m_data[1]) +
+					(qA.m_data[2] * qB.m_data[2]) +
+					(qA.m_data[3] * qB.m_data[3]);
+			}
+
+			/**
+			 * @brief Computes the product between two quaternions.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
+			static
+			constexpr
 			Quaternion
 			product (const Quaternion & qA, const Quaternion & qB) noexcept
 			{
@@ -577,31 +874,43 @@ namespace EmEn::Libs::Math
 				};
 			}
 
-			/** Sets this quaternion to the linear interpolation between two quaternions.
-			 * @param qA First quaternion to be interpolated.
-			 * @param qB Second quaternion to be interpolated.
-			 * @param time Progress of interpolation. */
+			/**
+			 * @brief Computes a linear interpolation between two quaternions.
+			 * @param qA A reference to a quaternion.
+			 * @param qB A reference to a quaternion.
+			 * @param time The factor of interpolation.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
 			static
+			constexpr
 			Quaternion
-			lerp (const Quaternion & qA, const Quaternion & qB, data_t time) noexcept
+			lerp (const Quaternion & qA, const Quaternion & qB, precision_t time) noexcept
 			{
 				return (qA * (1.0 - time)) + (qB * time);
 			}
 
-			/** Returns quaternion that is slerped by fraction 't' between two quaternions. */
+			/**
+			 * @brief Computes a linear interpolation between two quaternions.
+			 * @param qA A reference to a quaternion.
+			 * @param qB A reference to a quaternion.
+			 * @param time The factor of interpolation.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
 			static
 			Quaternion
-			slerp (const Quaternion & qA, const Quaternion & qB, data_t time) noexcept
+			slerp (const Quaternion & qA, const Quaternion & qB, precision_t time)
 			{
-				auto omega = std::acos(clamp(Quaternion::dot(qA, qB), -1.0, 1.0));
+				auto omega = std::acos(std::clamp(Quaternion::dotProduct(qA, qB), -static_cast< precision_t >(1.0), static_cast< precision_t >(1.0)));
 
 				if ( Utility::isZero(omega) )
 				{
-					omega = std::numeric_limits<data_t>::epsilon();
+					omega = std::numeric_limits< precision_t >::epsilon();
 				}
 
 				const auto som = std::sin(omega);
-				const auto st0 = std::sin((1.0 - time) * omega) / som;
+				const auto st0 = std::sin((static_cast< precision_t >(1.0) - time) * omega) / som;
 				const auto st1 = std::sin(time * omega) / som;
 
 				return {
@@ -612,45 +921,56 @@ namespace EmEn::Libs::Math
 				};
 			}
 
-			/** Sets this quaternion to the result of the spherical interpolation between two quaternions
-			 * @param qA First quaternion to be interpolated.
-			 * @param qB Second quaternion to be interpolated.
-			 * @param time Progress of interpolation.
-			 * @param threshold To avoid inaccuracies at the end (time=1) the interpolation switches to linear interpolation at some point. This value defines how much of the remaining interpolation will be calculated with linearInterpolation. Everything from 1-threshold up will be linear interpolation. */
+			/**
+			 * @brief Sets this quaternion to the result of the spherical interpolation between two quaternions
+			 * @param qA A reference to a quaternion.
+			 * @param qB A reference to a quaternion.
+			 * @param time The factor of interpolation.
+			 * @param threshold To avoid inaccuracies at the end (time=1) the interpolation switches to linear interpolation at some point.
+			 * This value defines how much of the remaining interpolation will be calculated with linearInterpolation.
+			 * Everything from 1-threshold up will be linear interpolation.
+			 * @return Quaternion
+			 */
+			[[nodiscard]]
 			static
-			Quaternion &
-			slerp (const Quaternion & qA, const Quaternion & qB, data_t time, data_t threshold = 0.05) noexcept
+			Quaternion
+			slerp (const Quaternion & qA, const Quaternion & qB, precision_t time, precision_t threshold = 0.05)
 			{
-				auto angle = Quaternion::dot(qA, qB);
+				auto angle = Quaternion::dotProduct(qA, qB);
 
-				/* Make sure we use the short rotation. */
-				if ( angle < 0.0 )
+				auto qACopy = qA;
+
+				/* NOTE: Make sure we use the short rotation. */
+				if ( angle < static_cast< precision_t >(0) )
 				{
-					qA *= -1.0;
-					angle *= -1.0;
+					qACopy *= -static_cast< precision_t >(1);
+					angle *= -static_cast< precision_t >(1);
 				}
 
-				/* Spherical interpolation. */
-				if ( angle <= (1.0 - threshold) )
+				/* NOTE: Spherical interpolation. */
+				if ( angle <= static_cast< precision_t >(1) - threshold )
 				{
 					const auto theta = std::acos(angle);
-					const auto invsintheta = reciprocal(sinf(theta));
-					const auto scale = std::sin(theta * (1.0 - time)) * invsintheta;
-					const auto invscale = std::sin(theta * time) * invsintheta;
+					const auto invSinTheta = reciprocal(sinf(theta));
+					const auto scale = std::sin(theta * (static_cast< precision_t >(1) - time)) * invSinTheta;
+					const auto invScale = std::sin(theta * time) * invSinTheta;
 
-					return (qA * scale) + (qB * invscale);
+					return (qACopy * scale) + (qB * invScale);
 				}
 
 				/* linear interpolation. */
-				return Quaternion::lerp(qA, qB, time);
+				return Quaternion::lerp(qACopy, qB, time);
 			}
 
-			/** Creates quaternion from rotation angle and rotation axis.
+			/**
+			 * @brief Creates quaternion from rotation angle and rotation axis.
 			 * @note Axis must be unit length. The quaternion representing the rotation is "q = cos(A/2)+sin(A/2)*(x*i+y*j+z*k)".
 			 * @param angle Rotation Angle in radians.
-			 * @param axis Rotation axis. */
+			 * @param axis Rotation axis.
+			 * @return Quaternion &
+			 */
 			Quaternion &
-			fromAngleAxis (data_t angle, const Vector< 3, data_t > & axis) noexcept
+			fromAngleAxis (precision_t angle, const Vector< 3, precision_t > & axis)
 			{
 				const auto halfAngle = 0.5 * angle;
 				const auto sin = std::sin(halfAngle);
@@ -663,93 +983,65 @@ namespace EmEn::Libs::Math
 				return *this;
 			}
 
-			/** Fills an angle (radians) around an axis (unit vector) */
+			/**
+			 * @brief Fills an angle around an axis (unit vector)
+			 * @param angle An angle expressed in radians.
+			 * @param axis A reference to a vector.
+			 * @return void
+			 */
 			void
-			toAngleAxis (data_t & angle, Vector< 3, data_t > & axis) const noexcept
+			toAngleAxis (precision_t & angle, Vector< 3, precision_t > & axis) const
 			{
-				const auto scale = std::sqrt(m_data[X] * m_data[X] + m_data[Y] * m_data[Y] + m_data[Z] * m_data[Z]);
+				const auto sqLen = this->squaredLength();
 
-				if ( Utility::isZero(scale) || m_data[W] > 1.0 || m_data[W] < -1.0 )
+				if ( Utility::isZero(sqLen) || m_data[W] > 1.0 || m_data[W] < -1.0 )
 				{
 					angle = 0.0;
 					axis[X] = 0.0;
 					axis[Y] = 1.0;
-					axis[X] = 0.0;
+					axis[Z] = 0.0;
 				}
 				else
 				{
-					const auto invscale = reciprocal(scale);
+					const auto invScale = reciprocal(std::sqrt(sqLen));
 
 					angle = 2.0 * std::acos(m_data[W]);
-					axis[X] = m_data[X] * invscale;
-					axis[Y] = m_data[Y] * invscale;
-					axis[Z] = m_data[Z] * invscale;
+					axis[X] = m_data[X] * invScale;
+					axis[Y] = m_data[Y] * invScale;
+					axis[Z] = m_data[Z] * invScale;
 				}
 			}
 
-			/** Output this quaternion to an Euler angle (radians) */
+			/**
+			 * @brief Sets quaternion to represent a rotation from one vector to another.
+			 * @param from A reference to vector.
+			 * @param to A reference to vector.
+			 * @return void
+			 */
 			void
-			toEuler (Vector< 3, data_t > & euler) const noexcept
-			{
-				const auto sqw = m_data[W] * m_data[W];
-				const auto sqx = m_data[X] * m_data[X];
-				const auto sqy = m_data[Y] * m_data[Y];
-				const auto sqz = m_data[Z] * m_data[Z];
-
-				const auto test = 2.0 * (m_data[Y] * m_data[W] - m_data[X] * m_data[Z]);
-
-				if ( Utility::equal(test, 1.0) )
-				{
-					/* heading = rotation about z-axis. */
-					euler[Z] = -2.0 * std::atan2(m_data[X], m_data[W]);
-					/* bank = rotation about x-axis. */
-					euler[X] = 0.0;
-					/* attitude = rotation about y-axis. */
-					euler[Y] = (Pi< data_t >) / 2.0;
-				}
-				else if ( Utility::equal(test, -1.0) )
-				{
-					/* heading = rotation about z-axis. */
-					euler[Z] = 2.0 * std::atan2(m_data[X], m_data[W]);
-					/* bank = rotation about x-axis. */
-					euler[X] = 0.0;
-					/* attitude = rotation about y-axis. */
-					euler[Y] = (Pi< data_t >) / -2.0;
-				}
-				else
-				{
-					/* heading = rotation about z-axis. */
-					euler[Z] = std::atan2(2.0 * (m_data[X] * m_data[Y] + m_data[Z] * m_data[W]), (sqx - sqy - sqz + sqw));
-					/* bank = rotation about x-axis. */
-					euler[X] = std::atan2(2.0 * (m_data[Y] * m_data[Z] + m_data[X] * m_data[W]),(-sqx - sqy + sqz + sqw));
-					/* attitude = rotation about y-axis. */
-					euler[Y] = std::asin(clamp(test, -1.0, 1.0));
-				}
-			}
-
-			/** Sets quaternion to represent a rotation from one vector to another. */
-			Quaternion &
-			rotationFromTo (const Vector< 3, data_t > & from, const Vector< 3, data_t > & to) noexcept
+			rotationFromTo (const Vector< 3, precision_t > & from, const Vector< 3, precision_t > & to)
 			{
 				auto v0 = from.normalized();
 				auto v1 = to.normalized();
 
-				const auto d = Vector< 3, data_t >::dot(v0, v1);
+				const auto d = Vector< 3, precision_t >::dot(v0, v1);
 
 				/* If dot == 1, vectors are the same */
 				if ( d >= 1.0 )
 				{
-					return this->loadIdentitm_data[Y];
+					this->reset();
+
+					return;
 				}
 
 				/* exactly opposite */
 				if ( d <= -1.0 )
 				{
-					auto axis = Vector< 3, data_t >::cross({1.0, 0.0, 0.0}, v0);
+					auto axis = Vector< 3, precision_t >::cross({1.0, 0.0, 0.0}, v0);
 
 					if ( axis.length() == 0.0 )
 					{
-						axis = Vector<3, data_t>::cross({0.0, 1.0, 0.0}, v0);
+						axis = Vector< 3, precision_t >::cross({0.0, 1.0, 0.0}, v0);
 					}
 
 					/* same as fromAngleAxis(core::PI, axis).normalize(); */
@@ -758,20 +1050,22 @@ namespace EmEn::Libs::Math
 
 				const auto s = std::sqrt((1.0 + d) * 2.0); // optimize inv_sqrt
 				const auto invS = 1.0 / s;
-				const auto c = Vector< 3, data_t >::cross(v0, v1) * invS;
+				const auto c = Vector< 3, precision_t >::cross(v0, v1) * invS;
 
-				return this->set(c[X], c[Y], c[Z], s * 0.5F).normalize();
+				this->set(c[X], c[Y], c[Z], s * 0.5F).normalize();
 			}
 
 			/**
 			 * @brief Computes the rotation matrix represented by a unit quaternion.
 			 * @note This does not check that this quaternion is normalized.
 			 * It returns the matrix, which will not be a rotation if the quaternion is non-unit.
+			 * @return Matrix< 3, precision_t >
 			 */
-			Matrix< 3, data_t >
+			constexpr
+			Matrix< 3, precision_t >
 			rotationMatrix () const noexcept
 			{
-				std::array< data_t, 9 > m {
+				std::array< precision_t, 9 > m {
 					1.0 - 2.0 * m_data[Y] * m_data[Y] - 2.0 * m_data[Z] * m_data[Z],
 						  2.0 * m_data[X] * m_data[Y] - 2.0 * m_data[Z] * m_data[W],
 						  2.0 * m_data[X] * m_data[Z] + 2.0 * m_data[Y] * m_data[W],
@@ -785,32 +1079,24 @@ namespace EmEn::Libs::Math
 					1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Y] * m_data[Y]
 				};
 
-				return Matrix< 3, data_t >{m};
+				return Matrix< 3, precision_t >{m};
 			}
 
-			/** Returns the scaled-axis representation of this quaternion rotation. */
-			Vector< 3, data_t >
-			scaledAxis () const noexcept
-			{
-				std::array< data_t, 3 > axis;
-
-				/* FIXME: Find the black magic behind this ! */
-				//HeliMath::scaled_axis_from_quaternion(axis.data(), m_data.data());
-
-				return Vector< 3, data_t >{axis};
-			}
-
-			/** Sets quaternion to be same as rotation by scaled axis w. */
+			/**
+			 * @brief Sets quaternion to be same as rotation by scaled axis w.
+			 * @param scaledAxis A reference to a vector.
+			 * @return void
+			 */
 			void
-			scaledAxis (const Vector< 3, data_t > & w) noexcept
+			setFromScaledAxis (const Vector< 3, precision_t > & scaledAxis)
 			{
-				auto theta = w.length();
+				auto theta = scaledAxis.length();
 
-				if ( theta > 0.0001 )
+				if ( theta > std::numeric_limits< precision_t >::epsilon() )
 				{
 					auto s = std::sin(theta / 2.0);
 
-					Vector< 3, data_t > tmp(w / theta * s);
+					Vector< 3, precision_t > tmp(scaledAxis / theta * s);
 
 					m_data[0] = tmp[X];
 					m_data[1] = tmp[Y];
@@ -824,245 +1110,144 @@ namespace EmEn::Libs::Math
 				}
 			}
 
-			/** Returns a vector rotated by this quaternion. Functionally equivalent to:  (rotationMatrim_data[X] * v) or (q * Quaternion(0, v) * q.inverse()).
-			 * @warning  conjugate() is used instead of inverse() for better performance, when this quaternion must be normalized. */
-			Vector< 3, data_t >
-			rotatedVector (const Vector< 3, data_t > & v) const noexcept
+			/**
+			 * @brief Returns the scaled-axis representation of this quaternion rotation.
+			 * @return Vector< 3, precision_t >
+			 */
+			[[nodiscard]]
+			Vector< 3, precision_t >
+			getScaledAxis () const
 			{
-				return (((*this) * Quaternion(v, 0)) * this->conjugate()).complex();
-			}
+				precision_t angle;
+				Vector< 3, precision_t > scaledAxis;
 
-			/** Computes the quaternion that is equivalent to a given euler angle rotation.
-			 * @param euler A 3-vector in order:  roll-pitch-yaw. */
-			void
-			euler (const Vector< 3, data_t > & euler) noexcept
-			{
-				auto c1 = std::cos(euler[Z] * 0.5);
-				auto c2 = std::cos(euler[Y] * 0.5);
-				auto c3 = std::cos(euler[X] * 0.5);
-				auto s1 = std::sin(euler[Z] * 0.5);
-				auto s2 = std::sin(euler[Y] * 0.5);
-				auto s3 = std::sin(euler[X] * 0.5);
+				this->toAngleAxis(angle, scaledAxis);
 
-				m_data[0] = c1*c2*s3 - s1*s2*c3;
-				m_data[1] = c1*s2*c3 + s1*c2*s3;
-				m_data[2] = s1*c2*c3 - c1*s2*s3;
-				m_data[3] = c1*c2*c3 + s1*s2*s3;
-			}
-
-			/** Returns an equivalent euler angle representation of this quaternion.
-			 * @return Euler angles in roll-pitch-yaw order. */
-			Vector< 3, data_t >
-			euler () const noexcept
-			{
-				const static auto PiOver2 = Pi< data_t > * 0.5;
-
-				Vector< 3, data_t > euler;
-
-				/* Quick conversion to Euler angles to give tilt to user. */
-				auto sqw = m_data[3] * m_data[3];
-				auto sqx = m_data[0] * m_data[0];
-				auto sqy = m_data[1] * m_data[1];
-				auto sqz = m_data[2] * m_data[2];
-
-				euler[Y] = std::asin(2.0 * (m_data[3] * m_data[1] - m_data[0] * m_data[2]));
-
-				if ( PiOver2 - std::abs(euler[Y]) > std::numeric_limits< data_t >::epsilon() )
+				if ( Utility::isZero(angle) )
 				{
-					euler[Z] = std::atan2(2.0 * (m_data[0] * m_data[1] + m_data[3] * m_data[2]), sqx - sqy - sqz + sqw);
-					euler[X] = std::atan2(2.0 * (m_data[3] * m_data[0] + m_data[1] * m_data[2]), sqw - sqx - sqy + sqz);
-				}
-				else
-				{
-					/* Compute heading from local 'down' vector. */
-					euler[Z] = std::atan2(2 * m_data[1] * m_data[2] - 2 * m_data[0] * m_data[3], 2 * m_data[0] * m_data[2] + 2 * m_data[1] * m_data[3]);
-					euler[X] = 0.0;
-
-					/* If facing down, reverse yaw. */
-					if ( euler[X] < 0 )
-						euler[Z] = Pi< data_t > - euler[Z];
+					return {0.0, 0.0, 0.0};
 				}
 
-				return euler;
+				return scaledAxis * angle;
 			}
 
-			/** Computes a special representation that decouples the Z rotation. The decoupled representation is two rotations, Qxy and Qz, so that Q = Qxy * Qz. */
-			void
-			decoupleZ (Quaternion * Qxy, Quaternion * Qz) const noexcept
+			/**
+			 * @brief Returns a vector rotated by this quaternion.
+			 * @param vector A reference to a vector.
+			 * @return Vector< 3, precision_t >
+			 */
+			constexpr
+			Vector< 3, precision_t >
+			rotatedVector (const Vector< 3, precision_t > & vector) const noexcept
 			{
-				Vector< 3, data_t > ztt(0.0, 0.0, 1.0);
-				auto zbt = this->rotatedVector(ztt);
-				auto axis_xy = Vector< 3, data_t >::cross(ztt, zbt);
-				auto axis_norm = axis_xy.length();
-
-				auto axis_theta = std::acos(clamp(zbt[Z], -1.0, 1.0));
-
-				if ( axis_norm > 0.00001 )
-				{
-					axis_xy = axis_xy * (axis_theta / axis_norm); // limit is *1
-				}
-
-				Qxy->scaledAxis(axis_xy);
-				*Qz = (Qxy->conjugate() * (*this));
+				return (*this * Quaternion(vector, 0) * this->conjugate()).complex();
 			}
 
-
-			/** Returns a matrix representation of this quaternion. Specifically this is the matrix such that:
-			 * this->matrim_data[X] * q.vector() = (*this) * q for any quaternion q.
-			 * Note that this is @e NOT the rotation matrix that may be represented by a unit quaternion. */
-			Matrix< 4, data_t >
-			matrix () const noexcept
+			/**
+			 * @brief Returns a matrix representation of this quaternion.
+			 * @return Matrix< 4, precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Matrix< 4, precision_t >
+			getMatrix () const noexcept
 			{
-				std::array< data_t, 16 > m{
+				std::array< precision_t, 16 > matrixData{
 					 m_data[W], -m_data[Z],  m_data[Y],  m_data[X],
 					 m_data[Z],  m_data[W], -m_data[X],  m_data[Y],
 					-m_data[Y],  m_data[X],  m_data[W],  m_data[Z],
 					-m_data[X], -m_data[Y], -m_data[Z],  m_data[W]
 				};
 
-				return Matrix< 4, data_t >{m};
+				return Matrix< 4, precision_t >{matrixData};
 			}
 
-			/** Returns a matrix representation of this quaternion for right multiplication. Specifically this is the matrix such that:
-			 * q.vector().transpose() * this->matrim_data[X] = (q * (*this)).vector().transpose() for any quaternion q.
-			 * Note that this is @e NOT the rotation matrix that may be represented by a unit quaternion. */
-			Matrix< 4, data_t >
-			rightMatrix () const noexcept
+			/**
+			 * @brief Returns a matrix representation of this quaternion for right multiplication.
+			 * @return Matrix< 4, precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Matrix< 4, precision_t >
+			getRightMatrix () const noexcept
 			{
-				std::array< data_t, 16 > m{
-					+m_data[W], -m_data[Z],  m_data[Y], -m_data[X],
-					+m_data[Z],  m_data[W], -m_data[X], -m_data[Y],
+				std::array< precision_t, 16 > matrixData{
+					 m_data[W], -m_data[Z],  m_data[Y], -m_data[X],
+					 m_data[Z],  m_data[W], -m_data[X], -m_data[Y],
 					-m_data[Y],  m_data[X],  m_data[W], -m_data[Z],
-					+m_data[X],  m_data[Y],  m_data[Z],  m_data[W]
+					 m_data[X],  m_data[Y],  m_data[Z],  m_data[W]
 				};
 
-				return Matrix< 4, data_t >{m};
+				return Matrix< 4, precision_t >{matrixData};
 			}
 
-			/** Creates a matrix from this quaternion. */
-			Matrix< 4, data_t >
-			getMatrix () const noexcept
+			/**
+			 * @brief Computes the Swing-Twist decomposition of this quaternion.
+			 * @param twistAxis A reference to a vector. Must be normalized.
+			 * @return std::pair< Quaternion, Quaternion >
+			 */
+			[[nodiscard]]
+			std::pair< Quaternion, Quaternion >
+			swingTwistDecomposition (const Vector< 3, precision_t > & twistAxis) const
 			{
-				Matrix< 4, data_t > m;
+				const auto sqLen = twistAxis.squaredLength();
 
-				this->getMatrix(m);
+				if ( sqLen < std::numeric_limits< precision_t >::epsilon() * std::numeric_limits< precision_t >::epsilon() )
+				{
+					//throw std::invalid_argument("twistAxis must be non-zero for swing-twist decomposition.");
+					return {};
+				}
 
-				return m;
+				const auto rotatedAxis = this->rotatedVector(twistAxis);
+
+				Quaternion swing;
+				swing.rotationFromTo(twistAxis, rotatedAxis);
+
+				auto twist = swing.conjugated() * (*this);
+
+				const auto twistVectorPart = twist.complex();
+				const auto projectedTwistVector = Vector< 3, precision_t >::dotProduct(twistVectorPart, twistAxis) * twistAxis;
+
+				twist.set(projectedTwistVector, twist.real());
+				twist.normalize(); 
+
+				return {swing, twist};
 			}
 
-			/** Creates a matrix from this quaternion. */
-			void
-			getMatrix (Matrix< 4, data_t > & dest, const Vector< 3, data_t > & center = {}) const noexcept
+			/**
+			 * @brief Computes the Swing-Twist decomposition of this quaternion with Z+ axis.
+			 * @return std::pair< Quaternion, Quaternion >
+			 */
+			[[nodiscard]]
+			std::pair< Quaternion, Quaternion >
+			swingTwistDecomposition () const
 			{
-				dest[0] = 1.0 - 2.0 * m_data[Y] * m_data[Y] - 2.0 * m_data[Z] * m_data[Z];
-				dest[1] = 2.0 * m_data[X] * m_data[Y] + 2.0 * m_data[Z] * m_data[W];
-				dest[2] = 2.0 * m_data[X] * m_data[Z] - 2.0 * m_data[Y] * m_data[W];
-				dest[3] = 0.0;
-
-				dest[4] = 2.0 * m_data[X] * m_data[Y] - 2.0 * m_data[Z] * m_data[W];
-				dest[5] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Z] * m_data[Z];
-				dest[6] = 2.0 * m_data[Z] * m_data[Y] + 2.0 * m_data[X] * m_data[W];
-				dest[7] = 0.0;
-
-				dest[8] = 2.0 * m_data[X] * m_data[Z] + 2.0 * m_data[Y] * m_data[W];
-				dest[9] = 2.0 * m_data[Z] * m_data[Y] - 2.0 * m_data[X] * m_data[W];
-				dest[10] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Y] * m_data[Y];
-				dest[11] = 0.0;
-
-				dest[12] = center[X];
-				dest[13] = center[Y];
-				dest[14] = center[Z];
-				dest[15] = 1.0;
-
-				/* FIXME: Find the black magic behind this ! */
-				dest.setDefinitelyIdentityMatrix(false);
+				return this->swingTwistDecomposition(Vector< 3, precision_t >::positiveZ());
 			}
 
-			/*!
-				Creates a matrix from this quaternion
-				Rotate about a center point
-				shortcut for
-				core::quaternion q;
-				q.rotationFromTo ( vin[i].Normal, forward );
-				q.getMatrixCenter ( lookat, center, newPos );
-
-				core::Matrix< 4, data_t > m2;
-				m2.setInverseTranslation ( center );
-				lookat *= m2;
-
-				core::Matrix< 4, data_t > m3;
-				m2.setTranslation ( newPos );
-				lookat *= m3;
-
-			*/
-			void
-			getMatrixCenter (Matrix< 4, data_t > & dest, const Vector< 3, data_t > & center, const Vector< 3, data_t > & translation) const noexcept
-			{
-				dest[0] = 1.0 - 2.0 * m_data[Y] * m_data[Y] - 2.0 * m_data[Z] * m_data[Z];
-				dest[1] = 2.0 * m_data[X] * m_data[Y] + 2.0 * m_data[Z] * m_data[W];
-				dest[2] = 2.0 * m_data[X] * m_data[Z] - 2.0 * m_data[Y] * m_data[W];
-				dest[3] = 0.0;
-
-				dest[4] = 2.0 * m_data[X] * m_data[Y] - 2.0 * m_data[Z] * m_data[W];
-				dest[5] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Z] * m_data[Z];
-				dest[6] = 2.0 * m_data[Z] * m_data[Y] + 2.0 * m_data[X] * m_data[W];
-				dest[7] = 0.0;
-
-				dest[8] = 2.0 * m_data[X] * m_data[Z] + 2.0 * m_data[Y] * m_data[W];
-				dest[9] = 2.0 * m_data[Z] * m_data[Y] - 2.0 * m_data[X] * m_data[W];
-				dest[10] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Y] * m_data[Y];
-				dest[11] = 0.0;
-
-				/* FIXME: Find the black magic behind this ! */
-				dest.setRotationCenter(center, translation);
-			}
-
-			/** Creates a matrix from this quaternion. */
-			inline
-			void
-			getMatrix_transposed (Matrix< 4, data_t > & dest) const noexcept
-			{
-				dest[0] = 1.0 - 2.0 * m_data[Y] * m_data[Y] - 2.0 * m_data[Z] * m_data[Z];
-				dest[4] = 2.0 * m_data[X] * m_data[Y] + 2.0 * m_data[Z] * m_data[W];
-				dest[8] = 2.0 * m_data[X] * m_data[Z] - 2.0 * m_data[Y] * m_data[W];
-				dest[12] = 0.0;
-
-				dest[1] = 2.0 * m_data[X] * m_data[Y] - 2.0 * m_data[Z] * m_data[W];
-				dest[5] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Z] * m_data[Z];
-				dest[9] = 2.0 * m_data[Z] * m_data[Y] + 2.0 * m_data[X] * m_data[W];
-				dest[13] = 0.0;
-
-				dest[2] = 2.0 * m_data[X] * m_data[Z] + 2.0 * m_data[Y] * m_data[W];
-				dest[6] = 2.0 * m_data[Z] * m_data[Y] - 2.0 * m_data[X] * m_data[W];
-				dest[10] = 1.0 - 2.0 * m_data[X] * m_data[X] - 2.0 * m_data[Y] * m_data[Y];
-				dest[14] = 0.0;
-
-				dest[3] = 0.0;
-				dest[7] = 0.0;
-				dest[11] = 0.0;
-				dest[15] = 1.0;
-
-				/* FIXME: Find the black magic behind this ! */
-				dest.setDefinitelyIdentityMatrix(false);
-			}
-
-			/** Reset vector to 0.
-			 * @return A reference to this vector. */
+			/**
+			 * @brief Resets the quaternion to identity.
+			 * @return Quaternion &
+			 */
+			constexpr
 			Quaternion &
 			reset () noexcept
 			{
 				m_data[X] = 0;
 				m_data[Y] = 0;
 				m_data[Z] = 0;
-				m_data[W] = 0;
+				m_data[W] = 1;
 
 				return *this;
 			}
 
-			/** Copy the quaternion data insided a C-Array of data_t.
-			 * @warning  The target must provide enough space. */
+			/**
+			 * @brief Copies the quaternion data insided a C-Array of precision_t.
+			 * @warning The target must provide enough space.
+			 * @return void
+			 */
 			void
-			copy (data_t * target) const noexcept
+			copy (precision_t * target) const noexcept
 			{
 				target[0] = m_data[X];
 				target[1] = m_data[Y];
@@ -1071,8 +1256,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * STL streams printable object.
-			 *
+			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
 			 * @return std::ostream &
@@ -1087,14 +1271,13 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * Stringify the object.
-			 *
+			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
 			 * @return std::string
 			 */
 			friend
 			std::string
-			to_string (const Quaternion & obj) noexcept
+			to_string (const Quaternion & obj)
 			{
 				std::stringstream output;
 
@@ -1105,6 +1288,6 @@ namespace EmEn::Libs::Math
 
 		private:
 
-			std::array< data_t, 4 > m_data{0.0, 0.0, 0.0, 1.0};
+			std::array< precision_t, 4 > m_data{0.0, 0.0, 0.0, 1.0};
 	};
 }

@@ -141,6 +141,12 @@ namespace EmEn::Scenes
 		return false;
 	}
 
+	void
+	StaticEntity::onContentModified () noexcept
+	{
+		this->notify(EntityContentModified, this->shared_from_this());
+	}
+
 	bool
 	StaticEntity::onUnhandledNotification (const ObservableTrait * observable, int notificationCode, const std::any & /*data*/) noexcept
 	{

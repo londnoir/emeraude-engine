@@ -65,13 +65,13 @@ namespace EmEn::Vulkan
 	}
 
 	void
-	SwapChain::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	SwapChain::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.create(*Renderer::instance(), this->id());
 	}
 
 	void
-	SwapChain::onSourceDisconnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	SwapChain::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.destroy();
 	}

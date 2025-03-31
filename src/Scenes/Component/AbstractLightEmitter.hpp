@@ -32,7 +32,7 @@
 #include <string>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
@@ -75,9 +75,9 @@ namespace EmEn::Scenes::Component
 	/**
 	 * @brief Base class of light emitters.
 	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This can act as a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This can act as a virtual video device.
 	 */
-	class AbstractLightEmitter : public Abstract, public AVConsole::AbstractVirtualVideoDevice
+	class AbstractLightEmitter : public Abstract, public AVConsole::AbstractVirtualDevice
 	{
 		public:
 
@@ -132,7 +132,7 @@ namespace EmEn::Scenes::Component
 			 */
 			~AbstractLightEmitter () override = default;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::videoType() */
 			[[nodiscard]]
 			AVConsole::VideoType
 			videoType () const noexcept override
@@ -400,7 +400,7 @@ namespace EmEn::Scenes::Component
 			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
 			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept final;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept final;
 
 			/**

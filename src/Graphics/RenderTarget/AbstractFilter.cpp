@@ -29,7 +29,7 @@
 namespace EmEn::Graphics::RenderTarget
 {
 	AbstractFilter::AbstractFilter (const std::string & name) noexcept
-		: AVConsole::AbstractVirtualVideoDevice(name)
+		: AbstractVirtualDevice(name, AVConsole::DeviceType::Video, AVConsole::ConnexionType::Both)
 	{
 
 	}

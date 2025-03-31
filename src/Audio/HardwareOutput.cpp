@@ -39,7 +39,8 @@ namespace EmEn::Audio
 	using namespace EmEn::Libs::Math;
 
 	HardwareOutput::HardwareOutput (const std::string & name, Manager & audioManager) noexcept
-		: AbstractVirtualAudioDevice(name, AVConsole::ConnexionType::Input), m_audioManager(&audioManager)
+		: AbstractVirtualDevice(name, AVConsole::DeviceType::Audio, AVConsole::ConnexionType::Input),
+		m_audioManager(&audioManager)
 	{
 
 	}

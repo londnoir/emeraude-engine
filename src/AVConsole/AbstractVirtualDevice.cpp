@@ -48,48 +48,6 @@ namespace EmEn::AVConsole
 
 	}
 
-	const std::string &
-	AbstractVirtualDevice::id () const noexcept
-	{
-		return m_id;
-	}
-
-	DeviceType
-	AbstractVirtualDevice::type () const noexcept
-	{
-		return m_type;
-	}
-
-	ConnexionType
-	AbstractVirtualDevice::allowedConnexionType() const noexcept
-	{
-		return m_allowedConnexionType;
-	}
-
-	bool
-	AbstractVirtualDevice::hasInputConnected () const noexcept
-	{
-		return !m_inputs.empty();
-	}
-
-	const std::set< std::shared_ptr< AbstractVirtualDevice > > &
-	AbstractVirtualDevice::inputs () const noexcept
-	{
-		return m_inputs;
-	}
-
-	bool
-	AbstractVirtualDevice::hasOutputConnected () const noexcept
-	{
-		return !m_outputs.empty();
-	}
-
-	const std::set< std::shared_ptr< AbstractVirtualDevice > > &
-	AbstractVirtualDevice::outputs () const noexcept
-	{
-		return m_outputs;
-	}
-
 	bool
 	AbstractVirtualDevice::isConnectedWith (const std::shared_ptr< AbstractVirtualDevice > & device, ConnexionType direction) const noexcept
 	{
@@ -206,6 +164,7 @@ namespace EmEn::AVConsole
 
 		for ( const auto & outputDevice : m_outputs )
 		{
+			/* NOTE: Targeting only one device. */
 			if ( !filterDevice.empty() && filterDevice != outputDevice->id() )
 			{
 				continue;
@@ -288,22 +247,6 @@ namespace EmEn::AVConsole
 		m_outputs.clear();
 	}
 
-	void
-	AbstractVirtualDevice::onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept
-	{
-#ifdef DEBUG
-		TraceInfo{TracerTag} << "The virtual source device '" << sourceDevice->id() << "' connected !";
-#endif
-	}
-
-	void
-	AbstractVirtualDevice::onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
-	{
-#ifdef DEBUG
-		TraceInfo{TracerTag} << "The virtual source target '" << targetDevice->id() << "' connected !";
-#endif
-	}
-
 	std::string
 	AbstractVirtualDevice::getConnexionState () const noexcept
 	{
@@ -327,6 +270,10 @@ namespace EmEn::AVConsole
 	std::string
 	AbstractVirtualDevice::buildDeviceId (const std::string & name) noexcept
 	{
-		return (std::stringstream{} << name << '_' << s_deviceCount++).str();
+		std::stringstream deviceId;
+
+		deviceId << name << '_' << s_deviceCount++;
+
+		return deviceId.str();
 	}
 }

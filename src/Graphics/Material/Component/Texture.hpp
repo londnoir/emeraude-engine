@@ -29,7 +29,6 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <memory>
-#include <ostream>
 #include <string>
 
 /* Local inclusions for inheritances. */
@@ -53,7 +52,7 @@ namespace EmEn::Graphics::Material::Component
 	 * @brief The texture component type.
 	 * @extends EmEn::Graphics::Material::Component::Interface This class describe a component type.
 	 */
-	class Texture : public Interface
+	class Texture final : public Interface
 	{
 		public:
 
@@ -127,6 +126,14 @@ namespace EmEn::Graphics::Material::Component
 			textureResource () const noexcept override
 			{
 				return m_texture;
+			}
+
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::getSampler() */
+			[[nodiscard]]
+			Saphir::Declaration::Sampler
+			getSampler (uint32_t materialSet) const noexcept override
+			{
+				return {materialSet, this->binding(), this->textureType(), this->samplerName()};
 			}
 
 			/**

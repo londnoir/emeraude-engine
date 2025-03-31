@@ -29,7 +29,6 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <memory>
-#include <ostream>
 #include <string>
 
 /* Local inclusions for inheritances. */
@@ -105,6 +104,14 @@ namespace EmEn::Graphics::Material::Component
 				return nullptr;
 			}
 
+			/** @copydoc EmEn::Graphics::Material::Component::Interface::getSampler() */
+			[[nodiscard]]
+			Saphir::Declaration::Sampler
+			getSampler (uint32_t materialSet) const noexcept override
+			{
+				return {0, 0, nullptr, nullptr};
+			}
+
 			/**
 			 * @brief Sets a new color.
 			 * @param color A reference to a color.
@@ -140,7 +147,7 @@ namespace EmEn::Graphics::Material::Component
 
 			/**
 			 * @brief Changes the opacity value of the color.
-			 * @param value A opacity value between 0.0 and 1.0
+			 * @param value An opacity value between 0.0 and 1.0
 			 * @return void
 			 */
 			void

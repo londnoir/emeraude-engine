@@ -35,6 +35,7 @@ namespace EmEn::Libs
 	/**
 	 * @brief Adds the ability to use flags on object by using an array of booleans.
 	 * @note Only the flags reading is public. This is intended for internal options of a class.
+	 * @warning The EmEn::FlagTrait is a better alternative to use.
 	 * @tparam count_t The number of possible flags. Default 8.
 	 */
 	template< size_t count_t = 8 >
@@ -70,6 +71,7 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Destructs the flag array trait.
+			 * @note As a trait mechanism, 'virtual' keyword is useless here.
 			 */
 			virtual ~FlagArrayTrait () = default;
 
@@ -86,6 +88,7 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns whether a flag is enabled.
+			 * @warning Out of bound flag index will return silently 'false'.
 			 * @param flag The flag index.
 			 * @return bool
 			 */
@@ -93,6 +96,11 @@ namespace EmEn::Libs
 			bool
 			isFlagEnabled (size_t flag) const noexcept
 			{
+				if ( flag >= count_t )
+				{
+					return false;
+				}
+
 				return m_flags[flag];
 			}
 
@@ -101,32 +109,56 @@ namespace EmEn::Libs
 			/**
 			 * @brief Constructs a flag array trait.
 			 */
-			explicit FlagArrayTrait () noexcept = default;
+			FlagArrayTrait () noexcept = default;
 
 			/**
 			 * @brief Enables a flag.
+			 * @warning Out of bound flag index will do silently nothing.
 			 * @param flag The flag index.
 			 * @return void
 			 */
 			void
 			enableFlag (size_t flag) noexcept
 			{
-				m_flags[flag] = true;
+				if ( flag < count_t )
+				{
+					m_flags[flag] = true;
+				}
+			}
+
+			/**
+			 * @brief Toggles a flag state.
+			 * @warning Out of bound flag index will do silently nothing.
+			 * @param flag The flag index.
+			 * @return void
+			 */
+			void
+			toggleFlag (size_t flag) noexcept
+			{
+				if ( flag < count_t )
+				{
+					m_flags[flag] = !m_flags[flag];
+				}
 			}
 
 			/**
 			 * @brief Disables a flag.
+			 * @warning Out of bound flag index will do silently nothing.
 			 * @param flag The flag index.
 			 * @return void
 			 */
 			void
 			disableFlag (size_t flag) noexcept
 			{
-				m_flags[flag] = false;
+				if ( flag < count_t )
+				{
+					m_flags[flag] = false;
+				}
 			}
 
 			/**
 			 * @brief Sets a flag state.
+			 * @warning Out of bound flag index will do silently nothing.
 			 * @param flag The flag index.
 			 * @param state The flag state.
 			 * @return void
@@ -134,7 +166,10 @@ namespace EmEn::Libs
 			void
 			setFlag (size_t flag, bool state) noexcept
 			{
-				m_flags[flag] = state;
+				if ( flag < count_t )
+				{
+					m_flags[flag] = state;
+				}
 			}
 
 			/**

@@ -71,6 +71,7 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Destructs the flag trait.
+			 * @note As a trait mechanism, 'virtual' keyword is useless here.
 			 */
 			virtual ~FlagTrait () = default;
 
@@ -94,10 +95,15 @@ namespace EmEn::Libs
 			bool
 			isFlagEnabled (data_t flagBit) const noexcept
 			{
-				return m_flags & flagBit;
+				return (m_flags & flagBit) != 0;
 			}
 
 		protected:
+
+			/**
+			 * @brief Constructs a default flag trait.
+			 */
+			FlagTrait () noexcept = default;
 
 			/**
 			 * @brief Constructs a flag trait.
@@ -128,7 +134,18 @@ namespace EmEn::Libs
 			void
 			disableFlag (data_t flagBit) noexcept
 			{
-				m_flags = m_flags & ~flagBit;
+				m_flags &= ~flagBit;
+			}
+
+			/**
+			 * @brief Toggles a flag state.
+			 * @param flagBit The flag bit value.
+			 * @return void
+			 */
+			void
+			toggleFlag (data_t flagBit) noexcept
+			{
+				m_flags ^= flagBit;
 			}
 
 			/**
@@ -156,6 +173,6 @@ namespace EmEn::Libs
 
 		private:
 
-			data_t m_flags;
+			data_t m_flags{0};
 	};
 }

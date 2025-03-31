@@ -90,13 +90,13 @@ namespace EmEn::Graphics::RenderTarget::Texture
 	}
 
 	void
-	Cubemap::onSourceConnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Cubemap::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.create(*Renderer::instance(), this->id());
 	}
 
 	void
-	Cubemap::onSourceDisconnected (AbstractVirtualVideoDevice * /*sourceDevice*/) noexcept
+	Cubemap::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 	{
 		m_viewMatrices.destroy();
 	}

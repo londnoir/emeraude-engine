@@ -26,19 +26,7 @@
 
 #include "Abstract.hpp"
 
-/* STL inclusions. */
-#include <cstddef>
-#include <memory>
-#include <string>
-
 /* Local inclusions. */
-#include "Libs/Math/CartesianFrame.hpp"
-#include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
-#include "Libs/Math/Vector.hpp"
-#include "Libs/NameableTrait.hpp"
-#include "Physics/MovableTrait.hpp"
-#include "Physics/PhysicalObjectProperties.hpp"
 #include "Scenes/AbstractEntity.hpp"
 #include "Tracer.hpp"
 
@@ -56,33 +44,10 @@ namespace EmEn::Scenes::Component
 	const Sphere< float > Abstract::NullBoundingSphere{};
 
 	Abstract::Abstract (const std::string & name, const AbstractEntity & parentEntity) noexcept
-		: NameableTrait(name), m_parentEntity(parentEntity)
+		: NameableTrait(name),
+		m_parentEntity(parentEntity)
 	{
 
-	}
-
-	size_t
-	Abstract::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	Abstract::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	const AbstractEntity &
-	Abstract::parentEntity () const noexcept
-	{
-		return m_parentEntity;
-	}
-
-	bool
-	Abstract::isParentEntityMovable () const noexcept
-	{
-		return dynamic_cast< const MovableTrait * >(&m_parentEntity) != nullptr;
 	}
 
 	bool
@@ -94,15 +59,9 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	Abstract::isRenderable () const noexcept
+	Abstract::isParentEntityMovable () const noexcept
 	{
-		return this->getRenderableInstance() != nullptr;
-	}
-
-	std::shared_ptr< RenderableInstance::Abstract >
-	Abstract::getRenderableInstance () const noexcept
-	{
-		return nullptr;
+		return m_parentEntity.hasMovableAbility();
 	}
 
 	const Renderable::Interface *
@@ -118,18 +77,6 @@ namespace EmEn::Scenes::Component
 		return renderableInstance->renderable();
 	}
 
-	const PhysicalObjectProperties &
-	Abstract::physicalObjectProperties () const noexcept
-	{
-		return m_physicalObjectProperties;
-	}
-
-	PhysicalObjectProperties &
-	Abstract::physicalObjectProperties () noexcept
-	{
-		return m_physicalObjectProperties;
-	}
-
 	CartesianFrame< float >
 	Abstract::getWorldCoordinates () const noexcept
 	{
@@ -139,7 +86,7 @@ namespace EmEn::Scenes::Component
 	Vector< 3, float >
 	Abstract::getWorldVelocity () const noexcept
 	{
-		const auto * movable = dynamic_cast< const MovableTrait * >(&m_parentEntity);
+		const auto * movable = m_parentEntity.getMovableTrait();
 
 		if ( movable == nullptr )
 		{

@@ -36,7 +36,6 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libs/PixelFactory/Color.hpp"
 #include "Libs/PixelFactory/Pixmap.hpp"
 #include "Resources/Container.hpp"
 
@@ -44,6 +43,7 @@ namespace EmEn::Graphics
 {
 	/**
 	 * @brief The image resource class.
+	 * This is a wrapper around PixelFactory's Pixmap class to make it a loadable resource.
 	 * @extends EmEn::Resources::ResourceTrait This is a loadable resource.
 	 */
 	class ImageResource final : public Resources::ResourceTrait
@@ -108,7 +108,7 @@ namespace EmEn::Graphics
 			uint32_t height () const noexcept;
 
 			/**
-			 * @brief Returns whether pixmaps are all gray scale.
+			 * @brief Returns whether the image is a gray scale.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -122,7 +122,7 @@ namespace EmEn::Graphics
 			Libs::PixelFactory::Color< float > averageColor () const noexcept;
 
 			/**
-			 * @brief Returns a image resource by its name.
+			 * @brief Returns an image resource by its name.
 			 * @param resourceName A reference to a string.
 			 * @param directLoad Use the direct loading mode. Default false.
 			 * @return std::shared_ptr< ImageResource >

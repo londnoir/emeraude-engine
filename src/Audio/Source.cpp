@@ -369,10 +369,10 @@ namespace EmEn::Audio
 		}
 
 		/* The angle covered by the inner cone, where the source will not attenuate. (default 360) */
-		alSourcef(this->identifier(), AL_CONE_INNER_ANGLE, Math::clamp(innerAngle, 0.0F, FullRevolution< float >));
+		alSourcef(this->identifier(), AL_CONE_INNER_ANGLE, std::clamp(innerAngle, 0.0F, FullRevolution< float >));
 
 		/* The angle covered by the outer cone, where the source will be fully. (default 360) */
-		alSourcef(this->identifier(), AL_CONE_OUTER_ANGLE, Math::clamp(outerAngle, 0.0F, FullRevolution< float >));
+		alSourcef(this->identifier(), AL_CONE_OUTER_ANGLE, std::clamp(outerAngle, 0.0F, FullRevolution< float >));
 
 		/* The gain attenuation applied when the listener is outside the source's outer cone. Default 0 */
 		alSourcef(this->identifier(), AL_CONE_OUTER_GAIN, Math::clampToUnit(outerGain));
@@ -392,7 +392,7 @@ namespace EmEn::Audio
 			return;
 		}
 
-		alSourcef(this->identifier(), AL_PITCH, Math::clamp(pitch, 0.5F, 2.0F));
+		alSourcef(this->identifier(), AL_PITCH, std::clamp(pitch, 0.5F, 2.0F));
 	}
 
 	void
@@ -410,7 +410,7 @@ namespace EmEn::Audio
 			return;
 		}
 
-		const ALint value = Math::clamp(factor, 0, 10);
+		const ALint value = std::clamp(factor, 0, 10);
 
 		alSourcei(this->identifier(), AL_AIR_ABSORPTION_FACTOR, value);
 	}

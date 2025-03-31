@@ -35,10 +35,9 @@
 #include <vulkan/vulkan.h>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 
 /* Local inclusions for usages. */
-#include "AVConsole/Types.hpp"
 #include "Graphics/FramebufferPrecisions.hpp"
 #include "Graphics/Types.hpp"
 #include "Vulkan/Sync/Fence.hpp"
@@ -67,9 +66,9 @@ namespace EmEn::Graphics::RenderTarget
 {
 	/**
 	 * @brief The base class for all render targets.
-	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This is a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This is a virtual video device.
 	 */
-	class Abstract : public AVConsole::AbstractVirtualVideoDevice
+	class Abstract : public AVConsole::AbstractVirtualDevice
 	{
 		public:
 

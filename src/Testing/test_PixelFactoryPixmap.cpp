@@ -143,7 +143,9 @@ TEST(PixelFactoryPixmap, fillValue)
 
 TEST(PixelFactoryPixmap, fillSequence)
 {
-	const auto random = Utility::randomVector< uint8_t >(100, 0, 255);
+	Randomizer< uint8_t > randomizer;
+
+	const auto random = randomizer.vector(100, 0, 255);
 
 	Pixmap< uint8_t > image{340, 120, ChannelMode::RGBA};
 
@@ -288,7 +290,9 @@ TEST(PixelFactoryPixmap, fillChannelValue)
 
 TEST(PixelFactoryPixmap, fillChannelSequence)
 {
-	const auto random = Utility::randomVector< uint8_t >(100, 0, 255);
+	Randomizer< uint8_t > randomizer;
+
+	const auto random = randomizer.vector(100, 0, 255);
 
 	Pixmap< uint8_t > image{256, 256, ChannelMode::RGBA};
 
@@ -316,25 +320,25 @@ TEST(PixelFactoryPixmap, fillChannelPattern)
 	Pixmap< uint8_t > image{1024, 768, ChannelMode::RGBA};
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Red)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnRed)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Red, redChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Green)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnGreen)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Green, greenChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Blue)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnBlue)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Blue, blueChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Alpha)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(PatternOnAlpha)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Alpha, alphaChannel));
 	}

@@ -38,9 +38,11 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <filesystem>
 
 /* Local inclusions. */
 #include "Libs/Utility.hpp"
+#include "Libs/Randomizer.hpp"
 #include "Types.hpp"
 
 namespace EmEn::Libs::WaveFactory
@@ -386,7 +388,9 @@ namespace EmEn::Libs::WaveFactory
 					return false;
 				}
 
-				std::fill(m_data.begin(), m_data.end(), Utility::random< precision_t >(std::numeric_limits< precision_t >::min(), std::numeric_limits< precision_t >::max()));
+				Randomizer< precision_t > randomizer;
+
+				std::fill(m_data.begin(), m_data.end(), randomizer.value(std::numeric_limits< precision_t >::lowest(), std::numeric_limits< precision_t >::max()));
 
 				return true;
 			}

@@ -129,7 +129,7 @@ namespace EmEn::Graphics
 	}
 
 	void
-	PostProcessor::render (const PixelFactory::Area< size_t > & /*region*/) const noexcept
+	PostProcessor::render (const Rectangle< uint32_t > & /*region*/) const noexcept
 	{
 		/*if ( m_effectsList.empty() )
 		{

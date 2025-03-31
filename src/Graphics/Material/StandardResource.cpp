@@ -1211,14 +1211,7 @@ namespace EmEn::Graphics::Material
 			return true;
 		}
 
-		const auto * component = dynamic_cast< const Texture * >(componentIt->second.get());
-
-		if ( component == nullptr )
-		{
-			Tracer::error(ClassId, "DYNAMIC CAST FAILURE !");
-
-			return false;
-		}
+		const auto * component = static_cast< const Texture * >(componentIt->second.get());
 
 		if ( !fragmentShader.declare(Declaration::Sampler{materialSet, component->binding(), component->textureType(), component->samplerName()}) )
 		{

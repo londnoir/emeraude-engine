@@ -49,7 +49,7 @@ namespace EmEn::Graphics::RenderTarget::View
 	{
 		public:
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::videoType() */
 			[[nodiscard]]
 			AVConsole::VideoType
 			videoType () const noexcept override

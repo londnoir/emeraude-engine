@@ -66,6 +66,7 @@ namespace EmEn
 			 * @brief Constructs primary services manager.
 			 * @param argc The argument count from the standard C/C++ main() function.
 			 * @param wargv The argument values from the standard C/C++ main() function.
+			 * @param identification A reference to the application identification.
 			 * @param childProcess Declares a child process.
 			 */
 			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool childProcess) noexcept;

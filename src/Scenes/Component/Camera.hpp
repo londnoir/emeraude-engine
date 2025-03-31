@@ -33,7 +33,7 @@
 #include <memory>
 
 /* Local inclusions for inheritances. */
-#include "AVConsole/AbstractVirtualVideoDevice.hpp"
+#include "AVConsole/AbstractVirtualDevice.hpp"
 #include "Abstract.hpp"
 
 /* Local inclusions for usages. */
@@ -45,9 +45,9 @@ namespace EmEn::Scenes::Component
 	/**
 	 * @brief This class defines a physical point of view to capture image in the world.
 	 * @extends EmEn::Scenes::Component::Abstract The base class for each entity component.
-	 * @extends EmEn::AVConsole::AbstractVirtualVideoDevice This is a virtual video device.
+	 * @extends EmEn::AVConsole::AbstractVirtualDevice This is a virtual video device.
 	 */
-	class Camera final : public Abstract, public AVConsole::AbstractVirtualVideoDevice
+	class Camera final : public Abstract, public AVConsole::AbstractVirtualDevice
 	{
 		public:
 
@@ -98,7 +98,7 @@ namespace EmEn::Scenes::Component
 			/** @copydoc EmEn::Scenes::Component::Abstract::shouldRemove() */
 			bool shouldRemove () const noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::videoType() */
 			[[nodiscard]]
 			AVConsole::VideoType videoType () const noexcept override;
 
@@ -226,11 +226,11 @@ namespace EmEn::Scenes::Component
 			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateDeviceFromCoordinates() */
 			void updateDeviceFromCoordinates (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Vector< 3, float > & worldVelocity) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::updateProperties() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::updateProperties() */
 			void updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept override;
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::onTargetConnected() */
-			void onTargetConnected (AbstractVirtualVideoDevice * targetDevice) noexcept override;
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::onTargetConnected() */
+			void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept override;
 
 			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
 			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;

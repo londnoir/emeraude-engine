@@ -196,7 +196,8 @@ namespace EmEn::Graphics
 		/* Advance the cursor in Y by the highest char from the current Font. */
 		if ( count > 0 )
 		{
-			this->moveCursorY(m_font->lineHeight() * count);
+			// FIXME
+			//this->moveCursorY(m_font->lineHeight() * count);
 		}
 	}
 
@@ -290,13 +291,14 @@ namespace EmEn::Graphics
 					return false;
 				}
 
-				m_currentCursor[X] = m_originCursor[X];
+			// FIXME
+				/*m_currentCursor[X] = m_originCursor[X];
 				m_currentCursor[Y] += -static_cast< int >(m_font->lineHeight());
 
 				if ( !this->moveUp(m_font->lineHeight(), m_clearColor) )
 				{
 					return false;
-				}
+				}*/
 
 				break;
 
@@ -318,12 +320,12 @@ namespace EmEn::Graphics
 		}
 
 		/* Render the glyph. */
-		const Processor proc{*m_target};
+		/*const Processor proc{*m_target};
 
 		if ( !proc.stencil(m_color, this->getArea(glyph), glyph) )
 		{
 			return false;
-		}
+		}*/
 
 		/* Advancing cursor. */
 		m_currentCursor[X] += static_cast< int >(glyph.width()) + m_spacing;
@@ -350,7 +352,8 @@ namespace EmEn::Graphics
 			{
 				/* HT \t Horizontal Tab[f] */
 				case 9 :
-					nextWidth += static_cast< unsigned long >(m_font->spacing() * 4);
+					// FIXME
+					//nextWidth += static_cast< unsigned long >(m_font->spacing() * 4);
 					break;
 
 				/* LF \n Line feed */
@@ -371,7 +374,8 @@ namespace EmEn::Graphics
 
 				/* White space */
 				case 32 :
-					nextWidth = static_cast< unsigned long >(m_font->spacing());
+					// FIXME
+					//nextWidth = static_cast< unsigned long >(m_font->spacing());
 					break;
 
 				/* Remaining control chars */
@@ -412,7 +416,8 @@ namespace EmEn::Graphics
 					[[fallthrough]];
 
 				default :
-					nextWidth = static_cast< unsigned long >(m_font->font().glyph(ASCIICode).width() + static_cast< size_t >(m_spacing));
+					// FIXME
+					//nextWidth = static_cast< unsigned long >(m_font->font().glyph(ASCIICode).width() + static_cast< size_t >(m_spacing));
 					break;
 			}
 
@@ -430,10 +435,12 @@ namespace EmEn::Graphics
 			}
 		}
 
-		return {
+		// FIXME
+		/*return {
 			std::max(width, rowWidth),
 			lineCount * m_font->lineHeight()
-		};
+		};*/
+		return {0, 0};
 	}
 
 	bool
@@ -473,14 +480,16 @@ namespace EmEn::Graphics
 			case 127 : // DEL Delete[k][e]
 				if ( m_flags[AllCharactersEnabled] )
 				{
-					return this->renderGlyph(m_font->font().glyph(ASCIICode));
+					// FIXME
+					//return this->renderGlyph(m_font->font().glyph(ASCIICode));
 				}
 
 				break;
 
 			/* HT \t Horizontal Tab[f]. */
 			case 9 :
-				this->moveCursorX(m_font->spacing() * 4);
+				// FIXME
+				//this->moveCursorX(m_font->spacing() * 4);
 				break;
 
 			/* LF \n Line feed. */
@@ -500,12 +509,15 @@ namespace EmEn::Graphics
 
 			/* White space. */
 			case 32 :
-				this->moveCursorX(m_font->spacing());
+				// FIXME
+				//this->moveCursorX(m_font->spacing());
 				break;
 
 			/* Printable character. */
 			default :
-				return this->renderGlyph(m_font->font().glyph(ASCIICode));
+				// FIXME
+				//return this->renderGlyph(m_font->font().glyph(ASCIICode));
+				break;
 		}
 
 		return true;
@@ -579,7 +591,7 @@ namespace EmEn::Graphics
 	}
 
 	bool
-	TextWriter::moveUp (size_t distance, const Color< float > & color) noexcept
+	TextWriter::moveUp (uint32_t distance, const Color< float > & color) noexcept
 	{
 		Processor proc{*m_target};
 
@@ -588,7 +600,7 @@ namespace EmEn::Graphics
 			return false;
 		}
 
-		return proc.copy(color, {0UL, 0UL, m_target->width(), distance});
+		return proc.copy(color, {0U, 0U, m_target->width(), distance});
 	}
 
 	std::string
@@ -631,7 +643,7 @@ namespace EmEn::Graphics
 	}
 
 	std::string
-	to_string (const TextWriter & obj) noexcept
+	to_string (const TextWriter & obj)
 	{
 		std::stringstream output;
 

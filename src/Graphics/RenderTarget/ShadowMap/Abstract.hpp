@@ -58,7 +58,7 @@ namespace EmEn::Graphics::RenderTarget::ShadowMap
 				Bias, Bias, Bias, 1.0F
 			}};
 
-			/** @copydoc EmEn::AVConsole::AbstractVirtualVideoDevice::videoType() */
+			/** @copydoc EmEn::AVConsole::AbstractVirtualDevice::videoType() */
 			[[nodiscard]]
 			AVConsole::VideoType
 			videoType () const noexcept override

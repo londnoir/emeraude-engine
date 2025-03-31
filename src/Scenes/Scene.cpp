@@ -131,11 +131,11 @@ namespace EmEn::Scenes
 			{
 				for ( const auto & component : std::ranges::views::values(currentNode->components()) )
 				{
-					if ( std::dynamic_pointer_cast< Component::Camera >(component) != nullptr )
+					if ( std::static_pointer_cast< Component::Camera >(component) != nullptr )
 					{
 						hasCamera = true;
 					}
-					else if ( std::dynamic_pointer_cast< Component::Microphone >(component) != nullptr )
+					else if ( std::static_pointer_cast< Component::Microphone >(component) != nullptr )
 					{
 						hasMicrophone = true;
 					}
@@ -1509,8 +1509,7 @@ namespace EmEn::Scenes
 		{
 			if ( notificationCode == AbstractEntity::EntityContentModified )
 			{
-				auto * abstractEntity = std::any_cast< AbstractEntity * >(data);
-				const auto staticEntity = dynamic_cast< StaticEntity * >(abstractEntity)->shared_from_this();
+				const auto staticEntity = std::any_cast< std::shared_ptr< StaticEntity > >(data);
 
 				this->checkEntityLocationInOctrees(staticEntity);
 			}
@@ -1527,8 +1526,7 @@ namespace EmEn::Scenes
 		{
 			if ( notificationCode == AbstractEntity::EntityContentModified )
 			{
-				auto * abstractEntity = std::any_cast< AbstractEntity * >(data);
-				const auto node = dynamic_cast< Node * >(abstractEntity)->shared_from_this();
+				const auto node = std::any_cast< std::shared_ptr< Node > >(data);
 
 				this->checkEntityLocationInOctrees(node);
 			}

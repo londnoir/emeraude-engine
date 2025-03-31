@@ -1196,14 +1196,14 @@ namespace EmEn::Vulkan
 #ifdef DEBUG
 		if ( !this->isCreated() )
 		{
-			Tracer::error(ClassId, "The command buffer is not created !");
+			TraceError{ClassId} << "The command buffer is not created for the geometry '" << geometry.name() << "' !";
 
 			return;
 		}
 
 		if ( instanceCount == 0 )
 		{
-			Tracer::error(ClassId, "No instance count !");
+			TraceError{ClassId} << "No instance count for the geometry '" << geometry.name() << "' !";
 
 			return;
 		}

@@ -26,12 +26,13 @@
 
 #pragma once
 
+/* STL inclusions; */
+#include <cstdint>
+
 namespace EmEn::AVConsole
 {
-	/**
-	 * @brief The DeviceType enum
-	 */
-	enum class DeviceType
+	/** @brief Enumerates device types. */
+	enum class DeviceType: int8_t
 	{
 		Video,
 		Audio,
@@ -41,7 +42,7 @@ namespace EmEn::AVConsole
 	/**
 	 * @brief The connexion type enumeration for a device.
 	 */
-	enum class ConnexionType
+	enum class ConnexionType: int8_t
 	{
 		Input,
 		Output,
@@ -51,8 +52,9 @@ namespace EmEn::AVConsole
 	/**
 	 * @brief Enumerates output device video type.
 	 */
-	enum class VideoType
+	enum class VideoType: int8_t
 	{
+		NotVideoDevice,
 		View,
 		Texture,
 		ShadowMap,

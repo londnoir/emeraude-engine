@@ -739,8 +739,7 @@ namespace EmEn::Scenes
 
 		this->notify(SubNodeCreating, this->shared_from_this());
 
-		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
-		auto subNode = m_children.emplace(name, std::make_shared< Node >(name, std::dynamic_pointer_cast< Node >(this->shared_from_this()), sceneTimeMS, coordinates)).first->second;
+		auto subNode = m_children.emplace(name, std::make_shared< Node >(name, this->shared_from_this(), sceneTimeMS, coordinates)).first->second;
 
 		this->observe(subNode.get());
 
@@ -750,7 +749,7 @@ namespace EmEn::Scenes
 	}
 
 	void
-	Node::onLocationDataUpdate () noexcept /* NOLINT(misc-no-recursion) : Indeed the function is recursive as this is a node tree. */
+	Node::onLocationDataUpdate () noexcept
 	{
 		if ( this->isRoot() )
 		{
@@ -806,11 +805,16 @@ namespace EmEn::Scenes
 		return this->updateSimulation(scene.physicalEnvironmentProperties());
 	}
 
+	void
+	Node::onContentModified () noexcept
+	{
+		this->notify(EntityContentModified, this->shared_from_this());
+	}
+
 	std::shared_ptr< Node >
 	Node::getRoot () noexcept
 	{
-		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
-		auto currentNode = std::dynamic_pointer_cast< Node >(this->shared_from_this());
+		auto currentNode = this->shared_from_this();
 
 		while ( !currentNode->isRoot() )
 		{
@@ -823,8 +827,7 @@ namespace EmEn::Scenes
 	std::shared_ptr< const Node >
 	Node::getRoot () const noexcept
 	{
-		/* FIXME: The enable_shared_from_this trait should be part of the Node class. */
-		auto currentNode = std::dynamic_pointer_cast< const Node >(this->shared_from_this());
+		auto currentNode = this->shared_from_this();
 
 		while ( !currentNode->isRoot() )
 		{
