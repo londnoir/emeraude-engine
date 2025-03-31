@@ -410,7 +410,7 @@ namespace EmEn::Libs::Math
 			 * @param data A pointer to a C-Style array containing at least the dimension of the matrix.
 			 */
 			explicit
-			Matrix (const precision_t * data) noexcept
+			Matrix (std::span< const precision_t, dim_t * dim_t > & data) noexcept
 			{
 				#pragma omp simd
 				for ( size_t index = 0; index < dim_t * dim_t; index++ )
@@ -441,7 +441,7 @@ namespace EmEn::Libs::Math
 				Matrix matrix;
 
 				#pragma omp simd
-				for ( size_t index = 0; index < dim_t; index++ )
+				for ( size_t index = 0; index < dim_t * dim_t; index++ )
 				{
 					matrix.m_data[index] = -m_data[index];
 				}
@@ -1447,6 +1447,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			precision_t
 			fastDeterminant () const noexcept
 			{
@@ -1493,6 +1494,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			precision_t
 			trace () const noexcept
 			{
@@ -1511,6 +1513,7 @@ namespace EmEn::Libs::Math
 			 * @brief Transposes the matrix.
 			 * @return Matrix &
 			 */
+			constexpr
 			Matrix &
 			transpose () noexcept
 			{
@@ -1591,6 +1594,7 @@ namespace EmEn::Libs::Math
 			 * @return Matrix
 			 */
 			[[nodiscard]]
+			constexpr
 			Matrix
 			inverse () const noexcept
 			{
@@ -1721,7 +1725,7 @@ namespace EmEn::Libs::Math
 					m_data[M4x4Col0Row0], m_data[M4x4Col1Row0], m_data[M4x4Col2Row0], 0,
 					m_data[M4x4Col0Row1], m_data[M4x4Col1Row1], m_data[M4x4Col2Row1], 0,
 					m_data[M4x4Col0Row2], m_data[M4x4Col1Row2], m_data[M4x4Col2Row2], 0,
-					m_data[M4x4Col0Row3], m_data[M4x4Col1Row3], m_data[M4x4Col2Row3], m_data[M4x4Col3Row3]
+					m_data[M4x4Col0Row3], m_data[M4x4Col1Row3], m_data[M4x4Col2Row3], 1
 				};
 
 				return Matrix{data};
@@ -2365,8 +2369,8 @@ namespace EmEn::Libs::Math
 					matrix[M4x4Col2Row2] = -(zFar + zNear) / (zFar - zNear);
 					matrix[M4x4Col3Row2] = -(2.0 * zFar * zNear) / (zFar - zNear);
 
-					matrix[M4x4Col2Row3] = -1.0;
-					matrix[M4x4Col3Row3] = 0.0;
+					matrix[M4x4Col2Row3] = -1;
+					matrix[M4x4Col3Row3] = 0;
 				}
 
 				return matrix;

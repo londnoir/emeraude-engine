@@ -74,7 +74,7 @@ namespace EmEn
 			m_font = Resources::Manager::instance()->fonts().getDefaultResource();
 
 			m_processor.setPixmap(m_surface->pixmap());
-			m_processor.setFont(&m_font->font());
+			m_processor.setFont(m_font->font(), 16U);
 			m_processor.setFontColor(White);
 		}
 
@@ -86,7 +86,6 @@ namespace EmEn
 	{
 		this->destroyTimers();
 
-		m_processor.setFont(nullptr);
 		m_font.reset();
 
 		m_screen.reset();

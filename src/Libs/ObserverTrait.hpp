@@ -100,11 +100,7 @@ namespace EmEn::Libs
 			bool
 			isObserving (ObservableTrait * observable) const noexcept
 			{
-#if __cplusplus >= 202002L /* C++20 feature */
 				return m_observables.contains(observable);
-#else
-				return m_observables.find(observable) != m_observables.cend();
-#endif
 			}
 
 			/**

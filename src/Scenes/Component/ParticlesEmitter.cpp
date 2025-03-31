@@ -38,7 +38,7 @@ namespace EmEn::Scenes::Component
 	using namespace Physics;
 	using namespace Graphics;
 
-	ParticlesEmitter::ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable, size_t instanceCount) noexcept
+	ParticlesEmitter::ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Renderable::Interface > & renderable, uint32_t instanceCount) noexcept
 		: Abstract(name, parentEntity),
 		m_renderableInstance(std::make_shared< RenderableInstance::Multiple >(renderable, instanceCount, renderable->isSprite() ? RenderableInstance::FacingCamera : 0)),
 		m_particleLimit(instanceCount)

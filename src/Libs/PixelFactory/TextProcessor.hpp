@@ -66,8 +66,9 @@ namespace EmEn::Libs::PixelFactory
 			 * @param pixmap A reference to a target pixmap.
 			 */
 			explicit
-			TextProcessor (Pixmap< precision_t > & pixmap) noexcept
-				: m_pixmap(&pixmap), m_area(pixmap.area())
+		TextProcessor (Pixmap< precision_t > & pixmap) noexcept
+				: m_pixmap(&pixmap),
+				m_area(pixmap.area())
 			{
 
 			}
@@ -109,25 +110,15 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Sets a font to write on the pixmap.
 			 * @param font A pointer to a font.
+			 * @param fontSize The size in the font.
 			 * @return void
 			 */
 			void
-			setFont (const Font< precision_t > * font) noexcept
+			setFont (const Font< precision_t > & font, uint32_t fontSize) noexcept
 			{
-				m_font = font;
+				m_selectedFont = font.glyphs(fontSize);
 
 				this->updateMetrics();
-			}
-
-			/**
-			 * @brief Returns the font smart pointer.
-			 * @return const Font< precision_t > *
-			 */
-			[[nodiscard]]
-			const Font< precision_t > *
-			font () const noexcept
-			{
-				return m_font;
 			}
 
 			/**
@@ -139,17 +130,6 @@ namespace EmEn::Libs::PixelFactory
 			setFontColor (const Color< float > & color) noexcept
 			{
 				m_fontColor = color;
-			}
-
-			/**
-			 * @brief Returns the font color.
-			 * @return const Color< float > &
-			 */
-			[[nodiscard]]
-			const Color< float > &
-			fontColor () const noexcept
-			{
-				return m_fontColor;
 			}
 
 			/**
@@ -213,9 +193,9 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				if ( m_font == nullptr )
+				if ( m_selectedFont == nullptr )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", there is no font !" "\n";
+					std::cerr << __PRETTY_FUNCTION__ << ", there is no font selected !" "\n";
 
 					return false;
 				}
@@ -229,20 +209,18 @@ namespace EmEn::Libs::PixelFactory
 
 					for ( ; currentChar < text.size(); currentChar++ )
 					{
-						auto chr = text.at(currentChar);
+						auto ASCIICode = text.at(currentChar);
 
 						/* NOTE: Check for a new line feed. */
-						if ( chr == '\n' )
+						if ( ASCIICode == '\n' )
 						{
-							currentColumn = 0;
-
 							currentChar++;
 
 							break;
 						}
 
 						/* NOTE: Check for spaces special cases. */
-						if ( chr == ' ' )
+						if ( ASCIICode == ' ' )
 						{
 							/* NOTE: Do not print a space at a beginning of a line. */
 							if ( currentColumn == 0 )
@@ -265,7 +243,7 @@ namespace EmEn::Libs::PixelFactory
 							}
 						}
 
-						this->printCharacter(chr, currentColumn, currentRow);
+						this->blitCharacter(ASCIICode, currentColumn, currentRow);
 
 						currentColumn++;
 
@@ -291,19 +269,20 @@ namespace EmEn::Libs::PixelFactory
 		private:
 
 			/**
-			 * @brief Prints a character on the pixmap.
-			 * @param chr The ASCII code.
+			 * @brief Blit a character on the target pixmap.
+			 * @param ASCIICode The ASCII code of the character.
 			 * @param column The column inside the area.
 			 * @param row The row inside the area.
 			 * @return bool
 			 */
 			bool
-			printCharacter (char chr, size_t column, size_t row) noexcept
+			blitCharacter (char ASCIICode, size_t column, size_t row) noexcept
 			{
-				const auto & glyph = m_font->glyph(chr);
+				const auto & glyph = m_selectedFont->glyph(ASCIICode);
 
-				const Area< size_t > glyphArea = glyph.area(
-					m_area.offsetX() + (column * m_font->maxWidth()),
+				/* Compute the final area on the pixmap. */
+				const auto glyphArea = glyph.area(
+					m_area.offsetX() + (column * m_selectedFont->widestChar()),
 					m_area.offsetY() + (row * m_textMetrics.lineHeight)
 				);
 
@@ -346,20 +325,19 @@ namespace EmEn::Libs::PixelFactory
 			void
 			updateMetrics () noexcept
 			{
-				if ( !m_area.isValid() || m_font == nullptr )
+				if ( !m_area.isValid() || m_selectedFont == nullptr )
 				{
 					return;
 				}
 
-				m_textMetrics.lineHeight = m_font->maxHeight() + m_textMetrics.lineSpace;
-
-				m_textMetrics.maxColumns = std::floor(m_area.width() / m_font->maxWidth());
+				m_textMetrics.lineHeight = m_selectedFont->height() + m_textMetrics.lineSpace;
+				m_textMetrics.maxColumns = std::floor(m_area.width() / m_selectedFont->widestChar());
 				m_textMetrics.maxRows = std::floor(m_area.height() / m_textMetrics.lineHeight);
 			}
 
 			Pixmap< precision_t > * m_pixmap{nullptr};
-			const Font< precision_t > * m_font{nullptr};
-			Area< size_t > m_area;
+			Area< size_t > m_area{};
+			const ASCIIGlyphArray< precision_t > * m_selectedFont{nullptr};
 			Color< float > m_fontColor = White;
 			DrawPixelMode m_mode{DrawPixelMode::Normal};
 			TextMetrics m_textMetrics;

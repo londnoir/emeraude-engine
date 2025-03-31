@@ -170,7 +170,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns wheter the data is non-empty and dimension valid.
+			 * @brief Returns whether the data is non-empty and dimension valid.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -263,17 +263,11 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			isPowerOfTwo () const noexcept
 			{
-				if ( m_width % 2 > 0 )
-				{
-					return false;
-				}
+				auto isPow2 = [] (const size_t n) {
+					return n > 0 && (n & (n - 1)) == 0;
+				};
 
-				if ( m_height % 2 > 0 )
-				{
-					return false;
-				}
-
-				return true;
+				return isPow2(m_width) && isPow2(m_height);
 			}
 
 			/**

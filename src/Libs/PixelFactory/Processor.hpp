@@ -170,7 +170,7 @@ namespace EmEn::Libs::PixelFactory
 					( pointA[Math::Y] < 0 && pointB[Math::Y] < 0 ) || ( pointA[Math::Y] > height && pointB[Math::Y] > height )
 				)
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the segment is completely outside the pixmap" "\n";
+					std::cerr << "Pixmap::drawSegment(), the segment is completely outside the pixmap" "\n";
 
 					return false;
 				}
@@ -608,7 +608,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !source.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::resize(), source Pixmap is invalid !" "\n";
 
 					return {};
 				}
@@ -616,7 +616,7 @@ namespace EmEn::Libs::PixelFactory
 				/* Simple copy if same size. */
 				if ( width == source.width() && height == source.height() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", source Pixmap is already at good dimension !" "\n";
+					std::cerr << "Pixmap::resize(), source Pixmap is already at good dimension !" "\n";
 
 					return source;
 				}
@@ -632,7 +632,7 @@ namespace EmEn::Libs::PixelFactory
 				switch ( filteringMode )
 				{
 					case FilteringMode::Cubic :
-						std::cerr << __PRETTY_FUNCTION__ << ", the cubic sampling is not yet implemented ! Using linear filtering instead." "\n";
+						std::cerr << "Pixmap::resize(), the cubic sampling is not yet implemented ! Using linear filtering instead." "\n";
 
 						[[fallthrough]];
 
@@ -783,14 +783,21 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !source.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::crop(), the source pixmap is invalid !" "\n";
 
 					return {};
 				}
 
-				if ( !area.isValid() || !area.isIntersect(source.width(), source.height()) )
+				if ( !area.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the area is invalid or do not intersect the pixmap !" "\n";
+					std::cerr << "Pixmap::crop(), the area is invalid !" "\n";
+
+					return {};
+				}
+
+				if ( !area.isIntersect(source.width(), source.height()) )
+				{
+					std::cerr << "Pixmap::crop(), the area do not intersect the source pixmap !" "\n" << area << "\n";
 
 					return {};
 				}
@@ -1038,7 +1045,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !base.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", base Pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::mirror(), base pixmap is invalid !" "\n";
 
 					return {};
 				}
@@ -1207,7 +1214,7 @@ namespace EmEn::Libs::PixelFactory
 				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
 				if ( source.channelMode() != m_target.channelMode() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmaps must have the same channel mode in order to make a blit operation !" "\n";
+					std::cerr << "Pixmap::blit(), the pixmap must have the same channel mode in order to make a blit operation !" "\n";
 
 					return false;
 				}
@@ -1266,7 +1273,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( sourceClip.isOutside(rawData.width, rawData.height) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is outside the pixmap !" "\n";
+					std::cerr << "Pixmap::blit(), the clipping area is outside the pixmap !" "\n";
 
 					return false;
 				}
@@ -1279,7 +1286,7 @@ namespace EmEn::Libs::PixelFactory
 				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
 				if ( rawData.colorCount != m_target.colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmaps must have the same channel mode in order to make a blit operation !" "\n";
+					std::cerr << "Pixmap::blit(), the pixmap must have the same channel mode in order to make a blit operation !" "\n";
 
 					return false;
 				}
@@ -1413,7 +1420,7 @@ namespace EmEn::Libs::PixelFactory
 
 					if ( shiftSize >= source.width() )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", the source pixmap do not lie in target pixmap on X axis !" "\n";
+						std::cerr << "Pixmap::copy(), the source pixmap do not lie in target pixmap on X axis !" "\n";
 
 						return false;
 					}
@@ -1439,7 +1446,7 @@ namespace EmEn::Libs::PixelFactory
 
 					if ( shiftSize >= source.height() )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", the source pixmap do not lie in target pixmap on Y axis !" "\n";
+						std::cerr << "Pixmap::copy(), the source pixmap do not lie in target pixmap on Y axis !" "\n";
 
 						return false;
 					}
@@ -1533,7 +1540,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( !mask.isValid() || !mask.isGrayScale() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", mask pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::stencil(), mask pixmap is invalid !" "\n";
 
 					return false;
 				}
@@ -1605,7 +1612,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !m_target.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", target pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::checkPixmap(), target pixmap is invalid !" "\n";
 
 					return false;
 				}
@@ -1626,21 +1633,21 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !pixmap.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmap is invalid !" "\n";
+					std::cerr << "Pixmap::checkPixmapClipping(), the pixmap is invalid !" "\n";
 
 					return false;
 				}
 
 				if ( !clip.isValid() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is invalid !" "\n";
+					std::cerr << "Pixmap::checkPixmapClipping(), the clipping area is invalid !" "\n";
 
 					return false;
 				}
 
 				if ( clip.isOutside(pixmap.width(), pixmap.height()) )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the clipping area is outside the pixmap !" "\n";
+					std::cerr << "Pixmap::checkPixmapClipping(), the clipping area is outside the pixmap !" "\n";
 
 					return false;
 				}
@@ -1667,7 +1674,7 @@ namespace EmEn::Libs::PixelFactory
 				/* NOTE: Crop the width and height if overflow the source pixmap. */
 				if ( clip.cropOnOverflow(pixmap.width(), pixmap.height()) )
 				{
-					std::cout << __PRETTY_FUNCTION__ << ", source area overflow fixed to " << clip << " !" "\n";
+					std::cout << "Pixmap::checkPixmapClipping(), source area overflow fixed to " << clip << " !" "\n";
 				}
 
 				return true;

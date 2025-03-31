@@ -74,7 +74,7 @@ namespace EmEn::Scenes::Component
 			 * @param renderable The rendered object by this particle emitter.
 			 * @param instanceCount A fixed instance count.
 			 */
-			ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable, size_t instanceCount) noexcept;
+			ParticlesEmitter (const std::string & name, const AbstractEntity & parentEntity, const std::shared_ptr< Graphics::Renderable::Interface > & renderable, uint32_t instanceCount) noexcept;
 
 			/** @copydoc EmEn::Scenes::Component::Abstract::getRenderableInstance() const */
 			[[nodiscard]]
