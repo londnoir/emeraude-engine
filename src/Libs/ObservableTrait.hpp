@@ -26,21 +26,13 @@
 
 #pragma once
 
-/* Emeraude-Engine configuration. */
-#include "emeraude_config.hpp"
-
 /* STL inclusions. */
-#include <any>
 #include <cstddef>
-#include <iostream>
-#include <map>
-#include <mutex>
+#include <any>
 #include <set>
-#include <string>
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-#include <iostream>
-#endif
+#include <mutex>
 #ifdef DEBUG
+#include <map>
 #include <memory>
 #endif
 
@@ -114,11 +106,7 @@ namespace EmEn::Libs
 			bool
 			isObserved (ObserverTrait * observer) const noexcept
 			{
-#if __cplusplus >= 202002L /* C++20 feature */
 				return m_observers.contains(observer);
-#else
-				return m_observers.find(observer) != m_observers.cend();
-#endif
 			}
 
 			/**
@@ -148,7 +136,6 @@ namespace EmEn::Libs
 			[[nodiscard]]
 			virtual bool is (size_t classUID) const noexcept = 0;
 
-
 			/**
 			 * @brief Returns the label registered when generation the UID to use to debug the Observer::onNotification().
 			 * @note This debugging method will return :
@@ -158,32 +145,10 @@ namespace EmEn::Libs
 			 * @param UID An observable UID.
 			 * @return const char *
 			 */
-#ifdef NDEBUG
-			[[deprecated("This method is useless in release mode ! Surround the call with DEBUG macro.")]]
-#endif
-			[[nodiscard]]
-			static
-			const char *
-			whoIs (size_t UID) noexcept
-			{
 #ifdef DEBUG
-				if ( s_classUIDs == nullptr )
-				{
-					return "UNALLOCATED_MAP";
-				}
-
-				const auto item = s_classUIDs->find(UID);
-
-				if ( item != s_classUIDs->cend() )
-				{
-					return item->second;
-				}
-
-				return "UNREGISTERED_ITEM";
-#else
-				return "DEBUG_FEATURE";
+			[[nodiscard]]
+			static const char * whoIs (size_t UID) noexcept;
 #endif
-			}
 
 		protected:
 
@@ -206,38 +171,7 @@ namespace EmEn::Libs
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			static
-			size_t
-			getClassUID (const char * label) noexcept
-			{
-				/* NOTE: Lock the call to this function to be sure having a unique class identifier. */
-				const std::lock_guard< std::mutex > lock{s_UIDMutex};
-
-#ifdef DEBUG
-				const auto UID = s_nextClassUID++;
-
-				if ( s_classUIDs == nullptr )
-				{
-					s_classUIDs = std::make_unique< std::map< size_t, const char * > >();
-
-					/* NOTE: As a special engine debug feature, we register the
-					 * release of memory allocation at application exit. */
-					atexit([] () {
-						s_classUIDs.reset();
-					});
-				}
-
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-				std::cout << "Linking UID: " << UID << " to item '" << label << "'" "\n";
-#endif
-
-				s_classUIDs->emplace(UID, label);
-
-				return UID;
-#else
-				return s_nextClassUID++;
-#endif
-			}
+			static size_t getClassUID (const char * label) noexcept;
 
 		private:
 

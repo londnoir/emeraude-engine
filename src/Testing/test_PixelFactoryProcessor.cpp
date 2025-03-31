@@ -413,7 +413,7 @@ TEST(PixelFactoryProcessor, swapChannels)
 	}
 }
 
-TEST(PixmapProcessor, blit)
+TEST(PixelFactoryProcessor, blit)
 {
 	Pixmap< uint8_t > source;
 

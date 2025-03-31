@@ -400,7 +400,7 @@ namespace EmEn::Graphics::Geometry
 		/* Vertex color. */
 		if ( this->isFlagEnabled(EnableVertexColor) )
 		{
-			const auto color = Color< float >::random();
+			const auto color = Color< float >::quickRandom();
 			
 			m_localData.emplace_back(color.red());
 			m_localData.emplace_back(color.green());

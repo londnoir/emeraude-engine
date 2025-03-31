@@ -31,22 +31,20 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <utility>
 
 /* Local inclusions. */
 #include "FontResource.hpp"
 #include "Libs/Math/Vector.hpp"
-#include "Libs/PixelFactory/Area.hpp"
-#include "Libs/PixelFactory/Color.hpp"
 #include "Libs/PixelFactory/Margin.hpp"
 #include "Libs/PixelFactory/Pixmap.hpp"
 
 namespace EmEn::Graphics
 {
 	/**
-	 * @brief
+	 * @brief The text writer class to display a text buffer on a pixmap.
+	 * @todo This class must be rewritten. The main idea was to make a text buffer to display it in part on a pixmap with a dynamic update to enable text scrolling.
 	 * @extends EmEn::Libs::PixelFactory::Margin
 	 */
 	class TextWriter final : public Libs::PixelFactory::Margin< size_t >
@@ -76,11 +74,6 @@ namespace EmEn::Graphics
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"TextWriter"};
-
-			static constexpr auto LoremIpsum =
-				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales hendrerit.\n"
-				"Ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar. Nulla sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros vitae ligula. Pellentesque rhoncus nunc et augue. Integer id felis. Curabitur aliquet pellentesque diam. Integer quis metus vitae elit lobortis egestas. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi vel erat non mauris convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue eu, quam. Mauris ullamcorper felis vitae erat. Proin feugiat, augue non elementum posuere, metus purus iaculis lectus, et tristique ligula justo vitae magna.\n"
-				"Aliquam convallis sollicitudin purus. Praesent aliquam, enim at fermentum mollis, ligula massa adipiscing nisl, ac euismod nibh nisl eu lectus. Fusce vulputate sem at sapien. Vivamus leo. Aliquam euismod libero eu enim. Nulla nec felis sed leo placerat imperdiet. Aenean suscipit nulla in justo. Suspendisse cursus rutrum augue. Nulla tincidunt tincidunt mi. Curabitur iaculis, lorem vel rhoncus faucibus, felis magna fermentum augue, et ultricies lacus lorem varius purus. Curabitur eu amet.\n";
 
 			TextWriter () noexcept = default;
 
@@ -245,8 +238,7 @@ namespace EmEn::Graphics
 			size_t widthRequest (const std::string & text) const noexcept;
 
 			/**
-			 * STL streams printable object.
-			 *
+			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
 			 * @return std::ostream &
@@ -254,12 +246,11 @@ namespace EmEn::Graphics
 			friend std::ostream & operator<< (std::ostream & out, const TextWriter & obj);
 
 			/**
-			 * Stringify the object.
-			 *
+			 * @brief Stringifies the object.
 			 * @param obj A reference to the object to print.
 			 * @return std::string
 			 */
-			friend std::string to_string (const TextWriter & obj) noexcept;
+			friend std::string to_string (const TextWriter & obj);
 
 			static std::string ASCIITable () noexcept;
 
@@ -278,10 +269,10 @@ namespace EmEn::Graphics
 			}
 
 			[[nodiscard]]
-			Libs::PixelFactory::Area< size_t >
+			Libs::Math::Rectangle< uint32_t >
 			getArea (const Libs::PixelFactory::Pixmap< uint8_t > & glyph) const noexcept
 			{
-				return {static_cast< size_t >(m_currentCursor[Libs::Math::X]), this->OpenGLCursorY(glyph.height()), glyph.width(), glyph.height()};
+				return {static_cast< uint32_t >(m_currentCursor[Libs::Math::X]), this->OpenGLCursorY(glyph.height()), glyph.width(), glyph.height()};
 			}
 
 			[[nodiscard]]
@@ -296,7 +287,7 @@ namespace EmEn::Graphics
 
 			bool autoAlignCursor (Alignment alignment, const std::pair< size_t, size_t > & requestedSizes) noexcept;
 
-			bool moveUp (size_t distance, const Libs::PixelFactory::Color< float > & color) noexcept;
+			bool moveUp (uint32_t distance, const Libs::PixelFactory::Color< float > & color) noexcept;
 
 			/* Flag names. */
 			static constexpr auto WrappingEnabled{0UL};

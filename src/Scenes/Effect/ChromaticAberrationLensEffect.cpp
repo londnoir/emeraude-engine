@@ -42,14 +42,16 @@ namespace EmEn::Scenes
 
 	ChromaticAberrationLensEffect::ChromaticAberrationLensEffect (float xScale, float yScale) noexcept
 	{
-		m_redOffset[X] = Utility::random(-xScale, xScale);
-		m_redOffset[Y] = Utility::random(-yScale, yScale);
+		Randomizer< float > randomizer;
 
-		m_greenOffset[X] = Utility::random(-xScale, xScale);
-		m_greenOffset[Y] = Utility::random(-yScale, yScale);
+		m_redOffset[X] = randomizer.value(-xScale, xScale);
+		m_redOffset[Y] = randomizer.value(-yScale, yScale);
 
-		m_blueOffset[X] = Utility::random(-xScale, xScale);
-		m_blueOffset[Y] = Utility::random(-yScale, yScale);
+		m_greenOffset[X] = randomizer.value(-xScale, xScale);
+		m_greenOffset[Y] = randomizer.value(-yScale, yScale);
+
+		m_blueOffset[X] = randomizer.value(-xScale, xScale);
+		m_blueOffset[Y] = randomizer.value(-yScale, yScale);
 	}
 
 	bool

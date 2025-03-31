@@ -33,6 +33,7 @@
 #include <numeric>
 #include <type_traits>
 #include <vector>
+#include <numbers>
 
 #define OPTIMIZED
 
@@ -54,6 +55,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	requires (std::is_floating_point_v< float_t >)
+	[[deprecated("Use std::numbers::pi_v< float_t > instead !")]]
 	constexpr float_t Pi = static_cast< float_t >(3.14159265358979323846264338327950288);
 
 	/**
@@ -63,6 +65,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	requires (std::is_floating_point_v< float_t >)
+	[[deprecated("Use std::numbers::phi_v< float_t > instead !")]]
 	constexpr float_t Phi = static_cast< float_t >(1.61803398874989484820458683436563811);
 
 	/**
@@ -71,21 +74,8 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	requires (std::is_floating_point_v< float_t >)
+	[[deprecated("Use std::numbers::e_v< float_t > instead !")]]
 	constexpr float_t e = static_cast< float_t >(2.71828182845904523536028747135266249);
-
-	/**
-	 * @brief Gets the gold number.
-	 * @tparam float_t The type of floating point number. Default float.
-	 * @return float_t
-	 */
-	template< typename float_t = float >
-	[[nodiscard]]
-	constexpr
-	float_t
-	getPhi () noexcept requires (std::is_floating_point_v< float_t >)
-	{
-		return (1 + std::sqrt(static_cast< float_t >(5))) * static_cast< float_t >(0.5);
-	}
 
 	/**
 	 * @brief Gets the pi constant.
@@ -94,11 +84,25 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
-	constexpr
+	[[deprecated("Use std::numbers::pi_v< float_t > instead !")]]
 	float_t
 	getPi () noexcept requires (std::is_floating_point_v< float_t >)
 	{
 		return std::atan(static_cast< float_t >(1)) * 4;
+	}
+
+	/**
+	 * @brief Gets the gold number.
+	 * @tparam float_t The type of floating point number. Default float.
+	 * @return float_t
+	 */
+	template< typename float_t = float >
+	[[nodiscard]]
+	[[deprecated("Use std::numbers::phi_v< float_t > instead !")]]
+	float_t
+	getPhi () noexcept requires (std::is_floating_point_v< float_t >)
+	{
+		return (1 + std::sqrt(static_cast< float_t >(5))) * static_cast< float_t >(0.5);
 	}
 
 	/**
@@ -108,6 +112,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
+	[[deprecated("Use std::numbers::e_v< float_t > instead !")]]
 	float_t
 	getE (int trial = 4) noexcept requires (std::is_floating_point_v< float_t >)
 	{
@@ -174,7 +179,7 @@ namespace EmEn::Libs::Math
 	float_t
 	Radian (float_t degree) noexcept requires (std::is_floating_point_v< float_t >)
 	{
-		return degree * Pi< float_t > / HalfRevolution< float_t >;
+		return degree * std::numbers::pi_v< float_t > / HalfRevolution< float_t >;
 	}
 
 	/**
@@ -189,7 +194,7 @@ namespace EmEn::Libs::Math
 	float_t
 	Degree (float_t radian) noexcept requires (std::is_floating_point_v< float_t >)
 	{
-		return radian / Pi< float_t > * HalfRevolution< float_t >;
+		return radian / std::numbers::pi_v< float_t > * HalfRevolution< float_t >;
 	}
 
 	/**
@@ -202,6 +207,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename number_t = float >
 	[[nodiscard]]
+	[[deprecated("Use std::clamp instead !")]]
 	constexpr
 	number_t
 	clamp (number_t value, number_t min, number_t max) noexcept requires (std::is_arithmetic_v< number_t >)
@@ -310,13 +316,13 @@ namespace EmEn::Libs::Math
 
 	/**
 	 * @brief Performs cotan of an angle in degree.
+	 * @todo Can be marked 'constexpr' in C++23
 	 * @tparam float_t The type of floating point number. Default float.
 	 * @param degree The angle to compute.
 	 * @return float_t
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
-	constexpr
 	float_t
 	cotan (float_t degree) noexcept requires (std::is_floating_point_v< float_t >)
 	{
@@ -327,13 +333,13 @@ namespace EmEn::Libs::Math
 
 	/**
 	 * @brief Performs fast cotan of an angle in degree.
+	 * @todo Can be marked 'constexpr' in C++23
 	 * @tparam float_t The type of floating point number. Default float.
 	 * @param degree The angle to compute.
 	 * @return float_t
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
-	constexpr
 	float_t
 	fastCotan (float_t degree) noexcept requires (std::is_floating_point_v< float_t >)
 	{
@@ -351,6 +357,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename number_t = float, typename scale_float_t = float >
 	[[nodiscard]]
+	constexpr
 	number_t
 	linearInterpolation (number_t operandA, number_t operandB, scale_float_t factor) noexcept requires (std::is_arithmetic_v< number_t >, std::is_floating_point_v< scale_float_t >)
 	{
@@ -359,6 +366,7 @@ namespace EmEn::Libs::Math
 
 	/**
 	 * @brief Performs a cosine interpolation between values.
+	 * @todo Can be marked 'constexpr' in C++23
 	 * @tparam number_t The type of number. Default float.
 	 * @tparam scale_float_t The type of floating point number for the scale. Default float.
 	 * @param operandA The first value.
@@ -372,7 +380,7 @@ namespace EmEn::Libs::Math
 	cosineInterpolation (number_t operandA, number_t operandB, scale_float_t factor) noexcept requires (std::is_arithmetic_v< number_t >, std::is_floating_point_v< scale_float_t >)
 	{
 		/* Cosine version only modifies 'factor' before performing a simple linear interpolation. */
-		factor = (static_cast< scale_float_t >(1) - std::cos(factor * Pi< scale_float_t >)) * static_cast< scale_float_t >(0.5);
+		factor = (static_cast< scale_float_t >(1) - std::cos(factor * std::numbers::pi_v< scale_float_t >)) * static_cast< scale_float_t >(0.5);
 
 		return linearInterpolation(operandA, operandB, factor);
 	}
@@ -405,6 +413,33 @@ namespace EmEn::Libs::Math
 
 		return tmpA * factor * factor2 + tmpB * factor2 + tmpC * factor + tmpD;
 #endif
+	}
+
+	/**
+	 * @brief Performs 1D cubic interpolation (Catmull-Rom spline).
+	 * @tparam data_t The type of number. Default float.
+	 * @param p0 Value at x = -1
+	 * @param p1 Value at x = 0
+	 * @param p2 Value at x = +1
+	 * @param p3 Value at x = +2
+	 * @param factor Fractional position between p1 and p2 (0 <= t < 1).
+	 * @return Interpolated value.
+	 */
+	template< typename data_t = float >
+	[[nodiscard]]
+	data_t
+	cubicInterpolationCatmullRom (data_t p0, data_t p1, data_t p2, data_t p3, data_t factor) noexcept requires (std::is_floating_point_v< data_t >)
+	{
+		const data_t t2 = factor * factor;
+		const data_t t3 = t2 * factor;
+
+		data_t result =
+			0.5F * (-p0 + 3.0F * p1 - 3.0F * p2 + p3) * t3 +
+			0.5F * (2.0F * p0 - 5.0F * p1 + 4.0F * p2 - p3) * t2 +
+			0.5F * (-p0 + p2) * factor +
+			p1;
+
+		return result;
 	}
 
 	/**
@@ -482,6 +517,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename input_number_t = float, typename output_number_t = float >
 	[[nodiscard]]
+	constexpr
 	output_number_t
 	normalize (input_number_t value, input_number_t scale) noexcept requires (std::is_arithmetic_v< input_number_t >, std::is_arithmetic_v< output_number_t >)
 	{
@@ -500,7 +536,7 @@ namespace EmEn::Libs::Math
 	float_t
 	circleCircumference (float_t radius) noexcept requires (std::is_floating_point_v< float_t >)
 	{
-		return radius > 0 ? 2 * Pi< float_t > * radius : 0;
+		return radius > 0 ? 2 * std::numbers::pi_v< float_t > * radius : 0;
 	}
 
 	/**
@@ -515,18 +551,18 @@ namespace EmEn::Libs::Math
 	float_t
 	circleArea (float_t radius) noexcept requires (std::is_floating_point_v< float_t >)
 	{
-		return radius > 0 ? Math::Pi< float_t > * (radius * radius) : 0;
+		return radius > 0 ? std::numbers::pi_v< float_t > * (radius * radius) : 0;
 	}
 
 	/**
 	 * @brief Computes a sphere volume.
+	 * @todo Can be marked 'constexpr' in C++26 (std::pow)
 	 * @tparam float_t The type of floating point number. Default float.
 	 * @param radius The radius.
 	 * @return float_t
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
-	constexpr
 	float_t
 	sphereVolume (float_t radius) noexcept requires (std::is_floating_point_v< float_t >)
 	{
@@ -535,7 +571,7 @@ namespace EmEn::Libs::Math
 			return 0;
 		}
 
-		return (static_cast< float_t >(4) / static_cast< float_t >(3)) * Pi< float_t > * std::pow(radius, 3);
+		return static_cast< float_t >(4) / static_cast< float_t >(3) * std::numbers::pi_v< float_t > * std::pow(radius, 3);
 	}
 
 	/**
@@ -546,8 +582,8 @@ namespace EmEn::Libs::Math
 	 * @return number_t
 	 */
 	template< typename number_t = float >
-	[[deprecated("Invalid formula !")]]
 	[[nodiscard]]
+	constexpr
 	number_t
 	delta (number_t operandA, number_t operandB) noexcept requires (std::is_arithmetic_v< number_t >)
 	{
@@ -563,6 +599,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename number_t = float >
 	[[nodiscard]]
+	constexpr
 	number_t
 	difference (number_t operandA, number_t operandB) noexcept requires (std::is_arithmetic_v< number_t >)
 	{
@@ -577,6 +614,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename float_t = float >
 	[[nodiscard]]
+	constexpr
 	float_t
 	reciprocal (float_t value) noexcept requires (std::is_floating_point_v< float_t >)
 	{
@@ -585,6 +623,7 @@ namespace EmEn::Libs::Math
 
 	/**
 	 * @brief Returns the reciprocal square root.
+	 * @todo Can be marked 'constexpr' in C++26 (std::sqrt)
 	 * @tparam float_t The type of floating point number. Default float.
 	 * @param value The value.
 	 * @return float_t
@@ -592,7 +631,7 @@ namespace EmEn::Libs::Math
 	template< typename float_t = float >
 	[[nodiscard]]
 	float_t
-	reciprocalSquareRoot (float_t value) noexcept requires (std::is_floating_point_v< float_t >)
+	reciprocalSquareRoot (float_t value) requires (std::is_floating_point_v< float_t >)
 	{
 		return static_cast< float_t >(1) / std::sqrt(value);
 	}
@@ -624,6 +663,7 @@ namespace EmEn::Libs::Math
 
 	/**
 	 * @brief Returns the number of time requested to fit the alignment.
+	 * @todo Can be marked 'constexpr' in C++23 (std::ceil)
 	 * @tparam integral_t The type of integral number. Default uint32_t.
 	 * @param value The value to align.
 	 * @param alignment A fixed value for the alignment.
@@ -634,7 +674,7 @@ namespace EmEn::Libs::Math
 	size_t
 	alignCount (integral_t value, integral_t alignment) requires (std::is_integral_v< integral_t >)
 	{
-		return static_cast< size_t >(std::ceil(static_cast< float >(value) / static_cast< float >(alignment)));
+		return std::ceil(static_cast< float >(value) / static_cast< float >(alignment));
 	}
 
 	/**
@@ -648,6 +688,11 @@ namespace EmEn::Libs::Math
 	number_t
 	average (const std::vector< number_t > & numbers) requires (std::is_arithmetic_v< number_t >)
 	{
+		if ( numbers.empty() )
+		{
+			return static_cast< number_t >(0);
+		}
+
 		return numbers.empty() ? 0 : std::accumulate(numbers.cbegin(), numbers.cend(), 0) / numbers.size();
 	}
 }

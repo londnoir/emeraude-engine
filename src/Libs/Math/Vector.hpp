@@ -27,19 +27,19 @@
 #pragma once
 
 /* STL inclusions. */
-#include <algorithm>
-#include <array>
-#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cmath>
+#include <array>
+#include <algorithm>
 #include <iomanip>
-#include <iostream>
-#include <limits>
 #include <sstream>
-#include <string>
 #include <type_traits>
+#include <span>
+#include <limits>
 
 /* Local inclusions for usages. */
-#include "Libs/Utility.hpp"
+#include "Libs/Randomizer.hpp"
 #include "Libs/String.hpp"
 
 namespace EmEn::Libs::Math
@@ -63,6 +63,7 @@ namespace EmEn::Libs::Math
 	 * @tparam precision_t The data precision, should be a floating point number. Default float.
 	 * @note For position the fourth component should be 1 and for direction, it should be 0.
 	 * In that way, translation with matrices won't affect direction vectors.
+	 * @todo Check pertinence of OpenMP pragmas
 	 */
 	template< size_t dim_t, typename precision_t = float >
 	requires (dim_t == 2 || dim_t == 3 || dim_t == 4) && std::is_arithmetic_v< precision_t >
@@ -214,34 +215,39 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Constructs a vector from C-Style array.
-			 * @warning Unsafe !
 			 * @param data A pointer to a C-Style containing at least the dimension of the vector.
 			 */
 			explicit
-			Vector (const precision_t * data) noexcept
+			Vector (std::span< const precision_t, dim_t > data) noexcept
 			{
-				#pragma omp simd
-				for ( size_t index = 0; index < dim_t; index++ )
-				{
-					m_data[index] = data[index]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic) : We use raw data here.
-				}
+				std::copy(data.cbegin(), data.cend(), m_data.begin());
+			}
+
+			/**
+			 * @brief Copy raw data to vector.
+			 * @param data A pointer to a C-Style containing at least the dimension of the vector.
+			 * @return void
+			 */
+			void
+			copy (std::span< precision_t, dim_t > data) const noexcept
+			{
+				std::copy(m_data.begin(), m_data.end(), data.begin());
 			}
 
 			/**
 			 * @brief Builds a Vector< dim_t, precision_t > using a raw definition from a std::string.
+			 * @warning Bad formatted string will result to an origin vector.
 			 * @param str The string containing the vector definition.
 			 * @param separator A char to specify the values separator. Default is white space.
 			 * @param offset An index where to execute copying values. Default is 0.
 			 */
 			explicit
-			Vector (const std::string & str, char separator = ' ', size_t offset = 0) noexcept
+			Vector (const std::string & str, char separator = ' ', size_t offset = 0)
 			{
 				const auto chunks = String::explode(str, separator, false);
 
 				if ( chunks.size() < offset + dim_t )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", invalid parameter !" "\n";
-
 					return;
 				}
 
@@ -327,6 +333,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator+ () const noexcept
 			{
@@ -339,6 +346,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator- () const noexcept
 			{
@@ -478,6 +486,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator+ (const Vector & operand) const noexcept
 			{
@@ -498,6 +507,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator+ (const precision_t & operand) const noexcept
 			{
@@ -520,14 +530,10 @@ namespace EmEn::Libs::Math
 			Vector &
 			operator+= (const Vector & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; index++ )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
-					{
-						m_data[index] += operand.m_data[index];
-					}
+					m_data[index] += operand.m_data[index];
 				}
 
 				return *this;
@@ -541,14 +547,10 @@ namespace EmEn::Libs::Math
 			Vector &
 			operator+= (const precision_t & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; index++ )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
-					{
-						m_data[index] += operand;
-					}
+					m_data[index] += operand;
 				}
 
 				return *this;
@@ -560,6 +562,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator- (const Vector & operand) const noexcept
 			{
@@ -580,6 +583,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator- (const precision_t & operand) const noexcept
 			{
@@ -602,14 +606,10 @@ namespace EmEn::Libs::Math
 			Vector &
 			operator-= (const Vector & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; index++ )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
-					{
-						m_data[index] -= operand.m_data[index];
-					}
+					m_data[index] -= operand.m_data[index];
 				}
 
 				return *this;
@@ -623,14 +623,10 @@ namespace EmEn::Libs::Math
 			Vector &
 			operator-= (const precision_t & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; index++ )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
-					{
-						m_data[index] -= operand;
-					}
+					m_data[index] -= operand;
 				}
 
 				return *this;
@@ -642,6 +638,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator* (const Vector & operand) const noexcept
 			{
@@ -662,6 +659,7 @@ namespace EmEn::Libs::Math
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator* (const precision_t & operand) const noexcept
 			{
@@ -684,14 +682,10 @@ namespace EmEn::Libs::Math
 			Vector &
 			operator*= (const Vector & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; index++ )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
-					{
-						m_data[index] *= operand.m_data[index];
-					}
+					m_data[index] *= operand.m_data[index];
 				}
 
 				return *this;
@@ -716,19 +710,46 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the division between two vectors.
+			 * @warning Division by zero do not throw exception !
 			 * @param operand A reference to another vector.
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator/ (const Vector & operand) const noexcept
 			{
 				Vector vector;
 
-				#pragma omp simd
-				for ( size_t index = 0; index < dim_t; index++ )
+				if constexpr ( std::is_floating_point_v< precision_t > )
 				{
-					vector.m_data[index] = m_data[index] / operand.m_data[index];
+					#pragma omp simd
+					for ( size_t index = 0; index < dim_t; index++ )
+					{
+						if ( !Utility::isZero(operand.m_data[index]) )
+						{
+							vector.m_data[index] = m_data[index] / operand.m_data[index];
+						}
+						else
+						{
+							vector.m_data[index] = std::numeric_limits< precision_t>::quiet_NaN();
+						}
+					}
+				}
+				else
+				{
+					#pragma omp simd
+					for ( size_t index = 0; index < dim_t; index++ )
+					{
+						if ( operand != 0 )
+						{
+							vector.m_data[index] = m_data[index] / operand.m_data[index];
+						}
+						else
+						{
+							vector.m_data[index] = 0;
+						}
+					}
 				}
 
 				return vector;
@@ -736,19 +757,49 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the division between a vector and a scalar.
+			 * @warning Division by zero do not throw exception !
 			 * @param operand A scalar.
 			 * @return Vector
 			 */
 			[[nodiscard]]
+			constexpr
 			Vector
 			operator/ (const precision_t & operand) const noexcept
 			{
 				Vector vector;
 
-				#pragma omp simd
-				for ( size_t index = 0; index < dim_t; index++ )
+				if constexpr ( std::is_floating_point_v< precision_t > )
 				{
-					vector.m_data[index] = m_data[index] / operand;
+					#pragma omp simd
+					for ( size_t index = 0; index < dim_t; index++ )
+					{
+						if ( !Utility::isZero(operand) )
+						{
+							vector.m_data[index] = m_data[index] / operand;
+						}
+						else
+						{
+							vector.m_data[index] = std::numeric_limits< precision_t>::quiet_NaN();
+						}
+					}
+				}
+				else
+				{
+					if ( operand != 0 )
+					{
+						#pragma omp simd
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							vector.m_data[index] = m_data[index] / operand;
+						}
+					}
+					else
+					{
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							vector.m_data[index] = 0;
+						}
+					}
 				}
 
 				return vector;
@@ -756,19 +807,41 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the division between two vectors.
+			 * @warning Division by zero do not throw exception !
 			 * @param operand A reference to another vector.
 			 * @return Vector &
 			 */
 			Vector &
 			operator/= (const Vector & operand) noexcept
 			{
-				/* Guard self assignment */
-				if ( this != &operand )
+				if constexpr ( std::is_floating_point_v< precision_t > )
 				{
 					#pragma omp simd
 					for ( size_t index = 0; index < dim_t; index++ )
 					{
-						m_data[index] /= operand.m_data[index];
+						if ( !Utility::isZero(operand.m_data[index]) )
+						{
+							m_data[index] /= operand.m_data[index];
+						}
+						else
+						{
+							m_data[index] = std::numeric_limits< precision_t>::quiet_NaN();
+						}
+					}
+				}
+				else
+				{
+					#pragma omp simd
+					for ( size_t index = 0; index < dim_t; index++ )
+					{
+						if ( operand != 0 )
+						{
+							m_data[index] /= operand.m_data[index];
+						}
+						else
+						{
+							m_data[index] = 0;
+						}
 					}
 				}
 
@@ -777,23 +850,50 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the division with a scalar.
+			 * @warning Division by zero do not throw exception !
 			 * @param operand A scalar.
 			 * @return Vector &
 			 */
 			Vector &
 			operator/= (const precision_t & operand) noexcept
 			{
-				if ( !Utility::isZero(operand) )
+				if constexpr ( std::is_floating_point_v< precision_t > )
 				{
-					#pragma omp simd
-					for ( size_t index = 0; index < dim_t; index++ )
+					if ( !Utility::isZero(operand) )
 					{
-						m_data[index] /= operand;
+						#pragma omp simd
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							m_data[index] /= operand;
+						}
+					}
+					else
+					{
+						#pragma omp simd
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							m_data[index] = std::numeric_limits< precision_t>::quiet_NaN();
+						}
 					}
 				}
 				else
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", division by zero !" "\n";
+					if ( operand != 0 )
+					{
+						#pragma omp simd
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							m_data[index] /= operand;
+						}
+					}
+					else
+					{
+						#pragma omp simd
+						for ( size_t index = 0; index < dim_t; index++ )
+						{
+							m_data[index] = 0;
+						}
+					}
 				}
 
 				return *this;
@@ -846,14 +946,14 @@ namespace EmEn::Libs::Math
 			/**
 			 * @brief Performs an equality comparison between vectors.
 			 * @param operand A reference to another vector.
-			 * @param epsilon
+			 * @param epsilon The floating point tolerance value. Default C++ epsilon.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
 			equal (const Vector & operand, precision_t epsilon = std::numeric_limits< precision_t >::epsilon()) const noexcept
 			{
-				for ( size_t index = 0; index < dim_t * dim_t; index++ )
+				for ( size_t index = 0; index < dim_t ; index++ )
 				{
 					if ( Utility::different(m_data[index], operand.m_data[index], epsilon) )
 					{
@@ -867,7 +967,7 @@ namespace EmEn::Libs::Math
 			/**
 			 * @brief Performs an inequality comparison between vectors.
 			 * @param operand A reference to another vector.
-			 * @param epsilon
+			 * @param epsilon The floating point tolerance value. Default C++ epsilon.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -999,6 +1099,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			precision_t
 			lengthSquared () const noexcept
 			{
@@ -1026,7 +1127,6 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Rescales the vector length to unit.
-			 * @note Floating point number version.
 			 * @return Vector &
 			 */
 			Vector &
@@ -1036,25 +1136,86 @@ namespace EmEn::Libs::Math
 
 				if ( !Utility::isZero(length) )
 				{
-					this->scale(static_cast< precision_t >(1) / std::sqrt(length));
+					this->scale(1 / static_cast< precision_t >(std::sqrt(length)));
 				}
 
 				return *this;
 			}
 
 			/**
-			 * @brief Rescales the vector length to unit.
-			 * @note Integral number version.
+			 * @brief Rescales the vector length to unit (Snap to dominant axis).
+			 * @warning This version is mathematically incorrect due to integer usage.
+			 * This will however make the vector point to the highest direction.
 			 * @return Vector &
 			 */
 			Vector &
 			normalize () noexcept requires (std::is_integral_v< precision_t >)
 			{
-				const auto length = this->lengthSquared();
-
-				if ( length != 0 )
+				if constexpr ( dim_t == 2 )
 				{
-					this->scale(static_cast< precision_t >(1) / std::sqrt(length));
+					const auto absX = std::abs(m_data[X]);
+					const auto absY = std::abs(m_data[Y]);
+
+					if ( absX != 0 || absY != 0 )
+					{
+						if ( absX >= absY )
+						{
+							m_data[X] = m_data[X] > 0 ? 1 : -1;
+							m_data[Y] = 0;
+						}
+						else
+						{
+							m_data[X] = 0;
+							m_data[Y] = m_data[Y] > 0 ? 1 : -1;
+						}
+					}
+					else
+					{
+						m_data[X] = 0;
+						m_data[Y] = 0;
+					}
+
+					return *this;
+				}
+
+				if constexpr ( dim_t == 3 )
+				{
+					const auto absX = std::abs(m_data[X]);
+					const auto absY = std::abs(m_data[Y]);
+					const auto absZ = std::abs(m_data[Z]);
+
+					if ( absX != 0 || absY != 0 || absZ != 0 )
+					{
+						if ( absX >= absY && absX >= absZ )
+						{
+							m_data[X] = m_data[X] > 0 ? 1 : -1;
+							m_data[Y] = 0;
+							m_data[Z] = 0;
+						}
+						else if ( absY >= absZ )
+						{
+							m_data[X] = 0;
+							m_data[Y] = m_data[Y] > 0 ? 1 : -1;
+							m_data[Z] = 0;
+						}
+						else
+						{
+							m_data[X] = 0;
+							m_data[Y] = 0;
+							m_data[Z] = m_data[Z] > 0 ? 1 : -1;
+						}
+					}
+					else
+					{
+						m_data[X] = 0;
+						m_data[Y] = 0;
+						m_data[Z] = 0;
+					}
+				}
+
+				if constexpr ( dim_t == 4 )
+				{
+					m_data[W] = 0;
 				}
 
 				return *this;
@@ -1062,7 +1223,6 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Rescales the vector length to unit.
-			 * @note Floating point number version.
 			 * @return Vector
 			 */
 			[[nodiscard]]
@@ -1080,19 +1240,53 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Rescales the vector length to unit.
-			 * @note Integral number version.
+			 * @brief Rescales the vector length to unit (Snap to dominant axis).
+			 * @warning This version is mathematically incorrect due to integer usage.
+			 * This will however make the vector point to the highest direction.
 			 * @return Vector
 			 */
 			[[nodiscard]]
 			Vector
 			normalized () const noexcept requires (std::is_integral_v< precision_t >)
 			{
-				const auto length = this->lengthSquared();
-
-				if ( length != 0 )
+				if constexpr ( dim_t == 2 )
 				{
-					return this->scaled(static_cast< precision_t >(1) / std::sqrt(length));
+					const auto absX = std::abs(m_data[X]);
+					const auto absY = std::abs(m_data[Y]);
+
+					if ( absX != 0 || absY != 0 )
+					{
+						if ( absX >= absY )
+						{
+							return {m_data[X] > 0 ? 1 : -1, 0};
+						}
+
+						return {0, m_data[Y] > 0 ? 1 : -1};
+					}
+
+					return {};
+				}
+
+				if constexpr ( dim_t == 3 )
+				{
+					const auto absX = std::abs(m_data[X]);
+					const auto absY = std::abs(m_data[Y]);
+					const auto absZ = std::abs(m_data[Z]);
+
+					if ( absX != 0 || absY != 0 || absZ != 0 )
+					{
+						if ( absX >= absY && absX >= absZ )
+						{
+							return {m_data[X] > 0 ? 1 : -1, 0, 0};
+						}
+
+						if ( absY >= absZ )
+						{
+							return {0, m_data[Y] > 0 ? 1 : -1, 0};
+						}
+
+						return {0, 0, m_data[Z] > 0 ? 1 : -1};
+					}
 				}
 
 				return {};
@@ -1107,6 +1301,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			static
 			precision_t
 			dotProduct (const Vector & lhs, const Vector & rhs) noexcept
@@ -1134,7 +1329,7 @@ namespace EmEn::Libs::Math
 			precision_t
 			crossProduct (const Vector & lhs, const Vector & rhs) noexcept requires (dim_t == 2)
 			{
-				return lhs[X] * rhs[Y] - lhs[Y] * lhs[X];
+				return lhs[X] * rhs[Y] - lhs[Y] * rhs[X];
 			}
 
 			/**
@@ -1308,14 +1503,26 @@ namespace EmEn::Libs::Math
 			{
 				precision_t factor = vectorA.length() * vectorB.length();
 
-				if ( factor < 1e-6 )
+				if ( factor < std::numeric_limits< precision_t >::epsilon() )
 				{
-					factor = 1e-6;
+					return static_cast< precision_t >(0);
 				}
 
 				const precision_t dotResult = Vector::dotProduct(vectorA, vectorB) / factor;
 
-				return std::acos(clamp(dotResult, static_cast< precision_t >(-1), static_cast< precision_t >(0)));
+				return std::acos(std::clamp(dotResult, static_cast< precision_t >(-1), static_cast< precision_t >(1)));
+			}
+
+			/**
+			 * @brief Returns the angle of a 2D vector.
+			 * @return precision_t
+			 */
+			[[nodiscard]]
+			precision_t
+			angle2D ()
+			const noexcept requires (dim_t == 2 && std::is_floating_point_v<precision_t>)
+			{
+				return std::atan2(this->y(), this->x());
 			}
 
 			/**
@@ -1418,12 +1625,19 @@ namespace EmEn::Libs::Math
 			Vector
 			perpendicular () const noexcept
 			{
-				if ( std::abs(m_data[X]) > std::abs(m_data[Z]) )
+				if constexpr ( dim_t == 2 )
 				{
-					return Vector{-m_data[Y], m_data[X], 0}.normalize();
+					return Vector{-m_data[Y], m_data[X]}.normalize();
 				}
+				else
+				{
+					if ( std::abs(m_data[X]) > std::abs(m_data[Z]) )
+					{
+						return Vector{-m_data[Y], m_data[X], 0}.normalize();
+					}
 
-				return Vector{0, -m_data[Z], m_data[Y]}.normalize();
+					return Vector{0, -m_data[Z], m_data[Y]}.normalize();
+				}
 			}
 
 			/**
@@ -1437,11 +1651,15 @@ namespace EmEn::Libs::Math
 			Vector
 			midPoint (const Vector & lhs, const Vector & rhs) noexcept
 			{
-				return {
-					(lhs.m_data[X] + rhs.m_data[X]) * 0.5F,
-					(lhs.m_data[Y] + rhs.m_data[Y]) * 0.5F,
-					(lhs.m_data[Z] + rhs.m_data[Z]) * 0.5F
-				};
+				Vector result;
+
+				#pragma omp simd
+				for ( size_t index = 0; index < dim_t; ++index )
+				{
+					result[index] = (lhs[index] + rhs[index]) * static_cast< precision_t >(0.5);
+				}
+
+				return result;
 			}
 
 			/**
@@ -1458,26 +1676,30 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Checks whether the vector length is one.
+			 * @brief Checks if the vector is a unit vector (has length of 1).
+			 * @note Floating point number version using tolerance.
+			 * @param tolerance The acceptable deviation from 1.0 for the squared length.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			isOne () const noexcept
+			isOne (precision_t tolerance = std::numeric_limits< precision_t >::epsilon() * 100) const noexcept requires std::is_floating_point_v< precision_t >
 			{
-				if constexpr ( dim_t == 2 )
-				{
-					return (m_data[X] + m_data[Y]) == static_cast< precision_t >(1);
-				}
+				const precision_t lenSq = this->lengthSquared();
 
-				if constexpr ( dim_t == 3 || dim_t == 4 )
-				{
-					return (m_data[X] + m_data[Y] + m_data[Z]) == static_cast< precision_t >(1);
-				}
-				else
-				{
-					return false;
-				}
+				return std::abs(lenSq - static_cast< precision_t >(1)) < tolerance;
+			}
+
+			/**
+			 * @brief Checks if the vector is a unit vector (has length of 1).
+			 * @note Integral number version. Length must be exactly 1.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isOne () const noexcept requires std::is_integral_v< precision_t >
+			{
+				return this->lengthSquared() == static_cast< precision_t >(1);
 			}
 
 			/**
@@ -1489,7 +1711,7 @@ namespace EmEn::Libs::Math
 			isAllComponentOne () const noexcept
 			{
 				return std::all_of(m_data.cbegin(), m_data.cend(), [] (const auto & value) {
-					return value == 1.0F;
+					return value == static_cast< precision_t >(1);
 				});
 			}
 
@@ -1824,7 +2046,7 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns a random vector.
-			 * @note This version use the C rand() function.
+			 * @warning This version use the unreliable old C rand() function. Use EmEn::Libs::Vector::random class instead.
 			 * @param min The minimum value.
 			 * @param max The maximum value.
 			 * @return Vector
@@ -1858,26 +2080,27 @@ namespace EmEn::Libs::Math
 			 * @brief Returns a random vector.
 			 * @param min The minimum value.
 			 * @param max The maximum value.
+			 * @param randomizer A reference to a randomizer.
 			 * @return Vector
 			 */
 			[[nodiscard]]
 			static
 			Vector
-			random (precision_t min, precision_t max) noexcept
+			random (precision_t min, precision_t max, Randomizer< precision_t > & randomizer) noexcept
 			{
 				if constexpr ( dim_t == 2 )
 				{
-					return {Utility::random(min, max), Utility::random(min, max)};
+					return {randomizer.value(min, max), randomizer.value(min, max)};
 				}
 
 				if constexpr ( dim_t == 3 )
 				{
-					return {Utility::random(min, max), Utility::random(min, max), Utility::random(min, max)};
+					return {randomizer.value(min, max), randomizer.value(min, max), randomizer.value(min, max)};
 				}
 
 				if constexpr ( dim_t == 4 )
 				{
-					return {Utility::random(min, max), Utility::random(min, max), Utility::random(min, max), 0};
+					return {randomizer.value(min, max), randomizer.value(min, max), randomizer.value(min, max), 0};
 				}
 				else
 				{
@@ -1886,7 +2109,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Performs a linear interpolation between two vectors.
+			 * @brief Performs a linear interpolation between two vectors (LERP).
 			 * @param operandA A reference to a vector.
 			 * @param operandB A reference to a vector.
 			 * @param factor The factor between 0 and 1.
@@ -1895,7 +2118,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			static
 			Vector
-			lerp (const Vector & operandA, const Vector & operandB, precision_t factor) noexcept
+			linearInterpoloation (const Vector & operandA, const Vector & operandB, precision_t factor) noexcept
 			{
 				return operandA * factor + operandB * (1 - factor);
 			}
@@ -1913,9 +2136,9 @@ namespace EmEn::Libs::Math
 			Vector
 			quadraticBezierInterpolation (const Vector & operandA, const Vector & operandB, const Vector & operandC, precision_t factor) noexcept
 			{
-				return linearInterpolation(
-					linearInterpolation(operandA, operandB, factor),
-					linearInterpolation(operandB, operandC, factor),
+				return linearInterpoloation(
+					linearInterpoloation(operandA, operandB, factor),
+					linearInterpoloation(operandB, operandC, factor),
 					factor
 				);
 			}
@@ -1934,11 +2157,172 @@ namespace EmEn::Libs::Math
 			Vector
 			cubicBezierInterpolation (const Vector & operandA, const Vector & operandB, const Vector & operandC, const Vector & operandD, precision_t factor) noexcept
 			{
-				return linearInterpolation(
-					quadraticBezierInterpolation(operandA, operandB, operandD, factor),
-					quadraticBezierInterpolation(operandA, operandC, operandD, factor), // NOLINT(readability-suspicious-call-argument)
-					factor
-				);
+				const auto p01 = linearInterpoloation(operandA, operandB, factor);
+				const auto p12 = linearInterpoloation(operandB, operandC, factor);
+				const auto p23 = linearInterpoloation(operandC, operandD, factor);
+				const auto p012 = linearInterpoloation(p01, p12, factor);
+				const auto p123 = linearInterpoloation(p12, p23, factor);
+
+				return linearInterpoloation(p012, p123, factor);
+			}
+
+			/**
+			 * @brief Projects a vector to another one.
+			 * @param onto A reference to a vector.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			Vector
+			project (const Vector & onto) const noexcept requires std::is_floating_point_v< precision_t >
+			{
+				const precision_t D = onto.lengthSquared();
+
+				if ( Utility::isZero(D) )
+				{
+					return {};
+				}
+
+				return onto * (Vector::dotProduct(*this, onto) / D);
+			}
+
+			/**
+			 * @brief Rejects a projection.
+			 * @param from A reference to a vector.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			Vector
+			reject (const Vector& from) const noexcept requires std::is_floating_point_v< precision_t >
+			{
+				return *this - this->project(from);
+			}
+
+			/**
+			 * @brief Check if a vector is parallel.
+			 * @param other A reference to another vector.
+			 * @param tolerance Tolerance value. default epsilon.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isParallel (const Vector & other, precision_t tolerance = std::numeric_limits< precision_t >::epsilon() * 100) const noexcept requires std::is_floating_point_v<precision_t>
+			{
+				const precision_t lenSqA = this->lengthSquared();
+				const precision_t lenSqB = other.lengthSquared();
+
+				if ( lenSqA <= tolerance || lenSqB <= tolerance )
+				{
+					return false;
+				}
+
+				const precision_t dot = Vector::dotProduct(*this, other);
+				const precision_t denomSq = lenSqA * lenSqB;
+				const precision_t absCosTheta = std::abs(dot / std::sqrt(denomSq));
+
+				return absCosTheta >= static_cast< precision_t >(1) - tolerance;
+			}
+
+			/**
+			 * @brief Check if a vector is perpendicular.
+			 * @param other A reference to another vector.
+			 * @param tolerance Tolerance value. default epsilon.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isPerpendicular (const Vector & other, precision_t tolerance = std::numeric_limits< precision_t >::epsilon() * 100) const noexcept requires std::is_floating_point_v<precision_t>
+			{
+				const precision_t lenSqA = this->lengthSquared();
+				const precision_t lenSqB = other.lengthSquared();
+
+				if ( lenSqA <= tolerance || lenSqB <= tolerance )
+				{
+					return true;
+				}
+
+				const precision_t dot = Vector::dotProduct(*this, other);
+				const precision_t denom = std::sqrt(lenSqA * lenSqB);
+				const precision_t absCosTheta = std::abs(dot / denom);
+
+				return absCosTheta <= tolerance;
+			}
+
+			/**
+			 * @brief Returns the absolute vector.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			Vector
+			absolute () const noexcept
+			{
+				Vector result;
+
+				#pragma omp simd
+				for ( size_t i = 0; i < dim_t; ++i )
+				{
+					result[i] = std::abs(m_data[i]);
+				}
+
+				return result;
+			}
+
+			/**
+			 * @brief Restricts each component of the vector between a minimum and maximum scalar value.
+			 * @note If minVal > maxVal, the behavior is defined by std::clamp (the value will be clamped to maxVal).
+			 * @param minVal The minimum value allowed for each component.
+			 * @param maxVal The maximum value allowed for each component.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			constexpr
+			Vector
+			clamp (precision_t minVal, precision_t maxVal) const noexcept
+			{
+				Vector result;
+
+				#pragma omp simd
+				for ( size_t i = 0; i < dim_t; ++i )
+				{
+					result.m_data[i] = std::clamp(m_data[i], minVal, maxVal);
+				}
+
+				return result;
+			}
+
+			/**
+			 * @brief Restricts each component of the vector between the corresponding min/max vector components.
+			 * @note The behavior if minVec[i] > maxVec[i] is defined by std::clamp.
+			 * @param minVec The vector containing the minimum bounds for each component.
+			 * @param maxVec The vector containing the maximum bounds for each component.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			constexpr
+			Vector
+			clamp (const Vector & minVec, const Vector & maxVec) const noexcept
+			{
+				Vector result;
+
+				#pragma omp simd
+				for ( size_t i = 0; i < dim_t; ++i )
+				{
+					result.m_data[i] = std::clamp(m_data[i], minVec.m_data[i], maxVec.m_data[i]);
+				}
+
+				return result;
+			}
+
+			/**
+			 * @brief Restricts each component of the vector between 0 and 1 (saturation).
+			 * @note Utility function equivalent to clamp(0, 1). Very useful for colors, normalized factors, etc. Mainly for floating-point types.
+			 * @return Vector
+			 */
+			[[nodiscard]]
+			constexpr
+			Vector
+			saturate () const noexcept requires std::is_floating_point_v< precision_t >
+			{
+				return this->clamp(static_cast< precision_t >(0), static_cast< precision_t >(1));
 			}
 
 			/**
@@ -1980,7 +2364,7 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::string
-			to_string (const Vector & obj) noexcept
+			to_string (const Vector & obj)
 			{
 				std::stringstream output;
 

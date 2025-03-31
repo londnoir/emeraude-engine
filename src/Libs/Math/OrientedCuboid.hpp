@@ -49,7 +49,7 @@ namespace EmEn::Libs::Math
 	 */
 	template< typename data_t = float >
 	requires (std::is_arithmetic_v< data_t >)
-	class OrientedCuboid : public Shape3DInterface< data_t >
+	class OrientedCuboid final : public Shape3DInterface< data_t >
 	{
 		public:
 

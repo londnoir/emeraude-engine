@@ -64,8 +64,8 @@ namespace EmEn::Overlay
 	void
 	Surface::setPosition (float xPosition, float yPosition) noexcept
 	{
-		m_rectangle.setOffsetX(xPosition);
-		m_rectangle.setOffsetY(yPosition);
+		m_rectangle.setLeft(xPosition);
+		m_rectangle.setTop(yPosition);
 
 		this->updateModelMatrix();
 	}
@@ -102,14 +102,14 @@ namespace EmEn::Overlay
 		{
 			const auto screenWidth = static_cast< float >(m_framebufferProperties.width());
 
-			const auto positionXa = screenWidth * m_rectangle.offsetX();
+			const auto positionXa = screenWidth * m_rectangle.left();
 
 			if ( positionX < positionXa )
 			{
 				return false;
 			}
 
-			const auto positionXb = screenWidth * m_rectangle.offsetXb();
+			const auto positionXb = screenWidth * m_rectangle.right();
 
 			if ( positionX > positionXb )
 			{
@@ -120,14 +120,14 @@ namespace EmEn::Overlay
 		{
 			const auto screenHeight = static_cast< float >(m_framebufferProperties.height());
 
-			const auto positionYa = screenHeight * m_rectangle.offsetY();
+			const auto positionYa = screenHeight * m_rectangle.top();
 
 			if ( positionY < positionYa )
 			{
 				return false;
 			}
 
-			const auto positionYb = screenHeight * m_rectangle.offsetYb();
+			const auto positionYb = screenHeight * m_rectangle.bottom();
 
 			if ( positionY > positionYb )
 			{
@@ -154,8 +154,8 @@ namespace EmEn::Overlay
 		}
 
 		/* Get the pixel coordinates on the surface. */
-		const auto surfaceX = static_cast< size_t >(screenX - (static_cast< float >(m_framebufferProperties.width()) * m_rectangle.offsetX()));
-		const auto surfaceY = static_cast< size_t >(screenY - (static_cast< float >(m_framebufferProperties.height()) * m_rectangle.offsetY()));
+		const auto surfaceX = static_cast< size_t >(screenX - static_cast< float >(m_framebufferProperties.width()) * m_rectangle.left());
+		const auto surfaceY = static_cast< size_t >(screenY - static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top());
 
 		/* Get that pixel color from the pixmap. */
 		const auto pixelColor = m_localData.pixel(surfaceX, surfaceY);
@@ -167,8 +167,8 @@ namespace EmEn::Overlay
 	void
 	Surface::updateModelMatrix () noexcept
 	{
-		const auto xPosition = (-1.0F + m_rectangle.width()) + (m_rectangle.offsetX() * 2.0F);
-		const auto yPosition = (-1.0F + m_rectangle.height()) + (m_rectangle.offsetY() * 2.0F);
+		const auto xPosition = (-1.0F + m_rectangle.width()) + (m_rectangle.left() * 2.0F);
+		const auto yPosition = (-1.0F + m_rectangle.height()) + (m_rectangle.top() * 2.0F);
 
 		m_modelMatrix.reset();
 		m_modelMatrix *= Matrix< 4, float >::translation(xPosition, yPosition, m_depth);

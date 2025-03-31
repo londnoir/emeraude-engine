@@ -45,6 +45,7 @@
 #include "Libs/Time/EventTrait.hpp"
 
 /* Local inclusions for usages. */
+#include "Libs/Randomizer.hpp"
 #include "Graphics/Renderable/AbstractBackground.hpp"
 #include "Graphics/Renderable/SceneAreaInterface.hpp"
 #include "Graphics/Renderable/SeaLevelInterface.hpp"
@@ -208,6 +209,17 @@ namespace EmEn::Scenes
 			size () const noexcept
 			{
 				return m_boundary * 2;
+			}
+
+			/**
+			 * @brief Returns the float randomizer from the scene.
+			 * @return Libs::Randomizer< float > &
+			 */
+			[[nodiscard]]
+			Libs::Randomizer< float > &
+			randomizer () noexcept
+			{
+				return m_randomizer;
 			}
 
 			/**
@@ -962,6 +974,7 @@ namespace EmEn::Scenes
 			std::array< RenderBatch::List, 5 > m_renderLists{};
 			Saphir::EffectsList m_environmentEffects;
 			float m_boundary{0};
+			Libs::Randomizer< float > m_randomizer;
 			uint64_t m_lifetimeUS{0};
 			uint32_t m_lifetimeMS{0};
 			size_t m_cycle{0};

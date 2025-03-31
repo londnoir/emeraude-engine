@@ -864,7 +864,20 @@ namespace EmEn
 	bool
 	Core::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
 	{
-		/* NOTE: We don't want to do something here and for now ... */
+		/* NOTE: Pause the engine. */
+		if ( !repeat && key == KeyPause )
+		{
+			if ( m_flags[Paused] )
+			{
+				this->resume();
+			}
+			else
+			{
+				this->pause();
+			}
+
+			return true;
+		}
 
 		/* NOTE: Let the user application consume the event. */
 		return this->onAppKeyPress(key, scancode, modifiers, repeat);

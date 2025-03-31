@@ -30,37 +30,29 @@
 #include "emeraude_config.hpp"
 
 /* STL inclusions. */
-#include <array>
-#include <cmath>
 #include <cstdint>
-#include <cstdlib> // std::rand(), std::srand()
+#include <cstddef>
+#include <cassert>
+#include <cmath>
 #include <cstring>
-#include <ctime>
-#include <functional>
-#include <iostream>
-#include <limits>
+#include <ostream>
+#include <sstream>
 #include <string>
-#include <type_traits>
 #include <vector>
+#include <array>
+#include <functional>
+#include <limits>
+#include <type_traits>
 
 /* Local inclusions for usage. */
 #include "Libs/Algorithms/PerlinNoise.hpp"
-#include "Libs/Utility.hpp"
-#include "Area.hpp"
+#include "Libs/Math/Rectangle.hpp"
 #include "Color.hpp"
 #include "Gradient.hpp"
 #include "Types.hpp"
 
 namespace EmEn::Libs::PixelFactory
 {
-	/** @brief RGB + alpha color mode. */
-	static constexpr auto RGBA{4UL};
-	/** @brief RGB color mode. */
-	static constexpr auto RGB{3UL};
-	/** @brief Grayscale + alpha color mode. */
-	static constexpr auto GrayscaleAlpha{2UL};
-	/** @brief Grayscale color mode. */
-	static constexpr auto Grayscale{1UL};
 	/** @brief 72dpi resolution. */
 	static constexpr auto Resolution72DPI{2835UL};
 	/** @brief 96dpi resolution. */
@@ -97,16 +89,18 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Constructs a new pixmap.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
-			 * @param channelMode The number of color as a class constant. Default ChannelMode::RGB.
+			 * @param channelMode The number of color as a class constant. Default RGB.
 			 */
-			Pixmap (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB) noexcept
-				: m_width(width), m_height(height), m_channelMode(channelMode)
+			Pixmap (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB)
+				: m_width(width),
+				m_height(height),
+				m_channelMode(channelMode)
 			{
 				m_data.resize(this->elementCount(), 0);
 
 				if ( !this->initAlphaChannel() )
 				{
-					std::cerr << "Pixmap::Pixmap(" << width << ", " << height << ", " << static_cast< int >(channelMode) << ") : Unable to check alpha channel initialization !" "\n";
+					assert("Unable to check alpha channel initialization !");
 				}
 			}
 
@@ -119,14 +113,16 @@ namespace EmEn::Libs::PixelFactory
 			 * @param color A reference to a color.
 			 */
 			template< typename color_data_t = float >
-			Pixmap (size_t width, size_t height, ChannelMode channelMode, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
-				: m_width(width), m_height(height), m_channelMode(channelMode)
+			Pixmap (size_t width, size_t height, ChannelMode channelMode, const Color< color_data_t > & color) requires (std::is_floating_point_v< color_data_t >)
+				: m_width(width),
+				m_height(height),
+				m_channelMode(channelMode)
 			{
 				m_data.resize(this->elementCount(), 0);
 
 				if ( !this->fill(color) )
 				{
-					std::cerr << "Pixmap::Pixmap(" << width << ", " << height << ", " << static_cast< int >(channelMode) << ", " << color << ") : Unable to initialize color !" "\n";
+					assert("Unable to initialize color !");
 				}
 			}
 
@@ -138,11 +134,11 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			initialize (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB) noexcept
+			initialize (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB)
 			{
 				if ( width == 0 || height == 0 )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", invalid pixmap dimensions !" "\n";
+					assert("Invalid pixmap dimensions !");
 
 					return false;
 				}
@@ -170,14 +166,58 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns wheter the data is non-empty and dimension valid.
+			 * @brief Returns the pixmap width in pixels.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			width () const noexcept
+			{
+				return m_width;
+			}
+
+			/**
+			 * @brief Returns the pixmap half width in pixels.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			halfWidth () const noexcept
+			{
+				return std::floor(static_cast< float >(this->width()) * 0.5F);
+			}
+
+			/**
+			 * @brief Returns the pixmap height in pixels.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			height () const noexcept
+			{
+				return m_height;
+			}
+
+			/**
+			 * @brief Returns the pixmap half height in pixels.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			halfHeight () const noexcept
+			{
+				return std::floor(static_cast< float >(this->height()) * 0.5F);
+			}
+
+			/**
+			 * @brief Returns whether the data is non-empty and dimension valid.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
 			isValid () const noexcept
 			{
-				if ( m_width == 0 || m_height == 0 )
+				if ( this->width() == 0 || this->height() == 0 )
 				{
 					return false;
 				}
@@ -186,105 +226,14 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the pixmap width in pixels.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			width () const noexcept
-			{
-				return m_width;
-			}
-
-			/**
-			 * @brief Returns the pixmap half width in pixels.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			halfWidth () const noexcept
-			{
-				return static_cast< size_t >(std::floor(static_cast< float >(m_width) * 0.5F));
-			}
-
-			/**
-			 * @brief Returns the pixmap height in pixels.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			height () const noexcept
-			{
-				return m_height;
-			}
-
-			/**
-			 * @brief Returns the pixmap half height in pixels.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			halfHeight () const noexcept
-			{
-				return static_cast< size_t >(std::floor(static_cast< float >(m_height) * 0.5F));
-			}
-
-			/**
-			 * @brief Returns whether the pixmap is a square.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isSquare () const noexcept
-			{
-				return m_width == m_height;
-			}
-
-			/**
-			 * @brief Returns an area corresponding to the pixmap.
-			 * @note Offset parameter is added to the size of the pixmap.
-			 * @param offsetX Set an offset in X to the area. Default 0.
-			 * @param offsetY Set an offset in Y to the area. Default 0.
-			 * @return Area< size_t >
-			 */
-			[[nodiscard]]
-			Area< size_t >
-			area (size_t offsetX = 0, size_t offsetY = 0) const noexcept
-			{
-				return {offsetX, offsetY, m_width, m_height};
-			}
-
-			/**
-			 * @brief Returns whether the pixmap dimensions are a power of two.
-			 * @note Useful for GPU concerns.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isPowerOfTwo () const noexcept
-			{
-				if ( m_width % 2 > 0 )
-				{
-					return false;
-				}
-
-				if ( m_height % 2 > 0 )
-				{
-					return false;
-				}
-
-				return true;
-			}
-
-			/**
 			 * @brief Returns the number of pixel of the pixmap.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			pixelCount () const noexcept
 			{
-				return m_width * m_height;
+				return this->width() * this->height();
 			}
 
 			/**
@@ -300,13 +249,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the number of color.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			colorCount () const noexcept
 			{
-				return static_cast< size_t >(m_channelMode);
+				return static_cast< uint32_t >(this->channelMode());
 			}
 
 			/**
@@ -315,10 +264,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			elementCount () const noexcept
 			{
-				return m_width * m_height * this->colorCount();
+				return this->pixelCount() * this->colorCount();
 			}
 
 			/**
@@ -330,7 +279,7 @@ namespace EmEn::Libs::PixelFactory
 			size_t
 			bytes () const noexcept
 			{
-				return m_data.size() * sizeof(precision_t);
+				return this->elementCount() * sizeof(precision_t);
 			}
 
 			/**
@@ -366,7 +315,51 @@ namespace EmEn::Libs::PixelFactory
 			size_t
 			pitch () const noexcept
 			{
-				return m_width * this->colorCount() * sizeof(precision_t);
+				return this->width() * this->colorCount() * sizeof(precision_t);
+			}
+
+			/**
+			 * @brief Returns whether the pixmap is a square.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isSquare () const noexcept
+			{
+				return this->width() == this->height();
+			}
+
+			/**
+			 * @brief Returns a rectangle corresponding to the pixmap.
+			 * @note Offset parameter is added to the size of the pixmap.
+			 * @tparam rectangle_integer_t The type of rectangle data. Default int32_t.
+			 * @param offsetX Set an offset in X to the area. Default 0.
+			 * @param offsetY Set an offset in Y to the area. Default 0.
+			 * @return Math::Rectangle< uint32_t >
+			 */
+			template< typename rectangle_integer_t = int32_t >
+			[[nodiscard]]
+			Math::Rectangle< rectangle_integer_t >
+			rectangle (rectangle_integer_t offsetX = 0, rectangle_integer_t offsetY = 0) const noexcept
+			{
+				return {offsetX, offsetY, static_cast< rectangle_integer_t >(this->width()), static_cast< rectangle_integer_t >(this->height())};
+			}
+
+			/**
+			 * @brief Returns whether the pixmap dimensions are a power of two.
+			 * @note Useful for GPU concerns.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isPowerOfTwo () const noexcept
+			{
+				return std::has_single_bit(this->width()) && std::has_single_bit(this->height());
+				/*auto isPow2 = [] (const size_t n) {
+					return n > 0 && (n & (n - 1)) == 0;
+				};
+
+				return isPow2(this->width()) && isPow2(this->height());*/
 			}
 
 			/**
@@ -404,13 +397,13 @@ namespace EmEn::Libs::PixelFactory
 				{
 					if ( rowIndex >= m_height )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", row index overflow !" "\n";
+						assert("Row index overflow !");
 
 						rowIndex = m_height - 1;
 					}
 				}
 
-				return m_data.data() + (rowIndex * this->pitch());
+				return m_data.data() + (rowIndex * this->width() * this->colorCount());
 			}
 
 			/**
@@ -428,13 +421,13 @@ namespace EmEn::Libs::PixelFactory
 				{
 					if ( rowIndex >= m_height )
 					{
-						std::cerr << __PRETTY_FUNCTION__ << ", row index overflow !" "\n";
+						assert("Row index overflow !");
 
 						rowIndex = m_height - 1;
 					}
 				}
 
-				return m_data.data() + (rowIndex * this->pitch());
+				return m_data.data() + (rowIndex * this->width() * this->colorCount());
 			}
 
 			/**
@@ -552,7 +545,7 @@ namespace EmEn::Libs::PixelFactory
 					this->clampPixelIndex(pixelIndex);
 				}
 
-				return static_cast< size_t >(std::floor(pixelIndex / m_width));
+				return pixelIndex / m_width;
 			}
 
 			/**
@@ -1052,6 +1045,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns a sampled pixel using the nearest algorithm.
+			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
 			 * @tparam color_data_t The color data type.
 			 * @param texCoordU The X coordinate of the pixel.
 			 * @param texCoordV The Y coordinate of the pixel.
@@ -1076,9 +1070,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", incorrect parameters (U:" << texCoordU << ", V:" << texCoordV << ") !" "\n";
-
-					return {};
+					return Black;
 				}
 
 				/* Prepare variable for X axis. */
@@ -1092,6 +1084,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns a sampled pixel using the linear algorithm.
+			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
 			 * @tparam color_data_t The color data type.
 			 * @param texCoordU The X coordinate of the pixel.
 			 * @param texCoordV The Y coordinate of the pixel.
@@ -1116,9 +1109,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", incorrect parameters (U:" << texCoordU << ", V:" << texCoordV << ") !" "\n";
-
-					return {};
+					return Black;
 				}
 
 				/* Prepare variable for X axis. */
@@ -1144,6 +1135,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns a sampled pixel using the cosine algorithm.
+			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
 			 * @tparam color_data_t The color data type.
 			 * @param texCoordU The X coordinate of the pixel.
 			 * @param texCoordV The Y coordinate of the pixel.
@@ -1168,9 +1160,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", incorrect parameters (U:" << texCoordU << ", V:" << texCoordV << ") !" "\n";
-
-					return {};
+					return Black;
 				}
 
 				/* Prepare variable for X axis. */
@@ -1191,11 +1181,12 @@ namespace EmEn::Libs::PixelFactory
 				const auto topLeftPixel = this->pixel< color_data_t, false >(loX, hiY);
 				const auto topRightPixel = this->pixel< color_data_t, false >(hiX, hiY);
 
-				return Color< color_data_t >::bicosineInterpolation(bottomLeftPixel, bottomRightPixel, topLeftPixel, topRightPixel, factorX, factorY);
+				return Color< color_data_t >::biCosineInterpolation(bottomLeftPixel, bottomRightPixel, topLeftPixel, topRightPixel, factorX, factorY);
 			}
 
 			/**
 			 * @brief Returns a sampled pixel using the cubic algorithm.
+			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
 			 * @tparam color_data_t The color data type.
 			 * @param texCoordU The X coordinate of the pixel.
 			 * @param texCoordV The Y coordinate of the pixel.
@@ -1220,9 +1211,7 @@ namespace EmEn::Libs::PixelFactory
 				}
 				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", incorrect parameters (U:" << texCoordU << ", V:" << texCoordV << ") !" "\n";
-
-					return {};
+					return Black;
 				}
 
 				/* Prepare variable for X axis */
@@ -1357,7 +1346,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns whether the pixmap has a alpha channel.
+			 * @brief Returns whether the pixmap has an alpha channel.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -1464,7 +1453,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Enables the updated region marker. This feature will keep an Area object that hold every processLogics made to the pixmap.
+			 * @brief Enables the updated region marker.
+			 * This feature will keep a rectangle that hold every processLogics made to the pixmap.
 			 * @param state The state.
 			 */
 			void
@@ -1485,11 +1475,11 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the Area where every modification were lastly done on the Pixmap.
-			 * @return const Area &
+			 * @brief Returns the rectangle where every modification were lastly done on the Pixmap.
+			 * @return const Rectangle &
 			 */
 			[[nodiscard]]
-			const Area< size_t > &
+			const Math::Rectangle< uint32_t > &
 			updatedRegion () const noexcept
 			{
 				return m_lastUpdatedRegion;
@@ -1502,54 +1492,50 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setPixelAsUpdated (size_t coordX, size_t coordY) noexcept
+			setPixelAsUpdated (uint32_t coordX, uint32_t coordY) noexcept
 			{
 				if ( m_lastUpdatedRegion.isValid() )
 				{
-					/* Checks on X axis */
-					if ( coordX < m_lastUpdatedRegion.offsetX() )
+					if ( coordX < m_lastUpdatedRegion.left() )
 					{
-						m_lastUpdatedRegion.setOffsetX(coordX);
-						m_lastUpdatedRegion.modifyWidthBy(m_lastUpdatedRegion.offsetX() - coordX);
+						m_lastUpdatedRegion.setLeft(coordX);
+						m_lastUpdatedRegion.modifyWidthBy(m_lastUpdatedRegion.left() - coordX);
 					}
 
-					if ( coordX > m_lastUpdatedRegion.offsetXb() )
+					if ( coordX > m_lastUpdatedRegion.right() )
 					{
-						m_lastUpdatedRegion.setWidth((coordX - m_lastUpdatedRegion.offsetX()) + 1);
+						m_lastUpdatedRegion.setWidth((coordX - m_lastUpdatedRegion.left()) + 1);
 					}
 
-					/* Checks on Y axis */
-					if ( coordY < m_lastUpdatedRegion.offsetY() )
+					if ( coordY < m_lastUpdatedRegion.top() )
 					{
-						m_lastUpdatedRegion.setOffsetY(coordY);
-						m_lastUpdatedRegion.modifyHeightBy(m_lastUpdatedRegion.offsetY() - coordY);
+						m_lastUpdatedRegion.setTop(coordY);
+						m_lastUpdatedRegion.modifyHeightBy(m_lastUpdatedRegion.top() - coordY);
 					}
 
-					if ( coordY > m_lastUpdatedRegion.offsetYb() )
+					if ( coordY > m_lastUpdatedRegion.bottom() )
 					{
-						m_lastUpdatedRegion.setHeight((coordY - m_lastUpdatedRegion.offsetY()) + 1);
+						m_lastUpdatedRegion.setHeight((coordY - m_lastUpdatedRegion.top()) + 1);
 					}
 				}
 				else
 				{
-					m_lastUpdatedRegion = {coordX, coordY, 1U, 1U};
+					m_lastUpdatedRegion = {coordX, coordY, 1, 1};
 				}
 			}
 
 			/**
 			 * @brief Marks a region updated in the pixmap.
-			 * @param area A reference to the region.
+			 * @param rectangle A reference to a rectangle.
 			 * @return void
 			 */
 			void
-			setRegionAsUpdated (const Area< size_t > & area) noexcept
+			setRegionAsUpdated (const Math::Rectangle< uint32_t > & rectangle) noexcept
 			{
-				if ( !m_flags[UpdatedRegionMarkerEnabled] )
+				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					return;
+					m_lastUpdatedRegion.merge(rectangle);
 				}
-
-				m_lastUpdatedRegion = Area< size_t >::merge(m_lastUpdatedRegion, area);
 			}
 
 			/**
@@ -1559,15 +1545,13 @@ namespace EmEn::Libs::PixelFactory
 			void
 			setOverallUpdated () noexcept
 			{
-				if ( !m_flags[UpdatedRegionMarkerEnabled] )
+				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					return;
+					m_lastUpdatedRegion.setLeft(0);
+					m_lastUpdatedRegion.setRight(0);
+					m_lastUpdatedRegion.setWidth(m_width);
+					m_lastUpdatedRegion.setHeight(m_height);
 				}
-
-				m_lastUpdatedRegion.setOffsetX(0);
-				m_lastUpdatedRegion.setOffsetY(0);
-				m_lastUpdatedRegion.setWidth(m_width);
-				m_lastUpdatedRegion.setHeight(m_height);
 			}
 
 			/**
@@ -1582,12 +1566,13 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Adds alpha channel.
+			 * @todo Rework it to avoid whole copy of the pixel buffer.
 			 * @param alphaValue The initial alpha value.
 			 * @param modifyUpdatedRegion Set the updated region. Default true.
 			 * @return bool
 			 */
 			bool
-			addAlphaChannel (precision_t alphaValue, bool modifyUpdatedRegion = true) noexcept
+			addAlphaChannel (precision_t alphaValue, bool modifyUpdatedRegion = true)
 			{
 				if ( !this->isValid() )
 				{
@@ -1810,6 +1795,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Fills the pixmap with a color.
+			 * @warning This method is slow.
 			 * @tparam color_data_t The color data type.
 			 * @param color A reference to a color.
 			 * @return bool
@@ -1844,15 +1830,13 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			fill (const Pixmap & pattern) noexcept
 			{
-				if ( !this->isValid() )
+				if ( !this->isValid() || !pattern.isValid() )
 				{
 					return false;
 				}
 
 				if ( this->colorCount() != pattern.colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", the pixmap and the pattern do not have the same channel mode !" "\n";
-
 					return false;
 				}
 
@@ -1890,7 +1874,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Fills the pixmap with an horizontal gradient.
+			 * @brief Fills the pixmap with a horizontal gradient.
 			 * @tparam scale_data_t The scale data type. Default float.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param gradient A reference to a gradient.
@@ -1973,8 +1957,6 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( channelIndex >= this->colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad channel index !" "\n";
-
 					return false;
 				}
 
@@ -2017,8 +1999,6 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( channelIndex >= this->colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad channel index !" "\n";
-
 					return false;
 				}
 
@@ -2080,8 +2060,6 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( channelIndex >= this->colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad channel index !" "\n";
-
 					return false;
 				}
 
@@ -2126,7 +2104,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Fills the pixmap channel with an horizontal gradient.
+			 * @brief Fills the pixmap channel with a horizontal gradient.
 			 * @note The gradient will be used as a grayscale.
 			 * @tparam color_data_t The color data type.
 			 * @param channel The targeted channel of the pixmap.
@@ -2148,8 +2126,6 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( channelIndex >= this->colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad channel index !" "\n";
-
 					return false;
 				}
 
@@ -2202,8 +2178,6 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( channelIndex >= this->colorCount() )
 				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad channel index !" "\n";
-
 					return false;
 				}
 
@@ -2264,30 +2238,57 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				std::srand(static_cast< unsigned >(std::time(nullptr)));
-
-				std::vector< precision_t > pixelData{};
+				size_t bufferSize;
 
 				switch ( m_channelMode )
 				{
 					case ChannelMode::Grayscale :
 					case ChannelMode::GrayscaleAlpha :
-						pixelData.resize(m_width * m_height);
+						bufferSize = m_width * m_height;
 						break;
 
 					case ChannelMode::RGB :
 					case ChannelMode::RGBA :
-						pixelData.resize(m_width * m_height * 3);
+						bufferSize = m_width * m_height * 3;
 						break;
+
+					default:
+						return false;
 				}
 
-				std::generate(pixelData.begin(), pixelData.end(), std::rand);
+				if constexpr ( std::is_floating_point_v< precision_t > )
+				{
 
-				return this->fill(pixelData);
+					Randomizer< precision_t > randomizer;
+
+					const auto pixelBuffer = randomizer.vector(
+					   bufferSize,
+					   static_cast< precision_t>(0),
+					   static_cast< precision_t>(1)
+					);
+
+					return this->fill(pixelBuffer);
+				}
+
+				if constexpr ( std::is_integral_v< precision_t > )
+				{
+
+					Randomizer< precision_t > randomizer;
+
+					const auto pixelBuffer = randomizer.vector(
+					   bufferSize,
+					   static_cast< precision_t>(0),
+					   std::numeric_limits< precision_t >::max()
+					);
+
+					return this->fill(pixelBuffer);
+				}
+
+				return false;
 			}
 
 			/**
-			 * @brief Fills the pixmap with a basic noise.
+			 * @brief Fills the pixmap with a perlin noise.
 			 * @param scale The perlin noise scale factor.
 			 * @param grayNoise Generate only gray. Default false.
 			 * @return bool
@@ -2300,6 +2301,8 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
+				Randomizer< uint32_t > randomizer;
+
 				const auto limit = this->pixelCount();
 				const auto stride = this->colorCount();
 
@@ -2308,7 +2311,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::Grayscale :
 					case ChannelMode::GrayscaleAlpha :
 					{
-						Algorithms::PerlinNoise< float > generator{Utility::random(0U, std::numeric_limits< unsigned int >::max())};
+						Algorithms::PerlinNoise< float > generator{randomizer.value(0U, std::numeric_limits< uint32_t >::max())};
 
 						for ( size_t index = 0; index < limit; ++index )
 						{
@@ -2323,7 +2326,7 @@ namespace EmEn::Libs::PixelFactory
 					case ChannelMode::RGBA :
 						if ( grayNoise )
 						{
-							Algorithms::PerlinNoise< float > generator{Utility::random(0U, std::numeric_limits< unsigned int >::max())};
+							Algorithms::PerlinNoise< float > generator{randomizer.value(0U, std::numeric_limits< uint32_t >::max())};
 
 							for ( size_t index = 0; index < limit; ++index )
 							{
@@ -2337,9 +2340,9 @@ namespace EmEn::Libs::PixelFactory
 						}
 						else
 						{
-							Algorithms::PerlinNoise< float > redGenerator{Utility::random(0U, std::numeric_limits< unsigned int >::max())};
-							Algorithms::PerlinNoise< float > greenGenerator{Utility::random(0U, std::numeric_limits< unsigned int >::max())};
-							Algorithms::PerlinNoise< float > blueGenerator{Utility::random(0U, std::numeric_limits< unsigned int >::max())};
+							Algorithms::PerlinNoise< float > redGenerator{randomizer.value(0U, std::numeric_limits< uint32_t >::max())};
+							Algorithms::PerlinNoise< float > greenGenerator{randomizer.value(0U, std::numeric_limits< uint32_t >::max())};
+							Algorithms::PerlinNoise< float > blueGenerator{randomizer.value(0U, std::numeric_limits< uint32_t >::max())};
 
 							for ( size_t index = 0; index < limit; ++index )
 							{
@@ -2497,7 +2500,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			friend
 			std::string
-			to_string (const Pixmap & obj) noexcept
+			to_string (const Pixmap & obj)
 			{
 				std::stringstream output;
 
@@ -2520,9 +2523,8 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( pixelIndex >= pixelCount )
 				{
-#ifdef EMERAUDE_DEBUG_PIXEL_FACTORY
-					std::cerr << __PRETTY_FUNCTION__ << ", pixel index overflow !" "\n";
-#endif
+					assert("Pixel index overflow !");
+
 					pixelIndex = pixelCount - 1;
 				}
 			}
@@ -2538,19 +2540,11 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( coordX >= m_width )
 				{
-#ifdef EMERAUDE_DEBUG_PIXEL_FACTORY
-					std::cerr << __PRETTY_FUNCTION__ << ", pixel X coordinate overflow !" "\n";
-#endif
-
 					coordX = m_width - 1;
 				}
 
 				if ( coordY >= m_height )
 				{
-#ifdef EMERAUDE_DEBUG_PIXEL_FACTORY
-					std::cerr << __PRETTY_FUNCTION__ << ", pixel Y coordinate overflow !" "\n";
-#endif
-
 					coordY = m_height - 1;
 				}
 			}
@@ -2614,7 +2608,7 @@ namespace EmEn::Libs::PixelFactory
 			size_t m_height{0};
 			ChannelMode m_channelMode{ChannelMode::RGB};
 			std::vector< precision_t > m_data{};
-			Area< size_t > m_lastUpdatedRegion;
+			Math::Rectangle< uint32_t > m_lastUpdatedRegion;
 			std::array< bool, 8 > m_flags{
 				true/*UVWrappingEnabled*/,
 				true/*UpdatedRegionMarkerEnabled*/,
@@ -2638,10 +2632,6 @@ namespace EmEn::Libs::PixelFactory
 	dataConversion (const Pixmap< input_t > & input) noexcept requires (std::is_arithmetic_v< input_t >, std::is_arithmetic_v< output_t >)
 	{
 		Pixmap< output_t > output{input.width(), input.height(), input.channelMode()};
-
-#ifdef EMERAUDE_DEBUG_PIXEL_FACTORY
-		std::cout << "Pixmap data conversion : " << typeid(input_t).name() << " (" << sizeof(input_t) << " bytes) to " << typeid(output_t).name() << " (" << sizeof(output_t) << " bytes) !" "\n";
-#endif
 
 		const auto & inputData = input.data();
 		auto & outputData = output.data();

@@ -25,10 +25,8 @@
  */
 
 #pragma once
-#include "Libs/PixelFactory/Area.hpp"
+
 /* Local inclusions for usages. */
-/* VULKAN_DEV */
-//#include "Framebuffer.hpp"
 #include "Saphir/FramebufferEffectInterface.hpp"
 #include "Geometry/IndexedVertexResource.hpp"
 
@@ -97,7 +95,7 @@ namespace EmEn::Graphics
 			 * @param region The viewport area to blit/copy the render.
 			 * @return void
 			 */
-			void render (const Libs::PixelFactory::Area< size_t > & region) const noexcept;
+			void render (const Libs::Math::Rectangle< uint32_t > & region) const noexcept;
 
 			/**
 			 * @brief Returns a pointer to the framebuffer responsible for the post-processor.

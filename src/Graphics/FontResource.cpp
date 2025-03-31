@@ -67,14 +67,29 @@ namespace EmEn::Graphics
 
 		const std::bitset< BitmapSize * BitmapSize > bitmap{DefaultFont};
 
-		Pixmap< uint8_t > image{BitmapSize, BitmapSize, ChannelMode::RGBA};
+		Pixmap< uint8_t > charsMap{BitmapSize, BitmapSize, ChannelMode::Grayscale};
 
 		for ( size_t index = 0; index < bitmap.size(); index++ )
 		{
-			image.setPixel(index, bitmap[index] ? White : Black);
+			*charsMap.pixelPointer(index) = bitmap[index] ? 255 : 0;
 		}
 
-		return this->setLoadSuccess(m_data.parsePixmap(image));
+		if ( !m_data.parsePixmap(charsMap, 16U, false) )
+		{
+			return this->setLoadSuccess(false);
+		}
+
+		if ( !m_data.parsePixmap(charsMap, 24U, false) )
+		{
+			return this->setLoadSuccess(false);
+		}
+
+		if ( !m_data.parsePixmap(charsMap, 32U, false) )
+		{
+			return this->setLoadSuccess(false);
+		}
+
+		return this->setLoadSuccess(true);
 	}
 
 	bool
@@ -85,7 +100,7 @@ namespace EmEn::Graphics
 			return false;
 		}
 
-		return this->setLoadSuccess(m_data.readFile(filepath));
+		return this->setLoadSuccess(m_data.readFile(filepath, 16U, true));
 	}
 
 	bool

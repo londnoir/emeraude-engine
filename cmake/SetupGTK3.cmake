@@ -3,15 +3,12 @@ if ( NOT GTK3_ENABLED )
 
     find_package(PkgConfig REQUIRED)
 
-    pkg_check_modules(PC_GTK3 REQUIRED gtk+-3.0)
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
-    message("GTK3 ${PC_GTK3_VERSION} library enabled !")
-    message(" - Headers : ${PC_GTK3_INCLUDE_DIRS}")
-    message(" - Libraries : ${PC_GTK3_LIBRARIES}")
-    message(" - Binary : ${PC_GTK3_LIBRARIES}")
-
-    target_include_directories(${PROJECT_NAME} PRIVATE ${PC_GTK3_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${PC_GTK3_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${GTK3_INCLUDE_DIRS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARY_DIRS})
+    #target_compile_definitions(${PROJECT_NAME} PRIVATE ${GTK3_CFLAGS_OTHER})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
 
     set(GTK3_ENABLED On)
 else ()

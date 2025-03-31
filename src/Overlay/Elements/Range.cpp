@@ -53,7 +53,7 @@ namespace EmEn::Overlay::Elements
 		pixmap.zeroFill();
 
 		Processor proc{pixmap};
-		proc.drawSquare(pixmap.area(), White);
+		proc.drawSquare(pixmap.rectangle(), White);
 
 		const auto width = static_cast< size_t >(static_cast< float >(pixmap.width() - 6UL) * m_value);
 

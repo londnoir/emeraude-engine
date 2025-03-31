@@ -36,12 +36,8 @@
 
 /* Local inclusions. */
 #include "Graphics/TextureResource/Abstract.hpp"
-#include "Libs/PixelFactory/Area.hpp"
-#include "Libs/PixelFactory/Color.hpp"
 #include "Libs/PixelFactory/FileIO.hpp"
-#include "Libs/PixelFactory/Pixmap.hpp"
 #include "Libs/PixelFactory/Processor.hpp"
-#include "Libs/PixelFactory/Types.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
 #include "Resources/ResourceTrait.hpp"
@@ -59,6 +55,7 @@ const size_t EmEn::Resources::Container< EmEn::Graphics::CubemapResource >::Clas
 namespace EmEn::Graphics
 {
 	using namespace EmEn::Libs;
+	using namespace EmEn::Libs::Math;
 	using namespace EmEn::Libs::PixelFactory;
 
 	const size_t CubemapResource::ClassUID{getClassUID(ClassId)};
@@ -234,10 +231,10 @@ namespace EmEn::Graphics
 			return this->setLoadSuccess(false);
 		}
 
-		const auto width = pixmap.width() / 3;
-		const auto height = pixmap.height() / 2;
+		const auto width = static_cast< uint32_t >(pixmap.width() / 3);
+		const auto height = static_cast< uint32_t >(pixmap.height() / 2);
 
-		const std::array< Area< size_t >, CubemapFaceCount > areas{{
+		const std::array< Rectangle< uint32_t >, CubemapFaceCount > rectangles{{
 			/* PositiveX */
 			{0, 0, width, height},
 			/* NegativeX */
@@ -254,7 +251,7 @@ namespace EmEn::Graphics
 
 		for ( size_t faceIndex = 0; faceIndex < CubemapFaceCount; faceIndex++ )
 		{
-			m_data.at(faceIndex) = Processor< uint8_t >::crop(pixmap, areas.at(faceIndex));
+			m_data.at(faceIndex) = Processor< uint8_t >::crop(pixmap, rectangles.at(faceIndex));
 
 			if ( !TextureResource::Abstract::validatePixmap(ClassId, m_data.at(faceIndex)) )
 			{

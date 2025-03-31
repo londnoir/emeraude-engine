@@ -28,6 +28,7 @@
 
 /* STL inclusions. */
 #include <stack>
+#include <iostream>
 
 namespace EmEn::Libs
 {

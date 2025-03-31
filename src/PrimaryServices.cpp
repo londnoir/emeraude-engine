@@ -59,13 +59,13 @@ namespace EmEn
 	}
 
 #if IS_WINDOWS
-	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool readOnly) noexcept
-		: m_arguments(argc, wargv),
-		m_tracer(m_arguments, m_settings),
-		m_fileSystem(m_arguments, m_userInfo, identification),
-		m_settings(m_arguments, m_fileSystem, readOnly)
+	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool childProcess) noexcept
+		: m_arguments(argc, wargv, childProcess),
+		m_tracer(m_arguments, m_settings, childProcess),
+		m_fileSystem(m_arguments, m_userInfo, identification, childProcess),
+		m_settings(m_arguments, m_fileSystem, childProcess)
 	{
-		m_flags[ReadOnly] = readOnly;
+		m_flags[ChildProcess] = childProcess;
 
 		/* NOTE: This must be done immediately ! */
 		if ( !m_arguments.initialize(m_primaryServicesEnabled) )
@@ -73,7 +73,7 @@ namespace EmEn
 			std::cerr << ClassId << ", " << m_arguments.name() << " service failed to execute !";
 		}
 
-		if ( !readOnly && m_arguments.get("--verbose").isPresent() )
+		if ( !childProcess && m_arguments.get("--verbose").isPresent() )
 		{
 			m_flags[ShowInformation] = true;
 		}

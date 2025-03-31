@@ -409,14 +409,14 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::loadDiamondSquare (float size, size_t division, float factor, unsigned int seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
+	BasicFloorResource::loadDiamondSquare (float size, size_t division, float factor, float roughness, int32_t seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
 		Grid< float > grid{};
 
 		if ( grid.initializeData(size, division) )
 		{
 			grid.setUVMultiplier(UVMultiplier);
-			grid.applyDiamondSquare(factor, seed);
+			grid.applyDiamondSquare(factor, roughness, seed);
 		}
 		else
 		{

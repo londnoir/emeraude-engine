@@ -59,7 +59,7 @@ namespace EmEn::Overlay::Elements
 	void
 	Picture::setOpacity (float value) noexcept
 	{
-		m_opacity = Math::clampToUnit(value);
+		m_opacity = clampToUnit(value);
 	}
 
 	float

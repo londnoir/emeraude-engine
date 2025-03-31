@@ -27,13 +27,17 @@
 #pragma once
 
 /* STL inclusions. */
-#include <algorithm>
-#include <cmath>
 #include <cstdint>
+#include <cmath>
+#include <algorithm>
+#include <array>
 #include <numeric>
 #include <random>
 #include <type_traits>
 #include <vector>
+
+/* Local inclusions. */
+#include "Libs/Math/Base.hpp"
 
 namespace EmEn::Libs::Algorithms
 {
@@ -42,7 +46,7 @@ namespace EmEn::Libs::Algorithms
 	 * @tparam number_t The type of number. Default float.
 	 */
 	template< typename number_t = float >
-	requires (std::is_arithmetic_v< number_t >)
+	requires (std::is_floating_point_v< number_t >)
 	class PerlinNoise final
 	{
 		public:
@@ -77,7 +81,7 @@ namespace EmEn::Libs::Algorithms
 			 * @param seed The seed number.
 			 */
 			explicit
-			PerlinNoise (unsigned int seed) noexcept
+			PerlinNoise (uint32_t seed) noexcept
 			{
 				m_permutations.resize(256);
 
@@ -105,10 +109,14 @@ namespace EmEn::Libs::Algorithms
 			number_t
 			generate (number_t x, number_t y, number_t z) noexcept
 			{
+				constexpr uint32_t TableMask{255};
+				constexpr auto One{static_cast< number_t >(1.0)};
+				constexpr auto Half{static_cast< number_t >(0.5)};
+
 				/* Find the unit cube that contains the point. */
-				auto X = static_cast< unsigned int >(std::floor(x)) & 255;
-				auto Y = static_cast< unsigned int >(std::floor(y)) & 255;
-				auto Z = static_cast< unsigned int >(std::floor(z)) & 255;
+				const auto X = static_cast< uint32_t >(std::floor(x)) & TableMask;
+				const auto Y = static_cast< uint32_t >(std::floor(y)) & TableMask;
+				const auto Z = static_cast< uint32_t >(std::floor(z)) & TableMask;
 
 				/* Find relative x, y,z of point in cube. */
 				x -= std::floor(x);
@@ -129,37 +137,37 @@ namespace EmEn::Libs::Algorithms
 				const auto BB = m_permutations[B + 1] + Z;
 
 				/* Adds blended results from 8 corners of cube. */
-				auto res = PerlinNoise::linearInterpolation(
-					w,
-					PerlinNoise::linearInterpolation(
-						v,
-						PerlinNoise::linearInterpolation(
-							u,
-							this->grad(m_permutations[AA], x, y, z),
-							this->grad(m_permutations[BA], x - 1, y, z)
+				const auto result = Math::linearInterpolation(
+					Math::linearInterpolation(
+						Math::linearInterpolation(
+							PerlinNoise::grad(m_permutations[AA], x, y, z),
+							PerlinNoise::grad(m_permutations[BA], x - 1, y, z),
+							u
 						),
-						PerlinNoise::linearInterpolation(
-							u,
-							this->grad(m_permutations[AB], x, y - 1, z),
-							this->grad(m_permutations[BB], x - 1, y - 1, z)
-						)
+						Math::linearInterpolation(
+							PerlinNoise::grad(m_permutations[AB], x, y - 1, z),
+							PerlinNoise::grad(m_permutations[BB], x - 1, y - 1, z),
+							u
+						),
+						v
 					),
-					PerlinNoise::linearInterpolation(
-						v,
-						PerlinNoise::linearInterpolation(
-							u,
-							this->grad(m_permutations[AA + 1], x, y, z - 1),
-							this->grad(m_permutations[BA + 1], x - 1, y, z - 1)
+					Math::linearInterpolation(
+						Math::linearInterpolation(
+							PerlinNoise::grad(m_permutations[AA + 1], x, y, z - 1),
+							PerlinNoise::grad(m_permutations[BA + 1], x - 1, y, z - 1),
+							u
 						),
-						PerlinNoise::linearInterpolation(
-							u,
-							this->grad(m_permutations[AB + 1], x, y - 1, z - 1),
-							this->grad(m_permutations[BB + 1], x - 1, y - 1, z - 1)
-						)
-					)
+						Math::linearInterpolation(
+							PerlinNoise::grad(m_permutations[AB + 1], x, y - 1, z - 1),
+							PerlinNoise::grad(m_permutations[BB + 1], x - 1, y - 1, z - 1),
+							u
+						),
+						v
+					),
+					w
 				);
 
-				return (res + static_cast< number_t >(1.0)) * static_cast< number_t >(0.5);
+				return (result + One) * Half;
 			}
 
 			/**
@@ -172,57 +180,60 @@ namespace EmEn::Libs::Algorithms
 			uint8_t
 			generate8bits (number_t x, number_t y) noexcept
 			{
-				return static_cast< uint8_t >(static_cast< number_t >(256.0) * this->generate(x, y, 0));
+				constexpr auto Scale8bit{static_cast< number_t >(256.0)};
+
+				return static_cast< uint8_t >(Scale8bit * this->generate(x, y, 0));
 			}
 
 		private:
 
 			/**
+			 * @brief Computes the gradient value based on the hashed index and 3D coordinates.
+			 * @param hash The hashed value, typically derived from a permutation table, which determines the gradient direction.
+			 * @param x The x-coordinate of the input position.
+			 * @param y The y-coordinate of the input position.
+			 * @param z The z-coordinate of the input position.
+			 * @return The calculated gradient value (dot product between the gradient vector and position vector).
+			 */
+			[[nodiscard]]
+			static
+			number_t
+			grad (uint32_t hash, number_t x, number_t y, number_t z) noexcept
+			{
+				const auto & gradVector = GradientTable[hash & 15];
+
+				return static_cast< number_t >(gradVector.x) * x + static_cast< number_t >(gradVector.y) * y + static_cast< number_t >(gradVector.z) * z;
+			}
+
+			/**
 			 * @brief Performs a fade.
 			 * @param t
-			 * @return type_t
+			 * @return number_t
 			 */
+			[[nodiscard]]
 			static
 			number_t
 			fade (number_t t) noexcept
 			{
-				return t * t * t * (t * (t * 6 - 15) + 10);
+				constexpr auto FadeC1{static_cast< number_t >(6.0)};
+				constexpr auto FadeC2{static_cast< number_t >(15.0)};
+				constexpr auto FadeC3{static_cast< number_t >(10.0)};
+
+				return t * t * t * (t * (t * FadeC1 - FadeC2) + FadeC3);
 			}
 
-			/**
-			 * @brief Performs a linear interpolation.
-			 * @param t
-			 * @param a
-			 * @param b
-			 * @return type_t
-			 */
-			static
-			number_t
-			linearInterpolation (number_t t, number_t a, number_t b) noexcept
+			struct GradientVector
 			{
-				return a + t * (b - a);
-			}
+				int8_t x, y, z;
+			};
 
-			/**
-			 * @brief Performs a grad.
-			 * @param hash
-			 * @param x
-			 * @param y
-			 * @param z
-			 * @return type_t
-			 */
-			number_t
-			grad (unsigned int hash, number_t x, number_t y, number_t z) noexcept
-			{
-				const auto h = hash & 15;
+			static constexpr std::array< GradientVector, 16 > GradientTable {{
+	            {1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0}, // Indices 0-3   (Gradients XY)
+				{1, 0, 1}, {-1, 0, 1}, {1, 0, -1}, {-1, 0, -1}, // Indices 4-7   (Gradients XZ)
+				{0, 1, 1}, {0, -1, 1}, {0, 1, -1}, {0, -1, -1}, // Indices 8-11  (Gradients YZ)
+				{1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0}  // Indices 12-15 (Répétition first 4)
+            }};
 
-				/* Convert lower 4 bits of hash into 12 gradient directions. */
-				auto u = h < 8 ? x : y;
-				auto v = h < 4 ? y : h == 12 || h == 14 ? x : z;
-
-				return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
-			}
-
-			std::vector< unsigned int > m_permutations{};
+			std::vector< uint32_t > m_permutations{};
 	};
 }

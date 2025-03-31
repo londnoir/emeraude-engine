@@ -175,8 +175,8 @@ namespace EmEn::Overlay
 		const auto windowSize = Window::instance()->getFramebufferSize();
 
 		return {
-			windowSize[0] * m_rectangle.width(),
-			windowSize[1] * m_rectangle.height()
+			static_cast< float >(windowSize[0]) * m_rectangle.width(),
+			static_cast< float >(windowSize[1]) * m_rectangle.height()
 		};
 	}
 
@@ -187,8 +187,8 @@ namespace EmEn::Overlay
 		const auto windowSize = Window::instance()->getFramebufferSize();
 
 		return {
-			windowSize[0] * (m_rectangle.offsetX() - m_rectangle.width() + 1.0F) * Half< float >,
-			windowSize[1] * (m_rectangle.offsetY() - m_rectangle.height() + 1.0F) * Half< float >
+			static_cast< float >(windowSize[0]) * (m_rectangle.left() - m_rectangle.width() + 1.0F) * Half< float >,
+			static_cast< float >(windowSize[1]) * (m_rectangle.top() - m_rectangle.height() + 1.0F) * Half< float >
 		};
 	}
 

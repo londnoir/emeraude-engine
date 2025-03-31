@@ -27,11 +27,12 @@
 #pragma once
 
 /* STL inclusions. */
-#include <array>
-#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cmath>
+#include <cassert>
+#include <array>
 #include <iomanip>
-#include <iostream>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -147,6 +148,7 @@ namespace EmEn::Libs::Math
 	 *		[   R][Sy+R][   R][  Ty]
 	 *		[   R][   R][Sz+R][  Tz]
 	 *		[   0][   0][   0][   1]
+	 * @todo Check pertinence of OpenMP pragmas
 	 */
 	template< size_t dim_t, typename precision_t = float >
 	requires (dim_t == 2 || dim_t == 3 || dim_t == 4) && std::is_arithmetic_v< precision_t >
@@ -410,7 +412,7 @@ namespace EmEn::Libs::Math
 			 * @param data A pointer to a C-Style array containing at least the dimension of the matrix.
 			 */
 			explicit
-			Matrix (const precision_t * data) noexcept
+			Matrix (std::span< const precision_t, dim_t * dim_t > & data) noexcept
 			{
 				#pragma omp simd
 				for ( size_t index = 0; index < dim_t * dim_t; index++ )
@@ -441,7 +443,7 @@ namespace EmEn::Libs::Math
 				Matrix matrix;
 
 				#pragma omp simd
-				for ( size_t index = 0; index < dim_t; index++ )
+				for ( size_t index = 0; index < dim_t * dim_t; index++ )
 				{
 					matrix.m_data[index] = -m_data[index];
 				}
@@ -1031,12 +1033,7 @@ namespace EmEn::Libs::Math
 			void
 			setRow (size_t row, precision_t x, precision_t y) noexcept requires (dim_t == 2)
 			{
-				if ( row > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix row dimension overflow !" "\n";
-
-					return;
-				}
+				assert(row < dim_t);
 
 				m_data[row] = x;
 				m_data[row + dim_t] = y;
@@ -1053,12 +1050,7 @@ namespace EmEn::Libs::Math
 			void
 			setRow (size_t row, precision_t x, precision_t y, precision_t z) noexcept requires (dim_t == 3)
 			{
-				if ( row > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix row dimension overflow !" "\n";
-
-					return;
-				}
+				assert(row < dim_t);
 
 				m_data[row] = x;
 				m_data[row + dim_t] = y;
@@ -1077,12 +1069,7 @@ namespace EmEn::Libs::Math
 			void
 			setRow (size_t row, precision_t x, precision_t y, precision_t z, precision_t w) noexcept requires (dim_t == 4)
 			{
-				if ( row > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix row dimension overflow !" "\n";
-
-					return;
-				}
+				assert(row < dim_t);
 
 				m_data[row] = x;
 				m_data[row + dim_t] = y;
@@ -1099,12 +1086,7 @@ namespace EmEn::Libs::Math
 			void
 			setRow (size_t row, const Vector< dim_t, precision_t > & vector) noexcept
 			{
-				if ( row > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix row dimension overflow !" "\n";
-
-					return;
-				}
+				assert(row < dim_t);
 
 				#pragma omp simd
 				for ( size_t index = 0; index < dim_t; index++ )
@@ -1122,12 +1104,7 @@ namespace EmEn::Libs::Math
 			Vector< dim_t, precision_t >
 			row (size_t row) const noexcept
 			{
-				if ( row > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix row dimension overflow !" "\n";
-
-					return {};
-				}
+				assert(row < dim_t);
 
 				Vector< dim_t, precision_t > vector;
 
@@ -1150,12 +1127,7 @@ namespace EmEn::Libs::Math
 			void
 			setColumn (size_t col, precision_t x, precision_t y) noexcept requires (dim_t == 2)
 			{
-				if ( col > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix column dimension overflow !" "\n";
-
-					return;
-				}
+				assert(col < dim_t);
 
 				const auto shift = dim_t * col;
 
@@ -1174,12 +1146,7 @@ namespace EmEn::Libs::Math
 			void
 			setColumn (size_t col, precision_t x, precision_t y, precision_t z) noexcept requires (dim_t == 3)
 			{
-				if ( col > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix column dimension overflow !" "\n";
-
-					return;
-				}
+				assert(col < dim_t);
 
 				const auto shift = dim_t * col;
 
@@ -1200,12 +1167,7 @@ namespace EmEn::Libs::Math
 			void
 			setColumn (size_t col, precision_t x, precision_t y, precision_t z, precision_t w) noexcept requires (dim_t == 4)
 			{
-				if ( col > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix column dimension overflow !" "\n";
-
-					return;
-				}
+				assert(col < dim_t);
 
 				const auto shift = dim_t * col;
 
@@ -1217,21 +1179,16 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Sets a matrix column from a vector.
-			 * @param columnIndex The index of the column.
+			 * @param col The index of the column.
 			 * @param vector A reference to a vector.
 			 * @return void
 			 */
 			void
-			setColumn (size_t columnIndex, const Vector< dim_t, precision_t > & vector) noexcept
+			setColumn (size_t col, const Vector< dim_t, precision_t > & vector) noexcept
 			{
-				if ( columnIndex > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix column dimension overflow !" "\n";
+				assert(col < dim_t);
 
-					return;
-				}
-
-				const auto shift = dim_t * columnIndex;
+				const auto shift = dim_t * col;
 
 				#pragma omp simd
 				for ( size_t index = 0; index < dim_t; index++ )
@@ -1242,23 +1199,18 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns a column as a vector.
-			 * @param columnIndex The index of the column.
+			 * @param col The index of the column.
 			 * @return Vector< dim_t, precision_t >
 			 */
 			[[nodiscard]]
 			Vector< dim_t, precision_t >
-			column (size_t columnIndex) const noexcept
+			column (size_t col) const noexcept
 			{
-				if ( columnIndex > dim_t )
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", matrix column dimension overflow !" "\n";
-
-					return {};
-				}
+				assert(col < dim_t);
 
 				Vector< dim_t, precision_t > vector;
 
-				const auto shift = dim_t * columnIndex;
+				const auto shift = dim_t * col;
 
 				#pragma omp simd
 				for ( size_t index = 0; index < dim_t; index++ )
@@ -1447,6 +1399,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			precision_t
 			fastDeterminant () const noexcept
 			{
@@ -1493,6 +1446,7 @@ namespace EmEn::Libs::Math
 			 * @return precision_t
 			 */
 			[[nodiscard]]
+			constexpr
 			precision_t
 			trace () const noexcept
 			{
@@ -1511,6 +1465,7 @@ namespace EmEn::Libs::Math
 			 * @brief Transposes the matrix.
 			 * @return Matrix &
 			 */
+			constexpr
 			Matrix &
 			transpose () noexcept
 			{
@@ -1562,8 +1517,6 @@ namespace EmEn::Libs::Math
 
 				if ( Utility::isZero(D) )
 				{
-					std::cerr << "Matrix:inverse() : this matrix (" << dim_t << ") is not invertible !" "\n";
-
 					return *this;
 				}
 
@@ -1591,6 +1544,7 @@ namespace EmEn::Libs::Math
 			 * @return Matrix
 			 */
 			[[nodiscard]]
+			constexpr
 			Matrix
 			inverse () const noexcept
 			{
@@ -1598,8 +1552,6 @@ namespace EmEn::Libs::Math
 
 				if ( Utility::isZero(D) )
 				{
-					std::cerr << "Matrix:inverse() : this matrix (" << dim_t << ") is not invertible !" "\n";
-
 					return *this;
 				}
 
@@ -1721,7 +1673,7 @@ namespace EmEn::Libs::Math
 					m_data[M4x4Col0Row0], m_data[M4x4Col1Row0], m_data[M4x4Col2Row0], 0,
 					m_data[M4x4Col0Row1], m_data[M4x4Col1Row1], m_data[M4x4Col2Row1], 0,
 					m_data[M4x4Col0Row2], m_data[M4x4Col1Row2], m_data[M4x4Col2Row2], 0,
-					m_data[M4x4Col0Row3], m_data[M4x4Col1Row3], m_data[M4x4Col2Row3], m_data[M4x4Col3Row3]
+					m_data[M4x4Col0Row3], m_data[M4x4Col1Row3], m_data[M4x4Col2Row3], 1
 				};
 
 				return Matrix{data};
@@ -2365,8 +2317,8 @@ namespace EmEn::Libs::Math
 					matrix[M4x4Col2Row2] = -(zFar + zNear) / (zFar - zNear);
 					matrix[M4x4Col3Row2] = -(2.0 * zFar * zNear) / (zFar - zNear);
 
-					matrix[M4x4Col2Row3] = -1.0;
-					matrix[M4x4Col3Row3] = 0.0;
+					matrix[M4x4Col2Row3] = -1;
+					matrix[M4x4Col3Row3] = 0;
 				}
 
 				return matrix;
@@ -2407,21 +2359,16 @@ namespace EmEn::Libs::Math
 					matrix[M4x4Col2Row2] = -2 / deltaValue;
 					matrix[M4x4Col3Row2] = -((zFar + zNear) / deltaValue);
 				}
-				else
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", Orthographic projection : bad params !" "\n";
-				}
 
 				return matrix;
 			}
 
 			/**
 			 * @brief Returns an orthographic projection 4x4 matrix.
-			 * @note OpenGL compliant (right-handed). Tested against glm::perspectiveRH().
 			 * @param fov Field of view in degree.
 			 * @param aspectRatio The aspect ratio of the viewport.
-			 * @param zNear Limit for nearest vertices.
-			 * @param zFar Limit for farthest vertices.
+			 * @param zNear Limit for nearest vertices. Must be positive.
+			 * @param zFar Limit for farthest vertices. Must be positive.
 			 * @return Matrix< 4, precision_t >
 			 */
 			[[nodiscard]]
@@ -2429,34 +2376,34 @@ namespace EmEn::Libs::Math
 			Matrix
 			perspectiveProjection (precision_t fov, precision_t aspectRatio, precision_t zNear = 0, precision_t zFar = 1) noexcept requires (dim_t == 4)
 			{
+				if ( zNear < 0 )
+				{
+					zNear = 0;
+				}
+
+				if ( zFar < 0 )
+				{
+					zFar = 1;
+				}
+
+				const auto a = fastCotan(fov * static_cast< precision_t >(0.5));
+
 				Matrix matrix;
+				matrix[M4x4Col0Row0] = a / aspectRatio;
 
-				/* zNear, zFar must always be positive */
-				if ( zNear >= 0 && zFar >= 0 )
-				{
-					const auto a = fastCotan(fov * static_cast< precision_t >(0.5));
+				matrix[M4x4Col1Row1] = a;
 
-					matrix[M4x4Col0Row0] = a / aspectRatio;
+				matrix[M4x4Col2Row2] = -((zFar + zNear) / (zFar - zNear));
+				matrix[M4x4Col3Row2] = -((2 * zFar * zNear) / (zFar - zNear));
 
-					matrix[M4x4Col1Row1] = a;
-
-					matrix[M4x4Col2Row2] = -((zFar + zNear) / (zFar - zNear));
-					matrix[M4x4Col3Row2] = -((2 * zFar * zNear) / (zFar - zNear));
-
-					matrix[M4x4Col2Row3] = -1;
-					matrix[M4x4Col3Row3] = 0;
-				}
-				else
-				{
-					std::cerr << __PRETTY_FUNCTION__ << ", bad params ! (zNear: " << zNear << ", zFar: " << zFar << ")" "\n";
-				}
+				matrix[M4x4Col2Row3] = -1;
+				matrix[M4x4Col3Row3] = 0;
 
 				return matrix;
 			}
 
 			/**
 			 * @brief Returns a lookAt view 4x4 matrix.
-			 * @note OpenGL compliant (right-handed). Tested against glm::lookAtRH().
 			 * @param eye A reference to a Vector< 3, precision_t > for the "eye" direction.
 			 * @param center A reference to a Vector< 3, precision_t > for the "eye" position.
 			 * @param up A reference to a Vector< 3, precision_t > for the upward direction from the "eye".
@@ -2488,7 +2435,6 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns a lookAt view 4x4 matrix.
-			 * @note OpenGL compliant (right-handed). Tested against glm::lookAtRH().
 			 * @param eye A reference to a Vector< 4, precision_t > for the "eye" direction.
 			 * @param center A reference to a Vector< 4, precision_t > for the "eye" position.
 			 * @param up A reference to a Vector< 4, precision_t > for the upward direction from the "eye".

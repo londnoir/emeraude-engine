@@ -35,15 +35,11 @@
 #include <type_traits>
 
 /* Local inclusions for usages. */
-#include "Base.hpp"
 #include "Matrix.hpp"
-#include "Vector.hpp"
 
 namespace EmEn::Libs::Math
 {
-	/**
-	 * @brief The transform space enumeration.
-	 */
+	/** @brief The transform space enumeration. */
 	enum class TransformSpace : uint8_t
 	{
 		Local,
@@ -59,7 +55,7 @@ namespace EmEn::Libs::Math
 	 *  - Z axis : positive back, negative front
 	 * @tparam precision_t The data precision, should be a floating point number. Default float.
 	 */
-	template< typename precision_t = float > requires (std::is_arithmetic_v< precision_t >)
+	template< typename precision_t = float > requires (std::is_floating_point_v< precision_t >)
 	class CartesianFrame final
 	{
 		public:
@@ -509,55 +505,28 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the pitch (X) angle of the frame in radian.
-			 * @note Floating point number version.
 			 * @return precision_t
 			 */
 			[[nodiscard]]
 			precision_t
-			getPitchAngle () const noexcept requires (std::is_floating_point_v< precision_t >)
+			getPitchAngle () const noexcept
 			{
 				return Vector< 3, precision_t >::angle(m_backward, Vector< 3, precision_t >::negativeZ());
 			}
 
 			/**
-			 * @brief Returns the pitch (X) angle of the frame in radian.
-			 * @note Integer number version.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float
-			getPitchAngle () const noexcept requires (std::is_integral_v< precision_t >)
-			{
-				return 0;
-			}
-
-			/**
 			 * @brief Returns the yaw (Y) angle of the frame in radian.
-			 * @note Floating point number version.
 			 * @return precision_t
 			 */
 			[[nodiscard]]
 			precision_t
-			getYawAngle () const noexcept requires (std::is_floating_point_v< precision_t >)
+			getYawAngle () const noexcept
 			{
 				return Vector< 3, precision_t >::angle(m_backward, Vector< 3, precision_t >::positiveX());
 			}
 
 			/**
-			 * @brief Returns the yaw (Y) angle of the frame in radian.
-			 * @note Integer number version.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float
-			getYawAngle () const noexcept requires (std::is_integral_v< precision_t >)
-			{
-				return 0;
-			}
-
-			/**
 			 * @brief Returns the roll (Z) angle of the frame in radian.
-			 * @note Floating point number version.
 			 * @return precision_t
 			 */
 			[[nodiscard]]
@@ -565,18 +534,6 @@ namespace EmEn::Libs::Math
 			getRollAngle () const noexcept requires (std::is_floating_point_v< precision_t >)
 			{
 				return Vector< 3, precision_t >::angle(m_backward, Vector< 3, precision_t >::positiveY());
-			}
-
-			/**
-			 * @brief Returns the roll (Z) angle of the frame in radian.
-			 * @note Integer number version.
-			 * @return float
-			 */
-			[[nodiscard]]
-			float
-			getRollAngle () const noexcept requires (std::is_integral_v< precision_t >)
-			{
-				return 0;
 			}
 
 			/**
@@ -790,118 +747,157 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Rotates the frame around an arbitrary axis.
-			 * @param radian The angle expressed in radian. You can use the utility function Math::radians(degree).
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
 			 * @param axis A Vector3 to defines the axis.
 			 * @param local Using local axis.
 			 * @return void
 			 */
 			void
-			rotate (precision_t radian, const Vector< 3, precision_t > & axis, bool local) noexcept requires (std::floating_point < precision_t>)
+			rotate (precision_t radian, const Vector< 3, precision_t > & axis, bool local) noexcept
 			{
-				const auto matrix = Matrix< 3, precision_t >::rotation(radian, axis);
+				Vector< 3, precision_t > effectiveAxis;
 
-				m_downward = (matrix * m_downward).normalize();
-				m_backward = (matrix * m_backward).normalize();
+				if ( local )
+				{
+					effectiveAxis = this->getRotationMatrix3() * axis;
+				}
+				else
+				{
+					effectiveAxis = axis;
+				}
+
+				const auto rotationMatrix = Matrix< 3, precision_t >::rotation(radian, effectiveAxis);
+
+				m_downward = (rotationMatrix * m_downward).normalize();
+				m_backward = (rotationMatrix * m_backward).normalize();
 
 				if ( !local )
 				{
-					m_position = matrix * m_position;
+					m_position = rotationMatrix * m_position;
 				}
 			}
 
 			/**
-			 * @brief Rotates on X axis.
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
-			 * @param local Using local axis.
+			 * @brief Rotates this frame around a world-space axis passing through the origin of another frame.
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
+			 * @param worldAxis The axis of rotation (in world coordinates, should ideally be normalized).
+			 * @param referenceFrame The frame whose origin defines the point around which to rotate.
 			 * @return void
 			 */
 			void
-			pitch (precision_t radian, bool local) noexcept requires (std::floating_point < precision_t>)
+			rotate (precision_t radian, const Vector< 3, precision_t > & worldAxis, const CartesianFrame & referenceFrame) noexcept
 			{
-				this->rotate(radian, this->rightVector(), local);
+				const auto & rotationPoint = referenceFrame.position();
+
+				const auto rotationMatrix = Matrix< 3, precision_t >::rotation(radian, worldAxis);
+				const auto relativePos = m_position - rotationPoint;
+
+				m_downward = (rotationMatrix * m_downward).normalize();
+				m_backward = (rotationMatrix * m_backward).normalize();
+				m_position = (rotationMatrix * relativePos) + rotationPoint;
 			}
 
 			/**
-			 * @brief Rotate on Y axis (downward).
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
-			 * @param local Using local axis.
+			 * @brief Rotates on X axis (Pitch).
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
+			 * @param local If true, rotates around the local X-axis (Right), affecting only orientation.
+			 * If false, rotates around the world X-axis, affecting orientation and position relative to the world origin.
 			 * @return void
 			 */
 			void
-			yaw (precision_t radian, bool local) noexcept requires (std::floating_point < precision_t>)
+			pitch (precision_t radian, bool local) noexcept
 			{
-				this->rotate(radian, m_downward, local);
+				if ( local )
+				{
+					const auto rotationMatrix = Matrix<3, precision_t>::rotation(radian, this->rightVector());
+
+					m_downward = (rotationMatrix * m_downward).normalize();
+					m_backward = (rotationMatrix * m_backward).normalize();
+				}
+				else
+				{
+					this->rotate(radian, Vector< 3, precision_t >::positiveX(), false);
+				}
 			}
 
 			/**
-			 * @brief Rotates on Z axis.
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
-			 * @param local Using local axis.
-			 * @return void
-			 */
-			void
-			roll (precision_t radian, bool local) noexcept requires (std::floating_point < precision_t>)
-			{
-				this->rotate(radian, m_backward, local);
-			}
-
-			/**
-			 * @brief Rotates the frame around an arbitrary axis.
-			 * @FIXME Incorrect !
-			 * @param radian The angle expressed in radian. You can use the utility function Math::radians(degree).
-			 * @param axis A Vector3 to defines the axis.
+			 * @brief Rotates on X axis (Pitch) using another frame.
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
 			 * @param frame A reference to a cartesian frame.
 			 * @return void
 			 */
 			void
-			rotate (precision_t radian, const Vector< 3, precision_t > & axis, const CartesianFrame & /*frame*/) noexcept requires (std::floating_point < precision_t>)
+			pitch (precision_t radian, const CartesianFrame & frame) noexcept
 			{
-				const auto matrix = Matrix< 3, precision_t >::rotation(radian, axis);
-
-				m_downward = (matrix * m_downward).normalize();
-				m_backward = (matrix * m_backward).normalize();
+				this->rotate(radian, Vector< 3, precision_t >::positiveX(), frame);
 			}
 
 			/**
-			 * @brief Rotates on X axis using another frame.
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
+			 * @brief Rotates on Y axis (Yaw).
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
+			 * @param local If true, rotates around the local Y-axis (Downward), affecting only orientation.
+			 * If false, rotates around the world Y-axis, affecting orientation and position relative to the world origin.
+			 * @return void
+			 */
+			void
+			yaw (precision_t radian, bool local) noexcept
+			{
+				if ( local )
+				{
+					const auto rotationMatrix = Matrix< 3, precision_t >::rotation(radian, m_downward);
+
+					m_backward = (rotationMatrix * m_backward).normalize();
+				}
+				else
+				{
+					this->rotate(radian, Vector< 3, precision_t >::positiveY(), false);
+				}
+			}
+
+			/**
+			 * @brief Rotates on Y axis (Yaw) using another frame.
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
 			 * @param frame A reference to a cartesian frame.
 			 * @return void
 			 */
 			void
-			pitch (precision_t radian, const CartesianFrame & frame) noexcept requires (std::floating_point < precision_t>)
+			yaw (precision_t radian, const CartesianFrame & frame) noexcept
 			{
-				this->rotate(radian, this->rightVector(), frame);
+				this->rotate(radian, Vector< 3, precision_t >::positiveY(), frame);
 			}
 
 			/**
-			 * @brief Rotates on Y axis using another frame.
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
+			 * @brief Rotates on Z axis (Roll).
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
+			 * @param local If true, rotates around the local Z-axis (Backward), affecting only orientation.
+			 * If false, rotates around the world Z-axis, affecting orientation and position relative to the world origin.
+			 * @return void
+			 */
+			void
+			roll (precision_t radian, bool local) noexcept
+			{
+				if ( local )
+				{
+					const auto rotationMatrix = Matrix<3, precision_t>::rotation(radian, m_backward);
+
+					m_downward = (rotationMatrix * m_downward).normalize();
+				}
+				else
+				{
+					this->rotate(radian, Vector< 3, precision_t >::positiveZ(), false);
+				}
+			}
+
+			/**
+			 * @brief Rotates on Z axis (Roll) using another frame.
+			 * @param radian The angle expressed in radian. You can use the Math::Radian(degree).
 			 * @param frame A reference to a cartesian frame.
 			 * @return void
 			 */
 			void
-			yaw (precision_t radian, const CartesianFrame & frame) noexcept requires (std::floating_point < precision_t>)
+			roll (precision_t radian, const CartesianFrame & frame) noexcept
 			{
-				this->rotate(radian, m_downward, frame);
-			}
-
-			/**
-			 * @brief Rotates on Z axis using another frame.
-			 * @note You can use the Math::Radian(degree).
-			 * @param radian The angle expressed in radian.
-			 * @param frame A reference to a cartesian frame.
-			 * @return void
-			 */
-			void
-			roll (precision_t radian, const CartesianFrame & frame) noexcept requires (std::floating_point < precision_t>)
-			{
-				this->rotate(radian, m_backward, frame);
+				this->rotate(radian, Vector< 3, precision_t >::positiveZ(), frame);
 			}
 
 			/**
@@ -1045,8 +1041,42 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the inverted model matrix to place an object in a 3D scene.
-			 * @todo Check this method !
 			 * @note This method don't use the generic inverse() method.
+			 * Matrix Layout :
+			 *   [Xx][Xy][Xz][Px]
+			 *   [Ux][Uy][Uz][Py]
+			 *   [Fx][Fy][Fz][Pz]
+			 *   [ 0][ 0][ 0][ 1]
+			 * @return Matrix< 4, type_t >
+			 */
+			/*[[nodiscard]]
+			Matrix< 4, precision_t >
+			getInvertedModelMatrix_ () const noexcept
+			{
+				if ( m_scaling.isAllComponentOne() )
+				{
+					return this->getViewMatrix();
+				}
+
+				const auto right = this->rightVector();
+
+				const auto positionX = -Vector< 3, precision_t >::dotProduct(right, m_position) / m_scaling[X];
+				const auto positionY = -Vector< 3, precision_t >::dotProduct(m_downward, m_position) / m_scaling[Y];
+				const auto positionZ = -Vector< 3, precision_t >::dotProduct(m_backward, m_position) / m_scaling[Z];
+
+				std::array< precision_t, 16 > rawData{
+					right[X] / m_scaling[X], m_downward[X] / m_scaling[Y], m_backward[X] / m_scaling[Z], 0,
+					right[Y] / m_scaling[X], m_downward[Y] / m_scaling[Y], m_backward[Y] / m_scaling[Z], 0,
+					right[Z] / m_scaling[X], m_downward[Z] / m_scaling[Y], m_backward[Z] / m_scaling[Z], 0,
+					positionX, positionY, positionZ, 1
+				};
+
+				return Matrix< 4, precision_t >{rawData};
+			}*/
+
+			/**
+			 * @brief Returns the inverted model matrix (Local = InvModel * World). Calculates InvS * InvR * InvT directly.
+			 * @note Assumes scaling factors are non-zero for a valid inverse.
 			 * Matrix Layout :
 			 *   [Xx][Xy][Xz][Px]
 			 *   [Ux][Uy][Uz][Py]
@@ -1058,49 +1088,52 @@ namespace EmEn::Libs::Math
 			Matrix< 4, precision_t >
 			getInvertedModelMatrix () const noexcept
 			{
-				/*Matrix< 4, precision_t > modelMatrix;
+			    // Optimization: If scaling is identity (1, 1, 1), the inverse model matrix is simply the view matrix.
+			    if ( m_scaling.isAllComponentOne() )
+			    {
+			        return this->getViewMatrix();
+			    }
 
-				const auto right = this->rightVector();
+				assert(!Utility::isZero(m_scaling[X]) && "X scaling factor cannot be zero for inversion.");
+				assert(!Utility::isZero(m_scaling[Y]) && "Y scaling factor cannot be zero for inversion.");
+				assert(!Utility::isZero(m_scaling[Z]) && "Z scaling factor cannot be zero for inversion.");
 
-				const Vector< 3, precision_t > position{
-					-Vector< 3, precision_t >::dotProduct(right, m_position) / m_scaling[X],
-					-Vector< 3, precision_t >::dotProduct(m_downward, m_position) / m_scaling[Y],
-					-Vector< 3, precision_t >::dotProduct(m_backward, m_position) / m_scaling[Z]
-				};
+			    // Scaling is not identity, calculate the full inverse InvS * InvR * InvT
+		        // 1. Calculate inverse scaling factors
+		        //    We assume scale factors are non-zero. Division by zero is undefined behavior.
+		        //    Consider adding asserts or checks if zero scale is possible but invalid.
+		        const precision_t invScaleX = static_cast<precision_t>(1) / m_scaling[X];
+		        const precision_t invScaleY = static_cast<precision_t>(1) / m_scaling[Y];
+		        const precision_t invScaleZ = static_cast<precision_t>(1) / m_scaling[Z];
 
-				#pragma omp simd
-				for ( size_t index = 0; index < 3UL; index++ )
-				{
-					const auto shift = index * 4;
+		        // 2. Get the current world-space axes of the frame
+		        const auto right = this->rightVector(); // X+ axis
+		        // m_downward (Y+) and m_backward (Z+) are already members
 
-					modelMatrix[shift] = right[index] / m_scaling[X];
-					modelMatrix[shift + 1] = m_downward[index] / m_scaling[Y];
-					modelMatrix[shift + 2] = m_backward[index] / m_scaling[Z];
+		        // 3. Calculate translation part of the inverse matrix: T' = - (InvS * InvR * position)
+		        //    InvR * position = [dot(right, pos), dot(down, pos), dot(back, pos)]
+		        //    -InvS * (InvR * pos) = [-dot(r, p)*invSx, -dot(d, p)*invSy, -dot(b, p)*invSz]
+		        const auto positionX = -Vector< 3, precision_t >::dotProduct(right, m_position) * invScaleX;
+		        const auto positionY = -Vector< 3, precision_t >::dotProduct(m_downward, m_position) * invScaleY;
+		        const auto positionZ = -Vector< 3, precision_t >::dotProduct(m_backward, m_position) * invScaleZ;
 
-					modelMatrix[12 + index] = position[index];
-				}
+		        // 4. Calculate rotation part of the inverse matrix: R' = InvS * InvR .
+		        //    InvR (transpose of R) has columns: right, downward, backward.
+		        //    InvS applies 1/scale to each component of these column vectors.
+		        //    The resulting matrix (InvS * InvR) will have columns:
+		        //    Col0 = [right.x*invSx,    right.y*invSy,    right.z*invSz]
+		        //    Col1 = [downward.x*invSx, downward.y*invSy, downward.z*invSz]
+		        //    Col2 = [backward.x*invSx, backward.y*invSy, backward.z*invSz]
 
-				return modelMatrix;*/
+		        // 5. Construct the final inverse matrix (InvS * InvR * InvT) in column-major order
+		        std::array< precision_t, 16 > rawData{
+		            right[X] * invScaleX, right[Y] * invScaleY, right[Z] * invScaleZ, 0, // Column 0 (InvS * right_axis_of_InvR)
+		            m_downward[X] * invScaleX, m_downward[Y] * invScaleY, m_downward[Z] * invScaleZ, 0, // Column 1 (InvS * downward_axis_of_InvR)
+		            m_backward[X] * invScaleX, m_backward[Y] * invScaleY, m_backward[Z] * invScaleZ, 0, // Column 2 (InvS * backward_axis_of_InvR)
+		            positionX, positionY, positionZ, 1 // Column 3 (Translation part T')
+		        };
 
-				if ( !m_scaling.isAllComponentOne() )
-				{
-					const auto right = this->rightVector();
-
-					const auto positionX = -Vector< 3, precision_t >::dotProduct(right, m_position) / m_scaling[X];
-					const auto positionY = -Vector< 3, precision_t >::dotProduct(m_downward, m_position) / m_scaling[X];
-					const auto positionZ = -Vector< 3, precision_t >::dotProduct(m_backward, m_position) / m_scaling[X];
-
-					std::array< precision_t, 16 > rawData{
-						right[X] / m_scaling[X], m_downward[X] / m_scaling[Y], m_backward[X] / m_scaling[Z], 0,
-						right[Y] / m_scaling[X], m_downward[Y] / m_scaling[Y], m_backward[Y] / m_scaling[Z], 0,
-						right[Z] / m_scaling[X], m_downward[Z] / m_scaling[Y], m_backward[Z] / m_scaling[Z], 0,
-						positionX, positionY, positionZ, 1
-					};
-
-					return Matrix< 4, precision_t >{rawData};
-				}
-
-				return this->getViewMatrix();
+		        return Matrix< 4, precision_t >{rawData};
 			}
 
 			/**
@@ -1118,26 +1151,6 @@ namespace EmEn::Libs::Math
 			getViewMatrix () const noexcept
 			{
 				const auto right = this->rightVector();
-
-				// TODO: Do benchmark to see the fastest approach.
-				/*Matrix< 4, precision_t > matrix;
-				matrix[0] = right[X];
-				matrix[1] = m_downward[X];
-				matrix[2] = m_backward[X];
-
-				matrix[4] = right[Y];
-				matrix[5] = m_downward[Y];
-				matrix[6] = m_backward[Y];
-
-				matrix[8] = right[Z];
-				matrix[9] = m_downward[Z];
-				matrix[10] = m_backward[Z];
-
-				matrix[12] = -Vector< 3, precision_t >::dotProduct(right, m_position);
-				matrix[13] = -Vector< 3, precision_t >::dotProduct(m_downward, m_position);
-				matrix[14] = -Vector< 3, precision_t >::dotProduct(m_backward, m_position);
-
-				return matrix;*/
 
 				const auto positionX = -Vector< 3, precision_t >::dotProduct(right, m_position);
 				const auto positionY = -Vector< 3, precision_t >::dotProduct(m_downward, m_position);
@@ -1168,23 +1181,6 @@ namespace EmEn::Libs::Math
 			getInfinityViewMatrix () const noexcept
 			{
 				const auto right = this->rightVector();
-
-				// TODO: Do benchmark to see the fastest approach.
-				/*Matrix< 4, precision_t > matrix;
-
-				matrix[0] = right[X];
-				matrix[1] = m_downward[X];
-				matrix[2] = m_backward[X];
-
-				matrix[4] = right[Y];
-				matrix[5] = m_downward[Y];
-				matrix[6] = m_backward[Y];
-
-				matrix[8] = right[Z];
-				matrix[9] = m_downward[Z];
-				matrix[10] = m_backward[Z];
-
-				return matrix;*/
 
 				std::array< precision_t, 16 > rawData{
 					right[X], m_downward[X], m_backward[X], 0,

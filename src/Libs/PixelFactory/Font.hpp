@@ -27,13 +27,13 @@
 #pragma once
 
 /* STL inclusions. */
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <map>
 
 /* Third-party inclusions. */
 #include "ft2build.h"
@@ -42,17 +42,14 @@
 
 /* Local inclusions. */
 #include "Pixmap.hpp"
-#include "Area.hpp"
-#include "Color.hpp"
 #include "FileIO.hpp"
 #include "Processor.hpp"
-#include "Types.hpp"
 
 namespace EmEn::Libs::PixelFactory
 {
-	static constexpr auto DefaultFontSize{16UL};
-	static constexpr auto ASCIICount{256UL};
-	static constexpr auto FontMapDivisor{16UL};
+	static constexpr auto DefaultFontSize{16U};
+	static constexpr auto ASCIICount{256U};
+	static constexpr auto FontMapDivisor{16U};
 
 	/**
 	 * @brief Font format type.
@@ -65,7 +62,127 @@ namespace EmEn::Libs::PixelFactory
 	};
 
 	/**
-	 * @brief The font class.
+	 * @brief The glyph array for a specific font size.
+	 * @tparam precision_t The type of number for pixmap precision. Default uint8_t.
+	 */
+	template< typename precision_t = uint8_t >
+	class ASCIIGlyphArray
+	{
+		public:
+
+			/**
+			 * @brief Constructs an ASCII glyph array.
+			 * @param height The size/height of the font.
+			 */
+			explicit
+			ASCIIGlyphArray (uint32_t height) noexcept
+				: m_height(height)
+			{
+
+			}
+
+			/**
+			 * @brief Completes the glyph array with a function calling each character.
+			 * @param getGlyph A function to get the pixmap for the current character.
+			 * @param fixedWidth Declares the font with a fixed width.
+			 * @return bool
+			 */
+			template< typename GetGlyphFunc >
+			[[nodiscard]]
+			bool
+			writeGlyphData (GetGlyphFunc && getGlyph, bool fixedWidth)
+			{
+				m_fixedWidth = fixedWidth;
+				m_widestChar = 0;
+
+				for ( size_t index = 0; index < ASCIICount; index++ )
+				{
+					const auto glyph = getGlyph(index);
+
+					if ( !glyph.isValid() || glyph.height() > m_height )
+					{
+						std::cerr << "ASCIIGlyphArray::writeGlyphData(), unable to read glyph #" << index << "\n";
+
+						return false;
+					}
+
+					m_glyphs[index] = glyph;
+
+					if ( m_fixedWidth == false )
+					{
+						const auto width = glyph.width();
+
+						if ( width > m_widestChar )
+						{
+							m_widestChar = width;
+						}
+					}
+				}
+
+				if ( m_fixedWidth )
+				{
+					m_widestChar = m_glyphs[0].width();
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns whether the font size as been completed with a fixed width.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isFixedWidth () const noexcept
+			{
+				return m_fixedWidth;
+			}
+
+			/**
+			 * @brief Returns the widest character in the array.
+			 * @note With fixed width font, this function will return the fixed width value.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			widestChar () const noexcept
+			{
+				return m_widestChar;
+			}
+
+			/**
+			 * @brief Returns the height of characters.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			height () const noexcept
+			{
+				return m_height;
+			}
+
+			/**
+			 * @brief Returns the pixmap for a character.
+			 * @param ASCIICode ASCII code for the character.
+			 * @return const Pixmap< precision_t > &
+			 */
+			[[nodiscard]]
+			const Pixmap< precision_t > &
+			glyph (uint8_t ASCIICode) const noexcept
+			{
+				return m_glyphs[ASCIICode];
+			}
+
+		private:
+
+			std::array< Pixmap< precision_t >, ASCIICount > m_glyphs;
+			uint32_t m_widestChar{0};
+			uint32_t m_height{0};
+			bool m_fixedWidth{false};
+	};
+
+	/**
+	 * @brief The font class to read a true type font or a bitmap and store multiple size of it.
 	 * @tparam precision_t The type of number for pixmap precision. Default uint8_t.
 	 */
 	template< typename precision_t = uint8_t >
@@ -75,74 +192,39 @@ namespace EmEn::Libs::PixelFactory
 		public:
 
 			/**
-			 * @brief Constructs a default font.
+			 * @brief Constructs the font.
 			 */
 			Font () noexcept = default;
 
 			/**
-			 * @brief Returns the font size.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			size () const noexcept
-			{
-				return m_size;
-			}
-
-			/**
-			 * @brief Returns the real size of the widest char in the font.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			maxWidth () const noexcept
-			{
-				return m_maxWidth;
-			}
-
-			/**
-			 * @brief Returns the real size of the highest char in the font.
-			 * @return size_t
-			 */
-			[[nodiscard]]
-			size_t
-			maxHeight () const noexcept
-			{
-				return m_maxHeight;
-			}
-
-			/**
-			 * @brief Returns the pixmap for the character.
-			 * @param ASCIICode ASCII code for the character.
-			 * @return const Pixmap< precision_t > &
-			 */
-			[[nodiscard]]
-			const Pixmap< precision_t > &
-			glyph (uint8_t ASCIICode) const noexcept
-			{
-				return m_glyphs.at(ASCIICode);
-			}
-
-			/**
-			 * @brief Reads a font file.
+			 * @brief Reads a font file. At this point, this could be a true type font format or a bitmap.
 			 * @param filepath A reference to a filesystem path.
-			 * @param size The font size. Default 24.
+			 * @param fontSize The desired font size.
+			 * @param fixedWidth Enable each glyph to be the same size at the end of the process. Otherwise, each glyph will be cropped to the minimal width.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			readFile (const std::filesystem::path & filepath, size_t size = DefaultFontSize) noexcept
+			readFile (const std::filesystem::path & filepath, uint32_t fontSize, bool fixedWidth)
 			{
-				m_size = size;
-
 				switch ( Font::findFileType(filepath) )
 				{
 					case FontType::PixmapFont :
-						return this->readPixmapFile(filepath);
+					{
+						Pixmap< precision_t > charsMap;
+
+						if ( !FileIO::read(filepath, charsMap) )
+						{
+							std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", can't load pixel data from " << filepath << " file !" "\n";
+
+							return false;
+						}
+
+						return this->parsePixmap(charsMap, fontSize, fixedWidth);
+					}
 
 					case FontType::TrueTypeFont :
-						return this->readTrueTypeFile(filepath);
+						return this->readTrueTypeFile(filepath, fontSize, fixedWidth);
 
 					case FontType::None :
 						std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the font file " << filepath << " is not handled !" "\n";
@@ -154,106 +236,100 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief STL streams printable object.
-			 * @param charsMap A reference to a pixmap.
-			 * @return std::ostream &
+			 * @brief Parses a pixmap as a 16 x 16 ASCII chars map.
+			 * @param charsMap A reference to the pixmap.
+			 * @param fontSize The desired font size.
+			 * @param fixedWidth Enable each glyph to be the same size at the end of the process. Otherwise, each glyph will be cropped to the minimal width.
+			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			parsePixmap (const Pixmap< precision_t > & charsMap) noexcept
+			parsePixmap (const Pixmap< precision_t > & charsMap, uint32_t fontSize, bool fixedWidth)
 			{
-				const auto glyphWidth = charsMap.width() / FontMapDivisor;
-				const auto glyphHeight = charsMap.height() / FontMapDivisor;
+				if ( !charsMap.isValid() )
+				{
+					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the chars map is empty !" "\n";
 
-				Area< size_t > clipping(0, 0, glyphWidth, glyphHeight);
+					return false;
+				}
+
+				if ( charsMap.channelMode() != ChannelMode::Grayscale )
+				{
+					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the chars map must be a grayscale !" "\n";
+
+					return false;
+				}
+
+				if ( charsMap.width() % FontMapDivisor > 0 || charsMap.height() % FontMapDivisor > 0 )
+				{
+					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", invalid chars map dimensions !" "\n";
+
+					return false;
+				}
+
+				auto & glyphArray = this->getGlyphArray(fontSize);
+
+				const auto glyphWidth = static_cast< uint32_t >(charsMap.width() / FontMapDivisor);
+				const auto glyphHeight = static_cast< uint32_t >(charsMap.height() / FontMapDivisor);
 
 				const auto ratio = static_cast< float >(glyphWidth) / static_cast< float >(glyphHeight);
-				const auto rounded = std::round(static_cast< float >(m_size) * ratio);
+				const auto targetWidth = static_cast< uint32_t >(std::round(static_cast< float >(fontSize) * ratio));
 
-				m_maxWidth = static_cast< size_t >(rounded);
-				m_maxHeight = m_size;
+				return glyphArray.writeGlyphData([&] (size_t index) {
+					const auto coordX = static_cast< uint32_t >(index) % FontMapDivisor;
+					const auto coordY = static_cast< uint32_t >(std::floor(index / FontMapDivisor)); // Vulkan API
+					//const auto coordY = static_cast< uint32_t >(15 - ((charNum - coordX) / FontMapDivisor)); // OpenGL API
 
-				for ( size_t charNum = 0; charNum < ASCIICount; charNum++ )
-				{
-					const auto coordX = charNum % FontMapDivisor;
-					//const auto coordY = 15 - ((charNum - coordX) / FontMapDivisor); // OpenGL
-					const auto coordY = std::floor(charNum / FontMapDivisor); // Vulkan
+					/* Crop the target out of the chars map. */
+					auto glyph = Processor< precision_t >::crop(charsMap, {
+						coordX * glyphWidth, coordY * glyphHeight,
+						glyphWidth, glyphHeight
+					});
 
-					clipping.setOffsetX(coordX * glyphWidth);
-					clipping.setOffsetY(coordY * glyphHeight);
-
-					/* Crop the targeted char out of the bitmap and
-					 * resize it as the desired size to the char storage. */
-					const auto glyph = Processor< precision_t >::crop(charsMap, clipping);
-
-					if ( glyph.width() == m_maxWidth && glyph.height() == m_maxHeight )
+					if ( !fixedWidth )
 					{
-						m_glyphs.at(charNum) = glyph;
+						glyph = Processor< precision_t >::crop(glyph, Font::getUsableWidth(glyph));
 					}
-					else
-					{
-						m_glyphs.at(charNum) = Processor< precision_t >::resize(glyph, m_maxWidth, m_maxHeight);
-					}
-				}
 
-				return true;
+					/* If the height fits, just output the pixmap. */
+					if ( glyph.height() == fontSize )
+					{
+						return glyph;
+					}
+
+					return Processor< precision_t >::resize(glyph, targetWidth, fontSize);
+				}, fixedWidth);
 			}
 
-			/*bool
-			parsePixmap (const Pixmap< uint8_t > & map, size_t desiredHeight) noexcept
+			/**
+			 * @brief Returns the glyphs list for a specific size.
+			 * @warning The output can be nullptr.
+			 * @note If the size do not exist, the closest one will be selected.
+			 * @param size The font size.
+			 * @return const ASCIIGlyphArray< precision_t > *
+			 */
+			[[nodiscard]]
+			const ASCIIGlyphArray< precision_t > *
+			glyphs (uint32_t size) const
 			{
-				using namespace PixelFactory;
+				auto arrayIt = m_glyphs.find(size);
 
-				auto fixedFont = true;
-
-				if ( map.bytes() == 0 )
+				if ( arrayIt == m_glyphs.cend() )
 				{
-					Tracer::error(ClassId, BlobTrait() << "The Pixmap is empty !");
+					const auto closestSize = findClosestSize(size);
 
-					return false;
-				}
-
-				if ( map.width() % FontMapDivisor != 0 || map.height() % FontMapDivisor != 0 )
-				{
-					Tracer::error(ClassId, BlobTrait() << "Invalid glyphs map dimensions !");
-
-					return false;
-				}
-
-				// The available size in the chars map
-				const auto width = map.width() / FontMapDivisor;
-				const auto height = map.height() / FontMapDivisor;
-
-				Area clipping{width, height};
-
-				Pixmap rawGlyph{};
-
-				for ( auto glyphIt = m_glyphs.begin(); glyphIt != m_glyphs.end(); ++glyphIt )
-				{
-					const auto ASCIICode = std::distance(m_glyphs.begin(), glyphIt);
-
-					const auto coordX = ASCIICode % FontMapDivisor;
-
-					clipping.setOffsetX(coordX * width);
-					clipping.setOffsetY((FontMapDivisor - 1 - (ASCIICode - coordX) / FontMapDivisor) * height);
-
-					if ( fixedFont )
+					if ( closestSize == 0UL )
 					{
-						*glyphIt = Processor< uint8_t >::crop(map, clipping);
-					}
-					else
-					{
-						rawGlyph = Processor< uint8_t >::crop(map, clipping);
+						std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the font size " << closestSize << " is not loaded !" "\n";
 
-						*glyphIt = Processor< uint8_t >::crop(rawGlyph, FontResource::getUsableWidth(rawGlyph));
+						return nullptr;
 					}
+
+					arrayIt = m_glyphs.find(closestSize);
 				}
 
-				m_lineHeight = height;
-				m_spacing = fixedFont ? m_lineHeight : m_lineHeight / 2;
-
-				return true;
-			}*/
+				return &arrayIt->second;
+			}
 
 			/**
 			 * @brief STL streams printable object.
@@ -265,16 +341,14 @@ namespace EmEn::Libs::PixelFactory
 			std::ostream &
 			operator<< (std::ostream & out, const Font & obj)
 			{
-				out <<
-					"Font data :" "\n"
-					"Size : " << obj.m_size << "\n"
-					"Widest character : " << obj.m_maxWidth << "\n"
-					"Highest character : " << obj.m_maxHeight << "\n"
-					"Glyphs :" "\n";
+				out << "Font data (" << obj.m_glyphs.size() << " sizes cached):" "\n";
 
-				for ( const auto & glyph : obj.m_glyphs )
+				for ( const auto & [size, glyphArray] : obj.m_glyphs )
 				{
-					out << glyph;
+					out << "  - Size: " << size
+						<< " (Height: " << glyphArray.height()
+						<< ", FixedWidth: " << std::boolalpha << glyphArray.isFixedWidth()
+						<< ", Widest: " << glyphArray.widestChar() << ")" "\n";
 				}
 
 				return out;
@@ -287,7 +361,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			friend
 			std::string
-			to_string (const Font & obj) noexcept
+			to_string (const Font & obj)
 			{
 				std::stringstream output;
 
@@ -312,117 +386,131 @@ namespace EmEn::Libs::PixelFactory
 				return static_cast< integer_t >(static_cast< uint8_t >(ASCII));
 			}
 
+			/**
+			 * @brief Returns a rectangle around the valid pixels on X axis.
+			 * @param glyph A reference to a pixmap.
+			 * @return Math::Rectangle< uint32_t >
+			 */
 			[[nodiscard]]
 			static
-			Area< size_t >
-			getUsableWidth (const Pixmap< uint8_t > & glyph) noexcept
+			Math::Rectangle< uint32_t >
+			getUsableWidth (const Pixmap< precision_t > & glyph) noexcept
 			{
-				Area clip{};
-
-				clip.setHeight(glyph.height());
-
-				/* Gets the first column of pixels where a color changes. */
-				for ( size_t coordX = 0; coordX < glyph.width(); coordX++ )
+				const auto isColumnEmpty = [&glyph] (uint32_t coordX)
 				{
-					auto goOn = true;
-
-					for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
+					for ( uint32_t coordY = 0; coordY < glyph.height(); coordY++ )
 					{
-						const auto * pixels = glyph.pixelPointer(coordX, coordY);
-
-						if ( pixels[0] > 0 )
+						if ( glyph.pixelElement(coordX, coordY, Channel::Red) > 0 )
 						{
-							clip.setOffsetX(coordX);
-							//clip.setWidth(glyph.width() - x);
-
-							goOn = false;
-
-							break;
+							return false;
 						}
 					}
 
-					if ( !goOn )
+					return true;
+				};
+
+				/* Gets the first column of pixels where a color changes. */
+				uint32_t offset = 0U;
+
+				for ( uint32_t coordX = 0; coordX < glyph.width(); coordX++ )
+				{
+					if ( !isColumnEmpty(coordX) )
 					{
 						break;
 					}
+
+					offset++;
+				}
+
+				if ( offset >= glyph.width() )
+				{
+					return {glyph.halfWidth(), glyph.height()};
 				}
 
 				/* Gets the last column of pixels where a color is present. */
-				for ( size_t coordX = glyph.width() - 1; coordX > 0UL; coordX-- )
+				uint32_t width = glyph.width() - offset;
+
+				for ( uint32_t coordX = glyph.width(); coordX-- > 0U; )
 				{
-					auto goOn = true;
-
-					for ( size_t coordY = 0; coordY < glyph.height(); coordY++ )
-					{
-						const auto * pixels = glyph.pixelPointer(coordX, coordY);
-
-						if ( pixels[0] > 0 )
-						{
-							clip.setWidth(coordX - clip.offsetX() + 1);
-
-							goOn = false;
-
-							break;
-						}
-					}
-
-					if ( !goOn )
+					if ( !isColumnEmpty(coordX) )
 					{
 						break;
 					}
+
+					width = coordX - offset + 1;
 				}
 
-				if ( !clip.isValid() )
-				{
-					return {clip.width(), clip.height()};
-				}
-
-				return clip;
+				return {offset, 0U, width, glyph.height()};
 			}
 
 		private:
+			/**
+			 * @brief Returns the closest font size.
+			 * @param targetSize The desired font size.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			findClosestSize (uint32_t targetSize) const noexcept
+			{
+			    if ( m_glyphs.empty() )
+			    {
+			    	return 0UL;
+			    }
+
+			    const auto upper = m_glyphs.lower_bound(targetSize);
+
+			    if ( upper == m_glyphs.cbegin() )
+			    {
+			        return upper->first;
+			    }
+
+			    if ( upper == m_glyphs.cend() )
+			    {
+			        return std::prev(upper)->first;
+			    }
+
+			    const auto lower = std::prev(upper);
+
+				const uint32_t diffUpper = upper->first - targetSize;
+			    const uint32_t diffLower = targetSize - lower->first;
+
+			    if ( diffLower <= diffUpper )
+			    {
+			        return lower->first;
+			    }
+
+				return upper->first;
+			}
 
 			/**
-			 * @brief Reads a font map.
-			 * @param filepath A reference to a filesystem path.
-			 * @return bool
+			 * @brief Gets or creates the glyph array for a size.
+			 * @param size The desired font size.
+			 * @return ASCIIGlyphArray< precision_t > &
 			 */
-			bool
-			readPixmapFile (const std::filesystem::path & filepath) noexcept
+			[[nodiscard]]
+			ASCIIGlyphArray< precision_t > &
+			getGlyphArray (uint32_t size)
 			{
-				Pixmap< precision_t > charsMap;
+				auto it = m_glyphs.find(size);
 
-				if ( !FileIO::read(filepath, charsMap) )
+				if ( it == m_glyphs.end() )
 				{
-					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", can't load pixel data from " << filepath << " file !" "\n";
-
-					return false;
+					it = m_glyphs.emplace(size, ASCIIGlyphArray< precision_t >{size}).first;
 				}
 
-				if ( charsMap.bytes() == 0 )
-				{
-					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the pixmap " << filepath << " is empty !" "\n";
-
-					return false;
-				}
-
-				if ( charsMap.width() % FontMapDivisor > 0 || charsMap.height() % FontMapDivisor > 0 )
-				{
-					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", invalid chars map dimensions !" "\n";
-
-					return false;
-				}
-
-				return this->parsePixmap(charsMap);
+				return it->second;
 			}
 
 			/**
 			 * @brief Reads a TrueType font file.
 			 * @param filepath A reference to a filesystem path.
+			 * @param fontSize The desired font size.
+			 * @param fixedWidth Enable each glyph to be the same width at the end of the process.
 			 * @return bool
 			 */
 			bool
-			readTrueTypeFile (const std::filesystem::path & filepath) noexcept
+			readTrueTypeFile (const std::filesystem::path & filepath, uint32_t fontSize, bool fixedWidth)
 			{
 				FT_Library library{};
 				FT_Face face{};
@@ -436,209 +524,101 @@ namespace EmEn::Libs::PixelFactory
 				}
 
 				/* Load the font face. Face index 0 (always available). */
-				if ( FT_New_Face(library, filepath.string().c_str(), 0, &face) > 0 )
+				if ( FT_New_Face(library, filepath.string().data(), 0, &face) > 0 )
 				{
 					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", Font file " << filepath << " cannot be open !" "\n";
 
 					return false;
 				}
 
-				/* Prepare output sizes. NOTE: 0 means square. */
-				if ( FT_Set_Pixel_Sizes(face, 0, static_cast< FT_UInt >(m_size)) > 0 )
+				/* Prepare output sizes.
+				 * NOTE: 0 means square. */
+				if ( FT_Set_Pixel_Sizes(face, 0, static_cast< FT_UInt >(fontSize)) > 0 )
 				{
 					std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", the size request with this font is not available !" "\n";
 
 					return false;
 				}
 
-				/* MaxWidth will be determined inside the loop. */
-				m_maxWidth = 0;
-				m_maxHeight = m_size;
+				auto & glyphs = this->getGlyphArray(fontSize);
 
-				for ( size_t charNum = 0; charNum < ASCIICount; charNum++ )
-				{
+				const auto success = glyphs.writeGlyphData([&] (size_t index) {
 					/* Gets the correct glyph index inside the font for the iso code. */
-					const auto glyphIndex = FT_Get_Char_Index(face, charNum);
+					const auto glyphIndex = FT_Get_Char_Index(face, index);
 
-					/* Gets the glyph loaded. NOTE : Only one font can be loaded at a time. */
+					/* Gets the glyph loaded.
+					 * NOTE : Only one font can be loaded at a time. */
 					if ( FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) > 0 )
 					{
-						std::cerr << "[ERROR] " << __PRETTY_FUNCTION__ << ", Glyph " << glyphIndex << " failed to load !" "\n";
+						std::cerr << "[ERROR] Glyph " << glyphIndex << " failed to load !" "\n";
 
-						break;
+						return Pixmap< precision_t >{};
 					}
 
 					const auto glyphWidth = face->glyph->bitmap.width;
 					const auto glyphHeight = face->glyph->bitmap.rows;
 					const auto size = glyphWidth * glyphHeight;
 
-					if ( size > 0 )
+					/*if ( size > 0 )
 					{
 						auto newWidth = glyphWidth + 2;
 
-						/* Checks for overflow */
+						// Checks for overflow
 						newWidth = std::min(newWidth, size);
 
 						Pixmap glyph{};
 
 						if ( glyph.initialize(glyphWidth, glyphHeight, ChannelMode::Grayscale) )
 						{
-							const auto bufferSize = static_cast< size_t >(face->glyph->bitmap.width * face->glyph->bitmap.rows) * sizeof(uint8_t);
+							const auto bufferSize = static_cast< uint32_t >(face->glyph->bitmap.width * face->glyph->bitmap.rows) * sizeof(uint8_t);
 
 							glyph.fill(face->glyph->bitmap.buffer, bufferSize);
 						}
 						else
 						{
-							continue;
+							return {};
 						}
-
-						/* Three cases :
-							1. simple char as "m" 109
-							2. low char as "p" (NOTE : bitmap_top <> bitmap.rows) 112
-							3. high char as "f" 102
-						*/
-
-						/*
-						switch ( charNum )
-						{
-							case 109 :
-								std::cout << " m = rows:" << face->glyph->bitmap.rows << ", top:" << face->glyph->bitmap_top << " [" << glyph.getHeight() << "]" "\n";
-								break;
-
-							case 112 :
-								std::cout << " p = rows:" << face->glyph->bitmap.rows << ", top:" << face->glyph->bitmap_top << " [" << glyph.getHeight() << "]" "\n";
-								break;
-
-							case 102 :
-								std::cout << " f = rows:" << face->glyph->bitmap.rows << ", top:" << face->glyph->bitmap_top << " [" << glyph.getHeight() << "]" "\n";
-								break;
-						}
-						*/
 
 						const auto offsetY = (m_maxHeight - face->glyph->bitmap_top) - (m_maxHeight / 4);
 
 						if ( offsetY > m_maxHeight )
 						{
-							continue;
+							return {};
 						}
 
-						/*
-						int32_t offsetY = 0;
-						if ( face->glyph->bitmap_top != face->glyph->bitmap.rows )
-							offsetY = (m_maxHeight - face->glyph->bitmap_top) / 2;
-						else
-							offsetY = m_maxHeight - face->glyph->bitmap.rows;
-						*/
+						//int32_t offsetY = 0;
+						//if ( face->glyph->bitmap_top != face->glyph->bitmap.rows )
+						//	offsetY = (m_maxHeight - face->glyph->bitmap_top) / 2;
+						//else
+						//	offsetY = m_maxHeight - face->glyph->bitmap.rows;
 
 						auto & currentGlyph = m_glyphs.at(charNum);
 
 						currentGlyph.initialize(newWidth, m_maxHeight, ChannelMode::Grayscale);
 
 						const Processor proc{currentGlyph};
-						proc.blit(glyph, {1UL, static_cast< size_t >(offsetY), glyph.width(), glyph.height()});
+						proc.blit(glyph, {1UL, static_cast< uint32_t >(offsetY), glyph.width(), glyph.height()});
 
-						/* Sets the highest width of a char. */
-						m_maxWidth = std::max< size_t >(newWidth, m_maxWidth);
+						// Sets the highest width of a char.
+						m_maxWidth = std::max< uint32_t >(newWidth, m_maxWidth);
 					}
 					else
 					{
 						auto currentGlyph = m_glyphs.at(charNum);
 
-						/* Empty char. */
+						// Empty char.
 						currentGlyph.initialize(m_maxWidth / 2, m_maxHeight, ChannelMode::Grayscale);
 						currentGlyph.fill(Color(0.0F, 0.0F, 0.0F));
-					}
-				}
+					}*/
+
+					return Pixmap< precision_t >{};
+				}, fixedWidth);
 
 				FT_Done_Face(face);
 				FT_Done_FreeType(library);
 
-				return true;
+				return success;
 			}
-
-			/*bool
-			FontResource::parseFontFile (const std::filesystem::path & filepath, size_t desiredHeight) noexcept
-			{
-				using namespace PixelFactory;
-
-				FT_Library library;
-				FT_Face face;
-
-				// Try to init FreeType 2.
-				if ( FT_Init_FreeType(&library) > 0 )
-				{
-					Tracer::error(ClassId, BlobTrait() << "FreeType 2 initialization failed !");
-
-					return false;
-				}
-
-				// Load the font face. Face index 0 (always available).
-				if ( FT_New_Face(library, filepath.string().c_str(), 0, &face) > 0 )
-				{
-					Tracer::error(ClassId, BlobTrait() << "Can't load '" << filepath << "' font file !");
-
-					return false;
-				}
-
-				// Prepare output sizes.
-				if ( FT_Set_Pixel_Sizes(face, 0, static_cast< FT_UInt >(desiredHeight)) > 0 )
-				{
-					Tracer::error(ClassId, BlobTrait() << "The size " << desiredHeight << " with this font is not available !");
-
-					return false;
-				}
-
-				for ( auto glyphIt = m_glyphs.begin(); glyphIt != m_glyphs.end(); ++glyphIt )
-				{
-					const auto ASCIICode = static_cast< size_t >(std::distance(m_glyphs.begin(), glyphIt));
-
-					// Gets the correct glyph index inside the font for the ascii code.
-					const auto glyphIndex = FT_Get_Char_Index(face, ASCIICode);
-
-					// Gets the glyph loaded.
-					// NOTE : Only one glyph can be loaded at a time. FT_LOAD_RENDER
-					if ( FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) > 0 )
-					{
-						Tracer::error(ClassId, BlobTrait() << "Glyph " << glyphIndex << " failed to load !");
-
-						break;
-					}
-
-					// Gets the font glyph size.
-					const auto width = face->glyph->bitmap.width;
-					const auto height = face->glyph->bitmap.rows;
-
-					Pixmap rawGlyph;
-
-					if ( !rawGlyph.initialize(width, height, ChannelMode::Grayscale) )
-					{
-						Tracer::error(ClassId, "Unable to prepare a temporary Pixmap !");
-
-						continue;
-					}
-
-					// Copy the buffer.
-					rawGlyph.fill(face->glyph->bitmap.buffer, width * height * sizeof(uint8_t));
-
-					if ( glyphIt->initialize(width, desiredHeight, ChannelMode::Grayscale) )
-					{
-						const auto coordY = desiredHeight - static_cast< size_t >(face->glyph->bitmap_top) - desiredHeight / 4;
-
-						Processor proc{*glyphIt};
-						proc.blit(rawGlyph, {0UL, coordY, width, height});
-						proc.mirror(MirrorMode::X);
-					}
-				}
-
-				FT_Done_Face(face);
-
-				FT_Done_FreeType(library);
-
-				m_lineHeight = desiredHeight;
-				m_spacing = m_lineHeight / 2;
-
-				return true;
-			}*/
 
 			/**
 			 * @brief Determines the type of the font file.
@@ -679,9 +659,6 @@ namespace EmEn::Libs::PixelFactory
 				return FontType::None;
 			}
 
-			size_t m_size{DefaultFontSize};
-			size_t m_maxWidth{0};
-			size_t m_maxHeight{0};
-			std::array< Pixmap< precision_t >, ASCIICount > m_glyphs;
+			std::map< uint32_t, ASCIIGlyphArray< precision_t > > m_glyphs;
 	};
 }

@@ -143,7 +143,9 @@ TEST(PixelFactoryPixmap, fillValue)
 
 TEST(PixelFactoryPixmap, fillSequence)
 {
-	const auto random = Utility::randomVector< uint8_t >(100, 0, 255);
+	Randomizer< uint8_t > randomizer;
+
+	const auto random = randomizer.vector(100, 0, 255);
 
 	Pixmap< uint8_t > image{340, 120, ChannelMode::RGBA};
 
@@ -288,7 +290,9 @@ TEST(PixelFactoryPixmap, fillChannelValue)
 
 TEST(PixelFactoryPixmap, fillChannelSequence)
 {
-	const auto random = Utility::randomVector< uint8_t >(100, 0, 255);
+	Randomizer< uint8_t > randomizer;
+
+	const auto random = randomizer.vector(100, 0, 255);
 
 	Pixmap< uint8_t > image{256, 256, ChannelMode::RGBA};
 

@@ -26,6 +26,14 @@
 
 #include "ObservableTrait.hpp"
 
+/* Emeraude-Engine configuration. */
+#include "emeraude_config.hpp"
+
+/* STL inclusions. */
+#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
+#include <iostream>
+#endif
+
 /* Local inclusions. */
 #include "ObserverTrait.hpp"
 
@@ -34,10 +42,6 @@ namespace EmEn::Libs
 	std::mutex ObservableTrait::s_UIDMutex{};
 
 	size_t ObservableTrait::s_nextClassUID{1UL};
-
-#ifdef DEBUG
-	std::unique_ptr< std::map< size_t, const char * > > ObservableTrait::s_classUIDs{nullptr};
-#endif
 
 	ObservableTrait::~ObservableTrait ()
 	{
@@ -57,14 +61,14 @@ namespace EmEn::Libs
 	{
 		const std::lock_guard< std::mutex > lock{m_notificationMutex};
 
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
+		#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 		if ( m_observers.empty() )
 		{
 			std::cout << "Observable @" << this << " tries to notify the code '" << notificationCode << "', but no one was listening !" "\n";
 
 			return;
 		}
-#endif
+		#endif
 
 		/* [ERASE IN LOOP] */
 		auto observerIt = m_observers.begin();
@@ -87,4 +91,63 @@ namespace EmEn::Libs
 			}
 		}
 	}
+
+#ifdef DEBUG
+	std::unique_ptr< std::map< size_t, const char * > > ObservableTrait::s_classUIDs{nullptr};
+
+	const char *
+	ObservableTrait::whoIs (size_t UID) noexcept
+	{
+		if ( s_classUIDs == nullptr )
+		{
+			return "UNALLOCATED_MAP";
+		}
+
+		const auto item = s_classUIDs->find(UID);
+
+		if ( item != s_classUIDs->cend() )
+		{
+			return item->second;
+		}
+
+		return "UNREGISTERED_ITEM";
+	}
+
+	size_t
+	ObservableTrait::getClassUID (const char * label) noexcept
+	{
+		/* NOTE: Lock the call to this function to be sure having a unique class identifier. */
+		const std::lock_guard< std::mutex > lock{s_UIDMutex};
+
+		const auto UID = s_nextClassUID++;
+
+		if ( s_classUIDs == nullptr )
+		{
+			s_classUIDs = std::make_unique< std::map< size_t, const char * > >();
+
+			/* NOTE: As a special engine debug feature, we register the
+			 * release of memory allocation at application exit. */
+			atexit([] () {
+				s_classUIDs.reset();
+			});
+		}
+
+		#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
+		std::cout << "Linking UID: " << UID << " to item '" << label << "'" "\n";
+		#endif
+
+		s_classUIDs->emplace(UID, label);
+
+		return UID;
+	}
+#else
+	size_t
+	ObservableTrait::getClassUID (const char * label) noexcept
+	{
+		/* NOTE: Lock the call to this function to be sure having a unique class identifier. */
+		const std::lock_guard< std::mutex > lock{s_UIDMutex};
+
+		return s_nextClassUID++;
+	}
+#endif
 }
