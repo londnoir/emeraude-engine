@@ -63,12 +63,12 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Constructs a processor on a pixmap.
-			 * @param pixmap A reference to a target pixmap.
+			 * @param target A writable reference to a pixmap.
 			 */
 			explicit
-		TextProcessor (Pixmap< precision_t > & pixmap) noexcept
-				: m_pixmap(&pixmap),
-				m_rectangle(pixmap.area())
+			TextProcessor (Pixmap< precision_t > & target) noexcept
+				: m_pixmap(&target),
+				m_rectangle(target.area())
 			{
 
 			}

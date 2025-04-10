@@ -375,6 +375,57 @@ TEST(PixelFactoryProcessor, mirror)
 	}
 }
 
+TEST(PixelFactoryProcessor, rotateQuarterTurn)
+{
+	Pixmap< uint8_t > source;
+
+	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+
+	PrintScopeRealTime stat{"Processor::rotateQuarterTurn()"};
+
+	const auto output = Processor< uint8_t >::rotateQuarterTurn(source);
+
+	ASSERT_EQ(output.width(), 800);
+	ASSERT_EQ(output.height(), 1200);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+90.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, rotateHalfTurn)
+{
+	Pixmap< uint8_t > source;
+
+	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+
+	PrintScopeRealTime stat{"Processor::rotateHalfTurn()"};
+
+	const auto output = Processor< uint8_t >::rotateHalfTurn(source);
+
+	ASSERT_EQ(output.width(), 1200);
+	ASSERT_EQ(output.height(), 800);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+180.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, rotateThreeQuarterTurn)
+{
+	Pixmap< uint8_t > source;
+
+	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+
+	PrintScopeRealTime stat{"Processor::rotateThreeQuarterTurn()"};
+
+	const auto output = Processor< uint8_t >::rotateThreeQuarterTurn(source);
+
+	ASSERT_EQ(output.width(), 800);
+	ASSERT_EQ(output.height(), 1200);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+270.png"}, true));
+}
+
 TEST(PixelFactoryProcessor, inverseColors)
 {
 	Pixmap< uint8_t > source;

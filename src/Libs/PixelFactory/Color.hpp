@@ -190,11 +190,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator+= (const Color & operand) noexcept
 			{
-				//if ( this != &operand ) // NOTE: micro-optimization.
+				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] + operand.m_components[R]);
 					m_components[G] = Math::clampToUnit(m_components[G] + operand.m_components[G]);
@@ -227,11 +226,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator-= (const Color & operand) noexcept
 			{
-				//if ( this != &operand ) // NOTE: micro-optimization.
+				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] - operand.m_components[R]);
 					m_components[G] = Math::clampToUnit(m_components[G] - operand.m_components[G]);
@@ -264,7 +262,6 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator*= (const Color & operand) noexcept
 			{
@@ -303,7 +300,6 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand A reference to a color.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator/= (const Color & operand) noexcept
 			{
@@ -341,11 +337,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand The value to add.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator+= (data_t operand) noexcept
 			{
-				//if ( this != &operand ) // NOTE: micro-optimization.
+				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] + operand);
 					m_components[G] = Math::clampToUnit(m_components[G] + operand);
@@ -379,11 +374,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand The value to subtract.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator-= (data_t operand) noexcept
 			{
-				//if ( this != &operand ) // NOTE: micro-optimization.
+				if ( this != &operand )
 				{
 					m_components[R] = Math::clampToUnit(m_components[R] - operand);
 					m_components[G] = Math::clampToUnit(m_components[G] - operand);
@@ -417,7 +411,6 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand The value to multiply.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator*= (data_t operand) noexcept
 			{
@@ -459,7 +452,6 @@ namespace EmEn::Libs::PixelFactory
 			 * @param operand The value for the division.
 			 * @return Color &
 			 */
-			[[nodiscard]]
 			Color &
 			operator/= (data_t operand) noexcept
 			{

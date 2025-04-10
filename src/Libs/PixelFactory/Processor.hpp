@@ -31,7 +31,6 @@
 #include <cstring>
 #include <cmath>
 #include <cassert>
-#include <iostream>
 #include <limits>
 #include <type_traits>
 
@@ -166,8 +165,6 @@ namespace EmEn::Libs::PixelFactory
 					( pointA[Math::Y] < 0 && pointB[Math::Y] < 0 ) || ( pointA[Math::Y] > height && pointB[Math::Y] > height )
 				)
 				{
-					assert("The segment is completely outside the pixmap !");
-
 					return false;
 				}
 
@@ -205,11 +202,11 @@ namespace EmEn::Libs::PixelFactory
 				{
 					if ( steep )
 					{
-						m_target.blendPixel(static_cast< uint32_t >(y), static_cast< uint32_t >(x), color, mode);
+						m_target.blendFreePixel(static_cast< uint32_t >(y), static_cast< uint32_t >(x), color, mode);
 					}
 					else
 					{
-						m_target.blendPixel(static_cast< uint32_t >(x), static_cast< uint32_t >(y), color, mode);
+						m_target.blendFreePixel(static_cast< uint32_t >(x), static_cast< uint32_t >(y), color, mode);
 					}
 
 					error -= deltaY;
@@ -241,7 +238,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Draws a circle on the pixmap.
-			 * @todo Check boundary before calling blendPixel().
+			 * @todo Check boundary before calling blendFreePixel() and use blendPixel().
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param center The center of the circle.
 			 * @param radius The radius of the circle.
@@ -267,20 +264,20 @@ namespace EmEn::Libs::PixelFactory
 					const auto signedY = static_cast< int32_t >(y);
 
 					/* Quadrant 1 */
-					m_target.blendPixel(signedX + center.x(), signedY + center.y(), color, mode);
-					m_target.blendPixel(signedY + center.x(), signedX + center.y(), color, mode);
+					m_target.blendFreePixel(signedX + center.x(), signedY + center.y(), color, mode);
+					m_target.blendFreePixel(signedY + center.x(), signedX + center.y(), color, mode);
 
 					/* Quadrant 2 */
-					m_target.blendPixel(-signedX + center.x(), signedY + center.y(), color, mode);
-					m_target.blendPixel(-signedY + center.x(), signedX + center.y(), color, mode);
+					m_target.blendFreePixel(-signedX + center.x(), signedY + center.y(), color, mode);
+					m_target.blendFreePixel(-signedY + center.x(), signedX + center.y(), color, mode);
 
 					/* Quadrant 3 */
-					m_target.blendPixel(signedX + center.x(), -signedY + center.y(), color, mode);
-					m_target.blendPixel(signedY + center.x(), -signedX + center.y(), color, mode);
+					m_target.blendFreePixel(signedX + center.x(), -signedY + center.y(), color, mode);
+					m_target.blendFreePixel(signedY + center.x(), -signedX + center.y(), color, mode);
 
 					/* Quadrant 4 */
-					m_target.blendPixel(-signedX + center.x(), -signedY + center.y(), color, mode);
-					m_target.blendPixel(-signedY + center.x(), -signedX + center.y(), color, mode);
+					m_target.blendFreePixel(-signedX + center.x(), -signedY + center.y(), color, mode);
+					m_target.blendFreePixel(-signedY + center.x(), -signedX + center.y(), color, mode);
 
 					if ( delta >= 2 * x )
 					{
@@ -938,6 +935,150 @@ namespace EmEn::Libs::PixelFactory
 				}
 
 				return output;
+			}
+
+			/**
+			 * @brief Rotates orthogonally a pixmap with an angle of +90°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< precision_t >
+			rotateQuarterTurn (const Pixmap< precision_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< precision_t > target{source.height(), source.width(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the last column of the target (top to bottom). */
+				size_t coordX = target.width() - 1;
+				size_t coordY = 0;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY >= target.height() - 1 )
+					{
+						--coordX;
+						coordY = 0;
+					}
+					else
+					{
+						++coordY;
+					}
+				}
+
+				return target;
+			}
+
+			/**
+			 * @brief Rotates orthogonally a pixmap with an angle of +180°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< precision_t >
+			rotateHalfTurn (const Pixmap< precision_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< precision_t > target{source.width(), source.height(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the last row of the target (right to left). */
+				size_t coordX = target.width() - 1;
+				size_t coordY = target.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordX == 0 )
+					{
+						coordX = target.width() - 1;
+						--coordY;
+					}
+					else
+					{
+						--coordX;
+					}
+				}
+
+				return target;
+			}
+
+			/**
+			 * @brief Rotates orthogonally a pixmap with an angle of +270°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< precision_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< precision_t >
+			rotateThreeQuarterTurn (const Pixmap< precision_t > & source) noexcept
+			{
+				const auto & sourceData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				Pixmap< precision_t > target{source.height(), source.width(), source.channelMode()};
+				auto & targetData = target.data();
+
+				/* NOTE: We start from the first row of the source,
+				 * to copy to the first column of the target (bottom to top). */
+				size_t coordX = 0;
+				size_t coordY = target.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
+
+					for ( size_t index = 0; index < source.colorCount(); index++ )
+					{
+						targetData[targetIndex + index] = sourceData[sourceIndex + index];
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY == 0 )
+					{
+						++coordX;
+						coordY = target.height() - 1;
+					}
+					else
+					{
+						--coordY;
+					}
+				}
+
+				return target;
 			}
 
 			/**
@@ -1690,7 +1831,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a pixmap.
 			 * @param width The new width.
 			 * @param height The new height.
-			 * @param source A writable reference to a pixmap.
+			 * @param output A writable reference to a pixmap.
 			 * @return void
 			 */
 			static
@@ -1755,7 +1896,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a pixmap.
 			 * @param width The new width.
 			 * @param height The new height.
-			 * @param source A writable reference to a pixmap.
+			 * @param output A writable reference to a pixmap.
 			 * @return void
 			 */
 			static
@@ -1860,7 +2001,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param source A reference to a pixmap.
 			 * @param width The new width.
 			 * @param height The new height.
-			 * @param source A writable reference to a pixmap.
+			 * @param output A writable reference to a pixmap.
 			 * @return void
 			 */
 			static
@@ -1890,7 +2031,7 @@ namespace EmEn::Libs::PixelFactory
 
 						float interpolatedValues[4] = {0.0F, 0.0F, 0.0F, 0.0F};
 
-						const auto numChannels = static_cast< size_t >(source.channelMode());
+						const auto numChannels = static_cast< size_t >(source.colorCount());
 
 						for ( size_t channel = 0; channel < numChannels; ++channel )
 						{
@@ -1905,49 +2046,49 @@ namespace EmEn::Libs::PixelFactory
 								for ( int i = 0; i < 4; ++i )
 								{
 									const int currentX = xFloor - 1 + i;
-									const auto pix = source.template pixel< float, true >(currentX, currentY);
+									const auto color = source.safePixel(currentX, currentY);
 
 									switch ( source.channelMode() )
 									{
 										case ChannelMode::Grayscale:
-											pixel[i] = pix.red();
+											pixel[i] = color.red();
 											break;
 
 										case ChannelMode::GrayscaleAlpha:
-											pixel[i] = channel == 0 ? pix.red() : pix.alpha();
+											pixel[i] = channel == 0 ? color.red() : color.alpha();
 											break;
 
 										case ChannelMode::RGB:
 											if ( channel == 0 )
 											{
-												pixel[i] = pix.red();
+												pixel[i] = color.red();
 											}
 											else if ( channel == 1 )
 											{
-												pixel[i] = pix.green();
+												pixel[i] = color.green();
 											}
 											else
 											{
-												pixel[i] = pix.blue();
+												pixel[i] = color.blue();
 											}
 											break;
 
 										case ChannelMode::RGBA:
 											if ( channel == 0 )
 											{
-												pixel[i] = pix.red();
+												pixel[i] = color.red();
 											}
 											else if ( channel == 1 )
 											{
-												pixel[i] = pix.green();
+												pixel[i] = color.green();
 											}
 											else if ( channel == 2 )
 											{
-												pixel[i] = pix.blue();
+												pixel[i] = color.blue();
 											}
 											else
 											{
-												pixel[i] = pix.alpha();
+												pixel[i] = color.alpha();
 											}
 											break;
 

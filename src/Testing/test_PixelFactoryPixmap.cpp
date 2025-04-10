@@ -320,25 +320,25 @@ TEST(PixelFactoryPixmap, fillChannelPattern)
 	Pixmap< uint8_t > image{1024, 768, ChannelMode::RGBA};
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Red)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnRed)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Red, redChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Green)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnGreen)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Green, greenChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Blue)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannel(PatternOnBlue)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Blue, blueChannel));
 	}
 
 	{
-		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(Alpha)"};
+		PrintScopeRealTime stat{"Pixmap::fillChannelPattern(PatternOnAlpha)"};
 
 		ASSERT_TRUE(image.fillChannel(Channel::Alpha, alphaChannel));
 	}
