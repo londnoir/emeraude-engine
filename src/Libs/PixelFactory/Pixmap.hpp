@@ -60,10 +60,11 @@ namespace EmEn::Libs::PixelFactory
 
 	/**
 	 * @brief Defines a structure to store pixels to make an image.
-	 * @tparam precision_t The type of number for pixmap precision. Default uint8_t.
+	 * @tparam pixel_data_t The pixel component type for the pixmap depth precision. Default uint8_t.
+	 * @tparam dimension_t The type of unsigned integer used for pixmap dimension. Default uint32_t.
 	 */
-	template< typename precision_t = uint8_t >
-	requires (std::is_arithmetic_v< precision_t >)
+	template< typename pixel_data_t = uint8_t, typename dimension_t = uint32_t >
+	requires (std::is_arithmetic_v< pixel_data_t > && std::is_unsigned_v< dimension_t >)
 	class Pixmap
 	{
 		public:
@@ -91,7 +92,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @param height The initial height of the pixmap.
 			 * @param channelMode The number of color as a class constant. Default RGB.
 			 */
-			Pixmap (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB)
+			Pixmap (dimension_t width, dimension_t height, ChannelMode channelMode = ChannelMode::RGB)
 				: m_width(width),
 				m_height(height),
 				m_channelMode(channelMode)
@@ -106,14 +107,14 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Constructs a new pixmap initialized with a designed color.
-			 * @tparam color_data_t The color data type.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
 			 * @param channelMode The number of color as a class constant.
 			 * @param color A reference to a color.
 			 */
 			template< typename color_data_t = float >
-			Pixmap (size_t width, size_t height, ChannelMode channelMode, const Color< color_data_t > & color) requires (std::is_floating_point_v< color_data_t >)
+			Pixmap (dimension_t width, dimension_t height, ChannelMode channelMode, const Color< color_data_t > & color) requires (std::is_floating_point_v< color_data_t >)
 				: m_width(width),
 				m_height(height),
 				m_channelMode(channelMode)
@@ -127,14 +128,14 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Initializes pixmap data.
+			 * @brief Initializes the pixmap data.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
 			 * @param channelMode The number of color as a class constant. Default RGB.
 			 * @return bool
 			 */
 			bool
-			initialize (size_t width, size_t height, ChannelMode channelMode = ChannelMode::RGB)
+			initialize (dimension_t width, dimension_t height, ChannelMode channelMode = ChannelMode::RGB)
 			{
 				if ( width == 0 || height == 0 )
 				{
@@ -167,10 +168,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the pixmap width in pixels.
-			 * @return uint32_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			uint32_t
+			dimension_t
 			width () const noexcept
 			{
 				return m_width;
@@ -178,21 +179,21 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the pixmap half width in pixels.
-			 * @return uint32_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			uint32_t
+			dimension_t
 			halfWidth () const noexcept
 			{
-				return std::floor(static_cast< float >(this->width()) * 0.5F);
+				return static_cast< dimension_t >(std::floor(static_cast< float >(this->width()) * 0.5F));
 			}
 
 			/**
 			 * @brief Returns the pixmap height in pixels.
-			 * @return uint32_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			uint32_t
+			dimension_t
 			height () const noexcept
 			{
 				return m_height;
@@ -200,34 +201,36 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the pixmap half height in pixels.
-			 * @return uint32_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			uint32_t
+			dimension_t
 			halfHeight () const noexcept
 			{
-				return std::floor(static_cast< float >(this->height()) * 0.5F);
+				return static_cast< dimension_t >(std::floor(static_cast< float >(this->height()) * 0.5F));
 			}
 
 			/**
 			 * @brief Returns the pixmap ratio.
+			 * @tparam output_t The output data type. Default float.
 			 * @return float
 			 */
+			template< typename output_t >
 			[[nodiscard]]
-			float
+			output_t
 			ratio () const noexcept
 			{
 				if ( this->width() == 0 || this->height() == 0 )
 				{
-					return 0.0F;
+					return static_cast< output_t >(0);
 				}
 
 				if ( this->width() == this->height() )
 				{
-					return 1.0F;
+					return static_cast< output_t >(1);
 				}
 
-				return static_cast< float >(this->width()) / static_cast< float >(this->height());
+				return static_cast< output_t >(this->width()) / static_cast< output_t >(this->height());
 			}
 
 			/**
@@ -247,17 +250,6 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the number of pixel of the pixmap.
-			 * @return uint32_t
-			 */
-			[[nodiscard]]
-			uint32_t
-			pixelCount () const noexcept
-			{
-				return this->width() * this->height();
-			}
-
-			/**
 			 * @brief Returns the channel mode.
 			 * @return ChannelMode
 			 */
@@ -269,74 +261,94 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the number of color.
-			 * @return uint32_t
+			 * @brief Returns the number of pixel of the pixmap.
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			uint32_t
-			colorCount () const noexcept
+			output_t
+			pixelCount () const noexcept requires (std::is_unsigned_v< output_t >)
 			{
-				return static_cast< uint32_t >(this->channelMode());
+				return static_cast< output_t >(this->width() * this->height());
 			}
 
 			/**
-			 * @brief Returns the number of elements of the pixmap.
-			 * @note WIDTH * HEIGHT * COLOR COUNT
-			 * @return size_t
+			 * @brief Returns the number of color.
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			uint32_t
+			output_t
+			colorCount () const noexcept
+			{
+				return static_cast< output_t >(this->channelMode());
+			}
+
+			/**
+			 * @brief Returns the number of elements of the pixmap (WIDTH * HEIGHT * COLOR COUNT).
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
+			 */
+			template< typename output_t = uint32_t >
+			[[nodiscard]]
+			output_t
 			elementCount () const noexcept
 			{
 				return this->pixelCount() * this->colorCount();
 			}
 
 			/**
-			 * @brief Returns the size of the Pixmap in bytes.
-			 * @note WIDTH * HEIGHT * COLOR COUNT * PRECISION
-			 * @return size_t
+			 * @brief Returns the size of the Pixmap in bytes (WIDTH * HEIGHT * COLOR COUNT * PRECISION).
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			size_t
+			output_t
 			bytes () const noexcept
 			{
-				return this->elementCount() * sizeof(precision_t);
+				return this->elementCount() * static_cast< output_t >(sizeof(pixel_data_t));
 			}
 
 			/**
-			 * @brief Returns the size of a pixel in bytes.
-			 * @note COLOR COUNT * PRECISION
-			 * @return size_t
+			 * @brief Returns the size of a pixel in bytes (COLOR COUNT * PRECISION).
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			size_t
+			output_t
 			bytePerPixel () const noexcept
 			{
-				return this->colorCount() * sizeof(precision_t);
+				return this->colorCount() * static_cast< output_t >(sizeof(pixel_data_t));
 			}
 
 			/**
-			 * @brief Returns the size of a pixel in bits.
-			 * @note COLOR COUNT * PRECISION * 8
-			 * @return size_t
+			 * @brief Returns the size of a pixel in bits (COLOR COUNT * PRECISION * 8).
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			size_t
+			output_t
 			bitPerPixel () const noexcept
 			{
-				return this->bytePerPixel() * 8;
+				return this->bytePerPixel() * static_cast< output_t >(8);
 			}
 
 			/**
-			 * @brief Returns the size in bytes for one row of pixel.
-			 * @note WIDTH * COLOR COUNT * PRECISION
-			 * @return size_t
+			 * @brief Returns the size in bytes for one row of pixel (WIDTH * COLOR COUNT * PRECISION).
+			 * @tparam output_t The type of output data. Default uint32_t.
+			 * @return output_t
 			 */
+			template< typename output_t = uint32_t >
 			[[nodiscard]]
-			size_t
+			output_t
 			pitch () const noexcept
 			{
-				return this->width() * this->colorCount() * sizeof(precision_t);
+				return this->width() * this->colorCount() * static_cast< output_t >(sizeof(pixel_data_t));
 			}
 
 			/**
@@ -353,17 +365,17 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns a rectangle corresponding to the pixmap.
 			 * @note Offset parameter is added to the size of the pixmap.
-			 * @tparam rectangle_integer_t The type of rectangle data. Default int32_t.
+			 * @tparam rectangle_data_t The type of rectangle data. Default int32_t.
 			 * @param offsetX Set an offset in X to the rectangle. Default 0.
 			 * @param offsetY Set an offset in Y to the rectangle. Default 0.
-			 * @return Math::Rectangle< uint32_t >
+			 * @return Math::Rectangle< rectangle_data_t >
 			 */
-			template< typename rectangle_integer_t = int32_t >
+			template< typename rectangle_data_t = int32_t >
 			[[nodiscard]]
-			Math::Rectangle< rectangle_integer_t >
-			rectangle (rectangle_integer_t offsetX = 0, rectangle_integer_t offsetY = 0) const noexcept
+			Math::Rectangle< rectangle_data_t >
+			rectangle (rectangle_data_t offsetX = 0, rectangle_data_t offsetY = 0) const noexcept
 			{
-				return {offsetX, offsetY, static_cast< rectangle_integer_t >(this->width()), static_cast< rectangle_integer_t >(this->height())};
+				return {offsetX, offsetY, static_cast< rectangle_data_t >(this->width()), static_cast< rectangle_data_t >(this->height())};
 			}
 
 			/**
@@ -380,9 +392,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns read-only access to raw data of the pixmap.
-			 * @return const std::vector< data_t > &
+			 * @return const std::vector< pixel_data_t > &
 			 */
-			const std::vector< precision_t > &
+			[[nodiscard]]
+			const std::vector< pixel_data_t > &
 			data () const noexcept
 			{
 				return m_data;
@@ -390,9 +403,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns a write access to raw data of the pixmap.
-			 * @return std::vector< data_t > &
+			 * @return std::vector< pixel_data_t > &
 			 */
-			std::vector< precision_t > &
+			[[nodiscard]]
+			std::vector< pixel_data_t > &
 			data () noexcept
 			{
 				return m_data;
@@ -402,10 +416,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns a read-only pointer of the first element of a row.
 			 * @warning On row overflow, the method will return the last one.
 			 * @param rowIndex The index of the row.
-			 * @return const type_t *
+			 * @return const pixel_data_t *
 			 */
 			[[nodiscard]]
-			const precision_t *
+			const pixel_data_t *
 			rowPointer (size_t rowIndex) const noexcept
 			{
 				assert(rowIndex < this->height());
@@ -417,10 +431,10 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns the pointer of the first element of a row.
 			 * @warning On row overflow, the method will return the last one.
 			 * @param rowIndex The index of the row.
-			 * @return type_t *
+			 * @return pixel_data_t *
 			 */
 			[[nodiscard]]
-			precision_t *
+			pixel_data_t *
 			rowPointer (size_t rowIndex) noexcept
 			{
 				assert(rowIndex < this->height());
@@ -432,24 +446,24 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns a raw pixel pointer by its buffer index.
 			 * @warning On pixel overflow, the method will return the last one.
 			 * @param pixelIndex The index of the pixel.
-			 * @return const type_t *
+			 * @return const pixel_data_t *
 			 */
 			[[nodiscard]]
-			const precision_t *
+			const pixel_data_t *
 			pixelPointer (size_t pixelIndex) const noexcept
 			{
 				assert(pixelIndex < this->pixelCount());
-				
+
 				return m_data.data() + (pixelIndex * this->colorCount());
 			}
 
 			/**
 			 * @brief Returns a raw pixel pointer by its buffer index.
 			 * @param pixelIndex The index of the pixel.
-			 * @return const type_t *
+			 * @return const pixel_data_t *
 			 */
 			[[nodiscard]]
-			precision_t *
+			pixel_data_t *
 			pixelPointer (size_t pixelIndex) noexcept
 			{
 				assert(pixelIndex < this->pixelCount());
@@ -461,11 +475,11 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns a raw pixel pointer by its image coordinates.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
-			 * @return const type_t *
+			 * @return const pixel_data_t *
 			 */
 			[[nodiscard]]
-			const precision_t *
-			pixelPointer (uint32_t coordX, uint32_t coordY) const noexcept
+			const pixel_data_t *
+			pixelPointer (dimension_t coordX, dimension_t coordY) const noexcept
 			{
 				return m_data.data() + (this->pixelIndex(coordX, coordY) * this->colorCount());
 			}
@@ -474,11 +488,11 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Returns a raw pixel pointer by its image coordinates.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
-			 * @return const type_t *
+			 * @return const pixel_data_t *
 			 */
 			[[nodiscard]]
-			precision_t *
-			pixelPointer (uint32_t coordX, uint32_t coordY) noexcept
+			pixel_data_t *
+			pixelPointer (dimension_t coordX, dimension_t coordY) noexcept
 			{
 				return m_data.data() + (this->pixelIndex(coordX, coordY) * this->colorCount());
 			}
@@ -486,10 +500,10 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns the X coordinates in the image from the array index.
 			 * @param pixelIndex The pixel index.
-			 * @return size_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			size_t
+			dimension_t
 			x (size_t pixelIndex) const noexcept
 			{
 				assert(pixelIndex < this->pixelCount());
@@ -500,10 +514,10 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns the Y coordinates in the image from the array index.
 			 * @param pixelIndex The pixel index.
-			 * @return size_t
+			 * @return dimension_t
 			 */
 			[[nodiscard]]
-			size_t
+			dimension_t
 			y (size_t pixelIndex) const noexcept
 			{
 				assert(pixelIndex < this->pixelCount());
@@ -514,27 +528,31 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns the U texture2Ds coordinates in the image from the array index.
 			 * @warning On pixel overflow, the method will return the last one.
+			 * @tparam output_t The output data type. Default float.
 			 * @param pixelIndex The pixel index.
 			 * @return float
 			 */
+			template< typename output_t = float >
 			[[nodiscard]]
-			float
-			u (size_t pixelIndex) const noexcept
+			output_t
+			u (size_t pixelIndex) const noexcept requires (std::is_floating_point_v< output_t >)
 			{
-				return this->x(pixelIndex) / static_cast< float >(m_width - 1);
+				return static_cast< output_t >(this->x(pixelIndex)) / static_cast< output_t >(m_width - 1);
 			}
 
 			/**
 			 * @brief Returns the V texture2Ds coordinates in the image from the array index.
 			 * @warning On pixel overflow, the method will return the last one.
+			 * @tparam output_t The output data type. Default float.
 			 * @param pixelIndex The pixel index.
 			 * @return float
 			 */
+			template< typename output_t = float >
 			[[nodiscard]]
 			float
-			v (size_t pixelIndex) const noexcept
+			v (size_t pixelIndex) const noexcept requires (std::is_floating_point_v< output_t >)
 			{
-				return this->y(pixelIndex) / static_cast< float >(m_height - 1);
+				return static_cast< output_t >(this->y(pixelIndex)) / static_cast< output_t >(m_height - 1);
 			}
 
 			/**
@@ -545,7 +563,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			[[nodiscard]]
 			size_t
-			pixelIndex (uint32_t coordX, uint32_t coordY) const noexcept
+			pixelIndex (dimension_t coordX, dimension_t coordY) const noexcept
 			{
 				assert(coordX < m_width && coordY < m_height);
 
@@ -568,7 +586,7 @@ namespace EmEn::Libs::PixelFactory
 
 				const auto dataOffset = pixelIndex * this->colorCount();
 
-				if constexpr ( std::is_floating_point_v< precision_t > )
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
 				{
 					switch ( m_channelMode )
 					{
@@ -600,35 +618,32 @@ namespace EmEn::Libs::PixelFactory
 					switch ( m_channelMode )
 					{
 						case ChannelMode::Grayscale :
-							m_data[dataOffset] = color.template grayInteger< precision_t >();
+							m_data[dataOffset] = color.template grayInteger< pixel_data_t >();
 							break;
 
 						case ChannelMode::GrayscaleAlpha :
-							m_data[dataOffset] = color.template grayInteger< precision_t >();
-							m_data[dataOffset + 1] = color.template alphaInteger< precision_t >();
+							m_data[dataOffset] = color.template grayInteger< pixel_data_t >();
+							m_data[dataOffset + 1] = color.template alphaInteger< pixel_data_t >();
 							break;
 
 						case ChannelMode::RGB :
-							m_data[dataOffset] = color.template redInteger< precision_t >();
-							m_data[dataOffset + 1] = color.template greenInteger< precision_t >();
-							m_data[dataOffset + 2] = color.template blueInteger< precision_t >();
+							m_data[dataOffset] = color.template redInteger< pixel_data_t >();
+							m_data[dataOffset + 1] = color.template greenInteger< pixel_data_t >();
+							m_data[dataOffset + 2] = color.template blueInteger< pixel_data_t >();
 							break;
 
 						case ChannelMode::RGBA :
-							m_data[dataOffset] = color.template redInteger< precision_t >();
-							m_data[dataOffset + 1] = color.template greenInteger< precision_t >();
-							m_data[dataOffset + 2] = color.template blueInteger< precision_t >();
-							m_data[dataOffset + 3] = color.template alphaInteger< precision_t >();
+							m_data[dataOffset] = color.template redInteger< pixel_data_t >();
+							m_data[dataOffset + 1] = color.template greenInteger< pixel_data_t >();
+							m_data[dataOffset + 2] = color.template blueInteger< pixel_data_t >();
+							m_data[dataOffset + 3] = color.template alphaInteger< pixel_data_t >();
 							break;
 					}
 				}
 
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					this->setPixelAsUpdated(
-						pixelIndex % m_width,
-						pixelIndex / m_width
-					);
+					this->markPixelUpdated(pixelIndex % m_width, pixelIndex / m_width);
 				}
 			}
 
@@ -643,7 +658,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename color_data_t = float >
 			void
-			setPixel (uint32_t coordX, uint32_t coordY, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
+			setPixel (dimension_t coordX, dimension_t coordY, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				this->setPixel(this->pixelIndex(coordX, coordY), color);
 			}
@@ -651,6 +666,7 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Sets a color to a pixel using image coordinates.
 			 * @warning Avoid to use this method in a loop.
+			 * @warning Do not use this method, use setPixel() instead.
 			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
@@ -664,7 +680,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( coordX >= 0 && coordX < this->width() && coordY >= 0 && coordY < this->height() )
 				{
-					const auto pixelIndex = this->pixelIndex(static_cast< uint32_t >(coordX), static_cast< uint32_t >(coordY));
+					const auto pixelIndex = this->pixelIndex(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
 
 					this->setPixel(pixelIndex, color);
 				}
@@ -698,7 +714,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename color_data_t = float >
 			void
-			mixPixel (uint32_t coordX, uint32_t coordY, const Color< color_data_t > & color, float mix) noexcept requires (std::is_floating_point_v< color_data_t >)
+			mixPixel (dimension_t coordX, dimension_t coordY, const Color< color_data_t > & color, float mix) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				const auto previousColor = this->pixel(coordX, coordY);
 
@@ -707,6 +723,8 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Mixes a color to an existing pixel with a scalar value. It will be ignored if it's fall outside the pixmap.
+			 * @warning Do not use this method, use mixPixel() instead.
+			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
@@ -720,7 +738,7 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( coordX >= 0 && coordX < this->width() && coordY >= 0 && coordY < this->height() )
 				{
-					const auto previousColor = this->pixel(static_cast< size_t >(coordX), static_cast< size_t >(coordY));
+					const auto previousColor = this->pixel(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
 
 					this->setPixel(pixelIndex, Color< color_data_t >::mix(previousColor, color, mix));
 				}
@@ -763,7 +781,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename color_data_t = float >
 			void
-			blendPixel (uint32_t coordX, uint32_t coordY, const Color< color_data_t > & color, DrawPixelMode mode, float opacity = 1.0F) noexcept requires (std::is_floating_point_v< color_data_t >)
+			blendPixel (dimension_t coordX, dimension_t coordY, const Color< color_data_t > & color, DrawPixelMode mode, float opacity = 1.0F) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				if ( mode == DrawPixelMode::Replace )
 				{
@@ -781,6 +799,8 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Blends a color to an existing pixel. It will be ignored if it's fall outside the pixmap.
+			 * @warning Do not use this method, use blendPixel() instead.
+			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
@@ -797,11 +817,11 @@ namespace EmEn::Libs::PixelFactory
 				{
 					if ( mode == DrawPixelMode::Replace )
 					{
-						this->setPixel(static_cast< uint32_t >(coordX), static_cast< uint32_t >(coordY), color);
+						this->setPixel(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY), color);
 					}
 					else
 					{
-						const auto pixelIndex = this->pixelIndex(static_cast< uint32_t >(coordX), static_cast< uint32_t >(coordY));
+						const auto pixelIndex = this->pixelIndex(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
 
 						const auto previousColor = this->pixel(pixelIndex);
 
@@ -825,7 +845,7 @@ namespace EmEn::Libs::PixelFactory
 
 				const auto dataOffset = pixelIndex * this->colorCount();
 
-				if constexpr ( std::is_floating_point_v< precision_t > )
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
 				{
 					switch ( m_channelMode )
 					{
@@ -873,7 +893,7 @@ namespace EmEn::Libs::PixelFactory
 			template< typename color_data_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			pixel (uint32_t coordX, uint32_t coordY) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			pixel (dimension_t coordX, dimension_t coordY) const noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				return this->pixel(this->pixelIndex(coordX, coordY));
 			}
@@ -911,7 +931,7 @@ namespace EmEn::Libs::PixelFactory
 			template< typename color_data_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			safePixel (uint32_t coordX, uint32_t coordY, const Color< color_data_t > & defaultColor = Black) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			safePixel (dimension_t coordX, dimension_t coordY, const Color< color_data_t > & defaultColor = Black) const noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				if ( coordX >= m_width || coordY >= m_height)
 				{
@@ -923,7 +943,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the closest pixel to boundary at coordinates.
-			 * @tparam color_data_t The color data type.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
 			 * @return Color< color_data_t >
@@ -951,189 +971,206 @@ namespace EmEn::Libs::PixelFactory
 					coordY = m_height - 1;
 				}
 
-				return this->pixel(coordX, coordY);
+				return this->pixel(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
 			}
 
 			/**
 			 * @brief Returns a sampled pixel using the nearest algorithm.
 			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
-			 * @tparam color_data_t The color data type.
-			 * @param texCoordU The X coordinate of the pixel.
-			 * @param texCoordV The Y coordinate of the pixel.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @tparam uv_t The UV coordinates data type. Default float.
+			 * @param u The X coordinate of the pixel.
+			 * @param v The Y coordinate of the pixel.
 			 * @return Color< color_data_t >
 			 */
-			template< typename color_data_t = float >
+			template< typename color_data_t = float, typename uv_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			nearestSample (float texCoordU, float texCoordV) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			nearestSample (uv_t u, uv_t v) const noexcept requires (std::is_floating_point_v< color_data_t > && std::is_floating_point_v< uv_t >)
 			{
+				constexpr uv_t Zero{0};
+				constexpr uv_t One{1};
+
 				if ( m_flags[UVWrappingEnabled] )
 				{
-					if ( texCoordU < 0.0F || texCoordU > 1.0F )
+					if ( u < Zero || u > One )
 					{
-						texCoordU = std::fmod(std::abs(texCoordU), 1.0F);
+						u = std::fmod(std::abs(u), One);
 					}
 
-					if ( texCoordV < 0.0F || texCoordV > 1.0F )
+					if ( v < Zero || v > One )
 					{
-						texCoordV = std::fmod(std::abs(texCoordV), 1.0F);
+						v = std::fmod(std::abs(v), One);
 					}
 				}
-				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
+				else if ( u < Zero || u > One || v < Zero || v > One )
 				{
 					return Black;
 				}
 
 				/* Prepare variable for X axis. */
-				const auto realX = static_cast< float >(m_width - 1) * texCoordU;
+				const auto realX = static_cast< uv_t >(m_width - 1) * u;
 
 				/* Prepare variable for Y axis. */
-				const auto realY = static_cast< float >(m_height - 1) * texCoordV;
+				const auto realY = static_cast< uv_t >(m_height - 1) * v;
 
-				return this->pixel(static_cast< uint32_t >(std::round(realX)), static_cast< uint32_t >(std::round(realY)));
+				return this->pixel(
+					static_cast< dimension_t >(std::round(realX)),
+					static_cast< dimension_t >(std::round(realY))
+				);
 			}
 
 			/**
 			 * @brief Returns a sampled pixel using the linear algorithm.
 			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
-			 * @tparam color_data_t The color data type.
-			 * @param texCoordU The X coordinate of the pixel.
-			 * @param texCoordV The Y coordinate of the pixel.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @tparam uv_t The UV coordinates data type. Default float.
+			 * @param u The X coordinate of the pixel.
+			 * @param v The Y coordinate of the pixel.
 			 * @return Color< color_data_t >
 			 */
-			template< typename color_data_t = float>
+			template< typename color_data_t = float, typename uv_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			linearSample (float texCoordU, float texCoordV) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			linearSample (uv_t u, uv_t v) const noexcept requires (std::is_floating_point_v< color_data_t > && std::is_floating_point_v< uv_t >)
 			{
+				constexpr uv_t Zero{0};
+				constexpr uv_t One{1};
+
 				if ( m_flags[UVWrappingEnabled] )
 				{
-					if ( texCoordU < 0.0F || texCoordU > 1.0F )
+					if ( u < Zero || u > One )
 					{
-						texCoordU = std::fmod(std::abs(texCoordU), 1.0F);
+						u = std::fmod(std::abs(u), One);
 					}
 
-					if ( texCoordV < 0.0F || texCoordV > 1.0F )
+					if ( v < Zero || v > One )
 					{
-						texCoordV = std::fmod(std::abs(texCoordV), 1.0F);
+						v = std::fmod(std::abs(v), One);
 					}
 				}
-				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
+				else if ( u < Zero || u > One || v < Zero || v > One )
 				{
 					return Black;
 				}
 
 				/* Prepare variable for X axis. */
-				const auto realX = static_cast< float >(m_width - 1) * texCoordU;
-				const auto loX = static_cast< size_t >(std::floor(realX));
-				const auto hiX = static_cast< size_t >(std::ceil(realX));
-				const auto factorX = realX - static_cast< float >(loX);
+				const auto realX = static_cast< uv_t >(m_width - 1) * u;
+				const auto loX = static_cast< dimension_t >(std::floor(realX));
+				const auto hiX = static_cast< dimension_t >(std::ceil(realX));
 
 				/* Prepare variable for Y axis. */
-				const auto realY = static_cast< float >(m_height - 1) * texCoordV;
-				const auto loY = static_cast< size_t >(std::floor(realY));
-				const auto hiY = static_cast< size_t >(std::ceil(realY));
-				const auto factorY = realY - static_cast< float >(loY);
+				const auto realY = static_cast< uv_t >(m_height - 1) * v;
+				const auto loY = static_cast< dimension_t >(std::floor(realY));
+				const auto hiY = static_cast< dimension_t >(std::ceil(realY));
 
-				/* Gets involved pixels. */
-				auto bottomLeftPixel = this->pixel(loX, loY);
-				auto bottomRightPixel = this->pixel(hiX, loY);
-				auto topLeftPixel = this->pixel(loX, hiY);
-				auto topRightPixel = this->pixel(hiX, hiY);
-
-				return Color< color_data_t >::bilinearInterpolation(bottomLeftPixel, bottomRightPixel, topLeftPixel, topRightPixel, factorX, factorY);
+				return Color< color_data_t >::bilinearInterpolation(
+					this->pixel(loX, loY),
+					this->pixel(hiX, loY),
+					this->pixel(loX, hiY),
+					this->pixel(hiX, hiY),
+					realX - static_cast< uv_t >(loX),
+					realY - static_cast< uv_t >(loY)
+				);
 			}
 
 			/**
 			 * @brief Returns a sampled pixel using the cosine algorithm.
 			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
-			 * @tparam color_data_t The color data type.
-			 * @param texCoordU The X coordinate of the pixel.
-			 * @param texCoordV The Y coordinate of the pixel.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @tparam uv_t The UV coordinates data type. Default float.
+			 * @param u The X coordinate of the pixel.
+			 * @param v The Y coordinate of the pixel.
 			 * @return Color< color_data_t >
 			 */
-			template< typename color_data_t = float >
+			template< typename color_data_t = float, typename uv_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			cosineSample (float texCoordU, float texCoordV) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			cosineSample (uv_t u, uv_t v) const noexcept requires (std::is_floating_point_v< color_data_t > && std::is_floating_point_v< uv_t >)
 			{
+				constexpr uv_t Zero{0};
+				constexpr uv_t One{1};
+
 				if ( m_flags[UVWrappingEnabled] )
 				{
-					if ( texCoordU < 0.0F || texCoordU > 1.0F )
+					if ( u < Zero || u > One )
 					{
-						texCoordU = std::fmod(std::abs(texCoordU), 1.0F);
+						u = std::fmod(std::abs(u), One);
 					}
 
-					if ( texCoordV < 0.0F || texCoordV > 1.0F )
+					if ( v < Zero || v > One )
 					{
-						texCoordV = std::fmod(std::abs(texCoordV), 1.0F);
+						v = std::fmod(std::abs(v), One);
 					}
 				}
-				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
+				else if ( u < Zero || u > One || v < Zero || v > One )
 				{
 					return Black;
 				}
 
 				/* Prepare variable for X axis. */
-				const auto realX = static_cast< float >(m_width - 1) * texCoordU;
-				const auto loX = static_cast< size_t >(std::floor(realX));
-				const auto hiX = static_cast< size_t >(std::ceil(realX));
-				const auto factorX = realX - static_cast< float >(loX);
+				const auto realX = static_cast< uv_t >(m_width - 1) * u;
+				const auto loX = static_cast< dimension_t >(std::floor(realX));
+				const auto hiX = static_cast< dimension_t >(std::ceil(realX));
 
 				/* Prepare variable for Y axis. */
-				const auto realY = static_cast< float >(m_height - 1) * texCoordV;
-				const auto loY = static_cast< size_t >(std::floor(realY));
-				const auto hiY = static_cast< size_t >(std::ceil(realY));
-				const auto factorY = realY - static_cast< float >(loY);
+				const auto realY = static_cast< uv_t >(m_height - 1) * v;
+				const auto loY = static_cast< dimension_t >(std::floor(realY));
+				const auto hiY = static_cast< dimension_t >(std::ceil(realY));
 
-				/* Gets involved pixels. */
-				const auto bottomLeftPixel = this->pixel(loX, loY);
-				const auto bottomRightPixel = this->pixel(hiX, loY);
-				const auto topLeftPixel = this->pixel(loX, hiY);
-				const auto topRightPixel = this->pixel(hiX, hiY);
-
-				return Color< color_data_t >::biCosineInterpolation(bottomLeftPixel, bottomRightPixel, topLeftPixel, topRightPixel, factorX, factorY);
+				return Color< color_data_t >::biCosineInterpolation(
+					this->pixel(loX, loY),
+					this->pixel(hiX, loY),
+					this->pixel(loX, hiY),
+					this->pixel(hiX, hiY),
+					realX - static_cast< uv_t >(loX),
+					realY - static_cast< uv_t >(loY)
+				);
 			}
 
 			/**
 			 * @brief Returns a sampled pixel using the cubic algorithm.
 			 * @note Will returns a black color when outside the pixmap and UVWrappingEnabled turned off.
-			 * @tparam color_data_t The color data type.
-			 * @param texCoordU The X coordinate of the pixel.
-			 * @param texCoordV The Y coordinate of the pixel.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @tparam uv_t The UV coordinates data type. Default float.
+			 * @param u The X coordinate of the pixel.
+			 * @param v The Y coordinate of the pixel.
 			 * @return Color< color_data_t >
 			 */
-			template< typename color_data_t = float >
+			template< typename color_data_t = float, typename uv_t = float >
 			[[nodiscard]]
 			Color< color_data_t >
-			cubicSample (float texCoordU, float texCoordV) const noexcept requires (std::is_floating_point_v< color_data_t >)
+			cubicSample (float u, float v) const noexcept requires (std::is_floating_point_v< color_data_t > && std::is_floating_point_v< uv_t >)
 			{
+				constexpr uv_t Zero{0};
+				constexpr uv_t One{1};
+
 				if ( m_flags[UVWrappingEnabled] )
 				{
-					if ( texCoordU < 0.0F || texCoordU > 1.0F )
+					if ( u < Zero || u > One )
 					{
-						texCoordU = std::fmod(std::abs(texCoordU), 1.0F);
+						u = std::fmod(std::abs(u), One);
 					}
 
-					if ( texCoordV < 0.0F || texCoordV > 1.0F )
+					if ( v < Zero || v > One )
 					{
-						texCoordV = std::fmod(std::abs(texCoordV), 1.0F);
+						v = std::fmod(std::abs(v), One);
 					}
 				}
-				else if ( texCoordU < 0.0F || texCoordU > 1.0F || texCoordV < 0.0F || texCoordV > 1.0F )
+				else if ( u < Zero || u > One || v < Zero || v > One )
 				{
 					return Black;
 				}
 
 				/* Prepare variable for X axis */
-				const auto realX = static_cast< float >(m_width - 1) * texCoordU;
-				const auto loX = static_cast< size_t >(std::floor(realX));
-				const auto factorX = realX - static_cast< float >(loX);
+				const auto realX = static_cast< uv_t >(m_width - 1) * u;
+				const auto loX = static_cast< dimension_t >(std::floor(realX));
+				const auto factorX = realX - static_cast< uv_t >(loX);
 
 				/* Prepare variable for Y axis */
-				const auto realY = static_cast< float >(m_height - 1) * texCoordV;
-				const auto loY = static_cast< size_t >(std::floor(realY));
-				const auto factorY = realY - static_cast< float >(loY);
+				const auto realY = static_cast< uv_t >(m_height - 1) * v;
+				const auto loY = static_cast< dimension_t >(std::floor(realY));
+				const auto factorY = realY - static_cast< uv_t >(loY);
 
 				/* Gets involved pixels */
 				const auto p00 = this->safePixel(loX - 1, loY - 1);
@@ -1203,15 +1240,15 @@ namespace EmEn::Libs::PixelFactory
 			 * @param value The new value.
 			 */
 			void
-			setPixelElement (uint32_t coordX, uint32_t coordY, Channel channel, precision_t value) noexcept
+			setPixelElement (dimension_t coordX, dimension_t coordY, Channel channel, pixel_data_t value) noexcept
 			{
-				const auto dataOffset = (this->pixelIndex(coordX, coordY) * this->colorCount()) + static_cast< size_t >(channel);
+				const auto dataOffset = (this->pixelIndex(coordX, coordY) * this->colorCount< size_t >()) + static_cast< size_t >(channel);
 
 				m_data[dataOffset] = value;
 
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					this->setPixelAsUpdated(coordX, coordY);
+					this->markPixelUpdated(coordX, coordY);
 				}
 			}
 
@@ -1220,13 +1257,13 @@ namespace EmEn::Libs::PixelFactory
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
 			 * @param channel The pixmap channel targeted.
-			 * @return type_t
+			 * @return pixel_data_t
 			 */
 			[[nodiscard]]
-			precision_t
-			pixelElement (uint32_t coordX, uint32_t coordY, Channel channel) const noexcept
+			pixel_data_t
+			pixelElement (dimension_t coordX, dimension_t coordY, Channel channel) const noexcept
 			{
-				const auto dataOffset = (this->pixelIndex(coordX, coordY) * this->colorCount()) + static_cast< size_t >(channel);
+				const auto dataOffset = (this->pixelIndex(coordX, coordY) * this->colorCount< size_t >()) + static_cast< size_t >(channel);
 
 				return m_data[dataOffset];
 			}
@@ -1255,7 +1292,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the average color of the pixmap.
-			 * @tparam color_data_t The color data type.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @return Color< color_data_t >
 			 */
 			template< typename color_data_t = float >
@@ -1276,9 +1313,9 @@ namespace EmEn::Libs::PixelFactory
 				{
 					case ChannelMode::Grayscale :
 					case ChannelMode::GrayscaleAlpha :
-						if constexpr ( std::is_floating_point_v< precision_t > )
+						if constexpr ( std::is_floating_point_v< pixel_data_t > )
 						{
-							precision_t maxValue = 0;
+							pixel_data_t maxValue = 0;
 
 							for ( size_t index = 0; index < dataLimit; index += stride )
 							{
@@ -1291,25 +1328,25 @@ namespace EmEn::Libs::PixelFactory
 						}
 						else
 						{
-							size_t maxValue = 0;
+							uint32_t maxValue = 0;
 
 							for ( size_t index = 0; index < dataLimit; index += stride )
 							{
 								maxValue += m_data[index];
 							}
 
-							const auto value = static_cast< precision_t >(std::floor(maxValue / limit));
+							const auto value = static_cast< pixel_data_t >(std::floor(maxValue / limit));
 
 							return ColorFromInteger(value, value, value);
 						}
 
 					case ChannelMode::RGB :
 					case ChannelMode::RGBA :
-						if constexpr ( std::is_floating_point_v< precision_t > )
+						if constexpr ( std::is_floating_point_v< pixel_data_t > )
 						{
-							precision_t maxR = 0;
-							precision_t maxG = 0;
-							precision_t maxB = 0;
+							pixel_data_t maxR = 0;
+							pixel_data_t maxG = 0;
+							pixel_data_t maxB = 0;
 
 							for ( size_t index = 0; index < dataLimit; index += stride )
 							{
@@ -1326,9 +1363,9 @@ namespace EmEn::Libs::PixelFactory
 						}
 						else
 						{
-							size_t maxR = 0;
-							size_t maxG = 0;
-							size_t maxB = 0;
+							uint32_t maxR = 0;
+							uint32_t maxG = 0;
+							uint32_t maxB = 0;
 
 							for ( size_t index = 0; index < dataLimit; index += stride )
 							{
@@ -1338,9 +1375,9 @@ namespace EmEn::Libs::PixelFactory
 							}
 
 							return ColorFromInteger(
-								static_cast< precision_t >(std::floor(maxR / limit)),
-								static_cast< precision_t >(std::floor(maxG / limit)),
-								static_cast< precision_t >(std::floor(maxB / limit))
+								static_cast< pixel_data_t >(std::floor(maxR / limit)),
+								static_cast< pixel_data_t >(std::floor(maxG / limit)),
+								static_cast< pixel_data_t >(std::floor(maxB / limit))
 							);
 						}
 
@@ -1351,45 +1388,45 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Enables the updated region marker.
-			 * This feature will keep a rectangle that hold every processLogics made to the pixmap.
+			 * @note This feature will set a rectangle on region where changes are made in the pixmap.
 			 * @param state The state.
 			 */
 			void
-			enableUpdatedRegion (bool state) noexcept
+			enableUpdatedRegionMarker (bool state) noexcept
 			{
 				m_flags[UpdatedRegionMarkerEnabled] = state;
 			}
 
 			/**
-			 * @brief Returns whether the updated region marker is active.
+			 * @brief Returns whether the updated region marker is enabled.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool
-			updatedRegionEnabled () const noexcept
+			isUpdatedRegionMarkerEnabled () const noexcept
 			{
 				return m_flags[UpdatedRegionMarkerEnabled];
 			}
 
 			/**
-			 * @brief Returns the rectangle where every modification were lastly done on the Pixmap.
-			 * @return const Rectangle &
+			 * @brief Returns the region of the pixmap where changes has been made since the last marker reset.
+			 * @return const Math::Rectangle< dimension_t > &
 			 */
 			[[nodiscard]]
-			const Math::Rectangle< uint32_t > &
+			const Math::Rectangle< dimension_t > &
 			updatedRegion () const noexcept
 			{
 				return m_lastUpdatedRegion;
 			}
 
 			/**
-			 * @brief Marks a pixel updated in the pixmap.
+			 * @brief Updates the updated region marker from one pixel.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
 			 * @return void
 			 */
 			void
-			setPixelAsUpdated (uint32_t coordX, uint32_t coordY) noexcept
+			markPixelUpdated (dimension_t coordX, dimension_t coordY) noexcept
 			{
 				if ( m_lastUpdatedRegion.isValid() )
 				{
@@ -1422,12 +1459,12 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Marks a region updated in the pixmap.
+			 * @brief Updates the updated region marker from a rectangle.
 			 * @param rectangle A reference to a rectangle.
 			 * @return void
 			 */
 			void
-			setRegionAsUpdated (const Math::Rectangle< uint32_t > & rectangle) noexcept
+			markRectangleUpdated (const Math::Rectangle< dimension_t > & rectangle) noexcept
 			{
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
@@ -1436,11 +1473,11 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Sets the whole pixmap as updated.
+			 * @brief Updates the whole the updated region marker.
 			 * @return void
 			 */
 			void
-			setOverallUpdated () noexcept
+			markEverythingUpdated () noexcept
 			{
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
@@ -1452,11 +1489,11 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Reset the Area marker for updated region.
+			 * @brief Reset the updated region marker.
 			 * @return void
 			 */
 			void
-			resetUpdatedRegion () noexcept
+			resetUpdatedRegionMarker () noexcept
 			{
 				m_lastUpdatedRegion.reset();
 			}
@@ -1469,7 +1506,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			addAlphaChannel (precision_t alphaValue, bool modifyUpdatedRegion = true)
+			addAlphaChannel (pixel_data_t alphaValue, bool modifyUpdatedRegion = true)
 			{
 				if ( !this->isValid() )
 				{
@@ -1528,7 +1565,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( modifyUpdatedRegion )
 				{
-					this->setOverallUpdated();
+					this->markEverythingUpdated();
 				}
 
 				return true;
@@ -1541,7 +1578,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fill (precision_t value) noexcept
+			fill (pixel_data_t value) noexcept
 			{
 				if ( !this->isValid() )
 				{
@@ -1552,7 +1589,7 @@ namespace EmEn::Libs::PixelFactory
 				{
 					case ChannelMode::Grayscale :
 					case ChannelMode::RGB :
-						std::memset(m_data.data(), value, m_data.size() * sizeof(precision_t));
+						std::memset(m_data.data(), value, m_data.size() * sizeof(pixel_data_t));
 						break;
 
 					case ChannelMode::GrayscaleAlpha :
@@ -1580,7 +1617,7 @@ namespace EmEn::Libs::PixelFactory
 						break;
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1593,7 +1630,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fill (const precision_t * data, size_t size) noexcept
+			fill (const pixel_data_t * data, size_t size) noexcept
 			{
 				if ( !this->isValid() )
 				{
@@ -1673,7 +1710,7 @@ namespace EmEn::Libs::PixelFactory
 						break;
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1685,7 +1722,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fill (const std::vector< precision_t > & vector) noexcept
+			fill (const std::vector< pixel_data_t > & vector) noexcept
 			{
 				return this->fill(vector.data(), vector.size());
 			}
@@ -1693,7 +1730,7 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Fills the pixmap with a color.
 			 * @warning This method is slow.
-			 * @tparam color_data_t The color data type.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param color A reference to a color.
 			 * @return bool
 			 */
@@ -1713,7 +1750,7 @@ namespace EmEn::Libs::PixelFactory
 					this->setPixel(index, color);
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1765,7 +1802,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1786,19 +1823,19 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				for ( uint32_t rowIndex = 0; rowIndex < m_height; rowIndex++ )
+				for ( dimension_t rowIndex = 0; rowIndex < m_height; ++rowIndex )
 				{
 					const auto position = static_cast< scale_data_t >(rowIndex) / static_cast< scale_data_t >(m_height);
 
 					const auto color = gradient.colorAt(position);
 
-					for ( uint32_t colIndex = 0; colIndex < m_width; colIndex++ )
+					for ( dimension_t colIndex = 0; colIndex < m_width; ++colIndex )
 					{
 						this->setPixel(colIndex, rowIndex, color);
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1819,19 +1856,19 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				for ( uint32_t colIndex = 0; colIndex < m_width; colIndex++ )
+				for ( dimension_t colIndex = 0; colIndex < m_width; ++colIndex )
 				{
 					const auto position = static_cast< scale_data_t >(colIndex) / static_cast< scale_data_t >(m_width);
 
 					const auto color = gradient.colorAt(position);
 
-					for ( uint32_t rowIndex = 0; rowIndex < m_height; rowIndex++ )
+					for ( dimension_t rowIndex = 0; rowIndex < m_height; ++rowIndex )
 					{
 						this->setPixel(colIndex, rowIndex, color);
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1843,7 +1880,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fillChannel (Channel channel, precision_t value) noexcept
+			fillChannel (Channel channel, pixel_data_t value) noexcept
 			{
 				if ( !this->isValid() )
 				{
@@ -1859,7 +1896,7 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( m_channelMode == ChannelMode::Grayscale )
 				{
-					std::memset(m_data.data(), value, m_data.size() * sizeof(precision_t));
+					std::memset(m_data.data(), value, m_data.size() * sizeof(pixel_data_t));
 
 					return true;
 				}
@@ -1872,7 +1909,7 @@ namespace EmEn::Libs::PixelFactory
 					m_data[index + channelIndex] = value;
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1885,7 +1922,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fillChannel (Channel channel, const precision_t * data, size_t size) noexcept
+			fillChannel (Channel channel, const pixel_data_t * data, size_t size) noexcept
 			{
 				if ( !this->isValid() )
 				{
@@ -1919,7 +1956,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -1931,7 +1968,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return bool
 			 */
 			bool
-			fillChannel (Channel channel, const std::vector< precision_t > & vector) noexcept
+			fillChannel (Channel channel, const std::vector< pixel_data_t > & vector) noexcept
 			{
 				return this->fillChannel(channel, vector.data(), vector.size());
 			}
@@ -1960,24 +1997,34 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				uint32_t patternRowIndex = 0;
-				uint32_t patternColIndex = 0;
+				dimension_t patternRowIndex = 0;
+				dimension_t patternColIndex = 0;
 
-				for ( uint32_t rowIndex = 0; rowIndex < m_height; rowIndex++ )
+				for ( dimension_t rowIndex = 0; rowIndex < m_height; ++rowIndex )
 				{
-					for ( uint32_t colIndex = 0; colIndex < m_width; colIndex++ )
+					for ( dimension_t colIndex = 0; colIndex < m_width; ++colIndex )
 					{
-						if constexpr ( std::is_floating_point_v< precision_t > )
+						if constexpr ( std::is_floating_point_v< pixel_data_t > )
 						{
-							this->setPixelElement(colIndex, rowIndex, channel, pattern.pixel(patternColIndex, patternRowIndex).luminance(mode, option));
+							this->setPixelElement(
+								colIndex,
+								rowIndex,
+								channel,
+								pattern.pixel(patternColIndex, patternRowIndex).luminance(mode, option)
+							);
 						}
 						else
 						{
-							this->setPixelElement(colIndex, rowIndex, channel, pattern.pixel(patternColIndex, patternRowIndex).luminanceInteger(mode, option));
+							this->setPixelElement(
+								colIndex,
+								rowIndex,
+								channel,
+								pattern.pixel(patternColIndex, patternRowIndex).luminanceInteger(mode, option)
+							);
 						}
 
 						/* NOTE: Advance in the pattern columns, and reset at the right of the pattern image. */
-						patternColIndex++;
+						++patternColIndex;
 
 						if ( patternColIndex >= pattern.width() )
 						{
@@ -1986,7 +2033,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 
 					/* NOTE: Advance in the pattern rows, and reset at the bottom of the pattern image. */
-					patternRowIndex++;
+					++patternRowIndex;
 					patternColIndex = 0;
 
 					if ( patternRowIndex >= pattern.height() )
@@ -1995,7 +2042,7 @@ namespace EmEn::Libs::PixelFactory
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -2003,7 +2050,8 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Fills the pixmap channel with a horizontal gradient.
 			 * @note The gradient will be used as a grayscale.
-			 * @tparam color_data_t The color data type.
+			 * @tparam scale_data_t The scale data type. Default float.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param channel The targeted channel of the pixmap.
 			 * @param gradient A reference to a gradient.
 			 * @param mode The conversion mode. Default LumaRec709.
@@ -2026,13 +2074,13 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				for ( size_t rowIndex = 0; rowIndex < m_height; rowIndex++ )
+				for ( dimension_t rowIndex = 0; rowIndex < m_height; ++rowIndex )
 				{
 					const auto position = static_cast< scale_data_t >(rowIndex) / static_cast< scale_data_t >(m_height);
 
-					precision_t value;
+					pixel_data_t value;
 
-					if constexpr ( std::is_floating_point_v< precision_t > )
+					if constexpr ( std::is_floating_point_v< pixel_data_t > )
 					{
 						value = gradient.colorAt(position).luminance(mode, option);
 					}
@@ -2041,13 +2089,13 @@ namespace EmEn::Libs::PixelFactory
 						value = gradient.colorAt(position).luminanceInteger(mode, option);
 					}
 
-					for ( size_t colIndex = 0; colIndex < m_width; colIndex++ )
+					for ( dimension_t colIndex = 0; colIndex < m_width; ++colIndex )
 					{
 						this->setPixelElement(colIndex, rowIndex, channel, value);
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -2055,7 +2103,8 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Fills the pixmap channel with a vertical gradient.
 			 * @note The gradient will be used as a grayscale.
-			 * @tparam color_data_t The color data type.
+			 * @tparam scale_data_t The scale data type. Default float.
+			 * @tparam color_data_t The color data type. Default float.
 			 * @param channel The targeted channel of the pixmap.
 			 * @param gradient A reference to a gradient.
 			 * @param mode The conversion mode. Default LumaRec709.
@@ -2078,13 +2127,13 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				for ( size_t colIndex = 0; colIndex < m_width; colIndex++ )
+				for ( dimension_t colIndex = 0; colIndex < m_width; ++colIndex )
 				{
 					const auto position = static_cast< scale_data_t >(colIndex) / static_cast< scale_data_t >(m_width);
 
-					precision_t value;
+					pixel_data_t value;
 
-					if constexpr ( std::is_floating_point_v< precision_t > )
+					if constexpr ( std::is_floating_point_v< pixel_data_t > )
 					{
 						value = gradient.colorAt(position).luminance(mode, option);
 					}
@@ -2093,13 +2142,13 @@ namespace EmEn::Libs::PixelFactory
 						value = gradient.colorAt(position).luminanceInteger(mode, option);
 					}
 
-					for ( size_t rowIndex = 0; rowIndex < m_height; rowIndex++ )
+					for ( dimension_t rowIndex = 0; rowIndex < m_height; ++rowIndex )
 					{
 						this->setPixelElement(colIndex, rowIndex, channel, value);
 					}
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -2118,9 +2167,9 @@ namespace EmEn::Libs::PixelFactory
 
 				/* NOTE : C++ std::fill(myArray, myArray+N, 0); */
 				//std::fill(m_data.begin(), m_data.end(), 0);
-				std::memset(m_data.data(), 0, m_data.size() * sizeof(precision_t));
+				std::memset(m_data.data(), 0, m_data.size() * sizeof(pixel_data_t));
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 			}
 
 			/**
@@ -2153,29 +2202,29 @@ namespace EmEn::Libs::PixelFactory
 						return false;
 				}
 
-				if constexpr ( std::is_floating_point_v< precision_t > )
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
 				{
 
-					Randomizer< precision_t > randomizer;
+					Randomizer< pixel_data_t > randomizer;
 
 					const auto pixelBuffer = randomizer.vector(
 					   bufferSize,
-					   static_cast< precision_t>(0),
-					   static_cast< precision_t>(1)
+					   static_cast< pixel_data_t>(0),
+					   static_cast< pixel_data_t>(1)
 					);
 
 					return this->fill(pixelBuffer);
 				}
 
-				if constexpr ( std::is_integral_v< precision_t > )
+				if constexpr ( std::is_integral_v< pixel_data_t > )
 				{
 
-					Randomizer< precision_t > randomizer;
+					Randomizer< pixel_data_t > randomizer;
 
 					const auto pixelBuffer = randomizer.vector(
 					   bufferSize,
-					   static_cast< precision_t>(0),
-					   std::numeric_limits< precision_t >::max()
+					   static_cast< pixel_data_t>(0),
+					   std::numeric_limits< pixel_data_t >::max()
 					);
 
 					return this->fill(pixelBuffer);
@@ -2255,7 +2304,7 @@ namespace EmEn::Libs::PixelFactory
 						break;
 				}
 
-				this->setOverallUpdated();
+				this->markEverythingUpdated();
 
 				return true;
 			}
@@ -2290,13 +2339,13 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Applies a function on every pixel in rows order (Single loop).
 			 * @note Returning false will skip the pixel.
 			 * @warning This method is slow.
-			 * @tparam color_data_t The color data type.
-			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, uint32_t coordX, uint32_t coordY) -> bool
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, dimension_t coordX, dimension_t coordY) -> bool
 			 * @return void
 			 */
 			template< typename color_data_t = float >
 			void
-			forEachPixelRowMajor (const std::function< bool (Color< color_data_t > &, size_t, size_t) > & updatePixel) noexcept requires (std::is_floating_point_v< color_data_t >)
+			forEachPixelRowMajor (const std::function< bool (Color< color_data_t > &, dimension_t, dimension_t) > & updatePixel) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
 				const auto pixelCount = static_cast< size_t >(this->pixelCount());
 
@@ -2317,17 +2366,17 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Applies a function on every pixel in columns order (X^Y loops).
 			 * @note Returning false will skip the pixel.
 			 * @warning This method is slow.
-			 * @tparam color_data_t The color data type.
-			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, size_t, size_t) -> bool
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, dimension_t coordX, dimension_t coordY) -> bool
 			 * @return void
 			 */
 			template< typename color_data_t = float >
 			void
-			forEachPixelColMajor (const std::function< bool (Color< color_data_t > &, size_t, size_t) > & updatePixel) noexcept requires (std::is_floating_point_v< color_data_t >)
+			forEachPixelColMajor (const std::function< bool (Color< color_data_t > &, dimension_t, dimension_t) > & updatePixel) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				for ( uint32_t coordX = 0; coordX < m_width; coordX++ )
+				for ( dimension_t coordX = 0; coordX < m_width; ++coordX )
 				{
-					for ( uint32_t coordY = 0; coordY < m_height; coordY++ )
+					for ( dimension_t coordY = 0; coordY < m_height; ++coordY )
 					{
 						const auto pixelIndex = this->pixelIndex(coordX, coordY);
 
@@ -2433,7 +2482,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			clampPixelCoords (size_t & coordX, size_t & coordY) const noexcept
+			clampPixelCoords (dimension_t & coordX, dimension_t & coordY) const noexcept
 			{
 				if ( coordX >= m_width )
 				{
@@ -2448,34 +2497,34 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the zero value for a pixmap component.
-			 * @return type_t
+			 * @return pixel_data_t
 			 */
 			[[nodiscard]]
 			static
 			constexpr
-			precision_t
+			pixel_data_t
 			zero () noexcept
 			{
-				return static_cast< precision_t >(0);
+				return static_cast< pixel_data_t >(0);
 			}
 
 			/**
 			 * @brief Returns the one value for a pixmap component.
-			 * @return type_t
+			 * @return pixel_data_t
 			 */
 			[[nodiscard]]
 			static
 			constexpr
-			precision_t
+			pixel_data_t
 			one () noexcept
 			{
-				if constexpr ( std::is_floating_point_v< precision_t > )
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
 				{
-					return static_cast< precision_t >(1);
+					return static_cast< pixel_data_t >(1);
 				}
 				else
 				{
-					return std::numeric_limits< precision_t >::max();
+					return std::numeric_limits< pixel_data_t >::max();
 				}
 			}
 
@@ -2503,11 +2552,11 @@ namespace EmEn::Libs::PixelFactory
 			static constexpr auto UVWrappingEnabled{0UL};
 			static constexpr auto UpdatedRegionMarkerEnabled{1UL};
 
-			size_t m_width{0};
-			size_t m_height{0};
+			dimension_t m_width{0};
+			dimension_t m_height{0};
 			ChannelMode m_channelMode{ChannelMode::RGB};
-			std::vector< precision_t > m_data{};
-			Math::Rectangle< uint32_t > m_lastUpdatedRegion;
+			std::vector< pixel_data_t > m_data{};
+			Math::Rectangle< dimension_t > m_lastUpdatedRegion;
 			std::array< bool, 8 > m_flags{
 				true/*UVWrappingEnabled*/,
 				true/*UpdatedRegionMarkerEnabled*/,
@@ -2521,48 +2570,50 @@ namespace EmEn::Libs::PixelFactory
 	};
 
 	/**
-	 * @brief dataConversion
+	 * @brief Converts a pixmap from a data to another.
+	 * @tparam input_pixel_data_t The pixel data type of the source pixmap.
+	 * @tparam output_pixel_data_t The pixel data type of the target pixmap.
 	 * @param input A reference to input pixmap.
-	 * @return Pixmap< output_t >
+	 * @return Pixmap< output_pixel_data_t >
 	 */
-	template< typename input_t, typename output_t >
+	template< typename input_pixel_data_t, typename output_pixel_data_t >
 	[[nodiscard]]
-	Pixmap< output_t >
-	dataConversion (const Pixmap< input_t > & input) noexcept requires (std::is_arithmetic_v< input_t >, std::is_arithmetic_v< output_t >)
+	Pixmap< output_pixel_data_t >
+	dataConversion (const Pixmap< input_pixel_data_t > & input) noexcept requires (std::is_arithmetic_v< input_pixel_data_t >, std::is_arithmetic_v< output_pixel_data_t >)
 	{
-		Pixmap< output_t > output{input.width(), input.height(), input.channelMode()};
+		Pixmap< output_pixel_data_t > output{input.width(), input.height(), input.channelMode()};
 
 		const auto & inputData = input.data();
 		auto & outputData = output.data();
 
 		for ( size_t index = 0; index < inputData.size(); index++ )
 		{
-			if constexpr ( std::is_floating_point_v< input_t > )
+			if constexpr ( std::is_floating_point_v< input_pixel_data_t > )
 			{
 				/* float -> float */
-				if constexpr ( std::is_floating_point_v< output_t > )
+				if constexpr ( std::is_floating_point_v< output_pixel_data_t > )
 				{
-					outputData[index] = static_cast< output_t >(inputData[index]);
+					outputData[index] = static_cast< output_pixel_data_t >(inputData[index]);
 				}
 				/* float -> integer */
 				else
 				{
-					outputData[index] = static_cast< output_t >(std::round(inputData[index] * std::numeric_limits< output_t >::max()));
+					outputData[index] = static_cast< output_pixel_data_t >(std::round(inputData[index] * std::numeric_limits< output_pixel_data_t >::max()));
 				}
 			}
 			else
 			{
 				/* integer -> float */
-				if constexpr ( std::is_floating_point_v< output_t > )
+				if constexpr ( std::is_floating_point_v< output_pixel_data_t > )
 				{
-					outputData[index] = static_cast< output_t >(inputData[index]) / static_cast< output_t >(std::numeric_limits< input_t >::max());
+					outputData[index] = static_cast< output_pixel_data_t >(inputData[index]) / static_cast< output_pixel_data_t >(std::numeric_limits< input_pixel_data_t >::max());
 				}
 				/* integer -> integer */
 				else
 				{
-					const auto ratio = static_cast< float >(std::numeric_limits< output_t >::max()) / static_cast< float >(std::numeric_limits< input_t >::max());
+					const auto ratio = static_cast< float >(std::numeric_limits< output_pixel_data_t >::max()) / static_cast< float >(std::numeric_limits< input_pixel_data_t >::max());
 
-					outputData[index] = static_cast< output_t >(std::round(ratio * inputData[index]));
+					outputData[index] = static_cast< output_pixel_data_t >(std::round(ratio * inputData[index]));
 				}
 			}
 		}
