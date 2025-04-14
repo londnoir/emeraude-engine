@@ -81,6 +81,8 @@ namespace EmEn::Vulkan
 		std::unique_ptr< Sync::Fence > inFlightFence;
 	};
 
+
+
 	/**
 	 * @brief The vulkan swap chain class.
 	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
@@ -92,6 +94,16 @@ namespace EmEn::Vulkan
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"VulkanSwapChain"};
+
+			/** @brief The swap-chain status enumeration. */
+			enum class Status: uint8_t
+			{
+				Uninitialized,
+				Ready,
+				Degraded,
+				UnderConstruction,
+				Failure
+			};
 
 			/**
 			 * @brief Constructs a swap chain.
@@ -225,6 +237,28 @@ namespace EmEn::Vulkan
 			}
 
 			/**
+			 * @brief Returns the number of sample in use.
+			 * @return uint32_t
+			 */
+			[[nodiscard]]
+			uint32_t
+			sampleCount () const noexcept
+			{
+				return m_sampleCount;
+			}
+
+			/**
+			 * @brief Returns whether the multisampling is enabled and effective.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isMultisamplingEnabled () const noexcept
+			{
+				return this->sampleCount() > 1;
+			}
+
+			/**
 			 * @brief Returns the number of images in the swap chain.
 			 * @return uint32_t
 			 */
@@ -251,14 +285,14 @@ namespace EmEn::Vulkan
 			bool submitCommandBuffer (const std::shared_ptr< CommandBuffer > & commandBuffer, const uint32_t & imageIndex) noexcept;
 
 			/**
-			 * @brief Returns whether the swap chain is still valid or not.
-			 * @return bool
+			 * @brief Returns the current status of the swap-chain.
+			 * @return Status
 			 */
 			[[nodiscard]]
-			bool
-			isDegraded () const noexcept
+			Status
+			status () const noexcept
 			{
-				return m_flags[SwapChainRecreationRequested];
+				return m_status;
 			}
 
 		private:
@@ -324,18 +358,11 @@ namespace EmEn::Vulkan
 
 			/**
 			 * @brief Returns the dimensions of the swap chain.
-			 * @param capabilities
+			 * @param capabilities A reference to the surface capabilities structure.
 			 * @return VkExtent2D
 			 */
 			[[nodiscard]]
 			VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR & capabilities) const noexcept;
-
-			/**
-			 * @brief Checks the prerequisites to create a swap chain.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool checkPrerequisites () const noexcept;
 
 			/**
 			 * @brief Prepares data to complete the swap chain framebuffer.
@@ -417,26 +444,25 @@ namespace EmEn::Vulkan
 
 			/* Flag names. */
 			static constexpr auto ShowInformation{0UL};
-			static constexpr auto Ready{1UL};
-			static constexpr auto SwapChainRecreationRequested{2UL};
-			static constexpr auto TripleBufferingEnabled{3UL};
-			static constexpr auto VSyncEnabled{4UL};
-			static constexpr auto MultisamplingEnabled{5UL};
+			static constexpr auto TripleBufferingEnabled{1UL};
+			static constexpr auto VSyncEnabled{2UL};
 
 			Window * m_window;
 			VkSwapchainKHR m_handle{VK_NULL_HANDLE};
 			VkSwapchainCreateInfoKHR m_createInfo{};
+			Status m_status{Status::Uninitialized};
+			uint32_t m_sampleCount{1};
 			uint32_t m_imageCount{0};
 			uint32_t m_currentFrame{0};
 			std::vector< Frame > m_frames;
 			Graphics::ViewMatrices2DUBO m_viewMatrices;
 			std::array< bool, 8 > m_flags{
 				false/*ShowInformation*/,
-				false/*Ready*/,
-				false/*SwapChainRecreationRequested*/,
 				false/*TripleBufferingEnabled*/,
 				false/*VSyncEnabled*/,
-				false/*MultisamplingEnabled*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
+				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/
 			};

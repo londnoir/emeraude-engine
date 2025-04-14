@@ -266,14 +266,15 @@ namespace EmEn::Graphics
 					{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 512},
 					/* NOTE: SSBO (Shader Storage Buffer Object) */
 					{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64},
-					/* NOTE: Dynamic UBO */
+					/* NOTE: Dynamic UBO (Uniform Buffer Object) */
 					{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 512},
-					/* NOTE: Dynamic SSBO */
+					/* NOTE: Dynamic SSBO (Shader Storage Buffer Object) */
 					{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 64},
 					/* NOTE:  */
 					{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 32},
-					/* NOTE: Special UBO. */
-					//{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512}, // TODO: Check to enable this for reusable UBO between render calls
+					/* NOTE: Special UBO (Uniform Buffer Object). */
+					// TODO: Check to enable this for re-usable UBO between render calls.
+					//{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512},
 					/* NOTE:  */
 					//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0},
 					/* NOTE:  */
@@ -519,7 +520,7 @@ namespace EmEn::Graphics
 			return;
 		}
 
-		if ( m_swapChain->isDegraded() )
+		if ( m_swapChain->status() == SwapChain::Status::Degraded )
 		{
 			TraceInfo{ClassId} << "The swap-chain is degraded !";
 
