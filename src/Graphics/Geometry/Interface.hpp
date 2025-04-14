@@ -235,14 +235,14 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.
-			 * @return const Libraries::Math::Cuboid< float > &
+			 * @return const Libs::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding sphere surrounding the renderable.
-			 * @return const Libraries::Math::Sphere< float > &
+			 * @return const Libs::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;

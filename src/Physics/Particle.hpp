@@ -203,7 +203,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the current particle velocity.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &
@@ -214,7 +214,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Gives access to the velocity vector.
-			 * @return Libraries::Math::Vector< 3, float > &
+			 * @return Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > &

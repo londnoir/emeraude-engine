@@ -513,7 +513,7 @@ namespace EmEn::Graphics::RenderableInstance
 
 			/**
 			 * @brief Returns the local transformation matrix.
-			 * @return const Libraries::Math::Matrix< 4, float > &
+			 * @return const Libs::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Matrix< 4, float > &
@@ -621,7 +621,7 @@ namespace EmEn::Graphics::RenderableInstance
 
 			/**
 			 * @brief Returns the position where should be the renderable instance renderer in the world.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Vector< 3, float > worldPosition () const noexcept = 0;

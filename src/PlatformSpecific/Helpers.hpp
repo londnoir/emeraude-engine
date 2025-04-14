@@ -29,36 +29,25 @@
 /* Project configuration files. */
 #include "platform.hpp"
 
-#if IS_LINUX
-
-namespace EmEn::PlatformSpecific
-{
-
-}
-
-#elif IS_MACOS
-
-namespace EmEn::PlatformSpecific
-{
-
-}
-
-#elif IS_WINDOWS
-
 /* STL inclusions. */
 #include <string>
-#include <map>
-#include <vector>
+#if IS_WINDOWS
+	#include <map>
+	#include <vector>
+#endif
 
 /* Third-party inclusions. */
-#ifndef NOMINMAX
-#define NOMINMAX
+#if IS_WINDOWS
+	#ifndef NOMINMAX
+	#define NOMINMAX
+	#endif
+	#include <Windows.h>
+	#include <shtypes.h>
 #endif
-#include <Windows.h>
-#include <shtypes.h>
 
 namespace EmEn::PlatformSpecific
 {
+#if IS_WINDOWS
 	/**
 	 * @brief Returns a value in a wide string from the Windows register.
 	 * @param regSubKey A reference to a wide string.
@@ -123,6 +112,5 @@ namespace EmEn::PlatformSpecific
 	 */
 	[[nodiscard]]
 	std::vector< COMDLG_FILTERSPEC > createExtensionFilter (const std::vector< std::pair< std::string, std::vector< std::string > > > & filters, std::map< std::wstring, std::wstring > & dataHolder);
-}
-
 #endif
+}

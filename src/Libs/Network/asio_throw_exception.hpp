@@ -26,6 +26,9 @@
 
 #pragma once
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* STL inclusions. */
 #include <iostream>
 

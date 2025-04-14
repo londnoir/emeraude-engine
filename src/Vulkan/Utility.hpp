@@ -54,7 +54,7 @@ namespace EmEn::Vulkan
 	/**
 	 * @brief Gets the extensions available from Vulkan in a string.
 	 * @param type Which type of extensions.
-	 * @param extensions A reference to a extension list.
+	 * @param extensions A reference to an extension list.
 	 * @return std::string
 	 */
 	[[nodiscard]]

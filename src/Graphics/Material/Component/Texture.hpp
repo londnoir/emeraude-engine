@@ -182,7 +182,7 @@ namespace EmEn::Graphics::Material::Component
 
 			/**
 			 * @brief Returns the texture coordinates scale.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &

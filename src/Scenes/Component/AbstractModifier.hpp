@@ -201,7 +201,7 @@ namespace EmEn::Scenes::Component
 			 * @brief Returns the force applied to an entity.
 			 * @param worldCoordinates A reference to a cartesian frame.
 			 * @param worldBoundingSphere A reference to a sphere.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			virtual Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept = 0;
 
@@ -209,7 +209,7 @@ namespace EmEn::Scenes::Component
 			 * @brief Returns the force applied to an entity.
 			 * @param worldCoordinates A reference to a cartesian frame.
 			 * @param worldBoundingBox A reference to a sphere.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			virtual Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept = 0;
 

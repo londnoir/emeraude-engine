@@ -36,12 +36,13 @@
 #include <string>
 #include <filesystem>
 
-/* Third-party inclusions. */
+/* Third-party libraries */
 #include <unistd.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 
 /* Local inclusions. */
+#include "../Tracer.hpp"
 #include "Libs/String.hpp"
 
 namespace EmEn::PlatformSpecific
@@ -50,13 +51,13 @@ namespace EmEn::PlatformSpecific
 	SystemInfo::fetchOSInformation () noexcept
 	{
 		{
-			std::ifstream osReleaseFile{"/etc/os-release"};
+			std::ifstream file{"/etc/os-release"};
 
-			if ( osReleaseFile.is_open() )
+			if ( file.is_open() )
 			{
 				std::string line;
 
-				while ( std::getline(osReleaseFile, line) )
+				while ( std::getline(file, line) )
 				{
 					if ( line.starts_with("PRETTY_NAME") )
 					{
@@ -92,6 +93,43 @@ namespace EmEn::PlatformSpecific
 			m_OSInformation.systemVersion = info.version;
 			m_OSInformation.computerName = info.nodename;
 			m_OSInformation.rawInformation = rawInformation.str();
+		}
+
+		/* NOTE: Get the system unique identifier. */
+		{
+			// Call: "cat /var/lib/dbus/machine-id"
+			// System: cc4719450adf495083f5ab483b0cebca
+			// Requested: cc471945-0adf-4950-83f5-ab483b0cebca
+
+			std::ifstream file{"/var/lib/dbus/machine-id"};
+
+			if ( file.is_open() )
+			{
+				std::string line;
+
+				std::getline(file, line);
+
+				if ( line.length() == 32 )
+				{
+					m_OSInformation.machineUUID.resize(36);
+
+					size_t destIndex = 0;
+
+					for ( size_t index = 0; index < 32; ++index )
+					{
+						m_OSInformation.machineUUID[destIndex++] = line[index];
+
+						if ( index == 8 || index == 13 || index == 18 || index == 23 )
+						{
+							m_OSInformation.machineUUID[destIndex++] = '-';
+						}
+					}
+				}
+				else
+				{
+					std::cerr << "Failed to get machine UUID !" "\n";
+				}
+			}
 		}
 
 		return true;

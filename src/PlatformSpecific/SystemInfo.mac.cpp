@@ -32,6 +32,7 @@
 #if IS_MACOS
 
 /* STL inclusions. */
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <cstdio> // FIXME: Remove this
@@ -41,6 +42,7 @@
 #include <mach/mach.h>
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
+#include <IOKit/IOKitLib.h>
 
 namespace EmEn::PlatformSpecific
 {
@@ -75,6 +77,27 @@ namespace EmEn::PlatformSpecific
 			// macOS 10.1.1 and newer
 			m_OSInformation.systemName = (std::stringstream{} << "Apple Mac OS X " << (major - 4) << '.' << minor).str();
 			m_OSInformation.systemVersion = (std::stringstream{} << "10." << major << '.' << minor).str();
+		}
+
+		{
+			io_registry_entry_t ioRegistryRoot = IORegistryEntryFromPath(kIOMainPortDefault, "IOService:/");
+
+			auto UUIDString = (CFStringRef) IORegistryEntryCreateCFProperty(ioRegistryRoot, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+
+			const char * buffer = CFStringGetCStringPtr(UUIDString, kCFStringEncodingMacRoman);
+
+			if ( buffer != nullptr )
+			{
+				m_OSInformation.machineUUID.assign(buffer);
+			}
+			else
+			{
+				std::cerr << "Unable to get the machine UUID !" "\n";
+			}
+
+			CFRelease(UUIDString);
+
+			IOObjectRelease(ioRegistryRoot);
 		}
 
 		return true;

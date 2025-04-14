@@ -100,20 +100,34 @@ namespace EmEn
 			 * @brief Notifies a message.
 			 * @param message A reference to a string.
 			 * @param duration The delay of the message staying on screen. Default 3 seconds.
-			 * @return bool
+			 * @return void
 			 */
-			bool push (const std::string & message, uint32_t duration = DefaultDuration) noexcept;
+			void
+			push (const std::string & message, uint32_t duration = DefaultDuration) noexcept
+			{
+				if ( !this->usable() )
+				{
+					return;
+				}
+
+				m_notifications.emplace_back(message, duration);
+			}
 
 			/**
 			 * @brief Notifies a message.
 			 * @param message A reference to a blob.
 			 * @param duration The delay of the message staying on screen. Default 3 seconds.
-			 * @return bool
+			 * @return void
 			 */
-			bool
+			void
 			push (const Libs::BlobTrait & message, uint32_t duration = DefaultDuration) noexcept
 			{
-				return this->push(message.get(), duration);
+				if ( !this->usable() )
+				{
+					return;
+				}
+
+				m_notifications.emplace_back(message.get(), duration);
 			}
 
 			/**
@@ -135,6 +149,12 @@ namespace EmEn
 			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/**
+			 * @brief Updates the notifications.
+			 * @return void
+			 */
+			void updateNotifications () noexcept;
+
+			/**
 			 * @brief Updates the notification area pixel buffer.
 			 * @return void
 			 */
@@ -145,7 +165,8 @@ namespace EmEn
 			std::shared_ptr< Overlay::Surface > m_surface;
 			std::shared_ptr< Graphics::FontResource > m_font;
 			Libs::PixelFactory::TextProcessor< uint8_t > m_processor;
-			std::vector< std::pair< std::string, Libs::Time::TimerID > > m_notifications;
-			mutable std::mutex m_lock;
+			Libs::Time::TimerID m_timerID;
+			std::vector< std::pair< std::string, int32_t > > m_notifications;
+			mutable std::mutex m_notificationAccess;
 	};
 }

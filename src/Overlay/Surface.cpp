@@ -99,6 +99,7 @@ namespace EmEn::Overlay
 	bool
 	Surface::isBelowPoint (float positionX, float positionY) const noexcept
 	{
+		/* NOTE: Check on X axis */
 		{
 			const auto screenWidth = static_cast< float >(m_framebufferProperties.width());
 
@@ -117,6 +118,7 @@ namespace EmEn::Overlay
 			}
 		}
 
+		/* NOTE: Check on Y axis */
 		{
 			const auto screenHeight = static_cast< float >(m_framebufferProperties.height());
 
@@ -154,11 +156,11 @@ namespace EmEn::Overlay
 		}
 
 		/* Get the pixel coordinates on the surface. */
-		const auto surfaceX = static_cast< size_t >(screenX - static_cast< float >(m_framebufferProperties.width()) * m_rectangle.left());
-		const auto surfaceY = static_cast< size_t >(screenY - static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top());
+		const auto surfaceX = static_cast< size_t >(screenX - (static_cast< float >(m_framebufferProperties.width()) * m_rectangle.left()));
+		const auto surfaceY = static_cast< size_t >(screenY - (static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top()));
 
 		/* Get that pixel color from the pixmap. */
-		const auto pixelColor = m_localData.pixel(surfaceX, surfaceY);
+		const auto pixelColor = m_frontLocalData.safePixel(surfaceX, surfaceY);
 		const auto blocked = pixelColor.alpha() > m_alphaThreshold;
 
 		return blocked;
@@ -184,38 +186,60 @@ namespace EmEn::Overlay
 		const auto textureWidth = framebuffer.getSurfaceWidth(geometry.width());
 		const auto textureHeight = framebuffer.getSurfaceHeight(geometry.height());
 
-		if ( !m_localData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
+		if ( !m_backLocalData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
 		{
 			TraceError{ClassId} << "Unable to initialize a " << textureWidth << "x" << textureHeight << "px pixmap for the surface '" << this->name() << "' !";
 
 			return false;
 		}
 
-		if ( !this->createImage(renderer) )
+		/* NOTE: We only need one sampler. */
+		if ( m_sampler == nullptr || !m_sampler->isCreated() )
 		{
+			if ( !this->getSampler(renderer) )
+			{
+				return false;
+			}
+		}
+
+		if ( !this->createImage(renderer) || !this->createImageView() || !this->createDescriptorSet(renderer) )
+		{
+			this->clearBackFramebuffer();
+
 			return false;
 		}
 
-		if ( !this->createImageView() )
-		{
-			return false;
-		}
+		m_flags[ReadyToSwap] = true;
 
-		if ( !this->getSampler(renderer) )
-		{
-			return false;
-		}
-
-		return this->createDescriptorSet(renderer);
+		/* NOTE: At first creation, we swap automatically. */
+		return this->swapFramebuffers();
 	}
 
 	bool
 	Surface::destroyFromHardware () noexcept
 	{
-		if ( m_descriptorSet != nullptr )
+		/* NOTE: Cleaning the back buffer. */
+		this->clearBackFramebuffer();
+
+		/* NOTE: Cleaning the front buffer. */
 		{
-			m_descriptorSet->destroy();
-			m_descriptorSet.reset();
+			if ( m_frontDescriptorSet != nullptr )
+			{
+				m_frontDescriptorSet->destroy();
+				m_frontDescriptorSet.reset();
+			}
+
+			if ( m_frontImageView != nullptr )
+			{
+				m_frontImageView->destroyFromHardware();
+				m_frontImageView.reset();
+			}
+
+			if ( m_frontImage != nullptr )
+			{
+				m_frontImage->destroyFromHardware();
+				m_frontImage.reset();
+			}
 		}
 
 		if ( m_sampler != nullptr )
@@ -224,24 +248,17 @@ namespace EmEn::Overlay
 			m_sampler.reset();
 		}
 
-		if ( m_imageView != nullptr )
-		{
-			m_imageView->destroyFromHardware();
-			m_imageView.reset();
-		}
-
-		if ( m_image != nullptr )
-		{
-			m_image->destroyFromHardware();
-			m_image.reset();
-		}
-
 		return true;
 	}
 
 	bool
 	Surface::updateVideoMemory (Renderer & renderer) noexcept
 	{
+		if ( !m_framebufferAccess.try_lock() )
+		{
+			return true;
+		}
+
 		if ( !this->isVideoMemorySizeValid() )
 		{
 			this->updateModelMatrix();
@@ -249,6 +266,8 @@ namespace EmEn::Overlay
 			if ( !this->updatePhysicalRepresentation(renderer) )
 			{
 				TraceError{ClassId} << "Unable to update the physical representation of surface '" << this->name() << " !";
+
+				m_framebufferAccess.unlock();
 
 				return false;
 			}
@@ -260,21 +279,119 @@ namespace EmEn::Overlay
 			this->onSurfaceReadyForUsage();
 		}
 
-		if ( !this->isVideoMemoryUpToDate() )
+		/* NOTE: Updating the front framebuffer when ready for the application. */
+		if ( m_frontImage != nullptr && !this->isVideoMemoryUpToDate() )
 		{
 			const MemoryRegion memoryRegion{
-				m_localData.data().data(),
-				m_localData.bytes()
+				m_frontLocalData.data().data(),
+				m_frontLocalData.bytes()
 			};
 
-			if ( !m_image->writeData(renderer.transferManager(), memoryRegion) )
+			if ( !m_frontImage->writeData(renderer.transferManager(), memoryRegion) )
 			{
 				TraceError{ClassId} << "Unable to update the content of surface '" << this->name() << " !";
+
+				m_framebufferAccess.unlock();
 
 				return false;
 			}
 
 			m_flags[VideoMemoryUpToDate] = true;
+		}
+
+		m_framebufferAccess.unlock();
+
+		return true;
+	}
+
+	bool
+	Surface::getSampler (Renderer & renderer) noexcept
+	{
+		m_sampler = renderer.getSampler(0, 0);
+		m_sampler->setIdentifier(ClassId, this->name(), "Sampler");
+
+		if ( m_sampler == nullptr )
+		{
+			TraceError{ClassId} << "Unable to get a sampler for the surface '" << this->name() << "' !";
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
+	Surface::createImage (Renderer & renderer) noexcept
+	{
+		if ( !m_backLocalData.isValid() )
+		{
+			TraceError{ClassId} << "The back framebuffer local pixmap is invalid for the surface '" << this->name() << "' ! Unable to create the image for the GPU.";
+
+			return false;
+		}
+
+		if ( m_backImage != nullptr && m_backImage->isCreated() )
+		{
+			TraceError{ClassId} << "The back framebuffer image is already created for the surface '" << this->name() << "' ! Destroy it before.";
+
+			return false;
+		}
+
+		m_backImage = std::make_shared< Image >(
+			renderer.device(),
+			VK_IMAGE_TYPE_2D,
+			Image::getFormat< uint8_t >(m_backLocalData.colorCount()),
+			VkExtent3D{m_backLocalData.width(), m_backLocalData.height(), 1U},
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			0,
+			1,
+			1,
+			VK_SAMPLE_COUNT_1_BIT,
+			VK_IMAGE_TILING_OPTIMAL
+		);
+		m_backImage->setIdentifier(ClassId, this->name(), "Image");
+
+		if ( !m_backImage->create(renderer.transferManager(), m_backLocalData) )
+		{
+			TraceError{ClassId} << "Unable to create the back framebuffer image for the surface '" << this->name() << "' !";
+
+			m_backImage.reset();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	bool
+	Surface::createImageView () noexcept
+	{
+		if ( m_backImageView != nullptr && m_backImageView->isCreated() )
+		{
+			TraceError{ClassId} << "The back framebuffer image view is already created for the surface '" << this->name() << "' ! Destroy it before.";
+
+			return false;
+		}
+
+		m_backImageView = std::make_shared< ImageView >(
+			m_backImage,
+			VK_IMAGE_VIEW_TYPE_2D,
+			VkImageSubresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel = 0,
+				.levelCount = m_backImage->createInfo().mipLevels,
+				.baseArrayLayer = 0,
+				.layerCount = m_backImage->createInfo().arrayLayers
+			}
+		);
+		m_backImageView->setIdentifier(ClassId, this->name(), "ImageView");
+
+		if ( !m_backImageView->createOnHardware() )
+		{
+			TraceError{ClassId} << "Unable to create the back framebuffer image view for the surface '" << this->name() << "' !";
+
+			return false;
 		}
 
 		return true;
@@ -287,24 +404,24 @@ namespace EmEn::Overlay
 
 		if ( descriptorSetLayout == nullptr )
 		{
-			TraceError{ClassId} << "Unable to get the overlay descriptor set layout for the surface '" << this->name() << "' !";
+			TraceError{ClassId} << "Unable to get the back framebuffer overlay descriptor set layout for the surface '" << this->name() << "' !";
 
 			return false;
 		}
 
-		m_descriptorSet = std::make_unique< DescriptorSet >(renderer.descriptorPool(), descriptorSetLayout);
-		m_descriptorSet->setIdentifier(ClassId, this->name(), "DescriptorSet");
+		m_backDescriptorSet = std::make_unique< DescriptorSet >(renderer.descriptorPool(), descriptorSetLayout);
+		m_backDescriptorSet->setIdentifier(ClassId, this->name(), "DescriptorSet");
 
-		if ( !m_descriptorSet->create() )
+		if ( !m_backDescriptorSet->create() )
 		{
-			m_descriptorSet.reset();
+			m_backDescriptorSet.reset();
 
 			TraceError{ClassId} << "Unable to create the surface descriptor set for the surface '" << this->name() << "' !";
 
 			return false;
 		}
 
-		if ( !m_descriptorSet->writeCombinedImageSampler(0, *m_image, *m_imageView, *m_sampler) )
+		if ( !m_backDescriptorSet->writeCombinedImageSampler(0, *m_backImage, *m_backImageView, *m_sampler) )
 		{
 			TraceError{ClassId} << "Unable to write to the surface descriptor set of the surface '" << this->name() << "' !";
 
@@ -315,108 +432,55 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	Surface::createImage (Renderer & renderer) noexcept
+	Surface::swapFramebuffers () noexcept
 	{
-		if ( !m_localData.isValid() )
+		if ( !m_flags[ReadyToSwap] )
 		{
-			TraceError{ClassId} << "The local pixmap is invalid !";
+			TraceWarning{ClassId} << "The surface '" << this->name() << "' is not ready to swap !";
 
 			return false;
 		}
 
-		if ( m_image != nullptr && m_image->isCreated() )
+		if ( m_backImage == nullptr || m_backImageView == nullptr || m_backDescriptorSet == nullptr )
 		{
-			TraceError{ClassId} << "The image is already created ! Destroy it before.";
+			TraceError{ClassId} << "The surface '" << this->name() << "' back framebuffer is invalid !";
 
 			return false;
 		}
 
-		const auto width = static_cast< uint32_t >(m_localData.width());
-		const auto height = static_cast< uint32_t >(m_localData.height());
+		/* NOTE: Swap the local data. */
+		std::swap(m_backLocalData, m_frontLocalData);
 
-		m_image = std::make_shared< Image >(
-			renderer.device(),
-			VK_IMAGE_TYPE_2D,
-			Image::getFormat< uint8_t >(m_localData.colorCount()),
-			VkExtent3D{width, height, 1U},
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			0,
-			1,
-			1,
-			VK_SAMPLE_COUNT_1_BIT,
-			VK_IMAGE_TILING_OPTIMAL
-		);
-		m_image->setIdentifier(ClassId, this->name(), "Image");
+		/* NOTE: Swap the GPU resource pointers. */
+		m_backImage.swap(m_frontImage);
+		m_backImageView.swap(m_frontImageView);
+		m_backDescriptorSet.swap(m_frontDescriptorSet);
 
-		if ( !m_image->create(renderer.transferManager(), m_localData) )
-		{
-			TraceError{ClassId} << "Unable to create the image for the surface '" << this->name() << "' !";
-
-			m_image.reset();
-
-			return false;
-		}
+		m_flags[ReadyToSwap] = false;
 
 		return true;
 	}
 
-	bool
-	Surface::createImageView () noexcept
+	void
+	Surface::clearBackFramebuffer () noexcept
 	{
-		if ( m_imageView != nullptr && m_imageView->isCreated() )
+		if ( m_backDescriptorSet != nullptr )
 		{
-			TraceError{ClassId} << "The image view is created ! Destroy it before.";
-
-			return false;
+			m_backDescriptorSet->destroy();
+			m_backDescriptorSet.reset();
 		}
 
-		m_imageView = std::make_shared< ImageView >(
-			m_image,
-			VK_IMAGE_VIEW_TYPE_2D,
-			VkImageSubresourceRange{
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-				.baseMipLevel = 0,
-				.levelCount = m_image->createInfo().mipLevels,
-				.baseArrayLayer = 0,
-				.layerCount = m_image->createInfo().arrayLayers
-			}
-		);
-		m_imageView->setIdentifier(ClassId, this->name(), "ImageView");
-
-		if ( !m_imageView->createOnHardware() )
+		if ( m_backImageView != nullptr )
 		{
-			TraceError{ClassId} << "Unable to create the image view for the surface '" << this->name() << "' !";
-
-			return false;
+			m_backImageView->destroyFromHardware();
+			m_backImageView.reset();
 		}
 
-		return true;
-	}
-
-	bool
-	Surface::getSampler (Renderer & renderer) noexcept
-	{
-		if ( m_sampler != nullptr && m_sampler->isCreated() )
+		if ( m_backImage != nullptr )
 		{
-			TraceError{ClassId} << "The sampler is created ! Destroy it before.";
-
-			return false;
+			m_backImage->destroyFromHardware();
+			m_backImage.reset();
 		}
-
-		m_sampler = renderer.getSampler(0, 0);
-		m_sampler->setIdentifier(ClassId, this->name(), "Sampler");
-
-		if ( m_sampler == nullptr )
-		{
-			TraceError{ClassId} << "Unable to get a sampler for the surface '" << this->name() << "' !";
-
-			return false;
-		}
-
-		TraceSuccess{ClassId} << "The sampler for the '" << this->name() << "' surface is created !";
-
-		return true;
 	}
 
 	bool
@@ -428,7 +492,7 @@ namespace EmEn::Overlay
 		const auto textureWidth = framebuffer.getSurfaceWidth(geometry.width());
 		const auto textureHeight = framebuffer.getSurfaceHeight(geometry.height());
 
-		if ( m_localData.width() == textureWidth && m_localData.height() == textureHeight )
+		if ( m_backLocalData.width() == textureWidth && m_backLocalData.height() == textureHeight )
 		{
 			return true;
 		}
@@ -436,41 +500,33 @@ namespace EmEn::Overlay
 #ifdef DEBUG
 		TraceDebug{ClassId} <<
 			"Resizing the surface '" << this->name() << "' "
-			"from " << m_localData.width() << 'x' << m_localData.height() << " "
+			"from " << m_backLocalData.width() << 'x' << m_backLocalData.height() << " "
 			"to " << textureWidth << 'x' << textureHeight << " ...";
 #endif
 
-		if ( !m_localData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
+		if ( !m_backLocalData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
 		{
 			TraceError{ClassId} << "Unable to resize the pixmap for the surface '" << this->name() << "' !";
 
 			return false;
 		}
 
-		/* First destroy the image and the image view from GPU first. */
+		this->clearBackFramebuffer();
+
+		if ( !this->createImage(renderer) || !this->createImageView() || !this->createDescriptorSet(renderer) )
 		{
-			m_descriptorSet->destroy();
-			m_descriptorSet.reset();
+			this->clearBackFramebuffer();
 
-			m_imageView->destroyFromHardware();
-			m_imageView.reset();
-
-			/* FIXME: This causes a VK_ERROR_DEVICE_LOST */
-			m_image->destroyFromHardware();
-			m_image.reset();
-		}
-
-		/* Then recreate the framebuffer. */
-		if ( !this->createImage(renderer) )
-		{
 			return false;
 		}
 
-		if ( !this->createImageView() )
+		m_flags[ReadyToSwap] = true;
+
+		if ( m_flags[AutoSwapEnabled] )
 		{
-			return false;
+			return this->swapFramebuffers();
 		}
 
-		return this->createDescriptorSet(renderer);
+		return true;
 	}
 }

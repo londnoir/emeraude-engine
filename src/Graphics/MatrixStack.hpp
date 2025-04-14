@@ -111,7 +111,7 @@ namespace EmEn::Graphics
 
 			/**
 			 * @brief Returns the top matrix or Identity if the stack is empty.
-			 * @return const Libraries::Math::Matrix< 4, float > &
+			 * @return const Libs::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Matrix< 4, float > &

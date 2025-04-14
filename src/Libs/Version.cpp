@@ -26,6 +26,9 @@
 
 #include "Version.hpp"
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* STL inclusions. */
 #include <iostream>
 #include <sstream>

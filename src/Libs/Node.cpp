@@ -134,8 +134,8 @@ namespace EmEn::Libs
 	CartesianFrame< float >
 	Node::getWorldCartesianFrame () const noexcept
 	{
-		/* NOTE: As root, return the origin !
-		 * If the parent is the root node, just return the frame. */
+		/* NOTE: As root, return the origin!
+		 * If the parent is the root node, return the frame. */
 		if ( this->isRoot() || this->parent()->isRoot() )
 		{
 			return m_cartesianFrame;
@@ -147,7 +147,7 @@ namespace EmEn::Libs
 		{
 			const auto * node = this;
 
-			/* While parent is not root. */
+			/* While the parent is not root. */
 			while ( node != nullptr )
 			{
 				reversedTree.emplace(node->m_cartesianFrame);

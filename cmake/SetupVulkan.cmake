@@ -66,7 +66,7 @@ if ( NOT VULKAN_ENABLED )
 		message("Enabling Vulkan library from system ...")
 
 		if ( MSVC )
-			set(ENV{VULKAN_SDK} "C:/VulkanSDK/1.4.304.0/")
+			set(ENV{VULKAN_SDK} "C:/VulkanSDK/1.3.296.0/")
 		endif ()
 
 		find_package(Vulkan REQUIRED)
@@ -81,15 +81,17 @@ if ( NOT VULKAN_ENABLED )
 
 		message("Configuring GLSLang library as sub-project ...")
 
-		find_package(Python3 REQUIRED COMPONENTS Interpreter)
+		if ( NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glslang/External/spirv-tools )
+			message("Launching '${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glslang/update_glslang_sources.py' ...")
 
-		message("Launching '${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glslang/update_glslang_sources.py' ...")
+			find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-		execute_process(
-			COMMAND ${Python3_EXECUTABLE} update_glslang_sources.py
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glslang/
-			COMMAND_ERROR_IS_FATAL ANY
-		)
+			execute_process(
+				COMMAND ${Python3_EXECUTABLE} update_glslang_sources.py
+				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glslang/
+				COMMAND_ERROR_IS_FATAL ANY
+			)
+		endif ()
 
 		set(GLSLANG_TESTS_DEFAULT Off CACHE BOOL "" FORCE)
 		set(GLSLANG_ENABLE_INSTALL_DEFAULT Off CACHE BOOL "" FORCE)

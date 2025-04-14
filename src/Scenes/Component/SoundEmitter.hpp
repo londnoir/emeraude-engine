@@ -70,6 +70,11 @@ namespace EmEn::Scenes::Component
 			 */
 			SoundEmitter (const std::string & name, const AbstractEntity & parentEntity, bool permanent = false) noexcept;
 
+			/**
+			 * @brief Destroys the sound emitter. Taking cares there is no loading sound, or playing sound.
+			 */
+			~SoundEmitter () noexcept override;
+
 			/** @copydoc EmEn::Scenes::Component::Abstract::getComponentType() */
 			[[nodiscard]]
 			const char *

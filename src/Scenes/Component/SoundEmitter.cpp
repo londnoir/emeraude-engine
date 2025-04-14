@@ -60,6 +60,11 @@ namespace EmEn::Scenes::Component
 		this->setFlag(KeepInactiveSourceAlive, permanent);
 	}
 
+	SoundEmitter::~SoundEmitter () noexcept
+	{
+		this->stop();
+	}
+
 	void
 	SoundEmitter::move (const CartesianFrame< float > & worldCoordinates) noexcept
 	{

@@ -38,375 +38,643 @@ using namespace EmEn::Libs::Time::Elapsed;
 
 TEST(PixelFactoryProcessor, scale)
 {
-	Pixmap< uint8_t > baseImage;
+	PrintScopeRealTime globalStat{"Processor::scale(2.0F) [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(MediumRGBA, baseImage));
-	ASSERT_EQ(baseImage.width(), 512);
-	ASSERT_EQ(baseImage.height(), 512);
-	ASSERT_EQ(baseImage.colorCount(), 4);
+	Pixmap< uint8_t > source;
 
-	{
-		auto copyImage = baseImage;
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-		{
-			PrintScopeRealTime stat{"Processor::scale(2.0F)"};
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
-			Processor< uint8_t > processor{copyImage};
-
-			ASSERT_TRUE(processor.scaleValue(2.0F));
-		}
-
-		ASSERT_TRUE(FileIO::write(copyImage, {RES_BASE_PATH "/test-assets/tmp_scaleAllValue.png"}, true));
-	}
+	auto output = source;
 
 	{
-		auto copyImage = baseImage;
+		PrintScopeRealTime localStat{"Processor::scale(2.0F)"};
 
-		{
-			PrintScopeRealTime stat{"Processor::scale(1.5F, Channel::Red)"};
+		Processor< uint8_t > processor{output};
 
-			Processor< uint8_t > processor{copyImage};
-
-			ASSERT_TRUE(processor.scaleValue(2.0F, Channel::Red));
-		}
-
-		ASSERT_TRUE(FileIO::write(copyImage, {RES_BASE_PATH "/test-assets/tmp_scaleRedValue.png"}, true));
+		ASSERT_TRUE(processor.scaleValue(2.0F));
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_scaleAllValue.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, scaleRed)
+{
+	PrintScopeRealTime globalStat{"Processor::scale(1.5F, Channel::Red) [OVERALL]"};
+
+	Pixmap< uint8_t > source;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	auto output = source;
+
+	{
+		PrintScopeRealTime localStat{"Processor::scale(1.5F, Channel::Red)"};
+
+		Processor< uint8_t > processor{output};
+
+		ASSERT_TRUE(processor.scaleValue(2.0F, Channel::Red));
+	}
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_scaleRedValue.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, drawing)
 {
-	Pixmap< uint8_t > newImage{800, 600};
+	PrintScopeRealTime globalStat{"Processor::drawXXX() [OVERALL]"};
 
-	ASSERT_EQ(newImage.width(), 800);
-	ASSERT_EQ(newImage.height(), 600);
-	ASSERT_EQ(newImage.colorCount(), 3);
+	Pixmap< uint8_t > emptyImage{800, 600};
 
-	Processor< uint8_t > processor{newImage};
+	ASSERT_EQ(emptyImage.width(), 800);
+	ASSERT_EQ(emptyImage.height(), 600);
+	ASSERT_EQ(emptyImage.colorCount(), 3);
+
+	Processor< uint8_t > processor{emptyImage};
 
 	{
-		PrintScopeRealTime stat{"Processor::drawSegment({10, 16}, {85, 503}, LightBlue)"};
+		PrintScopeRealTime localState{"Processor::drawSegment({10, 16}, {85, 503}, LightBlue)"};
 
 		ASSERT_TRUE(processor.drawSegment({10, 16}, {85, 503}, LightBlue));
 	}
 
 	{
-		PrintScopeRealTime stat{"Processor::drawCircle({578, 250}, 58, DarkRed)"};
+		PrintScopeRealTime localState{"Processor::drawCircle({578, 250}, 58, DarkRed)"};
 
 		ASSERT_TRUE(processor.drawCircle({578, 250}, 58, DarkRed));
 	}
 
 	{
-		PrintScopeRealTime stat{"Processor::drawCircle({64, 128}, 800, Red)"};
+		PrintScopeRealTime localState{"Processor::drawCircle({64, 128}, 800, Red)"};
 
 		ASSERT_TRUE(processor.drawCircle({64, 128}, 500, Red));
 	}
 
 	{
-		PrintScopeRealTime stat{"Processor::drawSquare({256, 502, 125, 98}, Green)"};
+		PrintScopeRealTime localState{"Processor::drawSquare({256, 502, 125, 98}, Green)"};
 
 		ASSERT_TRUE(processor.drawSquare({256, 502, 125, 98}, Green));
 	}
 
 	{
-		PrintScopeRealTime stat{"Processor::drawCross({64, 96, 256, 128}, Yellow)"};
+		PrintScopeRealTime localState{"Processor::drawCross({64, 96, 256, 128}, Yellow)"};
 
 		ASSERT_TRUE(processor.drawCross({64, 96, 256, 128}, Yellow));
 	}
 
 	{
-		PrintScopeRealTime stat{"Processor::drawStraightCross({200, 350, 300, 350}, White)"};
+		PrintScopeRealTime localState{"Processor::drawStraightCross({200, 350, 300, 350}, White)"};
 
 		ASSERT_TRUE(processor.drawStraightCross({200, 350, 300, 350}, White));
 	}
 
-	ASSERT_TRUE(FileIO::write(newImage, {RES_BASE_PATH "/test-assets/tmp_drawing.png"}, true));
+	ASSERT_EQ(emptyImage.width(), 800);
+	ASSERT_EQ(emptyImage.height(), 600);
+	ASSERT_EQ(emptyImage.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(emptyImage, {RES_BASE_PATH "/test-assets/tmp_drawing.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, move)
 {
+	PrintScopeRealTime globalStat{"Processor::move(600, -200) [OVERALL]"};
+
 	Pixmap< uint8_t > source;
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::move(600, -200)"};
+		PrintScopeRealTime localStat{"Processor::move(600, -200)"};
 
 		Processor< uint8_t > processor{source};
 
 		ASSERT_TRUE(processor.move(600, -400));
 	}
 
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
 	ASSERT_TRUE(FileIO::write(source, {RES_BASE_PATH "/test-assets/tmp_moved.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, shift)
 {
+	PrintScopeRealTime globalStat{"Processor::shift(600, -400) [OVERALL]"};
+
 	Pixmap< uint8_t > source;
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::shift(600, -400)"};
+		PrintScopeRealTime localStat{"Processor::shift(600, -400)"};
 
 		Processor< uint8_t > processor{source};
 
 		ASSERT_TRUE(processor.shift(600, -400));
 	}
 
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
 	ASSERT_TRUE(FileIO::write(source, {RES_BASE_PATH "/test-assets/tmp_shifted.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, shiftTextArea)
 {
+	PrintScopeRealTime globalStat{"Processor::shiftTextArea(100) [OVERALL]"};
+
 	Pixmap< uint8_t > source;
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::shiftTextArea(100)"};
+		PrintScopeRealTime localStat{"Processor::shiftTextArea(100)"};
 
 		Processor< uint8_t > processor{source};
 
 		ASSERT_TRUE(processor.shiftTextArea(-100));
 	}
 
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
 	ASSERT_TRUE(FileIO::write(source, {RES_BASE_PATH "/test-assets/tmp_textShifted.png"}, true));
 }
 
-TEST(PixelFactoryProcessor, resize)
+TEST(PixelFactoryProcessor, resizeNearestDown)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::resize(50%,Nearest) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::resize(50%,Nearest)"};
+
+		output = Processor< uint8_t >::resize(source, 4080, 3072, FilteringMode::Nearest);
+	}
+
+	ASSERT_EQ(output.width(), 4080);
+	ASSERT_EQ(output.height(), 3072);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_4080x3072resizeNearest.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, resizeLinearDown)
+{
+	PrintScopeRealTime globalStat{"Processor::resize(50%,Linear) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::resize(50%,Linear)"};
+
+		output = Processor< uint8_t >::resize(source, 4080, 3072, FilteringMode::Linear);
+	}
+
+	ASSERT_EQ(output.width(), 4080);
+	ASSERT_EQ(output.height(), 3072);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_4080x3072resizeLinear.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, resizeCubicDown)
+{
+	PrintScopeRealTime globalStat{"Processor::resize(50%,Cubic) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::resize(50%,Cubic)"};
+
+		output = Processor< uint8_t >::resize(source, 4080, 3072, FilteringMode::Cubic);
+	}
+
+	ASSERT_EQ(output.width(), 4080);
+	ASSERT_EQ(output.height(), 3072);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_4080x3072resizeCubic.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, resizeNearestUp)
+{
+	PrintScopeRealTime globalStat{"Processor::resize(200%,Nearest) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
 
 	ASSERT_TRUE(FileIO::read(LargeRGB, source));
 
-	{
-		PrintScopeRealTime stat{"Processor::resize(640x480,Nearest)"};
-
-		const auto output = Processor< uint8_t >::resize(source, 640, 480, FilteringMode::Nearest);
-
-		ASSERT_EQ(output.width(), 640);
-		ASSERT_EQ(output.height(), 480);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_640x480resizeNearest.png"}, true));
-	}
+	ASSERT_EQ(source.width(), 1200);
+	ASSERT_EQ(source.height(), 800);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::resize(2560x2560,Linear)"};
+		PrintScopeRealTime localStat{"Processor::resize(200%,Nearest)"};
 
-		const auto output = Processor< uint8_t >::resize(source, 2560, 2560, FilteringMode::Linear);
-
-		ASSERT_EQ(output.width(), 2560);
-		ASSERT_EQ(output.height(), 2560);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_2560x2560resizeLinear.png"}, true));
+		output = Processor< uint8_t >::resize(source, 2400, 1600, FilteringMode::Nearest);
 	}
+
+	ASSERT_EQ(output.width(), 2400);
+	ASSERT_EQ(output.height(), 1600);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_2400x1600resizeNearest.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, resizeLinearUp)
+{
+	PrintScopeRealTime globalStat{"Processor::resize(200%,Linear) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+
+	ASSERT_EQ(source.width(), 1200);
+	ASSERT_EQ(source.height(), 800);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::resize(2560x1600,Cubic)"};
+		PrintScopeRealTime localStat{"Processor::resize(200%,Linear)"};
 
-		const auto output = Processor< uint8_t >::resize(source, 2560, 1600, FilteringMode::Cubic);
-
-		ASSERT_EQ(output.width(), 2560);
-		ASSERT_EQ(output.height(), 1600);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_2560x1600resizeCubic.png"}, true));
+		output = Processor< uint8_t >::resize(source, 2400, 1600, FilteringMode::Linear);
 	}
+
+	ASSERT_EQ(output.width(), 2400);
+	ASSERT_EQ(output.height(), 1600);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_2400x1600resizeLinear.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, resizeCubicUp)
+{
+	PrintScopeRealTime globalStat{"Processor::resize(200%,Cubic) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+
+	ASSERT_EQ(source.width(), 1200);
+	ASSERT_EQ(source.height(), 800);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::resize(200%,Cubic)"};
+
+		output = Processor< uint8_t >::resize(source, 2400, 1600, FilteringMode::Cubic);
+	}
+
+	ASSERT_EQ(output.width(), 2400);
+	ASSERT_EQ(output.height(), 1600);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_2400x1600resizeCubic.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, crop)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::crop(64, 128, 1600, 1200) [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::crop(800x600)"};
+		PrintScopeRealTime stat{"Processor::crop(64, 128, 1600, 1200)"};
 
-		const auto output = Processor< uint8_t >::crop(source, {64, 128, 800, 600});
-
-		ASSERT_EQ(output.width(), 800);
-		ASSERT_EQ(output.height(), 600);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_800x600cropped.png"}, true));
+		output = Processor< uint8_t >::crop(source, {64, 128, 1600, 1200});
 	}
+
+	ASSERT_EQ(output.width(), 1600);
+	ASSERT_EQ(output.height(), 1200);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_1600x1200cropped.png"}, true));
 }
 
-TEST(PixelFactoryProcessor, extractChannel)
+TEST(PixelFactoryProcessor, extractChannelRed)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::extractChannel(Red) [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
 
-	{
-		PrintScopeRealTime stat{"Processor::extractChannel(red)"};
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-		const auto output = Processor< uint8_t >::extractChannel(source, Channel::Red);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 1);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractRedChannel.png"}, true));
-	}
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::extractChannel(green)"};
+		PrintScopeRealTime localStat{"Processor::extractChannel(Red)"};
 
-		const auto output = Processor< uint8_t >::extractChannel(source, Channel::Green);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 1);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractGreenChannel.png"}, true));
+		output = Processor< uint8_t >::extractChannel(source, Channel::Red);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 1);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractChannelRed.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, extractChannelGreen)
+{
+	PrintScopeRealTime globalStat{"Processor::extractChannel(Green) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::extractChannel(blue)"};
+		PrintScopeRealTime localStat{"Processor::extractChannel(Green)"};
 
-		const auto output = Processor< uint8_t >::extractChannel(source, Channel::Blue);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 1);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractBlueChannel.png"}, true));
+		output = Processor< uint8_t >::extractChannel(source, Channel::Green);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 1);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractChannelGreen.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, extractChannelBlue)
+{
+	PrintScopeRealTime globalStat{"Processor::extractChannel(Blue) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::extractChannel(Blue)"};
+
+		output = Processor< uint8_t >::extractChannel(source, Channel::Blue);
+	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 1);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extractChannelBlue.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, toGrayscale)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::toGrayscale() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(MediumRGBA, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::toGrayscale()"};
+		PrintScopeRealTime localStat{"Processor::toGrayscale()"};
 
-		const auto output = Processor< uint8_t >::toGrayscale(source);
-
-		ASSERT_EQ(output.width(), 512);
-		ASSERT_EQ(output.height(), 512);
-		ASSERT_EQ(output.colorCount(), 1);
+		output = Processor< uint8_t >::toGrayscale(source);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 1);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_toGrayscale.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, toRGB)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::toRGB() [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
 
 	ASSERT_TRUE(FileIO::read(MediumRGBA, source));
 
+	ASSERT_EQ(source.width(), 512);
+	ASSERT_EQ(source.height(), 512);
+	ASSERT_EQ(source.colorCount(), 4);
+
 	{
-		PrintScopeRealTime stat{"Processor::toRGB()"};
+		PrintScopeRealTime localStat{"Processor::toRGB()"};
 
-		const auto output = Processor< uint8_t >::toRGB(source);
-
-		ASSERT_EQ(output.width(), 512);
-		ASSERT_EQ(output.height(), 512);
-		ASSERT_EQ(output.colorCount(), 3);
+		output = Processor< uint8_t >::toRGB(source);
 	}
+
+	ASSERT_EQ(output.width(), 512);
+	ASSERT_EQ(output.height(), 512);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_toRGB.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, toRGBA)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::toRGBA() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::toRGBA()"};
+		PrintScopeRealTime localStat{"Processor::toRGBA()"};
 
-		const auto output = Processor< uint8_t >::toRGBA(source, 0.5F);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 4);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_RGB2RGBA.png"}, true));
+		output = Processor< uint8_t >::toRGBA(source, 0.5F);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 4);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_toRGBA.png"}, true));
 }
 
-TEST(PixelFactoryProcessor, mirror)
+TEST(PixelFactoryProcessor, mirrorX)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::mirror(X) [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
 
-	{
-		PrintScopeRealTime stat{"Processor::mirror(x)"};
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-		const auto output = Processor< uint8_t >::mirror(source, MirrorMode::X);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirroredX.png"}, true));
-	}
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::mirror(y)"};
+		PrintScopeRealTime localStat{"Processor::mirror(X)"};
 
-		const auto output = Processor< uint8_t >::mirror(source, MirrorMode::Y);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirroredY.png"}, true));
+		output = Processor< uint8_t >::mirror(source, MirrorMode::X);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirrorX.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, mirrorY)
+{
+	PrintScopeRealTime globalStat{"Processor::mirror(Y) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::mirror(both)"};
+		PrintScopeRealTime localStat{"Processor::mirror(Y)"};
 
-		const auto output = Processor< uint8_t >::mirror(source, MirrorMode::Both);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirroredBoth.png"}, true));
+		output = Processor< uint8_t >::mirror(source, MirrorMode::Y);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirrorY.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, mirrorBoth)
+{
+	PrintScopeRealTime globalStat{"Processor::mirror(Both) [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::mirror(Both)"};
+
+		output = Processor< uint8_t >::mirror(source, MirrorMode::Both);
+	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_mirrorBoth.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, extend)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::extend() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::extend()"};
+		PrintScopeRealTime localStat{"Processor::extend()"};
 
-		const auto output = Processor< uint8_t >::extend(source, {3, 2, 4, 9}, Red);
-
-		ASSERT_EQ(output.width(), 1207);
-		ASSERT_EQ(output.height(), 811);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extended.png"}, true));
+		output = Processor< uint8_t >::extend(source, {16, 24, 32, 128}, Red);
 	}
 
+	ASSERT_EQ(output.width(), 8160 + 16 + 32);
+	ASSERT_EQ(output.height(), 6144 + 24 + 128);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_extend.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, rotateQuarterTurn)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::rotateQuarterTurn() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
 
-	PrintScopeRealTime stat{"Processor::rotateQuarterTurn()"};
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-	const auto output = Processor< uint8_t >::rotateQuarterTurn(source);
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
-	ASSERT_EQ(output.width(), 800);
-	ASSERT_EQ(output.height(), 1200);
+	{
+		PrintScopeRealTime localStat{"Processor::rotateQuarterTurn()"};
+
+		output = Processor< uint8_t >::rotateQuarterTurn(source);
+	}
+
+	ASSERT_EQ(output.width(), 6144);
+	ASSERT_EQ(output.height(), 8160);
 	ASSERT_EQ(output.colorCount(), 3);
 
 	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+90.png"}, true));
@@ -414,16 +682,24 @@ TEST(PixelFactoryProcessor, rotateQuarterTurn)
 
 TEST(PixelFactoryProcessor, rotateHalfTurn)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::rotateHalfTurn() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
 
-	PrintScopeRealTime stat{"Processor::rotateHalfTurn()"};
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-	const auto output = Processor< uint8_t >::rotateHalfTurn(source);
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
-	ASSERT_EQ(output.width(), 1200);
-	ASSERT_EQ(output.height(), 800);
+	{
+		PrintScopeRealTime localStat{"Processor::rotateHalfTurn()"};
+
+		output = Processor< uint8_t >::rotateHalfTurn(source);
+	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
 	ASSERT_EQ(output.colorCount(), 3);
 
 	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+180.png"}, true));
@@ -431,16 +707,24 @@ TEST(PixelFactoryProcessor, rotateHalfTurn)
 
 TEST(PixelFactoryProcessor, rotateThreeQuarterTurn)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::rotateThreeQuarterTurn() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
 
-	PrintScopeRealTime stat{"Processor::rotateThreeQuarterTurn()"};
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
 
-	const auto output = Processor< uint8_t >::rotateThreeQuarterTurn(source);
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
-	ASSERT_EQ(output.width(), 800);
-	ASSERT_EQ(output.height(), 1200);
+	{
+		PrintScopeRealTime localStat{"Processor::rotateThreeQuarterTurn()"};
+
+		output = Processor< uint8_t >::rotateThreeQuarterTurn(source);
+	}
+
+	ASSERT_EQ(output.width(), 6144);
+	ASSERT_EQ(output.height(), 8160);
 	ASSERT_EQ(output.colorCount(), 3);
 
 	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_rotated+270.png"}, true));
@@ -448,40 +732,52 @@ TEST(PixelFactoryProcessor, rotateThreeQuarterTurn)
 
 TEST(PixelFactoryProcessor, inverseColors)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::inverseColors() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::inverseColors()"};
+		PrintScopeRealTime localStat{"Processor::inverseColors()"};
 
-		const auto output = Processor< uint8_t >::inverseColors(source);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_colorInversed.png"}, true));
+		output = Processor< uint8_t >::inverseColors(source);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_inverseColors.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, swapChannels)
 {
-	Pixmap< uint8_t > source;
+	PrintScopeRealTime globalStat{"Processor::swapChannels() [OVERALL]"};
 
-	ASSERT_TRUE(FileIO::read(LargeRGB, source));
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(ExtraLargeRGB, source));
+
+	ASSERT_EQ(source.width(), 8160);
+	ASSERT_EQ(source.height(), 6144);
+	ASSERT_EQ(source.colorCount(), 3);
 
 	{
-		PrintScopeRealTime stat{"Processor::swapChannels()"};
+		PrintScopeRealTime localStat{"Processor::swapChannels()"};
 
-		const auto output = Processor< uint8_t >::swapChannels(source);
-
-		ASSERT_EQ(output.width(), 1200);
-		ASSERT_EQ(output.height(), 800);
-		ASSERT_EQ(output.colorCount(), 3);
-
-		ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_colorSwapped.png"}, true));
+		output = Processor< uint8_t >::swapChannels(source);
 	}
+
+	ASSERT_EQ(output.width(), 8160);
+	ASSERT_EQ(output.height(), 6144);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_swapChannels.png"}, true));
 }
 
 TEST(PixelFactoryProcessor, blit)
@@ -556,4 +852,54 @@ TEST(PixelFactoryProcessor, copy)
 	}
 
 	ASSERT_TRUE(FileIO::write(source, {RES_BASE_PATH "/test-assets/tmp_copy.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, addAlphaChannel)
+{
+	PrintScopeRealTime globalStat{"Processor::addAlphaChannel() [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(MediumRGB, source));
+
+	ASSERT_EQ(source.width(), 512);
+	ASSERT_EQ(source.height(), 512);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime localStat{"Processor::addAlphaChannel()"};
+
+		ASSERT_TRUE(Processor< uint8_t >::addAlphaChannel(source, output));
+	}
+
+	ASSERT_EQ(output.width(), 512);
+	ASSERT_EQ(output.height(), 512);
+	ASSERT_EQ(output.colorCount(), 4);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_addAlphaChannel.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, removeAlphaChannel)
+{
+	PrintScopeRealTime globalStat{"Processor::removeAlphaChannel() [OVERALL]"};
+
+	Pixmap< uint8_t > source, output;
+
+	ASSERT_TRUE(FileIO::read(MediumRGBA, source));
+
+	ASSERT_EQ(source.width(), 512);
+	ASSERT_EQ(source.height(), 512);
+	ASSERT_EQ(source.colorCount(), 4);
+
+	{
+		PrintScopeRealTime localStat{"Processor::removeAlphaChannel()"};
+
+		ASSERT_TRUE(Processor< uint8_t >::removeAlphaChannel(source, output));
+	}
+
+	ASSERT_EQ(output.width(), 512);
+	ASSERT_EQ(output.height(), 512);
+	ASSERT_EQ(output.colorCount(), 3);
+
+	ASSERT_TRUE(FileIO::write(output, {RES_BASE_PATH "/test-assets/tmp_removeAlphaChannel.png"}, true));
 }

@@ -26,6 +26,9 @@
 
 #include "HTTPRequest.hpp"
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* Local inclusions. */
 #include "Libs/String.hpp"
 

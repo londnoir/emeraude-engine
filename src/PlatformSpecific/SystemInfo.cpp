@@ -95,7 +95,7 @@ namespace EmEn::PlatformSpecific
 			hwloc_topology_init(&topology);
 			hwloc_topology_load(topology);
 
-			/* Get the number of logical core (PU) */
+			/* Get the number of logical cores (PU) */
 			{
 				const auto depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
 
@@ -105,7 +105,7 @@ namespace EmEn::PlatformSpecific
 				}
 			}
 
-			/* Get the number of physical core (CORE) */
+			/* Get the number of physical cores (CORE) */
 			{
 				const auto depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
 
@@ -155,6 +155,7 @@ namespace EmEn::PlatformSpecific
 			" - System name : " << obj.m_OSInformation.systemName << "\n"
 			" - System version : " << obj.m_OSInformation.systemVersion << "\n"
 			" - Computer name : " << obj.m_OSInformation.computerName << "\n\n"
+			" - Machine UUID : " << obj.m_OSInformation.machineUUID << "\n\n"
 
 			"CPU :" "\n"
 			" - Vendor : " << obj.m_CPUInformation.vendorName << " (" << obj.m_CPUInformation.vendorID << ")" << "\n"

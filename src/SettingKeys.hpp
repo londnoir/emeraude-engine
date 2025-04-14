@@ -173,8 +173,6 @@ namespace EmEn
 			static constexpr auto DefaultVideoFramebufferStencilBits{0U};
 			static constexpr auto VideoFramebufferSamplesKey{"Core/Video/Framebuffer/Samples"};
 			static constexpr auto DefaultVideoFramebufferSamples{1U};
-			static constexpr auto VideoFramebufferAntiAliasingKey{"Core/Video/Framebuffer/AntiAliasing"};
-			static constexpr auto DefaultVideoAntiAliasing{"None"};
 			static constexpr auto VideoFramebufferEnableMLAAKey{"Core/Video/Framebuffer/EnableMLAA"};
 			static constexpr auto DefaultVideoEnableMLAA{false};
 

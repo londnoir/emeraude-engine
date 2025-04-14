@@ -846,7 +846,7 @@ namespace EmEn::Scenes
 			 * @param count The number of coordinates desired.
 			 * @param min The minimum number to use for random in X, Y and Z axis.
 			 * @param max The maximum number to use for random in X, Y and Z axis.
-			 * @return std::vector< Libraries::Math::Coordinates< float > >
+			 * @return std::vector< Libs::Math::Coordinates< float > >
 			 */
 			[[nodiscard]]
 			static std::vector< Libs::Math::CartesianFrame< float > > generateRandomCoordinates (size_t count, float min, float max) noexcept;

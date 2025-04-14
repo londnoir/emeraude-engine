@@ -131,7 +131,7 @@ namespace EmEn::Graphics::Renderable
 
 			/**
 			 * @brief Returns the light position.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > & lightPosition () const noexcept;

@@ -26,6 +26,9 @@
 
 #include "HTTPResponse.hpp"
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* STL inclusions. */
 #include <iostream>
 
@@ -52,7 +55,7 @@ namespace EmEn::Libs::Network
 
 	}
 
-	HTTPResponse::HTTPResponse(const std::string & rawHeaders) noexcept
+	HTTPResponse::HTTPResponse (const std::string & rawHeaders) noexcept
 	{
 		if ( !this->parse(rawHeaders) )
 		{

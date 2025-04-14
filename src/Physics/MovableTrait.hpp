@@ -151,7 +151,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the linear velocity vector.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &
@@ -184,7 +184,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the angular velocity vector.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &
@@ -217,7 +217,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the center of mass from the scene node position.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &
@@ -365,7 +365,7 @@ namespace EmEn::Physics
 			/**
 			 * @brief Returns the world velocity of the entity.
 			 * @note If not override, velocity is null.
-			 * @return Libraries::Math::Vector< float >
+			 * @return Libs::Math::Vector< float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept = 0;
@@ -373,7 +373,7 @@ namespace EmEn::Physics
 			/**
 			 * @brief Returns the world center of mass of the entity.
 			 * @note If not override, velocity is null.
-			 * @return Libraries::Math::Vector< float >
+			 * @return Libs::Math::Vector< float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Vector< 3, float > getWorldCenterOfMass () const noexcept = 0;
@@ -400,14 +400,14 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the object physical properties for the physics simulation.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			virtual const PhysicalObjectProperties & getObjectProperties () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world position for the physics simulation.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Vector< 3, float > getWorldPosition () const noexcept = 0;
@@ -423,7 +423,7 @@ namespace EmEn::Physics
 			 * @brief Gives the new world orientation after simulation computed.
 			 * @param radianAngle
 			 * @param worldDirection
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			virtual void simulatedRotation (float radianAngle, const Libs::Math::Vector< 3, float > & worldDirection) noexcept = 0;
 

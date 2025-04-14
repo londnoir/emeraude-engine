@@ -201,7 +201,7 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the transform matrix.
-			 * @return const Libraries::Math::Matrix< 4, float > &
+			 * @return const Libs::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Matrix< 4, float > &
@@ -212,7 +212,7 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the texture coordinate multipliers vector.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &

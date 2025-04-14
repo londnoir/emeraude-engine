@@ -3,8 +3,6 @@
 #if IS_MACOS
 
 /* Third-party inclusions. */
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/CGLMacro.h>
 #import <AppKit/AppKit.h>
 
 /* Local inclusions. */
@@ -17,7 +15,6 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 	{
         @autoreleasepool
         {
-            [NSApplication sharedApplication];
             [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 
             NSAlert * alert = [[NSAlert alloc] init];

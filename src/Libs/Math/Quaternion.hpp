@@ -503,7 +503,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @breif Sets the complex part of the quaternion.
+			 * @brief Sets the complex part of the quaternion.
 			 * @param x
 			 * @param y
 			 * @param z
@@ -839,7 +839,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @breif Computes the dot-product between two quaternions.
+			 * @brief Computes the dot-product between two quaternions.
 			 * @param qA A reference to a quaternion.
 			 * @param qB A reference to a quaternion.
 			 * @return precision_t

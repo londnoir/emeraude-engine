@@ -473,7 +473,7 @@ namespace EmEn::Scenes
 			 * @brief Computes the ambient light fraction to add to global ambient light.
 			 * @tparam vectorData_t The data type to use for Vector. Default float.
 			 * @param light The targeted light.
-			 * @return Libraries::Math::Vector< 4, vectorData_t >
+			 * @return Libs::Math::Vector< 4, vectorData_t >
 			 */
 			template< typename vectorData_t = float >
 			Libs::Math::Vector< 4, vectorData_t >

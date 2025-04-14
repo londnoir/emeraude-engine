@@ -420,7 +420,7 @@ namespace EmEn::Graphics::Material
 			virtual BlendingMode blendingMode () const noexcept = 0;
 
 			/**
-			 * @breif Returns the variables or the code to get the fragment color produced by this material.
+			 * @brief Returns the variables or the code to get the fragment color produced by this material.
 			 * @note This is used for the final color without further effect application such as lighting.
 			 * @return std::string
 			 */

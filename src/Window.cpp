@@ -27,16 +27,10 @@
 #include "Window.hpp"
 
 /* STL inclusions. */
-#include <array>
 #include <cmath>
-#include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <iostream>
-#include <memory>
-#include <string>
 #include <utility>
-#include <vector>
 
 /* Local inclusions. */
 #include "Vulkan/Instance.hpp"

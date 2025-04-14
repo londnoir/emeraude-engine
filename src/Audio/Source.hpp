@@ -146,7 +146,7 @@ namespace EmEn::Audio
 
 			/**
 			 * @brief Returns the source position.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > position () const noexcept;
@@ -176,7 +176,7 @@ namespace EmEn::Audio
 
 			/**
 			 * @brief Returns the source direction.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > direction () const noexcept;
@@ -206,7 +206,7 @@ namespace EmEn::Audio
 
 			/**
 			 * @brief Returns the source velocity.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > velocity () const noexcept;

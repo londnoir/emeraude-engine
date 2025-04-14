@@ -97,7 +97,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the world position of the collision.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &
@@ -108,7 +108,7 @@ namespace EmEn::Physics
 
 			/**
 			 * @brief Returns the world direction vector of the collision.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 3, float > &

@@ -108,7 +108,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is bigger.
+			 * @brief Returns whether the area of another rectangle is bigger.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -121,7 +121,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is bigger or equal.
+			 * @brief Returns whether the area of another rectangle is bigger or equal.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -134,7 +134,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is smaller.
+			 * @brief Returns whether the area of another rectangle is smaller.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -147,7 +147,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is smaller or equal.
+			 * @brief Returns whether the area of another rectangle is smaller or equal.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -160,7 +160,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is equal.
+			 * @brief Returns whether the area of another rectangle is equal.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -173,7 +173,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the area of the another rectangle is different.
+			 * @brief Returns whether the area of another rectangle is different.
 			 * @param operand A reference to another rectangle.
 			 * @return bool
 			 */
@@ -269,7 +269,7 @@ namespace EmEn::Libs::Math
 			/**
 			 * @brief Sets the height of the rectangle from offset Y.
 			 * @warning The value must be positive, otherwise the method will ignore the new value.
-			 * @param value An Y-axis size.
+			 * @param value A Y-axis size.
 			 * @return void
 			 */
 			void
@@ -296,7 +296,7 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Modifies the width with a value to add or remove.
-			 * @note The result will be always positive or 0.
+			 * @note The result will always be positive or 0.
 			 * @param value The width difference.
 			 * @return void
 			 */
@@ -313,7 +313,7 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Modifies the height with a value to add or remove.
-			 * @note The result will be always positive or 0.
+			 * @note The result will always be positive or 0.
 			 * @param value The height difference.
 			 * @return void
 			 */
@@ -471,7 +471,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Merges two rectangle to produce a new one.
+			 * @brief Merges two rectangles to produce a new one.
 			 * @param rectangle A reference to another rectangle.
 			 * @return void
 			 */
@@ -537,7 +537,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the rectangle do not intersect another one.
+			 * @brief Returns whether the rectangle does not intersect another one.
 			 * @param rectangle A reference to another rectangle.
 			 * @return bool
 			 */
@@ -553,7 +553,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the rectangle do not intersect with a rectangle where coordinates are 0,0.
+			 * @brief Returns whether the rectangle does not intersect with a rectangle where coordinates are 0,0.
 			 * @param width The width of the rectangle. (x = 0)
 			 * @param height The height of the rectangle. (y = 0)
 			 * @return bool
@@ -570,7 +570,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the rectangle intersect another one.
+			 * @brief Returns whether the rectangle intersects another one.
 			 * @param rectangle A reference to a rectangle.
 			 * @return bool
 			 */
@@ -602,7 +602,7 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the rectangle intersect with a rectangle where coordinates are 0,0.
+			 * @brief Returns whether the rectangle intersects with a rectangle where coordinates are 0,0.
 			 * @param width The width of the rectangle. (x = 0)
 			 * @param height The height of the rectangle. (y = 0)
 			 * @return bool
@@ -701,7 +701,7 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the aspect ratio of the surface.
-			 * @warning This function will return 0 for invalid surface.
+			 * @warning This function will return 0 for an invalid surface.
 			 * @return data_t
 			 */
 			[[nodiscard]]

@@ -49,7 +49,7 @@ namespace EmEn::Libs::PixelFactory
 		Alpha = 3
 	};
 
-	/** @brief Enumerate type of compression for Pixmap file writing. */
+	/** @brief Enumerate compression types for Pixmap file writing. */
 	enum class Compression : uint8_t
 	{
 		None,
@@ -65,7 +65,7 @@ namespace EmEn::Libs::PixelFactory
 		Cubic
 	};
 
-	/** @brief Enumerate drawing mode when copying image or a color onto another. */
+	/** @brief List drawing mode when copying an image or a color onto another. */
 	enum class DrawPixelMode : uint8_t
 	{
 		Replace,
@@ -81,7 +81,7 @@ namespace EmEn::Libs::PixelFactory
 		Lighten
 	};
 
-	/** @brief Enumerate grayscale conversion from RGB color. */
+	/** @brief List grayscale conversion mode from RGB color. */
 	enum class GrayscaleConversionMode : uint8_t
 	{
 		/* Gray = (Red + Green + Blue) / 3 */
@@ -109,7 +109,7 @@ namespace EmEn::Libs::PixelFactory
 		Both
 	};
 
-	/** @brief Enumerate policies for handling the alpha channel. */
+	/** @brief List policies for handling the alpha channel. */
 	enum class AlphaChannelPolicy : uint8_t
 	{
 		Add,
@@ -140,7 +140,7 @@ namespace EmEn::Libs::PixelFactory
 
 	/**
 	 * @brief Structure to wrap raw data for pixmap.
-	 * @tparam precision_t
+	 * @tparam precision_t The pixel data type. Default uint8_t.
 	 */
 	template< typename precision_t = uint8_t >
 	struct RawPixmapData
@@ -151,9 +151,7 @@ namespace EmEn::Libs::PixelFactory
 		const precision_t * pointer{nullptr};
 	};
 
-	/**
-	 * @brief Static constant string containing placeholder text.
-	 */
+	/** @brief Static constant string containing placeholder text. */
 	static constexpr auto LoremIpsum{
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales hendrerit.\n"
 		"Ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar. Nulla sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros vitae ligula. Pellentesque rhoncus nunc et augue. Integer id felis. Curabitur aliquet pellentesque diam. Integer quis metus vitae elit lobortis egestas. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi vel erat non mauris convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue eu, quam. Mauris ullamcorper felis vitae erat. Proin feugiat, augue non elementum posuere, metus purus iaculis lectus, et tristique ligula justo vitae magna.\n"

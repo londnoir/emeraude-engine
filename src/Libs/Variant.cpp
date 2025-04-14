@@ -26,6 +26,9 @@
 
 #include "Variant.hpp"
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* STL inclusions. */
 #include <cstdint>
 #include <iostream>

@@ -37,6 +37,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 namespace EmEn::Libs::Utility
 {

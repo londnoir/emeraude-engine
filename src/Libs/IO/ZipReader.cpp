@@ -45,6 +45,28 @@ namespace EmEn::Libs::IO
 	}
 
 	bool
+	ZipReader::isArchiveFile (const std::filesystem::path & filepath) noexcept
+	{
+		if ( !exists(filepath) )
+		{
+			return false;
+		}
+
+		int errorCode = 0;
+
+		auto * archive = zip_open(filepath.string().data(), ZIP_RDONLY | ZIP_CHECKCONS, &errorCode);
+
+		if ( archive == nullptr )
+		{
+			return false;
+		}
+
+		zip_close(archive);
+
+		return true;
+	}
+
+	bool
 	ZipReader::open () noexcept
 	{
 		if ( !exists(m_filepath) )

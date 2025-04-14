@@ -30,7 +30,6 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
-#include <cassert>
 #include <limits>
 #include <type_traits>
 
@@ -44,7 +43,7 @@ namespace EmEn::Libs::PixelFactory
 	/**
 	 * @brief The pixmap processor is used to performs operations to a targeted pixmap.
 	 * @TODO Use swap buffer to optimize some of operations.
-	 * @note For further addition look with : https://github.com/podgorskiy/EnvMapTooL
+	 * @note For further addition look with: https://github.com/podgorskiy/EnvMapTooL
 	 * @tparam pixel_data_t The pixel component type for the pixmap depth precision. Default uint8_t.
 	 * @tparam dimension_t The type of unsigned integer used for pixmap dimension. Default uint32_t.
 	 */
@@ -76,7 +75,7 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			scaleValue (scale_t scalar) noexcept requires (std::is_floating_point_v< scale_t >)
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
@@ -104,7 +103,7 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			scaleValue (scale_t scalar, Channel channel) noexcept requires (std::is_floating_point_v< scale_t >)
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
@@ -138,11 +137,11 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Draws a line (Bresenham algorithm) between two point on the pixmap.
+			 * @brief Draws a line (Bresenham algorithm) between two points on the pixmap.
 			 * @todo Check for "Cohen-Sutherland" or "Liang-Barsky" algorithms for speed efficiency.
 			 * @tparam vector_data_t The vector data type. Default int32_t.
 			 * @tparam color_data_t The color data type. Default float.
-			 * @param pointA A reference to a vector for the execute coordinates of the line.
+			 * @param pointA A reference to a vector for the start coordinates of the line.
 			 * @param pointB A reference to a vector for the end coordinates of the line.
 			 * @param color A reference to a color.
 			 * @param mode The drawing mode. Default DrawPixelMode::Replace.
@@ -152,7 +151,7 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			drawSegment (Math::Vector< 2, vector_data_t > pointA, Math::Vector< 2, vector_data_t > pointB, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
@@ -160,7 +159,7 @@ namespace EmEn::Libs::PixelFactory
 				const auto width = static_cast< vector_data_t >(m_target.width());
 				const auto height = static_cast< vector_data_t >(m_target.height());
 
-				/* Checks if segment are inside the Pixmap. */
+				/* Checks if the segment is inside the Pixmap. */
 				if
 				(
 					( pointA[Math::X] < 0 && pointB[Math::X] < 0 ) || ( pointA[Math::X] > width && pointB[Math::X] > width ) ||
@@ -224,7 +223,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Draws a line between two point on the pixmap.
+			 * @brief Draws a line between two points on the pixmap.
 			 * @tparam segment_data_t The segment data type. Default int32_t.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param segment A reference to a segment.
@@ -253,7 +252,7 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			drawCircle (const Math::Vector< 2, vector_data_t > & center, vector_data_t radius, const Color< color_data_t > & color, DrawPixelMode mode = DrawPixelMode::Replace) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
@@ -398,7 +397,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Moves pixels into a direction.
-			 * @note Positive X value will move pixel to the left while positive Y value will move pixel upward.
+			 * @note Positive X value will move pixels to the left while positive Y value will move pixels upward.
 			 * @param xDirection An integer to move pixels in X-Axis.
 			 * @param yDirection An integer to move pixels in Y-Axis.
 			 * @return bool
@@ -406,12 +405,12 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			move (int32_t xDirection, int32_t yDirection) noexcept
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
 
-				/* NOTE: No movement at all ! */
+				/* NOTE: No movement at all! */
 				if ( xDirection == 0 && yDirection == 0 )
 				{
 					return false;
@@ -425,7 +424,7 @@ namespace EmEn::Libs::PixelFactory
 					const auto rowSize = m_target.pitch();
 					const auto xShift = xDirection * static_cast< int32_t >(m_target.colorCount());
 
-					/* NOTE : Defines chunk sizes to move. */
+					/* NOTE: Defines chunk sizes to move. */
 					const auto xLimit = rowSize - std::abs(xShift);
 					const auto yLimit = m_target.height() - std::abs(yDirection);
 
@@ -463,7 +462,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Moves pixels into a direction.
-			 * @note Positive X value will move pixel to the left while positive Y value will move pixel upward.
+			 * @note Positive X value will move pixels to the left while positive Y value will move pixels upward.
 			 * @param direction A reference to a 2D vector.
 			 * @return bool
 			 */
@@ -474,8 +473,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Shift pixmap into a direction. Same as Processor::move() with pixels wrapping.
-			 * @note Positive X value will move pixel to the left while positive Y value will move pixel upward.
+			 * @brief Shift the pixmap into a direction. Same as Processor::move() with pixel wrapping.
+			 * @note Positive X value will move pixels to the left while positive Y value will move pixels upward.
 			 * @param xDirection An integer to move pixels in X-Axis.
 			 * @param yDirection An integer to move pixels in Y-Axis.
 			 * @return bool
@@ -483,12 +482,12 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			shift (int32_t xDirection, int32_t yDirection) noexcept
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
 
-				/* NOTE: No movement at all ! */
+				/* NOTE: No movement at all! */
 				if ( xDirection == 0 && yDirection == 0 )
 				{
 					return true;
@@ -504,7 +503,7 @@ namespace EmEn::Libs::PixelFactory
 					yDirection % -m_target.height() :
 					yDirection % m_target.height();
 
-				/* NOTE: Complete shift in both direction. */
+				/* NOTE: Complete shift in both directions. */
 				if ( xDirection == 0 && yDirection == 0 )
 				{
 					return true;
@@ -515,7 +514,7 @@ namespace EmEn::Libs::PixelFactory
 				const auto rowSize = m_target.pitch();
 				const auto xShift = xDirection * m_target.colorCount();
 
-				/* NOTE : Defines chunk sizes to move. */
+				/* NOTE: Defines chunk sizes to move. */
 				const auto rowCopySizeA = rowSize - xShift;
 				const auto rowCopySizeB = rowSize - rowCopySizeA;
 
@@ -546,8 +545,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Shift pixmap into a direction. Same as Processor::move() with pixels wrapping.
-			 * @note Positive X value will move pixel to the left while positive Y value will move pixel upward.
+			 * @brief Shift the pixmap into a direction. Same as Processor::move() with pixel wrapping.
+			 * @note Positive X value will move pixels to the left while positive Y value will move pixels upward.
 			 * @param direction A reference to a 2D vector.
 			 * @return bool
 			 */
@@ -565,12 +564,12 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			shiftTextArea (int32_t distance) noexcept
 			{
-				if ( !this->checkPixmap() )
+				if ( !m_target.isValid() )
 				{
 					return false;
 				}
 
-				/* NOTE : Not moving at all ! */
+				/* NOTE: Not moving at all! */
 				if ( distance == 0 )
 				{
 					return true;
@@ -596,11 +595,482 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns a resized version of the Pixmap.
-			 * @param source A reference to a pixmap to resize.
+			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
+			 * @warning Pixmap involved must have the same color count.
+			 * @param source A reference to a source pixmap.
+			 * @param sourceClip A reference to a rectangle on the source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @return bool
+			 */
+			bool
+			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
+			{
+				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
+				{
+					return false;
+				}
+
+				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation! */
+				if ( source.channelMode() != m_target.channelMode() )
+				{
+					return false;
+				}
+
+				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
+				const auto rowSize = destinationClip.width() * pixelSize;
+
+				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
+				{
+					const auto sourceIndex = ((sourceClip.top() + destinationY) * source.width() + sourceClip.left()) * pixelSize;
+					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
+
+					std::memcpy(m_target.data().data() + destinationIndex, source.data().data() + sourceIndex, rowSize);
+				}
+
+				m_target.markRectangleUpdated(destinationClip);
+
+				return true;
+			}
+
+			/**
+			 * @brief Copies the source pixmap to the target pixmap.
+			 * @param source A reference to a source pixmap.
+			 */
+			bool
+			blit (const Pixmap< pixel_data_t, dimension_t > & source) const noexcept
+			{
+				const auto sourceArea = source.area();
+
+				return this->blit(source, sourceArea, sourceArea);
+			}
+
+			/**
+			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
+			 * @warning Pixmap involved must have the same color count.
+			 * @param source A reference to a source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @return bool
+			 */
+			bool
+			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
+			{
+				return this->blit(source, {source.width(), source.height()}, destinationClip);
+			}
+
+			/**
+			 * @brief Copies raw data to a clipped area of the target pixmap.
+			 * @warning Be sure to have enough data in the pointer.
+			 * @param rawData A reference to a structure of raw data.
+			 * @param sourceClip A reference to a rectangle on the source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @return bool
+			 */
+			bool
+			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
+			{
+				if ( sourceClip.isOutside(rawData.width, rawData.height) )
+				{
+#ifdef DEBUG
+					std::cerr << "The clipping area is outside the pixmap !" "\n";
+#endif
+
+					return false;
+				}
+
+				if ( !Processor::checkPixmapClipping(m_target, destinationClip) )
+				{
+					return false;
+				}
+
+				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation! */
+				if ( rawData.colorCount != m_target.colorCount() )
+				{
+					return false;
+				}
+
+				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
+				const auto rowSize = destinationClip.width() * pixelSize;
+
+				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
+				{
+					const auto sourceIndex = ((sourceClip.top() + destinationY) * rawData.width + sourceClip.left()) * pixelSize;
+					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
+
+					std::memcpy(m_target.data().data() + destinationIndex, rawData.pointer + sourceIndex, rowSize);
+				}
+
+				m_target.markRectangleUpdated(destinationClip);
+
+				return true;
+			}
+
+			/**
+			 * @brief Copies raw data to a clipped area of the target pixmap.
+			 * @warning Be sure to have enough data in the pointer.
+			 * @param rawData A reference to a structure of raw data.
+			 * @param clip A reference to a rectangle on the target pixmap. This will be used as the source clip and the destination clip.
+			 * @return bool
+			 */
+			bool
+			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & clip) const noexcept
+			{
+				return this->blit(rawData, clip, clip);
+			}
+
+			/**
+			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
+			 * @param source A reference to a source pixmap.
+			 * @param sourceClip A reference to a rectangle on the source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				/* NOTE: Check if we can replace the copy operation with a blit operation (much faster). */
+				if (
+					mode == DrawPixelMode::Replace &&
+					source.channelMode() != m_target.channelMode() &&
+					sourceClip.width() != destinationClip.width() &&
+					sourceClip.height() != destinationClip.height()
+				)
+				{
+					return this->blit(source, sourceClip, destinationClip);
+				}
+
+				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
+				{
+					return false;
+				}
+
+				for ( size_t y = 0; y < destinationClip.height(); y++ )
+				{
+					const auto sourceY = sourceClip.top() + y;
+					const auto destinationY = destinationClip.top() + y;
+
+					for ( size_t x = 0; x < destinationClip.width(); x++ )
+					{
+						const auto sourceX = sourceClip.left() + x;
+						const auto destinationX = destinationClip.left() + x;
+
+						m_target.blendPixel(destinationX, destinationY, source.pixel(sourceX, sourceY), mode, opacity);
+					}
+				}
+
+				m_target.markRectangleUpdated(destinationClip);
+
+				return true;
+			}
+
+			/**
+			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @param source A reference to a source pixmap.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				const auto sourceClip = source.template rectangle< dimension_t >();
+
+				return this->copy(source, sourceClip, sourceClip, mode, opacity);
+			}
+
+			/**
+			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @param source A reference to a source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				return this->copy(source, source.area(), destinationClip, mode, opacity);
+			}
+
+			/**
+			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @param source A reference to a source pixmap.
+			 * @param xPosition The position in X where to execute the copy.
+			 * @param yPosition The position in Y where to execute the copy.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, int32_t xPosition, int32_t yPosition, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				Math::Rectangle< dimension_t > sourceClip;
+				Math::Rectangle< dimension_t > destinationClip;
+
+				if ( xPosition < 0 )
+				{
+					const auto shiftSize = static_cast< size_t >(std::abs(xPosition));
+
+					if ( shiftSize >= source.width() )
+					{
+#ifdef DEBUG
+						std::cerr << "The source pixmap do not lie in target pixmap on X axis !" "\n";
+#endif
+
+						return false;
+					}
+
+					const auto newWidth = source.width() - shiftSize;
+
+					sourceClip.setLeft(shiftSize);
+					sourceClip.setWidth(newWidth);
+
+					destinationClip.setWidth(newWidth);
+				}
+				else
+				{
+					sourceClip.setWidth(source.width());
+
+					destinationClip.setLeft(static_cast< size_t >(xPosition));
+					destinationClip.setWidth(source.width());
+				}
+
+				if ( yPosition < 0 )
+				{
+					const auto shiftSize = static_cast< size_t >(std::abs(yPosition));
+
+					if ( shiftSize >= source.height() )
+					{
+#ifdef DEBUG
+						std::cerr << "The source pixmap do not lie in target pixmap on Y axis !" "\n";
+#endif
+
+						return false;
+					}
+
+					const auto newHeight = source.height() - shiftSize;
+
+					sourceClip.setTop(shiftSize);
+					sourceClip.setHeight(newHeight);
+
+					destinationClip.setHeight(newHeight);
+				}
+				else
+				{
+					sourceClip.setHeight(source.height());
+
+					destinationClip.setTop(static_cast< size_t >(yPosition));
+					destinationClip.setHeight(source.height());
+				}
+
+				return this->copy(source, sourceClip, destinationClip, mode, opacity);
+			}
+
+			/**
+			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @param source A reference to a source pixmap.
+			 * @param position A reference to a vector.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Vector< 2, int32_t > & position, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				return this->copy(source, source.area(), position.x(), position.y(), mode, opacity);
+			}
+
+			/**
+			 * @brief Copies a colored area to the target pixmap.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param color A reference to a color.
+			 * @param clip A reference to a rectangle.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			template< typename color_data_t = float >
+			bool
+			copy (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				if ( !Processor::checkPixmapClipping(m_target, clip) )
+				{
+					return false;
+				}
+
+				for ( size_t y = 0; y < clip.height(); y++ )
+				{
+					const auto destinationY = clip.top() + y;
+
+					for ( size_t x = 0; x < clip.width(); x++ )
+					{
+						const auto destinationX = clip.left() + x;
+
+						m_target.blendPixel(destinationX, destinationY, color, mode, opacity);
+					}
+				}
+
+				m_target.markRectangleUpdated(clip);
+
+				return true;
+			}
+
+			/**
+			 * @brief Copies with a stencil mask a clipped area of the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @warning The mask pixmap must be grayscale.
+			 * @param source A reference to a source pixmap.
+			 * @param sourceClip A reference to a rectangle on the source pixmap.
+			 * @param destinationClip A reference to a rectangle on the target pixmap.
+			 * @param mask A reference to a pixmap to act as the stencil mask.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @return bool
+			 */
+			bool
+			stencil (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace) const noexcept
+			{
+				if ( !mask.isValid() || !mask.isGrayScale() || !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
+				{
+					return false;
+				}
+
+				const auto rowPixelCount = destinationClip.width();
+
+				for ( size_t row = 0; row < destinationClip.height(); row++ )
+				{
+					const auto sourceIndex = (((sourceClip.top() + row) * source.width()) + sourceClip.left());
+					const auto destinationIndex = (((destinationClip.top() + row) * m_target.width()) + destinationClip.left());
+
+					/* FIXME: Check the value of the mask. */
+					for ( size_t pixel = 0; pixel < rowPixelCount; ++pixel )
+					{
+						m_target.blendPixel(destinationIndex + pixel, row, source.pixel(sourceIndex + pixel, row), mode);
+					}
+				}
+
+				m_target.markRectangleUpdated(destinationClip);
+
+				return true;
+			}
+
+			/**
+			 * @brief Copies with a stencil mask the source pixmap to a clipped area of the target pixmap.
+			 * @note The source pixmap will be used from the top-left corner.
+			 * @warning The mask pixmap must be grayscale.
+			 * @param source A reference to a source pixmap.
+			 * @param clip A reference to a rectangle on the target pixmap.
+			 * @param mask A reference to a pixmap to act as the stencil mask.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			bool
+			stencil (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & clip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				return this->stencil(source, {source.width(), source.height()}, clip, mask, mode, opacity);
+			}
+
+			/**
+			 * @brief Copies a colored area with a stencil mask to the target pixmap.
+			 * @tparam color_data_t The color data type. Default float.
+			 * @param color A reference to a color.
+			 * @param clip A reference to a rectangle.
+			 * @param mode Set the copy technic. Default: Replace.
+			 * @param mask A reference to a pixmap to act as the stencil mask.
+			 * @param opacity A global opacity. Default 1.0.
+			 * @return bool
+			 */
+			template< typename color_data_t = float >
+			bool
+			stencil (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			{
+				// TODO ...
+
+				return false;
+			}
+
+			/**
+			 * @brief Resizes a pixmap.
+			 * @param source A reference to a pixmap.
 			 * @param width The new width.
 			 * @param height The new height.
-			 * @param filteringMode The filtering mode to apply during the resize. Default FilteringMode::Linear.
+			 * @param destination A writable reference to a pixmap.
+			 * @param filteringMode The filtering mode to apply during the resize. Default linear.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			resize (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, Pixmap< pixel_data_t, dimension_t > & destination, FilteringMode filteringMode = FilteringMode::Linear) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				if ( width == source.width() && height == source.height() )
+				{
+					destination = source;
+
+					return true;
+				}
+
+				if ( !destination.initialize(width, height, source.channelMode()) )
+				{
+					return false;
+				}
+
+				switch ( filteringMode )
+				{
+					case FilteringMode::Cubic :
+						resizeCubic(source, width, height, destination);
+						break;
+
+					case FilteringMode::Linear :
+						resizeLinear(source, width, height, destination);
+						break;
+
+					case FilteringMode::Nearest :
+						resizeNearest(source, width, height, destination);
+						break;
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Resizes a pixmap using a ratio.
+			 * @param source A reference to a pixmap.
+			 * @param ratio The scale ratio.
+			 * @param destination A reference to a writable pixmap.
+			 * @param filteringMode The filtering mode to apply during the resize. Default linear.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			resize (const Pixmap< pixel_data_t, dimension_t > & source, float ratio, Pixmap< pixel_data_t, dimension_t > & destination, FilteringMode filteringMode = FilteringMode::Linear) noexcept
+			{
+				return Processor::resize(
+					source,
+					static_cast< size_t >(source.width() * ratio),
+					static_cast< size_t >(source.height() * ratio),
+					destination,
+					filteringMode
+				);
+			}
+
+			/**
+			 * @brief Returns a resized pixmap.
+			 * @param source A reference to a pixmap.
+			 * @param width The new width.
+			 * @param height The new height.
+			 * @param filteringMode The filtering mode to apply during the resize. Default linear.
 			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
@@ -608,42 +1078,26 @@ namespace EmEn::Libs::PixelFactory
 			Pixmap< pixel_data_t, dimension_t >
 			resize (const Pixmap< pixel_data_t, dimension_t > & source, dimension_t width, dimension_t height, FilteringMode filteringMode = FilteringMode::Linear) noexcept
 			{
-				if ( !source.isValid() )
-				{
-					return {};
-				}
-
-				/* Simple copy if same size. */
 				if ( width == source.width() && height == source.height() )
 				{
 					return source;
 				}
 
-				Pixmap< pixel_data_t, dimension_t > output{width, height, source.channelMode()};
+				Pixmap< pixel_data_t, dimension_t > output;
 
-				switch ( filteringMode )
+				if ( !Processor::resize(source, width, height, output, filteringMode) )
 				{
-					case FilteringMode::Cubic :
-						resizeCubic(source, width, height, output);
-						break;
-
-					case FilteringMode::Linear :
-						resizeLinear(source, width, height, output);
-						break;
-
-					case FilteringMode::Nearest :
-						resizeNearest(source, width, height, output);
-						break;
+					return {};
 				}
 
 				return output;
 			}
 
 			/**
-			 * @brief Returns a resized version of the Pixmap using a ratio.
-			 * @param source A reference to a pixmap to resize.
+			 * @brief Returns a resized pixmap using a ratio.
+			 * @param source A reference to a pixmap.
 			 * @param ratio The scale ratio.
-			 * @param filteringMode The filtering mode to apply during the resize. Default FilteringMode::Linear.
+			 * @param filteringMode The filtering mode to apply during the resize. Default linear.
 			 * @return Pixmap< pixel_data_t, dimension_t >
 			 */
 			[[nodiscard]]
@@ -651,11 +1105,53 @@ namespace EmEn::Libs::PixelFactory
 			Pixmap< pixel_data_t, dimension_t >
 			resize (const Pixmap< pixel_data_t, dimension_t > & source, float ratio, FilteringMode filteringMode = FilteringMode::Linear) noexcept
 			{
-				return Processor::resize(source, static_cast< size_t >(source.width() * ratio), static_cast< size_t >(source.height() * ratio), filteringMode);
+				return Processor::resize(
+					source,
+					static_cast< size_t >(source.width() * ratio),
+					static_cast< size_t >(source.height() * ratio),
+					filteringMode
+				);
 			}
 
 			/**
-			 * @brief Returns a cropped version of the Pixmap.
+			 * @brief Crops a pixmap.
+			 * @param source A reference to a pixmap.
+			 * @param rectangle A reference to a rectangle.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			crop (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & rectangle, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() || !rectangle.isValid() || !rectangle.isIntersect(source.width(), source.height()) )
+				{
+					return false;
+				}
+
+				if ( !destination.initialize(rectangle.width(), rectangle.height(), source.channelMode()) )
+				{
+					return false;
+				}
+
+				const auto rowBytes = destination.pitch();
+				const auto pixelBytes = source.colorCount() * sizeof(pixel_data_t);
+
+				for ( size_t rowIndex = 0; rowIndex < rectangle.height(); rowIndex++ )
+				{
+					const auto baseY = rowIndex + rectangle.top();
+					const auto destinationIndex = rowIndex * rowBytes;
+					const auto sourceIndex = (baseY * source.width() + rectangle.left()) * pixelBytes;
+
+					std::memcpy(destination.data().data() + destinationIndex, source.data().data() + sourceIndex, rowBytes);
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns a cropped pixmap.
 			 * @param source A reference to a pixmap.
 			 * @param rectangle A reference to a rectangle.
 			 * @return Pixmap< pixel_data_t, dimension_t >
@@ -665,60 +1161,138 @@ namespace EmEn::Libs::PixelFactory
 			Pixmap< pixel_data_t, dimension_t >
 			crop (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & rectangle) noexcept
 			{
-				if ( !source.isValid() || !rectangle.isValid() || !rectangle.isIntersect(source.width(), source.height()) )
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::crop(source, rectangle, output) )
 				{
 					return {};
-				}
-
-				Pixmap< pixel_data_t, dimension_t > output{rectangle.width(), rectangle.height(), source.channelMode()};
-
-				const auto rowBytes = output.pitch();
-				const auto pixelBytes = source.colorCount() * sizeof(pixel_data_t);
-
-				for ( size_t rowIndex = 0; rowIndex < rectangle.height(); rowIndex++ )
-				{
-					const auto baseY = rowIndex + rectangle.top();
-					const auto destinationIndex = rowIndex * rowBytes;
-					const auto sourceIndex = (baseY * source.width() + rectangle.left()) * pixelBytes;
-
-					std::memcpy(output.data().data() + destinationIndex, source.data().data() + sourceIndex, rowBytes);
 				}
 
 				return output;
 			}
 
 			/**
-			 * @brief Returns an extended version of the pixmap. Borders will be black.
+			 * @brief Extends a pixmap with black borders.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			extend (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination, const std::array< dimension_t, 4 > & borders) noexcept
+			{
+				const auto newWidth = source.width() + borders[0] + borders[2];
+				const auto newHeight = source.height() + borders[1] + borders[3];
+
+				if ( !destination.initialize(newWidth, newHeight, source.channelMode()) )
+				{
+					return false;
+				}
+
+				Processor processor{destination};
+
+				if ( !processor.blit(source, {borders[0], borders[1], source.width(), source.height()}) )
+				{
+					return false;
+				}
+
+				return destination;
+			}
+
+			/**
+			 * @brief Extends a pixmap with selectable color borders.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
 			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
-			 * @return Pixmap< pixel_data_t, dimension_t >
+			 * @param color A reference to a color.
+			 * @return bool
 			 */
 			template < typename color_data_t = float >
 			[[nodiscard]]
 			static
-			Pixmap< pixel_data_t, dimension_t >
-			extend (const Pixmap< pixel_data_t, dimension_t > & source, const std::array< dimension_t, 4 > & borders) noexcept requires (std::is_floating_point_v< color_data_t >)
+			bool
+			extend (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination, const std::array< dimension_t, 4 > & borders, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				Pixmap< pixel_data_t, dimension_t > target{
-					source.width() + borders[0] + borders[2],
-					source.height() + borders[1] + borders[3],
-					source.channelMode()
-				};
+				const auto newWidth = source.width() + borders[0] + borders[2];
+				const auto newHeight = source.height() + borders[1] + borders[3];
 
-				Processor processor{target};
-				processor.blit(source, {
-					borders[0],
-					borders[1],
-					source.width(),
-					source.height()
-				});
+				if ( !destination.initialize(newWidth, newHeight, source.channelMode()) )
+				{
+					return false;
+				}
+
+				Processor processor{destination};
+
+				if ( !processor.blit(source, {borders[0], borders[1], source.width(), source.height()}) )
+				{
+					return false;
+				}
+
+				/* Top */
+				if ( borders[1] > 0 )
+				{
+					if ( !processor.copy(color, {0, 0, destination.width(), borders[1]}) )
+					{
+						return false;
+					}
+				}
+
+				/* Bottom */
+				if ( borders[3] > 0 )
+				{
+					if ( !processor.copy(color, {0, destination.height() - borders[3], destination.width(), borders[3]}) )
+					{
+						return false;
+					}
+				}
+
+				/* Right */
+				if ( borders[0] > 0 )
+				{
+					if ( !processor.copy(color, {0, borders[1], borders[0], source.height()}) )
+					{
+						return false;
+					}
+				}
+
+				/* Left */
+				if ( borders[2] > 0 )
+				{
+					if ( !processor.copy(color, {destination.width() - borders[2], borders[1], borders[2], source.height()}) )
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns an extended pixmap with black borders.
+			 * @param source A reference to a pixmap.
+			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			extend (const Pixmap< pixel_data_t, dimension_t > & source, const std::array< dimension_t, 4 > & borders) noexcept
+			{
+				Pixmap< pixel_data_t, dimension_t > target;
+
+				if ( !Processor::extend(source, target, borders) )
+				{
+					return {};
+				}
 
 				return target;
 			}
 
 			/**
-			 * @brief Returns a cropped version of the Pixmap.
+			 * @brief Returns an extended pixmap with selectable color borders.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param source A reference to a pixmap.
 			 * @param borders A reference to an array of dimensions for borders [right, top, left, bottom].
@@ -731,65 +1305,656 @@ namespace EmEn::Libs::PixelFactory
 			Pixmap< pixel_data_t, dimension_t >
 			extend (const Pixmap< pixel_data_t, dimension_t > & source, const std::array< dimension_t, 4 > & borders, const Color< color_data_t > & color) noexcept requires (std::is_floating_point_v< color_data_t >)
 			{
-				Pixmap< pixel_data_t, dimension_t > target{
-					source.width() + borders[0] + borders[2],
-					source.height() + borders[1] + borders[3],
-					source.channelMode()
-				};
+				Pixmap< pixel_data_t, dimension_t > target;
 
-				Processor processor{target};
-				processor.blit(source, {
-					borders[0],
-					borders[1],
-					source.width(),
-					source.height()
-				});
-
-				/* Top */
-				if ( borders[1] > 0 )
+				if ( !Processor::extend(source, target, borders, color) )
 				{
-					processor.copy(color, {
-						0,
-						0,
-						target.width(),
-						borders[1]
-					});
-				}
-
-				/* Bottom */
-				if ( borders[3] > 0 )
-				{
-					processor.copy(color, {
-						0,
-						target.height() - borders[3],
-						target.width(),
-						borders[3]
-					});
-				}
-
-				/* Right */
-				if ( borders[0] > 0 )
-				{
-					processor.copy(color, {
-						0,
-						borders[1],
-						borders[0],
-						source.height()
-					});
-				}
-
-				/* Left */
-				if ( borders[2] > 0 )
-				{
-					processor.copy(color, {
-						target.width() - borders[2],
-						borders[1],
-						borders[2],
-						source.height()
-					});
+					return {};
 				}
 
 				return target;
+			}
+
+			/**
+			 * @brief Mirrors the pixmap on X axis, Y axis or both axes.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @param mode The mirror mode desired.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			mirror (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination, MirrorMode mode) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				if ( !destination.initialize(source.width(), source.height(), source.channelMode()) )
+				{
+					return false;
+				}
+
+				switch ( mode )
+				{
+					case MirrorMode::X :
+						Processor::mirrorX(source, destination);
+
+						return true;
+
+					case MirrorMode::Y :
+						return Processor::mirrorY(source, destination);
+
+					case MirrorMode::Both :
+						return Processor::mirrorBoth(source, destination);
+				}
+
+				return false;
+			}
+
+			/**
+			 * @brief Returns a mirrored pixmap on X axis, Y axis or both axes.
+			 * @param source A reference to a pixmap.
+			 * @param mode The mirror mode desired.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			mirror (const Pixmap< pixel_data_t, dimension_t > & source, MirrorMode mode) noexcept
+			{
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::mirror(source, output, mode) )
+				{
+					return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Orthogonally rotates a pixmap with an angle of +90°.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			rotateQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+				
+				const auto & srcData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				if ( !destination.initialize(source.height(), source.width(), source.channelMode()) )
+				{
+					return false;
+				}
+
+				auto & dstData = destination.data();
+
+				/* NOTE: We start from the first row of the source
+				 * to copy to the last column of the target (top to bottom). */
+				size_t coordX = destination.width() - 1;
+				size_t coordY = 0;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * destination.width() + coordX) * colorCount;
+
+					switch ( colorCount )
+					{
+						case 4 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							dstData[targetIndex+3] = srcData[sourceIndex+3];
+							break;
+
+						case 3 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							break;
+
+						case 2 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							break;
+
+						case 1 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							break;
+
+						default:
+							break;
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY >= destination.height() - 1 )
+					{
+						--coordX;
+						coordY = 0;
+					}
+					else
+					{
+						++coordY;
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns an orthogonally rotated pixmap with an angle of +90°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			rotateQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::rotateQuarterTurn(source, output) )
+				{
+					return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Orthogonally rotates a pixmap with an angle of +180°.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			rotateHalfTurn (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				const auto & srcData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				if ( !destination.initialize(source.width(), source.height(), source.channelMode()) )
+				{
+					return false;
+				}
+
+				auto & dstData = destination.data();
+
+				/* NOTE: We start from the first row of the source
+				 * to copy to the last row of the target (right to left). */
+				size_t coordX = destination.width() - 1;
+				size_t coordY = destination.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * destination.width() + coordX) * colorCount;
+
+					switch ( colorCount )
+					{
+						case 4 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							dstData[targetIndex+3] = srcData[sourceIndex+3];
+							break;
+
+						case 3 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							break;
+
+						case 2 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							break;
+
+						case 1 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							break;
+
+						default:
+							break;
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordX == 0 )
+					{
+						coordX = destination.width() - 1;
+						--coordY;
+					}
+					else
+					{
+						--coordX;
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns an orthogonally rotated pixmap with an angle of +180°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			rotateHalfTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::rotateHalfTurn(source, output) )
+				{
+					return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Orthogonally rotates a pixmap with an angle of +270°.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			rotateThreeQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				const auto & srcData = source.data();
+				const auto colorCount = source.colorCount();
+				const auto pixelCount = source.pixelCount();
+
+				if ( !destination.initialize(source.height(), source.width(), source.channelMode()) )
+				{
+					return false;
+				}
+
+				auto & dstData = destination.data();
+
+				/* NOTE: We start from the first row of the source
+				 * to copy to the first column of the target (bottom to top). */
+				size_t coordX = 0;
+				size_t coordY = destination.height() - 1;
+
+				/* NOTE: Per-pixel loop. */
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto sourceIndex = pixelIndex * colorCount;
+					const auto targetIndex = (coordY * destination.width() + coordX) * colorCount;
+
+					switch ( colorCount )
+					{
+						case 4 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							dstData[targetIndex+3] = srcData[sourceIndex+3];
+							break;
+
+						case 3 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							dstData[targetIndex+2] = srcData[sourceIndex+2];
+							break;
+
+						case 2 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							dstData[targetIndex+1] = srcData[sourceIndex+1];
+							break;
+
+						case 1 :
+							dstData[targetIndex] = srcData[sourceIndex];
+							break;
+
+						default:
+							break;
+					}
+
+					/* NOTE: Check the next target pixel coordinates. */
+					if ( coordY == 0 )
+					{
+						++coordX;
+						coordY = destination.height() - 1;
+					}
+					else
+					{
+						--coordY;
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns an orthogonally rotated pixmap with an angle of +270°.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			rotateThreeQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::rotateThreeQuarterTurn(source, output) )
+				{
+					return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Inverses the colors.
+			 * @note This leaves the alpha channel untouched.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			inverseColors (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return {};
+				}
+
+				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::GrayscaleAlpha )
+				{
+					return source;
+				}
+
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
+
+				const auto pixelCount = source.pixelCount();
+
+				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
+				{
+					const auto * pixelSrc = source.pixelPointer(pixelIndex);
+					auto * pixelDst = output.pixelPointer(pixelIndex);
+
+					pixelDst[0] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[0];
+					pixelDst[1] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[1];
+					pixelDst[2] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[2];
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief This reverses the order of color components in each pixel. E.g., RGB -> BGR. RGBA -> BGRA.
+			 * @note If swapAlpha is active, ARGB -> BGRA.
+			 * @param source A reference to a pixmap.
+			 * @param swapAlpha Set to swap the alpha channel too.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			swapChannels (const Pixmap< pixel_data_t, dimension_t > & source, bool swapAlpha = false) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return {};
+				}
+
+				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::GrayscaleAlpha )
+				{
+					return source;
+				}
+
+				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
+
+				const auto elementCount = source.elementCount();
+				const auto stride = source.colorCount();
+
+				const auto & dataSrc = source.data();
+				auto & dataDst = output.data();
+
+				switch ( source.channelMode() )
+				{
+					case ChannelMode::RGB :
+						for ( size_t index = 0; index < elementCount; index += stride )
+						{
+							/* RGB -> BGR */
+							dataDst[index] = dataSrc[index+2];
+							dataDst[index+1] = dataSrc[index+1];
+							dataDst[index+2] = dataSrc[index];
+						}
+						break;
+
+					case ChannelMode::RGBA :
+						if ( swapAlpha )
+						{
+							for ( size_t index = 0; index < elementCount; index += stride )
+							{
+								/* RGBA -> ABGR */
+								dataDst[index] = dataSrc[index+3];
+								dataDst[index+1] = dataSrc[index+2];
+								dataDst[index+2] = dataSrc[index+1];
+								dataDst[index+3] = dataSrc[index];
+							}
+						}
+						else
+						{
+							for ( size_t index = 0; index < elementCount; index += stride )
+							{
+								/* RGB -> BGR */
+								dataDst[index] = dataSrc[index+2];
+								dataDst[index+1] = dataSrc[index+1];
+								dataDst[index+2] = dataSrc[index];
+
+								/* Keeping alpha. */
+								dataDst[index+3] = dataSrc[index+3];
+							}
+						}
+						break;
+
+					case ChannelMode::Grayscale :
+					case ChannelMode::GrayscaleAlpha :
+						/* NOTE: should never happen */
+						return source;
+
+					default:
+						return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Returns a pixmap with an alpha channel.
+			 * @note Will return false if the pixmap already have an alpha channel.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			addAlphaChannel (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				if ( source.channelMode() == ChannelMode::GrayscaleAlpha || source.channelMode() == ChannelMode::RGBA )
+				{
+					return false;
+				}
+
+				const auto pixelCount = source.template pixelCount< size_t >();
+
+				if ( source.channelMode() == ChannelMode::Grayscale )
+				{
+					destination.initialize(source.width(), source.height(), ChannelMode::GrayscaleAlpha);
+
+					for ( size_t index = 0; index < pixelCount; index++ )
+					{
+						const auto srcData = source.pixelPointer(index);
+						auto dstData = destination.pixelPointer(index);
+
+						dstData[0] = srcData[0];
+						dstData[1] = Pixmap< pixel_data_t, dimension_t >::one();
+					}
+				}
+				else
+				{
+					destination.initialize(source.width(), source.height(), ChannelMode::RGBA);
+
+					for ( size_t index = 0; index < pixelCount; index++ )
+					{
+						const auto srcData = source.pixelPointer(index);
+						auto dstData = destination.pixelPointer(index);
+
+						dstData[0] = srcData[0];
+						dstData[1] = srcData[1];
+						dstData[2] = srcData[2];
+						dstData[3] = Pixmap< pixel_data_t, dimension_t >::one();
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns a pixmap with an alpha channel.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			addAlphaChannel (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				if ( source.channelMode() == ChannelMode::GrayscaleAlpha || source.channelMode() == ChannelMode::RGBA )
+				{
+					return source;
+				}
+
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::addAlphaChannel(source, output) )
+				{
+					return {};
+				}
+
+				return output;
+			}
+
+			/**
+			 * @brief Returns a pixmap without the alpha channel.
+			 * @note Will return false if the pixmap don't have an alpha channel.
+			 * @param source A reference to a pixmap.
+			 * @param destination A writable reference to a pixmap.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static
+			bool
+			removeAlphaChannel (const Pixmap< pixel_data_t, dimension_t > & source, Pixmap< pixel_data_t, dimension_t > & destination) noexcept
+			{
+				if ( !source.isValid() )
+				{
+					return false;
+				}
+
+				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::RGB )
+				{
+					return false;
+				}
+
+				const auto pixelCount = source.template pixelCount< size_t >();
+
+				if ( source.channelMode() == ChannelMode::GrayscaleAlpha )
+				{
+					destination.initialize(source.width(), source.height(), ChannelMode::Grayscale);
+
+					for ( size_t index = 0; index < pixelCount; index++ )
+					{
+						const auto srcData = source.pixelPointer(index);
+						auto dstData = destination.pixelPointer(index);
+
+						dstData[0] = srcData[0];
+					}
+				}
+				else
+				{
+					destination.initialize(source.width(), source.height(), ChannelMode::RGB);
+
+					for ( size_t index = 0; index < pixelCount; index++ )
+					{
+						const auto srcData = source.pixelPointer(index);
+						auto dstData = destination.pixelPointer(index);
+
+						dstData[0] = srcData[0];
+						dstData[1] = srcData[1];
+						dstData[2] = srcData[2];
+					}
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns a pixmap without the alpha channel.
+			 * @param source A reference to a pixmap.
+			 * @return Pixmap< pixel_data_t, dimension_t >
+			 */
+			[[nodiscard]]
+			static
+			Pixmap< pixel_data_t, dimension_t >
+			removeAlphaChannel (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
+			{
+				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::RGB )
+				{
+					return source;
+				}
+
+				Pixmap< pixel_data_t, dimension_t > output;
+
+				if ( !Processor::removeAlphaChannel(source, output) )
+				{
+					return {};
+				}
+
+				return output;
 			}
 
 			/**
@@ -965,764 +2130,7 @@ namespace EmEn::Libs::PixelFactory
 				return output;
 			}
 
-			/**
-			 * @brief Mirrors the pixmap on X axis, Y axis or both axis.
-			 * @param mode The mirror mode desired.
-			 * @return bool
-			 */
-			bool
-			mirror (MirrorMode mode) noexcept
-			{
-				if ( !m_target.isValid() )
-				{
-					return false;
-				}
-
-				/* Gets a copy. */
-				Pixmap< pixel_data_t, dimension_t > pixmap{m_target};
-
-				switch ( mode )
-				{
-					case MirrorMode::X :
-						Processor::mirrorX(pixmap, m_target);
-						break;
-
-					case MirrorMode::Y :
-						if ( !Processor::mirrorY(pixmap, m_target) )
-						{
-							return false;
-						}
-						break;
-
-					case MirrorMode::Both :
-						if ( !Processor::mirrorBoth(pixmap, m_target) )
-						{
-							return false;
-						}
-						break;
-				}
-
-				return true;
-			}
-
-			/**
-			 * @brief Mirrors the pixmap on X axis, Y axis or both axis.
-			 * @param base A reference to a pixmap.
-			 * @param mode The mirror mode desired.
-			 * @return Pixmap< pixel_data_t, dimension_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			mirror (const Pixmap< pixel_data_t, dimension_t > & base, MirrorMode mode) noexcept
-			{
-				if ( !base.isValid() )
-				{
-					return {};
-				}
-
-				Pixmap< pixel_data_t, dimension_t > output{base.width(), base.height(), base.channelMode()};
-
-				switch ( mode )
-				{
-					case MirrorMode::X :
-						Processor::mirrorX(base, output);
-						break;
-
-					case MirrorMode::Y :
-						if ( !Processor::mirrorY(base, output) )
-						{
-							return {};
-						}
-						break;
-
-					case MirrorMode::Both :
-						if ( !Processor::mirrorBoth(base, output) )
-						{
-							return {};
-						}
-						break;
-				}
-
-				return output;
-			}
-
-			/**
-			 * @brief Rotates orthogonally a pixmap with an angle of +90°.
-			 * @param source A reference to a pixmap.
-			 * @return Pixmap< precision_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			rotateQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
-			{
-				const auto & sourceData = source.data();
-				const auto colorCount = source.colorCount();
-				const auto pixelCount = source.pixelCount();
-
-				Pixmap< pixel_data_t, dimension_t > target{source.height(), source.width(), source.channelMode()};
-				auto & targetData = target.data();
-
-				/* NOTE: We start from the first row of the source,
-				 * to copy to the last column of the target (top to bottom). */
-				size_t coordX = target.width() - 1;
-				size_t coordY = 0;
-
-				/* NOTE: Per-pixel loop. */
-				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
-				{
-					const auto sourceIndex = pixelIndex * colorCount;
-					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
-
-					for ( size_t index = 0; index < source.colorCount(); index++ )
-					{
-						targetData[targetIndex + index] = sourceData[sourceIndex + index];
-					}
-
-					/* NOTE: Check the next target pixel coordinates. */
-					if ( coordY >= target.height() - 1 )
-					{
-						--coordX;
-						coordY = 0;
-					}
-					else
-					{
-						++coordY;
-					}
-				}
-
-				return target;
-			}
-
-			/**
-			 * @brief Rotates orthogonally a pixmap with an angle of +180°.
-			 * @param source A reference to a pixmap.
-			 * @return Pixmap< precision_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			rotateHalfTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
-			{
-				const auto & sourceData = source.data();
-				const auto colorCount = source.colorCount();
-				const auto pixelCount = source.pixelCount();
-
-				Pixmap< pixel_data_t, dimension_t > target{source.width(), source.height(), source.channelMode()};
-				auto & targetData = target.data();
-
-				/* NOTE: We start from the first row of the source,
-				 * to copy to the last row of the target (right to left). */
-				size_t coordX = target.width() - 1;
-				size_t coordY = target.height() - 1;
-
-				/* NOTE: Per-pixel loop. */
-				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
-				{
-					const auto sourceIndex = pixelIndex * colorCount;
-					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
-
-					for ( size_t index = 0; index < source.colorCount(); index++ )
-					{
-						targetData[targetIndex + index] = sourceData[sourceIndex + index];
-					}
-
-					/* NOTE: Check the next target pixel coordinates. */
-					if ( coordX == 0 )
-					{
-						coordX = target.width() - 1;
-						--coordY;
-					}
-					else
-					{
-						--coordX;
-					}
-				}
-
-				return target;
-			}
-
-			/**
-			 * @brief Rotates orthogonally a pixmap with an angle of +270°.
-			 * @param source A reference to a pixmap.
-			 * @return Pixmap< precision_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			rotateThreeQuarterTurn (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
-			{
-				const auto & sourceData = source.data();
-				const auto colorCount = source.colorCount();
-				const auto pixelCount = source.pixelCount();
-
-				Pixmap< pixel_data_t, dimension_t > target{source.height(), source.width(), source.channelMode()};
-				auto & targetData = target.data();
-
-				/* NOTE: We start from the first row of the source,
-				 * to copy to the first column of the target (bottom to top). */
-				size_t coordX = 0;
-				size_t coordY = target.height() - 1;
-
-				/* NOTE: Per-pixel loop. */
-				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
-				{
-					const auto sourceIndex = pixelIndex * colorCount;
-					const auto targetIndex = (coordY * target.width() + coordX) * colorCount;
-
-					for ( size_t index = 0; index < source.colorCount(); index++ )
-					{
-						targetData[targetIndex + index] = sourceData[sourceIndex + index];
-					}
-
-					/* NOTE: Check the next target pixel coordinates. */
-					if ( coordY == 0 )
-					{
-						++coordX;
-						coordY = target.height() - 1;
-					}
-					else
-					{
-						--coordY;
-					}
-				}
-
-				return target;
-			}
-
-			/**
-			 * @brief Inverses the colors.
-			 * @note This leave the alpha channel untouched.
-			 * @param source A reference to a pixmap.
-			 * @return Pixmap< pixel_data_t, dimension_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			inverseColors (const Pixmap< pixel_data_t, dimension_t > & source) noexcept
-			{
-				if ( !source.isValid() )
-				{
-					return {};
-				}
-
-				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::GrayscaleAlpha )
-				{
-					return source;
-				}
-
-				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
-
-				const auto pixelCount = source.pixelCount();
-
-				for ( size_t pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++ )
-				{
-					const auto * pixelSrc = source.pixelPointer(pixelIndex);
-					auto pixelDst = output.pixelPointer(pixelIndex);
-
-					pixelDst[0] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[0];
-					pixelDst[1] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[1];
-					pixelDst[2] = std::numeric_limits< pixel_data_t >::max() - pixelSrc[2];
-				}
-
-				return output;
-			}
-
-			/**
-			 * @brief This reverse the order of color components in each pixel. E.g. RGB -> BGR. RGBA -> BGRA.
-			 * @note If swapAlpha is active, ARGB -> BGRA.
-			 * @param source A reference to a pixmap.
-			 * @param swapAlpha Set to swap alpha channel too.
-			 * @return Pixmap< pixel_data_t, dimension_t >
-			 */
-			[[nodiscard]]
-			static
-			Pixmap< pixel_data_t, dimension_t >
-			swapChannels (const Pixmap< pixel_data_t, dimension_t > & source, bool swapAlpha = false) noexcept
-			{
-				if ( !source.isValid() )
-				{
-					return {};
-				}
-
-				if ( source.channelMode() == ChannelMode::Grayscale || source.channelMode() == ChannelMode::GrayscaleAlpha )
-				{
-					return source;
-				}
-
-				Pixmap< pixel_data_t, dimension_t > output{source.width(), source.height(), source.channelMode()};
-
-				const auto elementCount = source.elementCount();
-				const auto stride = source.colorCount();
-
-				const auto & dataSrc = source.data();
-				auto & dataDst = output.data();
-
-				switch ( source.channelMode() )
-				{
-					case ChannelMode::RGB :
-						for ( size_t index = 0; index < elementCount; index += stride )
-						{
-							/* RGB -> BGR */
-							dataDst[index] = dataSrc[index+2];
-							dataDst[index+1] = dataSrc[index+1];
-							dataDst[index+2] = dataSrc[index];
-						}
-						break;
-
-					case ChannelMode::RGBA :
-						if ( swapAlpha )
-						{
-							for ( size_t index = 0; index < elementCount; index += stride )
-							{
-								/* RGBA -> ABGR */
-								dataDst[index] = dataSrc[index+3];
-								dataDst[index+1] = dataSrc[index+2];
-								dataDst[index+2] = dataSrc[index+1];
-								dataDst[index+3] = dataSrc[index];
-							}
-						}
-						else
-						{
-							for ( size_t index = 0; index < elementCount; index += stride )
-							{
-								/* RGB -> BGR */
-								dataDst[index] = dataSrc[index+2];
-								dataDst[index+1] = dataSrc[index+1];
-								dataDst[index+2] = dataSrc[index];
-
-								/* Keeping alpha. */
-								dataDst[index+3] = dataSrc[index+3];
-							}
-						}
-						break;
-
-					case ChannelMode::Grayscale :
-					case ChannelMode::GrayscaleAlpha :
-						/* NOTE: should never happen */
-						return source;
-
-					default:
-						return {};
-				}
-
-				return output;
-			}
-
-			/**
-			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
-			 * @warning Pixmap involved must have the same color count.
-			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to a rectangle on source pixmap.
-			 * @param destinationClip A reference to a rectangle on target pixmap.
-			 * @return bool
-			 */
-			bool
-			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
-			{
-				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
-				{
-					return false;
-				}
-
-				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
-				if ( source.channelMode() != m_target.channelMode() )
-				{
-					return false;
-				}
-
-				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
-				const auto rowSize = destinationClip.width() * pixelSize;
-
-				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
-				{
-					const auto sourceIndex = ((sourceClip.top() + destinationY) * source.width() + sourceClip.left()) * pixelSize;
-					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
-
-					std::memcpy(m_target.data().data() + destinationIndex, source.data().data() + sourceIndex, rowSize);
-				}
-
-				m_target.markRectangleUpdated(destinationClip);
-
-				return true;
-			}
-
-			/**
-			 * @brief Copies the source pixmap to the target pixmap.
-			 * @param source A reference to a source pixmap.
-			 */
-			bool
-			blit (const Pixmap< pixel_data_t, dimension_t > & source) const noexcept
-			{
-				const auto sourceArea = source.area();
-
-				return this->blit(source, sourceArea, sourceArea);
-			}
-
-			/**
-			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @warning Pixmap involved must have the same color count.
-			 * @param source A reference to a source pixmap.
-			 * @param destinationClip A reference to a rectangle. on target pixmap.
-			 * @return bool
-			 */
-			bool
-			blit (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
-			{
-				return this->blit(source, {source.width(), source.height()}, destinationClip);
-			}
-
-			/**
-			 * @brief Copies raw data to a clipped area of the target pixmap.
-			 * @warning Be sure to have enough data in the pointer.
-			 * @param rawData A reference to a structure of raw data.
-			 * @param sourceClip A reference to a rectangle. on source pixmap.
-			 * @param destinationClip A reference to a rectangle. on target pixmap.
-			 * @return bool
-			 */
-			bool
-			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & sourceClip, const Math::Rectangle< dimension_t > & destinationClip) const noexcept
-			{
-				if ( sourceClip.isOutside(rawData.width, rawData.height) )
-				{
-					assert("The clipping area is outside the pixmap !");
-
-					return false;
-				}
-
-				if ( !Processor::checkPixmapClipping(m_target, destinationClip) )
-				{
-					return false;
-				}
-
-				/* NOTE: If both pixmap have the same channel mode, we can perform the blit operation ! */
-				if ( rawData.colorCount != m_target.colorCount() )
-				{
-					return false;
-				}
-
-				const auto pixelSize = m_target.colorCount() * sizeof(pixel_data_t);
-				const auto rowSize = destinationClip.width() * pixelSize;
-
-				for ( size_t destinationY = 0; destinationY < destinationClip.height(); destinationY++ )
-				{
-					const auto sourceIndex = ((sourceClip.top() + destinationY) * rawData.width + sourceClip.left()) * pixelSize;
-					const auto destinationIndex = ((destinationClip.top() + destinationY) * m_target.width() + destinationClip.left()) * pixelSize;
-
-					std::memcpy(m_target.data().data() + destinationIndex, rawData.pointer + sourceIndex, rowSize);
-				}
-
-				m_target.markRectangleUpdated(destinationClip);
-
-				return true;
-			}
-
-			/**
-			 * @brief Copies raw data to a clipped area of the target pixmap.
-			 * @warning Be sure to have enough data in the pointer.
-			 * @param rawData A reference to a structure of raw data.
-			 * @param clip A reference to a rectangle. on target pixmap. This will be used as the source clip and the destination clip.
-			 * @return bool
-			 */
-			bool
-			blit (const RawPixmapData< pixel_data_t > & rawData, const Math::Rectangle< dimension_t > & clip) const noexcept
-			{
-				return this->blit(rawData, clip, clip);
-			}
-
-			/**
-			 * @brief Copies a clipped area of the source pixmap to a clipped area of the target pixmap.
-			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to a rectangle. on source pixmap.
-			 * @param destinationClip A reference to a rectangle. on target pixmap.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			copy (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				/* NOTE: Check if we can replace the copy operation by a blit operation (much faster). */
-				if (
-					mode == DrawPixelMode::Replace &&
-					source.channelMode() != m_target.channelMode() &&
-					sourceClip.width() != destinationClip.width() &&
-					sourceClip.height() != destinationClip.height()
-				)
-				{
-					return this->blit(source, sourceClip, destinationClip);
-				}
-
-				if ( !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
-				{
-					return false;
-				}
-
-				for ( size_t y = 0; y < destinationClip.height(); y++ )
-				{
-					const auto sourceY = sourceClip.top() + y;
-					const auto destinationY = destinationClip.top() + y;
-
-					for ( size_t x = 0; x < destinationClip.width(); x++ )
-					{
-						const auto sourceX = sourceClip.left() + x;
-						const auto destinationX = destinationClip.left() + x;
-
-						m_target.blendPixel(destinationX, destinationY, source.pixel(sourceX, sourceY), mode, opacity);
-					}
-				}
-
-				m_target.markRectangleUpdated(destinationClip);
-
-				return true;
-			}
-
-			/**
-			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @param source A reference to a source pixmap.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			copy (const Pixmap< pixel_data_t, dimension_t > & source, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				const auto sourceClip = source.template rectangle< dimension_t >();
-
-				return this->copy(source, sourceClip, sourceClip, mode, opacity);
-			}
-
-			/**
-			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @param source A reference to a source pixmap.
-			 * @param destinationClip A reference to a rectangle. on target pixmap.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & destinationClip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				return this->copy(source, source.area(), destinationClip, mode, opacity);
-			}
-
-			/**
-			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @param source A reference to a source pixmap.
-			 * @param xPosition The position in X where to execute the copy.
-			 * @param yPosition The position in Y where to execute the copy.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			copy (const Pixmap< pixel_data_t, dimension_t > & source, int32_t xPosition, int32_t yPosition, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				Math::Rectangle< dimension_t > sourceClip;
-				Math::Rectangle< dimension_t > destinationClip;
-
-				if ( xPosition < 0 )
-				{
-					const auto shiftSize = static_cast< size_t >(std::abs(xPosition));
-
-					if ( shiftSize >= source.width() )
-					{
-						assert("The source pixmap do not lie in target pixmap on X axis !");
-
-						return false;
-					}
-
-					const auto newWidth = source.width() - shiftSize;
-
-					sourceClip.setLeft(shiftSize);
-					sourceClip.setWidth(newWidth);
-
-					destinationClip.setWidth(newWidth);
-				}
-				else
-				{
-					sourceClip.setWidth(source.width());
-
-					destinationClip.setLeft(static_cast< size_t >(xPosition));
-					destinationClip.setWidth(source.width());
-				}
-
-				if ( yPosition < 0 )
-				{
-					const auto shiftSize = static_cast< size_t >(std::abs(yPosition));
-
-					if ( shiftSize >= source.height() )
-					{
-						assert("The source pixmap do not lie in target pixmap on Y axis !");
-
-						return false;
-					}
-
-					const auto newHeight = source.height() - shiftSize;
-
-					sourceClip.setTop(shiftSize);
-					sourceClip.setHeight(newHeight);
-
-					destinationClip.setHeight(newHeight);
-				}
-				else
-				{
-					sourceClip.setHeight(source.height());
-
-					destinationClip.setTop(static_cast< size_t >(yPosition));
-					destinationClip.setHeight(source.height());
-				}
-
-				return this->copy(source, sourceClip, destinationClip, mode, opacity);
-			}
-
-			/**
-			 * @brief Copies the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @param source A reference to a source pixmap.
-			 * @param position A reference to a vector.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			copy (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Vector< 2, int32_t > & position, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				return this->copy(source, source.area(), position.x(), position.y(), mode, opacity);
-			}
-
-			/**
-			 * @brief Copies a colored area to the target pixmap.
-			 * @tparam color_data_t The color data type. Default float.
-			 * @param color A reference to a color.
-			 * @param clip A reference to a rectangle.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			template< typename color_data_t = float >
-			bool
-			copy (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				if ( !Processor::checkPixmapClipping(m_target, clip) )
-				{
-					return false;
-				}
-
-				for ( size_t y = 0; y < clip.height(); y++ )
-				{
-					const auto destinationY = clip.top() + y;
-
-					for ( size_t x = 0; x < clip.width(); x++ )
-					{
-						const auto destinationX = clip.left() + x;
-
-						m_target.blendPixel(destinationX, destinationY, color, mode, opacity);
-					}
-				}
-
-				m_target.markRectangleUpdated(clip);
-
-				return true;
-			}
-
-			/**
-			 * @brief Copies with a stencil mask a clipped area of the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @warning The mask pixmap must be a grayscale.
-			 * @param source A reference to a source pixmap.
-			 * @param sourceClip A reference to a rectangle. on source pixmap.
-			 * @param destinationClip A reference to a rectangle. on target pixmap.
-			 * @param mask A reference to a pixmap to act as the stencil mask.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @return bool
-			 */
-			bool
-			stencil (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace) const noexcept
-			{
-				if ( !mask.isValid() || !mask.isGrayScale() || !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
-				{
-					return false;
-				}
-
-				const auto rowPixelCount = destinationClip.width();
-
-				for ( size_t row = 0; row < destinationClip.height(); row++ )
-				{
-					const auto sourceIndex = (((sourceClip.top() + row) * source.width()) + sourceClip.left());
-					const auto destinationIndex = (((destinationClip.top() + row) * m_target.width()) + destinationClip.left());
-
-					/* FIXME: Check the value of the mask. */
-					for ( size_t pixel = 0; pixel < rowPixelCount; ++pixel )
-					{
-						m_target.blendPixel(destinationIndex + pixel, row, source.pixel(sourceIndex + pixel, row), mode);
-					}
-				}
-
-				m_target.markRectangleUpdated(destinationClip);
-
-				return true;
-			}
-
-			/**
-			 * @brief Copies with a stencil mask the source pixmap to a clipped area of the target pixmap.
-			 * @note The source pixmap will be used from top-left corner.
-			 * @warning The mask pixmap must be a grayscale.
-			 * @param source A reference to a source pixmap.
-			 * @param clip A reference to a rectangle. on target pixmap.
-			 * @param mask A reference to a pixmap to act as the stencil mask.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			bool
-			stencil (const Pixmap< pixel_data_t, dimension_t > & source, const Math::Rectangle< dimension_t > & clip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				return this->stencil(source, {source.width(), source.height()}, clip, mask, mode, opacity);
-			}
-
-			/**
-			 * @brief Copies a colored area with a stencil mask to the target pixmap.
-			 * @tparam color_data_t The color data type. Default float.
-			 * @param color A reference to a color.
-			 * @param clip A reference to a rectangle.
-			 * @param mode Set the copy technic. Default: Replace.
-			 * @param mask A reference to a pixmap to act as the stencil mask.
-			 * @param opacity A global opacity. Default 1.0.
-			 * @return bool
-			 */
-			/*template< typename color_data_t = float >
-			bool
-			stencil (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, const Pixmap< precision_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
-			{
-				// TODO ...
-
-				return false;
-			}*/
-
 		private:
-
-			/**
-			 * @brief Checks whether the targeted Pixmap in the processor is present and valid.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			checkPixmap () const noexcept
-			{
-				if ( !m_target.isValid() )
-				{
-					assert("Target pixmap is invalid !");
-
-					return false;
-				}
-
-				return true;
-			}
 
 			/**
 			 * @brief Checks the clipping area within a pixmap.
@@ -1739,21 +2147,27 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !pixmap.isValid() )
 				{
-					assert("Target pixmap is invalid !");
+#ifdef DEBUG
+					std::cerr << "Target pixmap is invalid !" "\n";
+#endif
 
 					return false;
 				}
 
 				if ( !clip.isValid() )
 				{
-					assert("The clipping area is invalid !");
+#ifdef DEBUG
+					std::cerr << "The clipping area is invalid !" "\n";
+#endif
 
 					return false;
 				}
 
 				if ( clip.isOutside(pixmap.width(), pixmap.height()) )
 				{
-					assert("The clipping area is outside the pixmap !");
+#ifdef DEBUG
+					std::cerr << "The clipping area is outside the pixmap !" "\n";
+#endif
 
 					return false;
 				}
@@ -1776,21 +2190,27 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( !pixmap.isValid() )
 				{
-					assert("Target pixmap is invalid !");
+#ifdef DEBUG
+					std::cerr << "Target pixmap is invalid !" "\n";
+#endif
 
 					return false;
 				}
 
 				if ( !clip.isValid() )
 				{
-					assert("The clipping area is invalid !");
+#ifdef DEBUG
+					std::cerr << "The clipping area is invalid !" "\n";
+#endif
 
 					return false;
 				}
 
 				if ( clip.isOutside(pixmap.width(), pixmap.height()) )
 				{
-					assert("The clipping area is outside the pixmap !");
+#ifdef DEBUG
+					std::cerr << "The clipping area is outside the pixmap !" "\n";
+#endif
 
 					return false;
 				}
@@ -1801,7 +2221,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Clamps segment point to the pixmap boundaries.
+			 * @brief Clamps the segment to the pixmap boundaries.
 			 * @param pointA A reference to the first point of the segment.
 			 * @param pointB A reference to the second point of the segment.
 			 * @return bool
@@ -2101,7 +2521,7 @@ namespace EmEn::Libs::PixelFactory
 				{
 					constexpr auto maxValue = std::numeric_limits< float >::max();
 
-					return static_cast< pixel_data_t >(std::max(0.0F, std::min(maxValue, value * maxValue + 0.5F)));
+					return static_cast< pixel_data_t >(std::max(0.0F, std::min(maxValue, (value * maxValue) + 0.5F)));
 				}
 			}
 
@@ -2139,19 +2559,19 @@ namespace EmEn::Libs::PixelFactory
 						const auto xFloor = static_cast< int32_t >(std::floor(realX));
 						const float tX = realX - static_cast< float >(xFloor);
 
-						float interpolatedValues[4] = {0.0F, 0.0F, 0.0F, 0.0F};
+						std::array< float, 4 > interpolatedValues{0.0F, 0.0F, 0.0F, 0.0F};
 
 						const auto numChannels = static_cast< size_t >(source.colorCount());
 
 						for ( size_t channel = 0; channel < numChannels; ++channel )
 						{
-							float intermediate[4];
+							std::array< float, 4 > intermediate{0.0F, 0.0F, 0.0F, 0.0F};
 
 							for ( int j = 0; j < 4; ++j )
 							{
 								const int currentY = yFloor - 1 + j;
 
-								float pixel[4];
+								std::array< float, 4 > pixel{0.0F, 0.0F, 0.0F, 0.0F};
 
 								for ( int i = 0; i < 4; ++i )
 								{
@@ -2279,7 +2699,7 @@ namespace EmEn::Libs::PixelFactory
 				const auto rowElementCount = source.pitch();
 				const auto rowCount = source.height();
 
-				/* Copy rows in reversed order to new pixmap. */
+				/* Copy rows in reversed order to a new pixmap. */
 				for ( size_t rowIndex = 0; rowIndex < rowCount; rowIndex++ )
 				{
 					const auto invertedRow = rowCount - (rowIndex + 1);

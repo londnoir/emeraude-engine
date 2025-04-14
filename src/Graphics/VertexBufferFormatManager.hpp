@@ -34,6 +34,9 @@
 #include <mutex>
 #include <vector>
 
+/* Local inclusions for inheritances. */
+#include "ServiceInterface.hpp"
+
 /* Local inclusions for usages. */
 #include "VertexBufferFormat.hpp"
 
@@ -57,7 +60,7 @@ namespace EmEn::Graphics
 	 * @brief The vertex buffer format manager service class.
 	 * @extends EmEn::ServiceInterface This is a service.
 	 */
-	class VertexBufferFormatManager final
+	class VertexBufferFormatManager final : public ServiceInterface
 	{
 		public:
 
@@ -70,7 +73,7 @@ namespace EmEn::Graphics
 			/**
 			 * @brief Constructs a vertex buffer format manager.
 			 */
-			VertexBufferFormatManager () noexcept = default;
+			VertexBufferFormatManager () noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -101,7 +104,31 @@ namespace EmEn::Graphics
 			/**
 			 * @brief Destructs the vertex buffer format manager.
 			 */
-			~VertexBufferFormatManager () noexcept;
+			~VertexBufferFormatManager () noexcept override = default;
+
+			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
+			[[nodiscard]]
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
+
+			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
+			[[nodiscard]]
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
+
+			/** @copydoc EmEn::ServiceInterface::usable() */
+			[[nodiscard]]
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Enables the print into the console of generated format. (DEBUG).
@@ -115,7 +142,8 @@ namespace EmEn::Graphics
 			}
 
 			/**
-			 * @brief Returns a vertex buffer format from a vertex shader.
+			 * @brief Creates or returns an existing vertex buffer format from a combination of a geometry and a vertex shader.
+			 * @warning The output vertex format can be nullptr !
 			 * @param geometry A reference to a geometry interface.
 			 * @param vertexShader A reference to a vertex shader.
 			 * @return std::shared_ptr< VertexBufferFormat >
@@ -130,12 +158,18 @@ namespace EmEn::Graphics
 			 * @return std::string
 			 */
 			[[nodiscard]]
-			static std::string getVertexBufferObjectUsage (const Geometry::Interface & geometry, VertexBufferFormat & vertexBufferFormat) noexcept;
+			static std::string getVertexBufferObjectUsage (const Geometry::Interface & geometry, const VertexBufferFormat & vertexBufferFormat) noexcept;
 
 		private:
 
+			/** @copydoc EmEn::ServiceInterface::onInitialize() */
+			bool onInitialize () noexcept override;
+
+			/** @copydoc EmEn::ServiceInterface::onTerminate() */
+			bool onTerminate () noexcept override;
+
 			/**
-			 * @brief Begins a binding declaration.
+			 * @brief Begins to bind declarations to a new vertex buffer format.
 			 * @param binding The binding point.
 			 * @return bool
 			 */
@@ -156,34 +190,34 @@ namespace EmEn::Graphics
 			void declareJump (VertexAttributeType attribute) noexcept;
 
 			/**
-			 * @brief Ends the declaration of a binding.
+			 * @brief Finishes the new vertex buffer format creation.
 			 * @param topology The geometry primitive to use.
 			 * @param bufferFlags The vertex buffer object flags.
 			 * @return bool
 			 */
-			bool endBinding (Graphics::Topology topology, uint32_t bufferFlags) noexcept;
+			bool endBinding (Topology topology, uint32_t bufferFlags) const noexcept;
 
 			/**
-			 * @brief resetBuildingParameters
+			 * @brief Resets the members that build a new vertex buffer format.
 			 * @return void
 			 */
 			void
 			resetBuildingParameters () noexcept
 			{
-				m_vertexBufferFormat.reset();
+				m_stagingVertexBufferFormat.reset();
 				m_currentBinding = 0;
 				m_bindingOffset = 0;
 				m_bindingElementCount = 0;
 			}
 
 			/* Flag names */
-			static constexpr auto Usable{0UL};
+			static constexpr auto ServiceInitialized{0UL};
 			static constexpr auto PrintGeneratedFormat{1UL};
 
 			std::vector< std::shared_ptr< VertexBufferFormat > > m_vertexBufferFormats;
 			/* Building parameters */
 			std::mutex m_building;
-			std::shared_ptr< VertexBufferFormat > m_vertexBufferFormat;
+			std::shared_ptr< VertexBufferFormat > m_stagingVertexBufferFormat;
 			uint32_t m_currentBinding{0};
 			uint32_t m_bindingOffset{0};
 			size_t m_bindingElementCount{0};

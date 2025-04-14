@@ -141,6 +141,14 @@ namespace EmEn::Libs::IO
 			[[nodiscard]]
 			bool extractAll (const std::filesystem::path & directory) const noexcept;
 
+			/**
+			 * @brief Returns whether file is an archive file by testing it.
+			 * @param filepath A reference to a path.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			static bool isArchiveFile (const std::filesystem::path & filepath) noexcept;
+
 		private:
 
 			/**

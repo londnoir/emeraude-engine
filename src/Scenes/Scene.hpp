@@ -632,7 +632,7 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns a random position within the scene area.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			Libs::Math::Vector< 3, float >
 			getRandomPosition () const noexcept

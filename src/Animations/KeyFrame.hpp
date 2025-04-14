@@ -62,7 +62,7 @@ namespace EmEn::Animations
 
 			/**
 			 * @brief Returns the interpolation type.
-			 * @return const Libraries::Math::InterpolationType &
+			 * @return const Libs::Math::InterpolationType &
 			 */
 			[[nodiscard]]
 			const Libs::Math::InterpolationType &

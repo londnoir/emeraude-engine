@@ -108,7 +108,7 @@ namespace EmEn::Graphics
 
 			/**
 			 * @brief Returns the position of the point of view.
-			 * @return const Libraries::Math::Vector< 3, float > &
+			 * @return const Libs::Math::Vector< 3, float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Vector< 3, float > & position () const noexcept = 0;

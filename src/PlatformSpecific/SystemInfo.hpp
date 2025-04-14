@@ -192,7 +192,7 @@ namespace EmEn::PlatformSpecific
 
 			OperatingSystem m_OSInformation{};
 			CPU m_CPUInformation{};
-			std::vector< GPUDevice > m_GPUDevices{};
+			std::vector< GPUDevice > m_GPUDevices;
 			bool m_informationFound{false};
 	};
 }

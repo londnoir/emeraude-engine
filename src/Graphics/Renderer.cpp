@@ -110,25 +110,8 @@ namespace EmEn::Graphics
 	}
 
 	bool
-	Renderer::onInitialize () noexcept
+	Renderer::initializeSubServices () noexcept
 	{
-		if ( !m_vulkanInstance.usable() )
-		{
-			Tracer::fatal(ClassId, "The Vulkan instance is not usable !");
-
-			return false;
-		}
-
-		/* Graphics device selection. */
-		m_device = m_vulkanInstance.getGraphicsDevice(&m_window);
-
-		if ( m_device == nullptr )
-		{
-			Tracer::fatal(ClassId, "Unable to find a suitable graphics device !");
-
-			return false;
-		}
-
 		/* Initialize the graphics shader manager. */
 		if ( m_shaderManager.initialize(m_subServicesEnabled) )
 		{
@@ -185,76 +168,134 @@ namespace EmEn::Graphics
 			return false;
 		}
 
-		/* Create the main descriptor pool.
-		 * FIXME: maybe not the right place ! */
-		const auto sizes = std::vector< VkDescriptorPoolSize >{
-			/* NOTE: Texture filtering alone. */
-			{VK_DESCRIPTOR_TYPE_SAMPLER, 16},
-			/* NOTE: Texture (than can be sampled). */
-			{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64},
-			/* NOTE: Texture associated to a filter (VK_DESCRIPTOR_TYPE_SAMPLER+VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE). */
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 0},
-			/* NOTE: UBO (Uniform Buffer Object) */
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 512},
-			/* NOTE: SSBO (Shader Storage Buffer Object) */
-			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64},
-			/* NOTE: Dynamic UBO */
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 512},
-			/* NOTE: Dynamic SSBO */
-			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 64},
-			/* NOTE:  */
-			{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 32},
-			/* NOTE: Special UBO. */
-			//{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512}, // TODO: Check to enable this for reusable UBO between render calls
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM, 0},
-			/* NOTE:  */
-			//{VK_DESCRIPTOR_TYPE_MUTABLE_EXT, 0}
-		};
-
-		m_descriptorPool = std::make_shared< DescriptorPool >(m_device, sizes, 4096, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-		m_descriptorPool->setIdentifier(ClassId, "Main", "DescriptorPool");
-
-		if ( !m_descriptorPool->createOnHardware() )
+		/* Initialize vertex buffer format manager. */
+		if ( m_vertexBufferFormatManager.initialize(m_subServicesEnabled) )
 		{
-			Tracer::fatal(ClassId, "Unable to create the descriptor pool !");
-
-			return false;
-		}
-
-		/* Create the swap chain for presenting images to screen. */
-		m_swapChain = std::make_shared< SwapChain >(m_device, m_primaryServices.settings(), m_window);
-		m_swapChain->setIdentifier(ClassId, "Main", "SwapChain");
-
-		if ( m_swapChain->createOnHardware() )
-		{
-			this->notify(SwapChainCreated, m_swapChain);
+			TraceSuccess{ClassId} << m_vertexBufferFormatManager.name() << " service up !";
 		}
 		else
 		{
-			Tracer::fatal(ClassId, "Unable to create the swap chain !");
+			TraceFatal{ClassId} << m_vertexBufferFormatManager.name() << " service failed to execute !";
 
 			return false;
 		}
 
-		/* Create a command pools and command buffers following the swap-chain images. */
-		if ( !this->createCommandSystem() )
+		return true;
+	}
+
+	bool
+	Renderer::onInitialize () noexcept
+	{
+		/* NOTE: Graphics device selection from the vulkan instance.
+		 * The Vulkan instance don't create directly a device on its initialization. */
+		if ( m_vulkanInstance.usable() )
 		{
-			Tracer::fatal(ClassId, "Unable to create a test command buffers !");
+			m_device = m_vulkanInstance.getGraphicsDevice(&m_window);
+
+			if ( m_device == nullptr )
+			{
+				Tracer::fatal(ClassId, "Unable to find a suitable graphics device !");
+
+				return false;
+			}
+		}
+		else
+		{
+			Tracer::fatal(ClassId, "The Vulkan instance is not usable to select a graphics device !");
 
 			return false;
+		}
+
+		/*
+		 * NOTE: Initialize all sub-services :
+		 *  - The shader manager (for shaders code generation to binary in the GPU)
+		 *  - The transfer manager (for memory move from CPU to GPU)
+		 *  - The layout manager (for graphics pipeline)
+		 *  - The shared uniform buffer object manager (to re-use a same large UBO between objects)
+		 *  - The vertex buffer format manager (to describe each vertex buffer once)
+		 */
+		if ( !this->initializeSubServices() )
+		{
+			Tracer::fatal(ClassId, "Unable to initialize renderer sub-services properly !");
+
+			return false;
+		}
+
+		/* NOTE: Create the swap-chain for presenting images to screen. */
+		{
+			m_swapChain = std::make_shared< SwapChain >(m_device, m_primaryServices.settings(), m_window);
+			m_swapChain->setIdentifier(ClassId, "Main", "SwapChain");
+
+			if ( !m_swapChain->createOnHardware() )
+			{
+				Tracer::fatal(ClassId, "Unable to create the swap-chain !");
+
+				return false;
+			}
+
+			/* Create a command pools and command buffers following the swap-chain images. */
+			if ( !this->createCommandSystem() )
+			{
+				m_swapChain.reset();
+
+				Tracer::fatal(ClassId, "Unable to create the swap-chain command pools and buffers !");
+
+				return false;
+			}
+
+			this->notify(SwapChainCreated, m_swapChain);
+		}
+
+		/* NOTE: Create the main descriptor pool. */
+		{
+			// TODO: Sizes management is maybe in the wrong place !
+			const auto sizes = std::vector< VkDescriptorPoolSize >{
+				/* NOTE: Texture filtering alone. */
+					{VK_DESCRIPTOR_TYPE_SAMPLER, 16},
+					/* NOTE: Texture (than can be sampled). */
+					{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64},
+					/* NOTE: Texture associated to a filter (VK_DESCRIPTOR_TYPE_SAMPLER+VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE). */
+					{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 0},
+					/* NOTE: UBO (Uniform Buffer Object) */
+					{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 512},
+					/* NOTE: SSBO (Shader Storage Buffer Object) */
+					{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64},
+					/* NOTE: Dynamic UBO (Uniform Buffer Object) */
+					{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 512},
+					/* NOTE: Dynamic SSBO (Shader Storage Buffer Object) */
+					{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 64},
+					/* NOTE:  */
+					{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 32},
+					/* NOTE: Special UBO (Uniform Buffer Object). */
+					// TODO: Check to enable this for re-usable UBO between render calls.
+					//{VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, 512},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM, 0},
+					/* NOTE:  */
+					//{VK_DESCRIPTOR_TYPE_MUTABLE_EXT, 0}
+				};
+
+			m_descriptorPool = std::make_shared< DescriptorPool >(m_device, sizes, 4096, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+			m_descriptorPool->setIdentifier(ClassId, "Main", "DescriptorPool");
+
+			if ( !m_descriptorPool->createOnHardware() )
+			{
+				Tracer::fatal(ClassId, "Unable to create the descriptor pool !");
+
+				return false;
+			}
 		}
 
 		this->registerToConsole();
@@ -479,7 +520,7 @@ namespace EmEn::Graphics
 			return;
 		}
 
-		if ( m_swapChain->isDegraded() )
+		if ( m_swapChain->status() == SwapChain::Status::Degraded )
 		{
 			TraceInfo{ClassId} << "The swap-chain is degraded !";
 

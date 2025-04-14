@@ -130,14 +130,13 @@ namespace EmEn::PlatformSpecific
 		std::string bus;
 	};
 
-	/**
-	 * @brief Describe the operating system.
-	 */
+	/** @brief Describe the operating system. */
 	struct OperatingSystem
 	{
 		std::string systemName;
 		std::string systemVersion;
 		std::string computerName;
+		std::string machineUUID;
 		std::string rawInformation;
 	};
 }

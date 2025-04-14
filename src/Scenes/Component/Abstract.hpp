@@ -219,14 +219,14 @@ namespace EmEn::Scenes::Component
 
 			/**
 			 * @brief Returns the absolute coordinates of this component using parent node.
-			 * @return Libraries::Math::Coordinates< float >
+			 * @return Libs::Math::Coordinates< float >
 			 */
 			[[nodiscard]]
 			Libs::Math::CartesianFrame< float > getWorldCoordinates () const noexcept;
 
 			/**
 			 * @brief Returns the absolute velocity of this component using parent node.
-			 * @return Libraries::Math::Vector< 3, float >
+			 * @return Libs::Math::Vector< 3, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 3, float > getWorldVelocity () const noexcept;
@@ -261,7 +261,7 @@ namespace EmEn::Scenes::Component
 			/**
 			 * @brief Returns the local bounding box of this component.
 			 * @note Can be invalid.
-			 * @return const Libraries::Math::Cuboid< float > &
+			 * @return const Libs::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
@@ -269,7 +269,7 @@ namespace EmEn::Scenes::Component
 			/**
 			 * @brief Returns the local bounding sphere of this component.
 			 * @note Can be invalid.
-			 * @return const Libraries::Math::Sphere< float > &
+			 * @return const Libs::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;

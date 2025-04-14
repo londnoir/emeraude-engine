@@ -3,6 +3,7 @@
 cmake_minimum_required(VERSION 3.25.1)
 cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH is enabled by default.
 cmake_policy(SET CMP0091 NEW) # MSVC runtime library flags are selected by an abstraction.
+#cmake_policy(SET CMP0177 NEW) # Normalize all install path 3.31
 
 # Adds custom CMake scripts/modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -20,7 +21,7 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 
 #######################################################################
 # Declare project and options.
-project(Emeraude VERSION 0.7.4 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
+project(Emeraude VERSION 0.7.41 DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20." LANGUAGES CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE On)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
@@ -33,8 +34,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS On)
 # Emeraude libraries project variables and options
 set(EMERAUDE_ENABLE_TESTS Off CACHE BOOL "Enable the Emeraude testing suite (Default Off).")
 set(EMERAUDE_INTERNET_CHECK_DOMAIN "google.com" CACHE STRING "Web domain to check internet connexion (Default google.com).")
-set(EMERAUDE_COMPILATION_DIR "" CACHE STRING "Declare where to project is compiled. For macOS this should point the 'package.app' in the compilation folder.")
-set(EMERAUDE_INSTALL_DIR "" CACHE STRING "Declare where to install the library. For macOS this should point the 'package.app'.")
+set(EMERAUDE_COMPILATION_DIR "" CACHE STRING "Declare where the project is compiled. For macOS this should point the 'package.app' in the compilation folder.")
 set(EMERAUDE_USE_SYSTEM_LIBS Off CACHE BOOL "Use the system for common libraries instead of the embedded ones (Default Off).")
 set(EMERAUDE_ENABLE_OPENMP On CACHE BOOL "Enable 'libomp' library [SYSTEM] (Default On).")
 set(EMERAUDE_ENABLE_SNDFILE On CACHE BOOL "Enable 'libsndfile' library. Adds the ability to read a wide range of sound formats [SYSTEM] (Default On).")
@@ -194,6 +194,7 @@ if ( APPLE )
 		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/Message.mac.mm
 		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/OpenFile.mac.mm
 		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Dialog/SaveFile.mac.mm
+		${CMAKE_CURRENT_SOURCE_DIR}/src/PlatformSpecific/Desktop/Commands.mac.mm
 	)
 endif ()
 
@@ -287,8 +288,12 @@ else ( UNIX )
 	)
 endif ()
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_BINARY_DIR}/include)
-target_include_directories(${PROJECT_NAME} PUBLIC ${LOCAL_LIB_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_BINARY_DIR}/include
+    ${LOCAL_LIB_DIR}/include
+	# "subprocess.h" library
+    ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/subprocess.h/
+)
 
 target_link_directories(${PROJECT_NAME} PUBLIC ${LOCAL_LIB_DIR}/lib)
 
@@ -418,10 +423,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/emeraude_config.hpp.in ${CMAKE_BI
 
 if ( NOT "${EMERAUDE_COMPILATION_DIR}" STREQUAL "" )
 	# Copy 'gamecontrollerdb.txt' in the compilation directory.
-	file(
-		COPY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
-		DESTINATION ${EMERAUDE_COMPILATION_DIR}/data
-	)
+	if ( APPLE )
+		file(
+			COPY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
+			DESTINATION ${EMERAUDE_COMPILATION_DIR}/Contents/Resources/data
+		)
+	else ()
+		file(
+			COPY ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
+			DESTINATION ${EMERAUDE_COMPILATION_DIR}/data
+		)
+	endif ()
 
 	# Copy debug file
 	if ( CMAKE_BUILD_TYPE MATCHES Debug )
@@ -439,35 +451,5 @@ if ( NOT "${EMERAUDE_COMPILATION_DIR}" STREQUAL "" )
 		)
 	endif ()
 else ()
-	message(STATUS "EMERAUDE_COMPILATION_DIR is not set, the compilation directory won't have all files for development !")
-endif ()
-
-
-
-###### Installing ######
-
-# TODO: Make a dev version for linux
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
-
-if ( NOT "${EMERAUDE_INSTALL_DIR}" STREQUAL "" )
-	message("Install shared library to ${EMERAUDE_INSTALL_DIR} ...")
-
-	install(TARGETS ${PROJECT_NAME}
-		LIBRARY DESTINATION ${EMERAUDE_INSTALL_DIR} COMPONENT Runtime
-		FRAMEWORK DESTINATION ${EMERAUDE_INSTALL_DIR} COMPONENT Runtime
-	)
-
-	if ( APPLE )
-		install(
-			FILES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
-			DESTINATION ${EMERAUDE_INSTALL_DIR}/Contents/Resources/data
-		)
-	else ()
-		install(
-			FILES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL_GameControllerDB/gamecontrollerdb.txt
-			DESTINATION ${EMERAUDE_INSTALL_DIR}/data
-		)
-	endif ()
-else ()
-	message(STATUS "EMERAUDE_INSTALL_DIR is not set, the shared library installation will be disabled !")
+	message(STATUS "EMERAUDE_COMPILATION_DIR is not set, the compilation directory won't have all files for development ! This is a sub-project warning !")
 endif ()

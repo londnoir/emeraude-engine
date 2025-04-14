@@ -69,7 +69,7 @@ namespace EmEn::Graphics::RenderTarget::View
 				0,
 				1,
 				1,
-				Instance::findSampleCount(this->precisions().samples())
+				device->findSampleCount(this->precisions().samples())
 			);
 			m_colorImage->setIdentifier(this->id() + "-Color-Image");
 

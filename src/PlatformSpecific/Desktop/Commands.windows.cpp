@@ -32,6 +32,12 @@
 #include <cstdlib>
 #include <sstream>
 
+/* Third-party inclusions. */
+#include <windows.h>
+
+/* Local inclusions. */
+#include "Window.hpp"
+
 namespace EmEn::PlatformSpecific::Desktop
 {
 	void
@@ -46,6 +52,23 @@ namespace EmEn::PlatformSpecific::Desktop
 		commandStream << "start " << argument;
 
 		system(commandStream.str().c_str());
+	}
+
+	void
+	flashTaskbarIcon (bool state) noexcept
+	{
+		FLASHWINFO fwi;
+		fwi.cbSize = sizeof(fwi);
+		fwi.hwnd = Window::instance()->getWin32Window();
+		fwi.dwFlags = state ? FLASHW_ALL : FLASHW_STOP;
+		fwi.uCount = 0;
+		FlashWindowEx(&fwi);
+	}
+
+	void
+	setTaskbarIconProgression (float progress, ProgressMode mode) noexcept
+	{
+
 	}
 }
 

@@ -122,7 +122,7 @@ namespace EmEn::Scenes
 			/**
 			 * @brief Gets position in the modifier space.
 			 * @param position A reference to a vector.
-			 * @return Libraries::Math::Vector< 4, float >
+			 * @return Libs::Math::Vector< 4, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Vector< 4, float > getPositionInModifierSpace (const Libs::Math::Vector< 3, float > & position) const noexcept;

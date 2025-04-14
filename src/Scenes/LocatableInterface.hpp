@@ -218,55 +218,55 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Sets the local coordinates of this entity.
-			 * @return Libraries::Math::Coordinates< float > &
+			 * @return Libs::Math::Coordinates< float > &
 			 */
 			virtual void setLocalCoordinates (const Libs::Math::CartesianFrame< float > & coordinates) noexcept = 0;
 
 			/**
 			 * @brief Returns the local coordinates of a 3D world entity.
-			 * @return const Libraries::Math::Coordinates< float > &
+			 * @return const Libs::Math::Coordinates< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::CartesianFrame< float > & localCoordinates () const noexcept = 0;
 
 			/**
 			 * @brief Returns the internal local coordinates of a 3D world entity.
-			 * @return const Libraries::Math::Coordinates< float > &
+			 * @return const Libs::Math::Coordinates< float > &
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::CartesianFrame< float > & localCoordinates () noexcept = 0;
 
 			/**
 			 * @brief Returns the world coordinates of a 3D world entity.
-			 * @return Libraries::Math::Coordinates< float >
+			 * @return Libs::Math::Coordinates< float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::CartesianFrame< float > getWorldCoordinates () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding box of a 3D world entity.
-			 * @return const Libraries::Math::Cuboid< float > &
+			 * @return const Libs::Math::Cuboid< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Cuboid< float > & localBoundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding box of a 3D world entity.
-			 * @return Libraries::Math::Cuboid< float >
+			 * @return Libs::Math::Cuboid< float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Cuboid< float > getWorldBoundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding sphere of a 3D world entity.
-			 * @return const Libraries::Math::Sphere< float > &
+			 * @return const Libs::Math::Sphere< float > &
 			 */
 			[[nodiscard]]
 			virtual const Libs::Math::Sphere< float > & localBoundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief Returns the world bounding sphere of a 3D world entity.
-			 * @return Libraries::Math::Sphere< float >
+			 * @return Libs::Math::Sphere< float >
 			 */
 			[[nodiscard]]
 			virtual Libs::Math::Sphere< float > getWorldBoundingSphere () const noexcept = 0;

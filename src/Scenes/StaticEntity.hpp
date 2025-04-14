@@ -403,7 +403,7 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns the coordinates of the static renderable.
-			 * @return Libraries::Math::Matrix< 4, float >
+			 * @return Libs::Math::Matrix< 4, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Matrix< 4, float >

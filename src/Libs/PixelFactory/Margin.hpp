@@ -27,15 +27,14 @@
 #pragma once
 
 /* STL inclusions. */
-#include <array>
 #include <cstdint>
-#include <iostream>
+#include <array>
 #include <sstream>
 #include <string>
 
 namespace EmEn::Libs::PixelFactory
 {
-	enum class MarginPosition: size_t
+	enum class MarginPosition: uint8_t
 	{
 		Top = 0UL,
 		Right = 1UL,
@@ -167,7 +166,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the margins size of a border.
+			 * @brief Returns the margin size of a border.
 			 * @param position The border.
 			 * @return data_t
 			 */

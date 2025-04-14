@@ -60,7 +60,7 @@ namespace EmEn::Libs::IO
 	size_t filesize (const std::filesystem::path & filepath) noexcept;
 
 	/**
-	 * @brief Creates an empty file at pointed location.
+	 * @brief Creates an empty file at a pointed location.
 	 * @param filepath A reference to a filesystem path.
 	 * @return bool
 	 */
@@ -110,7 +110,7 @@ namespace EmEn::Libs::IO
 	 * @brief Deletes a directory.
 	 * @warning This is a destructive function.
 	 * @param path A reference to a filesystem path.
-	 * @param recursive Will deletes everything in the directory. Default false.
+	 * @param recursive Will delete everything in the directory. Default false.
 	 * @return bool
 	 */
 	bool eraseDirectory (const std::filesystem::path & path, bool recursive = false) noexcept;
@@ -131,7 +131,7 @@ namespace EmEn::Libs::IO
 	bool exists (const std::filesystem::path & path) noexcept;
 
 	/**
-	 * @brief Checks whether the path has give the read permission to the application.
+	 * @brief Checks whether the path has given the read permission to the application.
 	 * @param path A reference to a filesystem path.
 	 * @return bool
 	 */
@@ -139,7 +139,7 @@ namespace EmEn::Libs::IO
 	bool readable (const std::filesystem::path & path) noexcept;
 
 	/**
-	 * @brief Checks whether the path has give the write permission to the application.
+	 * @brief Checks whether the path has given the write permission to the application.
 	 * @param path A reference to a filesystem path.
 	 * @return bool
 	 */
@@ -147,7 +147,7 @@ namespace EmEn::Libs::IO
 	bool writable (const std::filesystem::path & path) noexcept;
 
 	/**
-	 * @brief Checks whether the path has give the execute permission to the application.
+	 * @brief Checks whether the path has given the execute permission to the application.
 	 * @param path A reference to a filesystem path.
 	 * @return bool
 	 */
@@ -158,7 +158,7 @@ namespace EmEn::Libs::IO
 	 * @brief Extracts the file extension from a path.
 	 * @param filepath A reference to a filesystem path.
 	 * @param forceToLower Force to get the extension to lower case. Default false.
-	 * @return
+	 * @return std::string
 	 */
 	[[nodiscard]]
 	std::string getFileExtension (const std::filesystem::path & filepath, bool forceToLower = false) noexcept;

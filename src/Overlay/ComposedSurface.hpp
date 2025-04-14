@@ -165,7 +165,7 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Returns the texture offsets.
-			 * @return const Libraries::Math::Vector< 2, float > &
+			 * @return const Libs::Math::Vector< 2, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Vector< 2, float > & textureOffset () const noexcept;

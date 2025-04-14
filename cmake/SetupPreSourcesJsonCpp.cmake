@@ -1,9 +1,9 @@
 message("Preparing JsonCpp library from local source ...")
 
-if ( NOT EXISTS ${LOCAL_LIB_DIR}/include/json )
-	set(JSONCPP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/jsoncpp)
-	set(JSONCPP_TARGET_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/jsoncpp-amalgamated)
+set(JSONCPP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/jsoncpp)
+set(JSONCPP_TARGET_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/jsoncpp-amalgamated)
 
+if ( NOT EXISTS ${JSONCPP_TARGET_DIR} )
 	find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 	execute_process(

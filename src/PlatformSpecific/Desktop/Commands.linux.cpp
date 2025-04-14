@@ -47,6 +47,18 @@ namespace EmEn::PlatformSpecific::Desktop
 
 		system(commandStream.str().c_str());
 	}
+
+	void
+	flashTaskbarIcon (bool state) noexcept
+	{
+		/* NOTE: This OS method is only available with Unity desktop from Ubuntu. */
+	}
+
+	void
+	setTaskbarIconProgression (float progress, ProgressMode /*mode*/) noexcept
+	{
+		/* NOTE: This OS method is only available with Unity desktop from Ubuntu. */
+	}
 }
 
 #endif

@@ -30,9 +30,9 @@
 #include "emeraude_config.hpp"
 
 /* STL inclusions. */
-#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <array>
 #include <functional>
 #include <memory>
 #include <string>
@@ -111,7 +111,7 @@ namespace EmEn
 			};
 
 			/** @brief Observable notification codes. */
-			enum NotificationCode
+			enum NotificationCode: uint8_t
 			{
 				Created,
 				Destroyed,
@@ -368,7 +368,7 @@ namespace EmEn
 			void getBackOnDesktop () const noexcept;
 
 			/**
-			 * @brief Returns whether the window cover the whole desktop.
+			 * @brief Returns whether the window covers the whole desktop.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -463,7 +463,7 @@ namespace EmEn
 			std::array< uint32_t, 2 > getSize () const noexcept;
 
 			/**
-			 * @brief Returns the size, in screen coordinates, of each edge of the frame of the window.
+			 * @brief Returns the size, in screen coordinates, of each window frame edge.
 			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW. Use Window::state() instead.
 			 * @note The array will hold left, top, right and bottom.
 			 * @return std::array< uint32_t, 4 >
@@ -472,7 +472,7 @@ namespace EmEn
 			std::array< uint32_t, 4 > getBorderSize () const noexcept;
 
 			/**
-			 * @brief Returns the size, in pixels, of the framebuffer of the window.
+			 * @brief Returns the size, in pixels, of the window framebuffer.
 			 * @warning Do not use this function to respond to window events. Data are updated after the event in GLFW. Use Window::state() instead.
 			 * @param applyScale Divide the real framebuffer size by scaling factors. Default false.
 			 * @return std::array< uint32_t, 2 >
@@ -588,14 +588,14 @@ namespace EmEn
 			void initializeState () noexcept;
 
 			/**
-			 * @brief Checks monitors information and keep it to a static member from here.
+			 * @brief Checks monitors information and keeps it to a static member from here.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool checkMonitors () const noexcept;
 
 			/**
-			 * @brief Creates the window related objects.
+			 * @brief Creates the window-related objects.
 			 * @param width The width of the window.
 			 * @param height The height of the window.
 			 * @param monitorNumber The number of the monitor for multiple monitors configuration.
@@ -637,7 +637,7 @@ namespace EmEn
 
 			/**
 			 * @brief This callback for GLFW is called when the allocated framebuffer of the window is resized.
-			 * @note The order of call is : framebufferSizeCallback(), windowRefreshCallback(), windowSizeCallback() and finally windowPositionCallback().
+			 * @note The order of call is: framebufferSizeCallback(), windowRefreshCallback(), windowSizeCallback() and finally windowPositionCallback().
 			 * @param window A pointer to the system window handle.
 			 * @param width The width of the framebuffer in pixel.
 			 * @param height The height of the framebuffer in pixel.
@@ -646,7 +646,7 @@ namespace EmEn
 			static void framebufferSizeCallback (GLFWwindow * window, int width, int height) noexcept;
 
 			/**
-			 * @brief This callback for GLFW is called when the window is modified by the system. ie: a resize.
+			 * @brief This callback for GLFW is called when the window is modified by the system. Example: a resize.
 			 * @param window A pointer to the system window handle.
 			 * @return void
 			 */
@@ -715,7 +715,7 @@ namespace EmEn
 			 * @brief Notifies the window content request a scale by the host system.
 			 * @param window A pointer to the system window handle.
 			 * @param xScale The scale in X of the window content.
-			 * @param yScale TThe scale in Y of the window content.
+			 * @param yScale The scale in Y of the window content.
 			 * @return void
 			 */
 			static void windowContentScaleCallback (GLFWwindow * window, float xScale, float yScale) noexcept;
@@ -723,7 +723,7 @@ namespace EmEn
 			/**
 			 * @brief Returns the centered position for the window.
 			 * @note The window dimensions are forced due to a GLFW bug at startup.
-			 * @param windowSize A reference to an array of 2 unsigned integer.
+			 * @param windowSize A reference to an array of 2 unsigned integers.
 			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default preferred monitor.
 			 * @return std::array< int32_t, 2 >
 			 */

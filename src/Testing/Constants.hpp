@@ -35,7 +35,8 @@
 /* NOTE: Source images. */
 static const std::filesystem::path FixedFont{RES_BASE_PATH "/test-assets/fixed-font.tga"};
 static const std::filesystem::path TrueTypeFont{RES_BASE_PATH "/test-assets/Joystick.Bold.ttf"};
-static const std::filesystem::path LargeRGB{RES_BASE_PATH "/test-assets/1200x800-RBG_image001.jpg"};
+static const std::filesystem::path LargeRGB{RES_BASE_PATH "/test-assets/1200x800-RBG.jpg"};
+static const std::filesystem::path ExtraLargeRGB{RES_BASE_PATH "/test-assets/8160x6144-RBG.jpg"};
 static const std::filesystem::path MediumGrayscale{RES_BASE_PATH "/test-assets/512x512-Grayscale.png"};
 static const std::filesystem::path MediumGrayscaleAlpha{RES_BASE_PATH "/test-assets/512x512-GrayscaleAlpha.png"};
 static const std::filesystem::path MediumPalette{RES_BASE_PATH "/test-assets/512x512-Palette.png"};

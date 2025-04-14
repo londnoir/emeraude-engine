@@ -59,36 +59,119 @@ namespace EmEn::Vulkan
 	{
 		m_window->surface()->update(device);
 
+		/* NOTE: Check for multisampling. */
+		{
+			const auto sampleCount = settings.get< uint32_t >(VideoFramebufferSamplesKey, DefaultVideoFramebufferSamples);
+
+			if ( sampleCount > 1 )
+			{
+				m_sampleCount = device->findSampleCount(sampleCount);
+			}
+		}
+
 		m_flags[ShowInformation] = settings.get< bool >(VkShowInformationKey, DefaultVkShowInformation);
 		m_flags[VSyncEnabled] = settings.get< bool >(VideoEnableVSyncKey, DefaultVideoEnableVSync);
 		m_flags[TripleBufferingEnabled] = settings.get< bool >(VideoEnableTripleBufferingKey, DefaultVideoEnableTripleBuffering);
 	}
 
-	void
-	SwapChain::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
+	bool
+	SwapChain::createBaseSwapChain (VkSwapchainKHR oldSwapChain) noexcept
 	{
-		m_viewMatrices.create(*Renderer::instance(), this->id());
+		const auto & capabilities = m_window->surface()->capabilities();
+
+		const auto surfaceFormat = this->chooseSurfaceFormat();
+
+		m_createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		m_createInfo.pNext = nullptr;
+		m_createInfo.flags = 0;
+		m_createInfo.surface = m_window->surface()->handle();
+		m_createInfo.minImageCount = this->selectImageCount(capabilities);
+		m_createInfo.imageFormat = surfaceFormat.format;
+		m_createInfo.imageColorSpace = surfaceFormat.colorSpace;
+		m_createInfo.imageExtent = this->chooseSwapExtent(capabilities);
+		m_createInfo.imageArrayLayers = 1;
+		m_createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		//auto index = device->getFamilyQueueIndex(VK_QUEUE_GRAPHICS_BIT);
+
+		//QueueFamilyIndices indices = this->findQueueFamilies(m_device->physicalDeviceHandle());
+
+		//uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
+		//if ( indices.graphicsFamily != indices.presentFamily )
+		//{
+		//	m_createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		//	m_createInfo.queueFamilyIndexCount = 2;
+		//	m_createInfo.pQueueFamilyIndices = queueFamilyIndices;
+		//}
+		//else
+		{
+			m_createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE; /* Performance ! */
+			m_createInfo.queueFamilyIndexCount = 0; /* Optional */
+			m_createInfo.pQueueFamilyIndices = nullptr; /* Optional */
+		}
+		m_createInfo.preTransform = capabilities.currentTransform; /* NOTE: No transformation. Check "supportedTransforms" in "capabilities" */
+		m_createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		m_createInfo.presentMode = this->choosePresentMode();
+		m_createInfo.clipped = VK_TRUE;
+		m_createInfo.oldSwapchain = oldSwapChain;
+
+		const auto result = vkCreateSwapchainKHR(
+			this->device()->handle(),
+			&m_createInfo,
+			nullptr,
+			&m_handle
+		);
+
+		/* NOTE: Destroy the previous swap chain if exists. */
+		if ( m_createInfo.oldSwapchain != VK_NULL_HANDLE )
+		{
+			vkDestroySwapchainKHR(
+				this->device()->handle(),
+				m_createInfo.oldSwapchain,
+				nullptr
+			);
+		}
+
+		if ( result != VK_SUCCESS )
+		{
+			TraceFatal{ClassId} << "Unable to create the swap chain : " << vkResultToCString(result) << " !";
+
+			return false;
+		}
+
+		this->setExtent(m_createInfo.imageExtent.width, m_createInfo.imageExtent.height);
+
+		return true;
 	}
 
 	void
-	SwapChain::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
+	SwapChain::destroyBaseSwapChain () noexcept
 	{
-		m_viewMatrices.destroy();
+		if ( m_handle != VK_NULL_HANDLE )
+		{
+			vkDestroySwapchainKHR(this->device()->handle(), m_handle, nullptr);
+
+			m_handle = VK_NULL_HANDLE;
+		}
 	}
 
 	bool
 	SwapChain::onCreate (Renderer & renderer) noexcept
 	{
-		if ( !this->checkPrerequisites() )
+		if ( !this->hasDevice() || m_window == nullptr || m_window->surface() == nullptr )
 		{
-			Tracer::error(ClassId, "Prerequisites are not met to build the swap chain !");
+			Tracer::fatal(ClassId, "No device, window or surface to create the swap chain !");
 
 			return false;
 		}
 
+		m_status = Status::UnderConstruction;
+
 		if ( !this->createBaseSwapChain() )
 		{
 			Tracer::error(ClassId, "Unable to create the base of the swap chain !");
+
+			m_status = Status::Failure;
 
 			return false;
 		}
@@ -97,12 +180,16 @@ namespace EmEn::Vulkan
 		{
 			Tracer::error(ClassId, "Unable to prepare data to complete the swap chain !");
 
+			m_status = Status::Failure;
+
 			return false;
 		}
 
 		if ( !this->createFramebuffer(renderer) )
 		{
 			Tracer::error(ClassId, "Unable to complete the framebuffer !");
+
+			m_status = Status::Failure;
 
 			return false;
 		}
@@ -111,12 +198,14 @@ namespace EmEn::Vulkan
 		{
 			Tracer::error(ClassId, "Unable to create synchronization primitives !");
 
+			m_status = Status::Failure;
+
 			return false;
 		}
 
 		this->setCreated();
 
-		m_flags[Ready] = true;
+		m_status = Status::Ready;
 
 		return true;
 	}
@@ -133,6 +222,8 @@ namespace EmEn::Vulkan
 
 		this->device()->waitIdle("Destroying the swap chain");
 
+		m_status = Status::Uninitialized;
+
 		this->destroyFramebuffer();
 
 		this->destroyBaseSwapChain();
@@ -144,6 +235,8 @@ namespace EmEn::Vulkan
 	SwapChain::recreateOnHardware (Renderer & renderer) noexcept
 	{
 		this->resetFramebuffer();
+
+		m_status = Status::UnderConstruction;
 
 		if ( !this->createBaseSwapChain(m_handle) )
 		{
@@ -164,8 +257,7 @@ namespace EmEn::Vulkan
 			TraceSuccess{ClassId} << "The swap chain " << m_handle << " (" << this->identifier() << ") is successfully recreated !";
 		}
 
-		m_flags[Ready] = true;
-		m_flags[SwapChainRecreationRequested] = false;
+		m_status = Status::Ready;
 
 		return true;
 	}
@@ -173,7 +265,7 @@ namespace EmEn::Vulkan
 	void
 	SwapChain::resetFramebuffer () noexcept
 	{
-		m_flags[Ready] = false;
+		m_status = Status::Uninitialized;
 
 		for ( const auto & frame : m_frames )
 		{
@@ -199,36 +291,7 @@ namespace EmEn::Vulkan
 	void
 	SwapChain::destroyFramebuffer () noexcept
 	{
-		m_flags[Ready] = false;
-
 		m_frames.clear();
-	}
-
-	bool
-	SwapChain::checkPrerequisites () const noexcept
-	{
-		if ( !this->hasDevice() )
-		{
-			Tracer::error(ClassId, "No device to create the swap chain !");
-
-			return false;
-		}
-
-		if ( m_window == nullptr )
-		{
-			Tracer::error(ClassId, "No handle to create the swap chain !");
-
-			return false;
-		}
-
-		if ( m_window->surface() == nullptr )
-		{
-			Tracer::error(ClassId, "The surface pointer of the handle is null !");
-
-			return false;
-		}
-
-		return true;
 	}
 
 	uint32_t
@@ -297,89 +360,6 @@ namespace EmEn::Vulkan
 	}
 
 	bool
-	SwapChain::createBaseSwapChain (VkSwapchainKHR oldSwapChain) noexcept
-	{
-		const auto & capabilities = m_window->surface()->capabilities();
-
-		const auto surfaceFormat = this->chooseSurfaceFormat();
-
-		m_createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		m_createInfo.pNext = nullptr;
-		m_createInfo.flags = 0;
-		m_createInfo.surface = m_window->surface()->handle();
-		m_createInfo.minImageCount = this->selectImageCount(capabilities);
-		m_createInfo.imageFormat = surfaceFormat.format;
-		m_createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		m_createInfo.imageExtent = this->chooseSwapExtent(capabilities);
-		m_createInfo.imageArrayLayers = 1;
-		m_createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		//auto index = device->getFamilyQueueIndex(VK_QUEUE_GRAPHICS_BIT);
-
-		/*QueueFamilyIndices indices = this->findQueueFamilies(m_device->physicalDeviceHandle());
-
-			uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-
-			if ( indices.graphicsFamily != indices.presentFamily )
-			{
-				m_createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-				m_createInfo.queueFamilyIndexCount = 2;
-				m_createInfo.pQueueFamilyIndices = queueFamilyIndices;
-			}
-			else*/
-		{
-			m_createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE; /* Performance ! */
-			m_createInfo.queueFamilyIndexCount = 0; /* Optional */
-			m_createInfo.pQueueFamilyIndices = nullptr; /* Optional */
-		}
-		m_createInfo.preTransform = capabilities.currentTransform; /* NOTE: No transformation. Check "supportedTransforms" in "capabilities" */
-		m_createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		m_createInfo.presentMode = this->choosePresentMode();
-		m_createInfo.clipped = VK_TRUE;
-		m_createInfo.oldSwapchain = oldSwapChain;
-
-		const auto result = vkCreateSwapchainKHR(
-			this->device()->handle(),
-			&m_createInfo,
-			nullptr,
-			&m_handle
-		);
-
-		/* NOTE: Destroy the previous swap chain if exists. */
-		if ( m_createInfo.oldSwapchain != VK_NULL_HANDLE )
-		{
-			vkDestroySwapchainKHR(
-				this->device()->handle(),
-				m_createInfo.oldSwapchain,
-				nullptr
-			);
-		}
-
-		if ( result != VK_SUCCESS )
-		{
-			TraceFatal{ClassId} << "Unable to create the swap chain : " << vkResultToCString(result) << " !";
-
-			return false;
-		}
-
-		this->setExtent(m_createInfo.imageExtent.width, m_createInfo.imageExtent.height);
-
-		return true;
-	}
-
-	void
-	SwapChain::destroyBaseSwapChain () noexcept
-	{
-		m_flags[Ready] = false;
-
-		if ( m_handle != VK_NULL_HANDLE )
-		{
-			vkDestroySwapchainKHR(this->device()->handle(), m_handle, nullptr);
-
-			m_handle = VK_NULL_HANDLE;
-		}
-	}
-
-	bool
 	SwapChain::prepareFrameData () noexcept
 	{
 		/* NOTE: Will set the image count for the swap chain. */
@@ -424,7 +404,7 @@ namespace EmEn::Vulkan
 	}
 
 	bool
-	SwapChain::createImages () noexcept
+	SwapChain::createImageArray () noexcept
 	{
 		const auto swapChainImages = this->retrieveSwapChainImages();
 
@@ -467,7 +447,7 @@ namespace EmEn::Vulkan
 	}
 
 	bool
-	SwapChain::createFramebuffers (const std::shared_ptr< RenderPass > & renderPass) noexcept
+	SwapChain::createFramebufferArray (const std::shared_ptr< RenderPass > & renderPass) noexcept
 	{
 		/* Create the frame buffer for each set of images using the same render pass. */
 		for ( size_t imageIndex = 0; imageIndex < m_imageCount; ++imageIndex )
@@ -566,7 +546,7 @@ namespace EmEn::Vulkan
 			return false;
 		}
 
-		if ( !this->createImages() )
+		if ( !this->createImageArray() )
 		{
 			Tracer::error(ClassId, "Unable to create the swap chain images !");
 
@@ -576,7 +556,7 @@ namespace EmEn::Vulkan
 		/* Create the render pass base on the first set of images (this is the swap chain, all images are technically the same) */
 		const auto renderPass = this->createRenderPass(renderer);
 
-		if ( !this->createFramebuffers(renderPass) )
+		if ( !this->createFramebufferArray(renderPass) )
 		{
 			Tracer::error(ClassId, "Unable to create the swap chain framebuffer !");
 
@@ -663,7 +643,7 @@ namespace EmEn::Vulkan
 				.layerCount = imageCreateInfo.arrayLayers
 			}
 		);
-		depthImageView->setIdentifier(purposeId + "D-ImageView");
+		depthImageView->setIdentifier(purposeId + "Depth-ImageView");
 
 		if ( !depthImageView->createOnHardware() )
 		{
@@ -683,7 +663,7 @@ namespace EmEn::Vulkan
 				.layerCount = imageCreateInfo.arrayLayers
 			}
 		);
-		stencilImageView->setIdentifier(purposeId + "S-ImageView");
+		stencilImageView->setIdentifier(purposeId + "Stencil-ImageView");
 
 		if ( !stencilImageView->createOnHardware() )
 		{
@@ -739,7 +719,7 @@ namespace EmEn::Vulkan
 	bool
 	SwapChain::acquireNextImage (uint32_t & imageIndex) noexcept
 	{
-		if ( !m_flags[Ready] )
+		if ( m_status != Status::Ready )
 		{
 			return false;
 		}
@@ -776,7 +756,7 @@ namespace EmEn::Vulkan
 			case VK_SUBOPTIMAL_KHR :
 				TraceError{ClassId} << vkResultToCString(result) << " @ acquisition for image #" << imageIndex << " !";
 
-				m_flags[SwapChainRecreationRequested] = true;
+				m_status = Status::Degraded;
 
 				return false;
 
@@ -790,7 +770,9 @@ namespace EmEn::Vulkan
 	bool
 	SwapChain::submitCommandBuffer (const std::shared_ptr< CommandBuffer > & commandBuffer, const uint32_t & imageIndex) noexcept
 	{
-		if ( !m_flags[Ready] )
+		const std::lock_guard< std::mutex > deviceAccessLockGuard{this->device()->deviceAccessLock()};
+
+		if ( m_status != Status::Ready )
 		{
 			return false;
 		}
@@ -811,8 +793,6 @@ namespace EmEn::Vulkan
 			return false;
 		}
 
-		const std::lock_guard< std::mutex > deviceAccessLockGuard{this->device()->deviceAccessLock()};
-
 		const auto * graphicsQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
 
 		auto * waitSemaphore = currentFrame.imageAvailableSemaphore->handle();
@@ -824,6 +804,10 @@ namespace EmEn::Vulkan
 			return false;
 		}
 
+		const auto * presentationQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
+
+		bool swapChainRecreationNeeded = false;
+
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
@@ -834,13 +818,17 @@ namespace EmEn::Vulkan
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr;
 
-		const auto * presentationQueue = this->device()->getQueue(QueueJob::Presentation, QueuePriority::High);
-
-		if ( !presentationQueue->present(&presentInfo, m_flags[SwapChainRecreationRequested]) )
+		if ( !presentationQueue->present(&presentInfo, swapChainRecreationNeeded) )
 		{
+			if ( swapChainRecreationNeeded )
+			{
+				m_status = Status::Degraded;
+			}
+
 			return false;
 		}
 
+		/* TODO: Check if this is correct to skip the current frame index, when swap-chain has failed to present the image. */
 		m_currentFrame = (m_currentFrame + 1) % m_imageCount;
 
 		return true;
@@ -854,7 +842,6 @@ namespace EmEn::Vulkan
 		if ( m_flags[ShowInformation] )
 		{
 			std::stringstream info;
-
 			info << "Present modes available :" "\n";
 
 			for ( const auto presentMode : presentModes )
@@ -942,6 +929,18 @@ namespace EmEn::Vulkan
 
 		/* Default presentation mode (Always available). */
 		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	void
+	SwapChain::onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
+	{
+		m_viewMatrices.create(*Renderer::instance(), this->id());
+	}
+
+	void
+	SwapChain::onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
+	{
+		m_viewMatrices.destroy();
 	}
 
 	void

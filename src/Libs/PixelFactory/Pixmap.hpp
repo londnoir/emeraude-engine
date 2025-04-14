@@ -32,9 +32,9 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <cstddef>
-#include <cassert>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -43,6 +43,9 @@
 #include <functional>
 #include <limits>
 #include <type_traits>
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 /* Local inclusions for usage. */
 #include "Libs/Algorithms/PerlinNoise.hpp"
@@ -90,19 +93,23 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Constructs a new pixmap.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
-			 * @param channelMode The number of color as a class constant. Default RGB.
+			 * @param channelMode The desired color count. Default RGB.
 			 */
 			Pixmap (dimension_t width, dimension_t height, ChannelMode channelMode = ChannelMode::RGB)
 				: m_width(width),
 				m_height(height),
 				m_channelMode(channelMode)
 			{
-				m_data.resize(this->elementCount(), 0);
+				m_data.resize(this->elementCount());
 
+#ifdef DEBUG
 				if ( !this->initAlphaChannel() )
 				{
-					assert("Unable to check alpha channel initialization !");
+					std::cerr << "Unable to check alpha channel initialization !" "\n";
 				}
+#else
+				this->initAlphaChannel();
+#endif
 			}
 
 			/**
@@ -110,7 +117,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
-			 * @param channelMode The number of color as a class constant.
+			 * @param channelMode The desired color count.
 			 * @param color A reference to a color.
 			 */
 			template< typename color_data_t = float >
@@ -119,19 +126,23 @@ namespace EmEn::Libs::PixelFactory
 				m_height(height),
 				m_channelMode(channelMode)
 			{
-				m_data.resize(this->elementCount(), 0);
+				m_data.resize(this->elementCount());
 
+#ifdef DEBUG
 				if ( !this->fill(color) )
 				{
-					assert("Unable to initialize color !");
+					std::cerr << "Unable to initialize color !" "\n";
 				}
+#else
+				this->fill(color);
+#endif
 			}
 
 			/**
 			 * @brief Initializes the pixmap data.
 			 * @param width The initial width of the pixmap.
 			 * @param height The initial height of the pixmap.
-			 * @param channelMode The number of color as a class constant. Default RGB.
+			 * @param channelMode The desired color count. Default RGB.
 			 * @return bool
 			 */
 			bool
@@ -139,7 +150,9 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( width == 0 || height == 0 )
 				{
-					assert("Invalid pixmap dimensions !");
+#ifdef DEBUG
+					std::cerr << "Invalid pixmap dimensions !" "\n";
+#endif
 
 					return false;
 				}
@@ -147,7 +160,7 @@ namespace EmEn::Libs::PixelFactory
 				m_width = width;
 				m_height = height;
 				m_channelMode = channelMode;
-				m_data.resize(this->elementCount(), 0);
+				m_data.resize(this->elementCount());
 
 				return this->initAlphaChannel();
 			}
@@ -178,7 +191,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the pixmap half width in pixels.
+			 * @brief Returns the pixmap half-width in pixels.
 			 * @return dimension_t
 			 */
 			[[nodiscard]]
@@ -200,7 +213,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the pixmap half height in pixels.
+			 * @brief Returns the pixmap half-height in pixels.
 			 * @return dimension_t
 			 */
 			[[nodiscard]]
@@ -261,7 +274,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the number of pixel of the pixmap.
+			 * @brief Returns the pixel count of the pixmap.
 			 * @tparam output_t The type of output data. Default uint32_t.
 			 * @return output_t
 			 */
@@ -274,7 +287,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the number of color.
+			 * @brief Returns the color count by pixel.
 			 * @tparam output_t The type of output data. Default uint32_t.
 			 * @return output_t
 			 */
@@ -287,7 +300,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the number of elements of the pixmap (WIDTH * HEIGHT * COLOR COUNT).
+			 * @brief Returns the element count of the pixmap (WIDTH * HEIGHT * COLOR COUNT).
 			 * @tparam output_t The type of output data. Default uint32_t.
 			 * @return output_t
 			 */
@@ -413,7 +426,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns a read-only pointer of the first element of a row.
+			 * @brief Returns a read-only pointer to the first element of a row.
 			 * @warning On row overflow, the method will return the last one.
 			 * @param rowIndex The index of the row.
 			 * @return const pixel_data_t *
@@ -428,7 +441,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the pointer of the first element of a row.
+			 * @brief Returns the pointer to the first element of a row.
 			 * @warning On row overflow, the method will return the last one.
 			 * @param rowIndex The index of the row.
 			 * @return pixel_data_t *
@@ -572,7 +585,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Sets a color to a pixel.
-			 * @warning Avoid to use this method in a loop.
+			 * @warning Do not use this method in a loop.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param pixelIndex The index of the pixel.
 			 * @param color A reference to the color of the pixel.
@@ -649,7 +662,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Sets a color to a pixel using image coordinates.
-			 * @warning Avoid to use this method in a loop.
+			 * @warning Do not use this method in a loop.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
 			 * @param coordY The Y coordinate of the pixel.
@@ -664,9 +677,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Sets a color to a pixel using image coordinates.
-			 * @warning Avoid to use this method in a loop.
-			 * @warning Do not use this method, use setPixel() instead.
+			 * @brief Sets a color to a pixel using image coordinates. It will be ignored if it falls outside the pixmap.
+			 * @warning Do not use this method in a loop.
 			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param coordX The X coordinate of the pixel.
@@ -721,11 +733,11 @@ namespace EmEn::Libs::PixelFactory
 			{
 				const auto previousColor = this->pixel(coordX, coordY);
 
-				this->setPixel(pixelIndex, Color< color_data_t >::mix(previousColor, color, mix));
+				this->setPixel(coordX, coordY, Color< color_data_t >::mix(previousColor, color, mix));
 			}
 
 			/**
-			 * @brief Mixes a color to an existing pixel with a scalar value. It will be ignored if it's fall outside the pixmap.
+			 * @brief Mixes a color to an existing pixel with a scalar value. It will be ignored if it falls outside the pixmap.
 			 * @warning Do not use this method, use mixPixel() instead.
 			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
@@ -744,7 +756,9 @@ namespace EmEn::Libs::PixelFactory
 					coordY >= 0 && coordY < static_cast< int32_t >(this->height())
 				)
 				{
-					const auto previousColor = this->pixel(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
+                    const auto pixelIndex = this->pixelIndex(static_cast< dimension_t >(coordX), static_cast< dimension_t >(coordY));
+
+                    const auto previousColor = this->pixel(pixelIndex);
 
 					this->setPixel(pixelIndex, Color< color_data_t >::mix(previousColor, color, mix));
 				}
@@ -804,7 +818,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Blends a color to an existing pixel. It will be ignored if it's fall outside the pixmap.
+			 * @brief Blends a color to an existing pixel. It will be ignored if it falls outside the pixmap.
 			 * @warning Do not use this method, use blendPixel() instead.
 			 * @note The change will be ignored if the pixel coordinates are outside the pixmap.
 			 * @tparam color_data_t The color data type. Default float.
@@ -1278,7 +1292,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns whether the pixmap is gray scale.
+			 * @brief Returns whether the pixmap is grayscale.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -1397,7 +1411,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Enables the updated region marker.
-			 * @note This feature will set a rectangle on region where changes are made in the pixmap.
+			 * @note This feature will update a rectangle where changes are made in the pixmap. Use Pixmap::updatedRegion() to get this region.
 			 * @param state The state.
 			 */
 			void
@@ -1418,7 +1432,8 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the region of the pixmap where changes has been made since the last marker reset.
+			 * @brief Returns the region of the pixmap where changes have been made since the last marker reset.
+			 * @note Remember to call Pixmap::resetUpdatedRegionMarker() when you are done with the rectangle for the next update.
 			 * @return const Math::Rectangle< dimension_t > &
 			 */
 			[[nodiscard]]
@@ -1802,7 +1817,7 @@ namespace EmEn::Libs::PixelFactory
 						bytesLeft -= chunkBytes;
 					}
 
-					/* NOTE: Advance in the pattern rows, and reset at the bottom of the pattern image. */
+					/* NOTE: Advance in the pattern rows and reset at the bottom of the pattern image. */
 					patternRowIndex++;
 
 					if ( patternRowIndex >= pattern.height() )
@@ -1984,7 +1999,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Fills the pixmap channel with a pattern.
-			 * @note The pattern pixmap will be used as a grayscale.
+			 * @note The pattern pixmap will be used as grayscale.
 			 * @param channel The targeted channel of the pixmap.
 			 * @param pattern A reference to a pixmap.
 			 * @param mode The conversion mode. Default LumaRec709.
@@ -2032,7 +2047,7 @@ namespace EmEn::Libs::PixelFactory
 							);
 						}
 
-						/* NOTE: Advance in the pattern columns, and reset at the right of the pattern image. */
+						/* NOTE: Advance in the pattern columns and reset at the right of the pattern image. */
 						++patternColIndex;
 
 						if ( patternColIndex >= pattern.width() )
@@ -2041,7 +2056,7 @@ namespace EmEn::Libs::PixelFactory
 						}
 					}
 
-					/* NOTE: Advance in the pattern rows, and reset at the bottom of the pattern image. */
+					/* NOTE: Advance in the pattern rows and reset at the bottom of the pattern image. */
 					++patternRowIndex;
 					patternColIndex = 0;
 
@@ -2058,7 +2073,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Fills the pixmap channel with a horizontal gradient.
-			 * @note The gradient will be used as a grayscale.
+			 * @note The gradient will be used as grayscale.
 			 * @tparam scale_data_t The scale data type. Default float.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param channel The targeted channel of the pixmap.
@@ -2111,7 +2126,7 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Fills the pixmap channel with a vertical gradient.
-			 * @note The gradient will be used as a grayscale.
+			 * @note The gradient will be used as grayscale.
 			 * @tparam scale_data_t The scale data type. Default float.
 			 * @tparam color_data_t The color data type. Default float.
 			 * @param channel The targeted channel of the pixmap.
@@ -2320,7 +2335,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @brief Applies a function on every pixel in rows order (Single loop).
 			 * @note Returning false will skip the pixel.
 			 * @warning This method is slow.
-			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel) -> bool
+			 * @param updatePixel A reference to a function to modify the pixel. Signature: bool (Color & pixel)
 			 * @return void
 			 */
 			template< typename color_data_t = float >
@@ -2347,7 +2362,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @note Returning false will skip the pixel.
 			 * @warning This method is slow.
 			 * @tparam color_data_t The color data type. Default float.
-			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, dimension_t coordX, dimension_t coordY) -> bool
+			 * @param updatePixel A reference to a function to modify the pixel. Signature: bool (Color & pixel, dimension_t coordX, dimension_t coordY)
 			 * @return void
 			 */
 			template< typename color_data_t = float >
@@ -2374,7 +2389,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @note Returning false will skip the pixel.
 			 * @warning This method is slow.
 			 * @tparam color_data_t The color data type. Default float.
-			 * @param updatePixel A reference to a function to modify the pixel. Signature : function(Color & pixel, dimension_t coordX, dimension_t coordY) -> bool
+			 * @param updatePixel A reference to a function to modify the pixel. Signature: bool (Color & pixel, dimension_t coordX, dimension_t coordY)
 			 * @return void
 			 */
 			template< typename color_data_t = float >
@@ -2396,6 +2411,39 @@ namespace EmEn::Libs::PixelFactory
 
 						this->setPixel(pixelIndex, pixelColor);
 					}
+				}
+			}
+
+			/**
+			 * @brief Returns the zero value for a pixmap component.
+			 * @return pixel_data_t
+			 */
+			[[nodiscard]]
+			static
+			constexpr
+			pixel_data_t
+			zero () noexcept
+			{
+				return static_cast< pixel_data_t >(0);
+			}
+
+			/**
+			 * @brief Returns the one value for a pixmap component.
+			 * @return pixel_data_t
+			 */
+			[[nodiscard]]
+			static
+			constexpr
+			pixel_data_t
+			one () noexcept
+			{
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
+				{
+					return static_cast< pixel_data_t >(1);
+				}
+				else
+				{
+					return std::numeric_limits< pixel_data_t >::max();
 				}
 			}
 
@@ -2474,10 +2522,10 @@ namespace EmEn::Libs::PixelFactory
 			{
 				const auto pixelCount = this->pixelCount();
 
+				static_assert(pixelIndex >= pixelCount, "Pixel index overflow !");
+
 				if ( pixelIndex >= pixelCount )
 				{
-					assert("Pixel index overflow !");
-
 					pixelIndex = pixelCount - 1;
 				}
 			}
@@ -2503,40 +2551,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
-			 * @brief Returns the zero value for a pixmap component.
-			 * @return pixel_data_t
-			 */
-			[[nodiscard]]
-			static
-			constexpr
-			pixel_data_t
-			zero () noexcept
-			{
-				return static_cast< pixel_data_t >(0);
-			}
-
-			/**
-			 * @brief Returns the one value for a pixmap component.
-			 * @return pixel_data_t
-			 */
-			[[nodiscard]]
-			static
-			constexpr
-			pixel_data_t
-			one () noexcept
-			{
-				if constexpr ( std::is_floating_point_v< pixel_data_t > )
-				{
-					return static_cast< pixel_data_t >(1);
-				}
-				else
-				{
-					return std::numeric_limits< pixel_data_t >::max();
-				}
-			}
-
-			/**
-			 * @brief Takes care of initialize alpha channel to 1.
+			 * @brief Takes care of initialize the alpha channel to one (opaque).
 			 * @return bool
 			 */
 			bool
@@ -2577,7 +2592,7 @@ namespace EmEn::Libs::PixelFactory
 	};
 
 	/**
-	 * @brief Converts a pixmap from a data to another.
+	 * @brief Converts a pixmap from data to another.
 	 * @tparam input_pixel_data_t The pixel data type of the source pixmap.
 	 * @tparam output_pixel_data_t The pixel data type of the target pixmap.
 	 * @param input A reference to input pixmap.

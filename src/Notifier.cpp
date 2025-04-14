@@ -26,6 +26,8 @@
 
 #include "Notifier.hpp"
 
+#include <ranges>
+
 /* Local inclusions. */
 #include "Graphics/FontResource.hpp"
 #include "Resources/Manager.hpp"
@@ -40,7 +42,8 @@ namespace EmEn
 	const size_t Notifier::ClassUID{getClassUID(ClassId)};
 
 	Notifier::Notifier (Overlay::Manager & overlayManager) noexcept
-		: ServiceInterface(ClassId), m_overlayManager(overlayManager)
+		: ServiceInterface(ClassId),
+		m_overlayManager(overlayManager)
 	{
 
 	}
@@ -75,16 +78,22 @@ namespace EmEn
 			return false;
 		}
 
-		m_surface->pixmap().fill(Transparent);
+		m_surface->frontPixmap().fill(Transparent);
 
 		{
 			//m_font = Resources::Manager::instance()->fonts().getResource("old", false);
 			m_font = Resources::Manager::instance()->fonts().getDefaultResource();
 
-			m_processor.setPixmap(m_surface->pixmap());
+			m_processor.setPixmap(m_surface->frontPixmap());
 			m_processor.setFont(m_font->font(), 16U);
 			m_processor.setFontColor(White);
 		}
+
+		m_timerID = this->createTimer([&] (Time::TimerID /*timerID*/) {
+			this->updateNotifications();
+
+			return false;
+		}, 500, false, true);
 
 		return m_overlayManager.enableScreen("NotifierScreen");
 	}
@@ -92,79 +101,65 @@ namespace EmEn
 	bool
 	Notifier::onTerminate () noexcept
 	{
-		this->destroyTimers();
+		this->destroyTimer(m_timerID);
 
 		m_font.reset();
 
-		m_screen.reset();
 		m_surface.reset();
+		m_screen.reset();
 
-		return true;
-	}
-
-	bool
-	Notifier::push (const std::string & message, uint32_t duration) noexcept
-	{
-		if ( !this->usable() )
-		{
-			return false;
-		}
-
-		m_notifications.emplace_back(message, this->createTimer(
-			[&] (Time::TimerID timerID){
-				{
-					const std::lock_guard< std::mutex > lock(m_lock);
-
-					for ( auto notificationIt = m_notifications.begin(); notificationIt != m_notifications.cend(); ++notificationIt )
-					{
-						if ( notificationIt->second == timerID )
-						{
-							m_notifications.erase(notificationIt);
-
-							break;
-						}
-					}
-				}
-
-				this->displayNotifications();
-
-				return true;
-			},
-			duration,
-			true, /* Only once. */
-			true /* Start directly. */
-		));
-
-		this->displayNotifications();
+		this->forget(&m_overlayManager);
 
 		return true;
 	}
 
 	void
-	Notifier::displayNotifications () noexcept
+	Notifier::updateNotifications () noexcept
 	{
-		m_surface->pixmap().fill(Transparent);
+		auto notificationIt = m_notifications.begin();
 
-		if ( !m_notifications.empty() )
+		while ( notificationIt != m_notifications.end() )
 		{
-			std::stringstream buffer;
-
+			if ( notificationIt->second <= 0 )
 			{
-				const std::lock_guard< std::mutex > lock(m_lock);
-
-				for ( auto rIt = m_notifications.crbegin(); rIt != m_notifications.crend(); ++rIt )
-				{
-					buffer << rIt->first << '\n';
-				}
+				notificationIt = m_notifications.erase(notificationIt);
 			}
-
-			if ( !m_processor.write(buffer.str()) )
+			else
 			{
-				return;
+				notificationIt->second -= 500;
+
+				++notificationIt;
 			}
 		}
 
-		m_surface->setVideoMemoryOutdated();
+		this->displayNotifications();
+	}
+
+	void
+	Notifier::displayNotifications () noexcept
+	{
+		const std::lock_guard< std::mutex > lockB{m_surface->frontFramebufferMutex()};
+
+		if ( !m_surface->frontPixmap().fill(Transparent) || m_notifications.empty() )
+		{
+			return;
+		}
+
+		std::stringstream buffer;
+
+		{
+			const std::lock_guard< std::mutex > lockA{m_notificationAccess};
+
+			for ( const auto & [message, delay]: std::ranges::reverse_view(m_notifications) )
+			{
+				buffer << message << '\n';
+			}
+		}
+
+		if ( m_processor.write(buffer.str()) )
+		{
+			m_surface->setVideoMemoryOutdated();
+		}
 	}
 
 	void
@@ -172,15 +167,13 @@ namespace EmEn
 	{
 		/* NOTE: Removes all notifications. */
 		{
-			const std::lock_guard< std::mutex > lock(m_lock);
-
-			this->destroyTimers();
+			const std::lock_guard< std::mutex > lock{m_notificationAccess};
 
 			m_notifications.clear();
 		}
 
 		/* NOTE: Clean up the screen. */
-		if ( m_surface->pixmap().fill(Transparent) )
+		if ( m_surface->frontPixmap().fill(Transparent) )
 		{
 			m_surface->setVideoMemoryOutdated();
 		}

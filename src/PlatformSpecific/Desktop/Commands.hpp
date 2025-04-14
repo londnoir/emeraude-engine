@@ -30,11 +30,30 @@
 #include "platform.hpp"
 
 /* STL inclusions. */
+#include <cstdint>
 #include <string>
 #include <filesystem>
 
 namespace EmEn::PlatformSpecific::Desktop
 {
+	/** @brief The progress mode enumeration for Windows. */
+	enum class ProgressMode: uint8_t
+	{
+		None,
+		Normal,
+		Indeterminate,
+		Error,
+		Paused
+	};
+
+	/**
+	 * @brief Converts a string to a progress mode token.
+	 * @param string A reference to a string.
+	 * @return ProgressMode
+	 */
+	[[nodiscard]]
+	ProgressMode to_ProgressMode (const std::string & string) noexcept;
+
 	/**
 	 * @brief Tries to open a URL in an external web browser.
 	 * @param url A reference to a string.
@@ -69,4 +88,19 @@ namespace EmEn::PlatformSpecific::Desktop
 	 * @return void
 	 */
 	void runDesktopApplication (const std::string & argument) noexcept;
+
+	/**
+	 * @brief Makes the taskbar icon of the application flashing to alert the user.
+	 * @param state The flashing state.
+	 * @return void
+	 */
+	void flashTaskbarIcon (bool state) noexcept;
+
+	/**
+	 * @brief Sets a progression inside the taskbar icon of the application.
+	 * @param progress The progression value. Negative number disables the progression.
+	 * @param mode The progression mode. Only for Windows.
+	 * @return void
+	 */
+	void setTaskbarIconProgression (float progress, ProgressMode mode) noexcept;
 }

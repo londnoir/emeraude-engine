@@ -26,6 +26,9 @@
 
 #include "URIDomain.hpp"
 
+/* Application configuration */
+#include "platform.hpp"
+
 /* STL inclusions. */
 #include <array>
 #include <iostream>

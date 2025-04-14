@@ -111,7 +111,7 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Returns the surface geometry.
-			 * @return const Libraries::Math::Rectangle< float > &
+			 * @return const Libs::Math::Rectangle< float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Rectangle< float > &
@@ -133,7 +133,7 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Returns the model matrix to place the surface on screen.
-			 * @return const Libraries::Math::Matrix< 4, float > &
+			 * @return const Libs::Math::Matrix< 4, float > &
 			 */
 			[[nodiscard]]
 			const Libs::Math::Matrix< 4, float > &
@@ -142,11 +142,38 @@ namespace EmEn::Overlay
 				return m_modelMatrix;
 			}
 
+			/**
+			 * @brief Returns the pixmap from the front framebuffer.
+			 * @warning Use the front framebuffer mutex before writing into the pixmap with Surface::frontFramebufferMutex().
+			 * @return Libs::PixelFactory::Pixmap< uint8_t > &
+			 */
 			[[nodiscard]]
 			Libs::PixelFactory::Pixmap< uint8_t > &
-			pixmap () noexcept
+			frontPixmap () noexcept
 			{
-				return m_localData;
+				return m_frontLocalData;
+			}
+
+			/**
+			 * @brief Returns the pixmap from the back framebuffer.
+			 * @return Libs::PixelFactory::Pixmap< uint8_t > &
+			 */
+			[[nodiscard]]
+			Libs::PixelFactory::Pixmap< uint8_t > &
+			backPixmap () noexcept
+			{
+				return m_backLocalData;
+			}
+
+			/**
+			 * @brief Returns the mutex to access the front framebuffer for writing operation.
+			 * @return std::mutex &
+			 */
+			[[nodiscard]]
+			std::mutex &
+			frontFramebufferMutex () const noexcept
+			{
+				return m_framebufferAccess;
 			}
 
 			/**
@@ -469,14 +496,14 @@ namespace EmEn::Overlay
 			bool isBelowPoint (float positionX, float positionY) const noexcept;
 
 			/**
-			 * @brief Returns the surface descriptor set.
+			 * @brief Returns the surface descriptor set of the front buffer.
 			 * @return const Vulkan::DescriptorSet *
 			 */
 			[[nodiscard]]
 			const Vulkan::DescriptorSet *
 			descriptorSet () const noexcept
 			{
-				return m_descriptorSet.get();
+				return m_frontDescriptorSet.get();
 			}
 			/**
 			 * @brief Creates the surface on the GPU.
@@ -499,6 +526,13 @@ namespace EmEn::Overlay
 			 * @return bool
 			 */
 			bool updateVideoMemory (Graphics::Renderer & renderer) noexcept;
+
+			/**
+			 * @brief Swaps the back framebuffer to front framebuffer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool swapFramebuffers () noexcept;
 
 			/**
 			 * @brief On key press event handler.
@@ -619,15 +653,15 @@ namespace EmEn::Overlay
 		private:
 
 			/**
-			 * @brief Creates the descriptor set for this surface.
-			 * @param renderer A reference to the graphics renderer.
+			 * @brief Gets a Vulkan sampler.
+			 * @param renderer A reference to the renderer.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept;
+			bool getSampler (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Creates the Vulkan image.
+			 * @brief Creates the Vulkan image for the back framebuffer.
 			 * @param renderer A reference to the renderer.
 			 * @return bool
 			 */
@@ -635,19 +669,25 @@ namespace EmEn::Overlay
 			bool createImage (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @brief Creates the Vulkan image view.
+			 * @brief Creates the Vulkan image view for the back framebuffer.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool createImageView () noexcept;
 
 			/**
-			 * @brief Gets a Vulkan sampler.
-			 * @param renderer A reference to the renderer.
+			 * @brief Creates the descriptor set for this surface for the back framebuffer.
+			 * @param renderer A reference to the graphics renderer.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool getSampler (Graphics::Renderer & renderer) noexcept;
+			bool createDescriptorSet (Graphics::Renderer & renderer) noexcept;
+
+			/**
+			 * @brief Clears the back framebuffer.
+			 * @return void
+			 */
+			void clearBackFramebuffer () noexcept;
 
 			/**
 			 * @brief Updates the model matrix to place the surface on screen.
@@ -664,7 +704,7 @@ namespace EmEn::Overlay
 			bool updatePhysicalRepresentation (Graphics::Renderer & renderer) noexcept;
 
 			/**
-			 * @breif Event to override when the surface is ready.
+			 * @brief Event to override when the surface is ready.
 			 * @return void
 			 */
 			virtual
@@ -686,15 +726,22 @@ namespace EmEn::Overlay
 			static constexpr auto IsOpaque{8UL};
 			static constexpr auto IsAlphaTestEnabled{9UL};
 			static constexpr auto ProcessUnblockedPointerEvents{10UL};
+			static constexpr auto AutoSwapEnabled{11UL};
+			static constexpr auto ReadyToSwap{12UL};
 
 			const FramebufferProperties & m_framebufferProperties;
 			Libs::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
 			Libs::Math::Matrix< 4, float > m_modelMatrix;
-			Libs::PixelFactory::Pixmap< uint8_t > m_localData; // pixel buffer
-			std::shared_ptr< Vulkan::Image > m_image;
-			std::shared_ptr< Vulkan::ImageView > m_imageView;
+			Libs::PixelFactory::Pixmap< uint8_t > m_frontLocalData;
+			Libs::PixelFactory::Pixmap< uint8_t > m_backLocalData;
 			std::shared_ptr< Vulkan::Sampler > m_sampler;
-			std::unique_ptr< Vulkan::DescriptorSet > m_descriptorSet;
+			std::shared_ptr< Vulkan::Image > m_frontImage;
+			std::shared_ptr< Vulkan::ImageView > m_frontImageView;
+			std::unique_ptr< Vulkan::DescriptorSet > m_frontDescriptorSet;
+			std::shared_ptr< Vulkan::Image > m_backImage;
+			std::shared_ptr< Vulkan::ImageView > m_backImageView;
+			std::unique_ptr< Vulkan::DescriptorSet > m_backDescriptorSet;
+			mutable std::mutex m_framebufferAccess;
 			float m_depth{0.0F};
 			float m_alphaThreshold{0.1F};
 			std::array< bool, 16 > m_flags{
@@ -709,8 +756,8 @@ namespace EmEn::Overlay
 				false/*IsOpaque*/,
 				false/*IsAlphaTestEnabled*/,
 				false/*ProcessUnblockedPointerEvents*/,
-				false/*UNUSED*/,
-				false/*UNUSED*/,
+				false/*AutoSwapEnabled*/,
+				false/*ReadyToSwap*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/

@@ -241,7 +241,7 @@ namespace EmEn::Scenes::Component
 
 			/**
 			 * @brief Returns the matrix to compute the light space.
-			 * @return Libraries::Math::Matrix< 4, float >
+			 * @return Libs::Math::Matrix< 4, float >
 			 */
 			[[nodiscard]]
 			Libs::Math::Matrix< 4, float > getLightSpaceMatrix () const noexcept;
@@ -378,7 +378,7 @@ namespace EmEn::Scenes::Component
 			 * @brief Returns an intensified color by a value.
 			 * @param color A reference to a color.
 			 * @param intensity The intensity value.
-			 * @return Libraries::Math::Vector< 4, float >
+			 * @return Libs::Math::Vector< 4, float >
 			 */
 			static
 			Libs::Math::Vector< 4, float >

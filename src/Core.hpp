@@ -196,10 +196,7 @@ namespace EmEn
 			void
 			notifyUser (const std::string & message, uint32_t duration = Notifier::DefaultDuration) noexcept
 			{
-				if ( !this->notifier().push(message, duration) )
-				{
-					Tracer::info("DisabledNotifier", message);
-				}
+				this->notifier().push(message, duration);
 			}
 
 			/**
@@ -211,12 +208,7 @@ namespace EmEn
 			void
 			notifyUser (const Libs::BlobTrait & message, uint32_t duration = Notifier::DefaultDuration) noexcept
 			{
-				const auto messageStr = message.get();
-
-				if ( !this->notifier().push(messageStr, duration) )
-				{
-					Tracer::info(ClassId, messageStr);
-				}
+				this->notifier().push(message.get(), duration);
 			}
 
 			/**

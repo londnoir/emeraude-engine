@@ -36,6 +36,37 @@ namespace EmEn::PlatformSpecific::Desktop
 
 	static constexpr auto TracerTag{"DesktopCommand"};
 
+	ProgressMode
+	to_ProgressMode (const std::string & string) noexcept
+	{
+		if ( string == "none")
+		{
+			return ProgressMode::None;
+		}
+
+		if ( string == "normal")
+		{
+			return ProgressMode::Normal;
+		}
+
+		if ( string == "indeterminate")
+		{
+			return ProgressMode::Indeterminate;
+		}
+
+		if ( string == "error")
+		{
+			return ProgressMode::Error;
+		}
+
+		if (string == "paused")
+		{
+			return ProgressMode::Paused;
+		}
+
+		return ProgressMode::Normal;
+	}
+
 	bool
 	openURL (const std::string & url) noexcept
 	{
