@@ -643,7 +643,7 @@ namespace EmEn::Vulkan
 				.layerCount = imageCreateInfo.arrayLayers
 			}
 		);
-		depthImageView->setIdentifier(purposeId + "D-ImageView");
+		depthImageView->setIdentifier(purposeId + "Depth-ImageView");
 
 		if ( !depthImageView->createOnHardware() )
 		{
@@ -663,7 +663,7 @@ namespace EmEn::Vulkan
 				.layerCount = imageCreateInfo.arrayLayers
 			}
 		);
-		stencilImageView->setIdentifier(purposeId + "S-ImageView");
+		stencilImageView->setIdentifier(purposeId + "Stencil-ImageView");
 
 		if ( !stencilImageView->createOnHardware() )
 		{
