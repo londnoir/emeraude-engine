@@ -37,17 +37,40 @@
 
 namespace EmEn::Graphics
 {
-	VertexBufferFormatManager::~VertexBufferFormatManager () noexcept
+	const size_t VertexBufferFormatManager::ClassUID{getClassUID(ClassId)};
+
+	VertexBufferFormatManager::VertexBufferFormatManager () noexcept
+		: ServiceInterface(ClassId)
+	{
+
+	}
+
+	bool
+	VertexBufferFormatManager::onInitialize () noexcept
+	{
+		m_flags[ServiceInitialized] = true;
+
+		return true;
+	}
+
+	bool
+	VertexBufferFormatManager::onTerminate () noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_building};
 
+		m_flags[ServiceInitialized] = false;
+
+		this->resetBuildingParameters();
+
 		m_vertexBufferFormats.clear();
+
+		return true;
 	}
 
 	bool
 	VertexBufferFormatManager::beginBinding (uint32_t binding) noexcept
 	{
-		if ( m_vertexBufferFormat == nullptr )
+		if ( m_stagingVertexBufferFormat == nullptr )
 		{
 			Tracer::error(ClassId, "No vertex buffer format is currently built !");
 
@@ -55,7 +78,7 @@ namespace EmEn::Graphics
 		}
 
 		/* NOTE: Check the binding index. */
-		if ( m_vertexBufferFormat->binding(binding) != nullptr )
+		if ( m_stagingVertexBufferFormat->binding(binding) != nullptr )
 		{
 			TraceError{ClassId} << "Binding index " << binding << " already declared !";
 
@@ -72,7 +95,7 @@ namespace EmEn::Graphics
 	bool
 	VertexBufferFormatManager::declareAttribute (VertexAttributeType attribute) noexcept
 	{
-		if ( m_vertexBufferFormat == nullptr )
+		if ( m_stagingVertexBufferFormat == nullptr )
 		{
 			return false;
 		}
@@ -85,7 +108,7 @@ namespace EmEn::Graphics
 			VK_FORMAT_R32G32B32A32_SFLOAT
 		};
 
-		const auto attributeSize = Graphics::attributeSize(attribute);
+		const auto attributeSize = getAttributeSize(attribute);
 
 		if ( attributeSize == 0 )
 		{
@@ -94,7 +117,7 @@ namespace EmEn::Graphics
 			return false;
 		}
 
-		m_vertexBufferFormat->setInputAttribute(
+		m_stagingVertexBufferFormat->setInputAttribute(
 			static_cast< uint32_t >(attribute),
 			m_currentBinding,
 			formats[attributeSize],
@@ -111,7 +134,7 @@ namespace EmEn::Graphics
 	void
 	VertexBufferFormatManager::declareJump (VertexAttributeType attribute) noexcept
 	{
-		const auto attributeSize = Graphics::attributeSize(attribute);
+		const auto attributeSize = getAttributeSize(attribute);
 
 		if ( attributeSize > 0 )
 		{
@@ -124,22 +147,22 @@ namespace EmEn::Graphics
 	}
 
 	bool
-	VertexBufferFormatManager::endBinding (Topology topology, uint32_t bufferFlags) noexcept
+	VertexBufferFormatManager::endBinding (Topology topology, uint32_t bufferFlags) const noexcept
 	{
-		if ( m_vertexBufferFormat == nullptr )
+		if ( m_stagingVertexBufferFormat == nullptr )
 		{
 			return false;
 		}
 
 		/* NOTE: Save the whole binding in an index. */
-		m_vertexBufferFormat->setBinding(
+		m_stagingVertexBufferFormat->setBinding(
 			m_currentBinding,
 			m_bindingOffset,
 			(bufferFlags & PerInstance) != 0U ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX
 		);
 
 		/* NOTE: Creates the binding format. */
-		m_vertexBufferFormat->saveBindingData(
+		m_stagingVertexBufferFormat->saveBindingData(
 			m_currentBinding,
 			m_bindingElementCount,
 			topology,
@@ -154,7 +177,7 @@ namespace EmEn::Graphics
 	{
 		const std::lock_guard lock{m_building};
 		
-		m_vertexBufferFormat = std::make_shared< VertexBufferFormat >();
+		m_stagingVertexBufferFormat = std::make_shared< VertexBufferFormat >();
 		
 		{
 			/* NOTE : These are the used vertex attributes in the vertex shader. */
@@ -358,7 +381,10 @@ namespace EmEn::Graphics
 					bufferFlags |= RequestPrimitiveRestart;
 				}
 
-				this->endBinding(geometry.topology(), bufferFlags);
+				if ( !this->endBinding(geometry.topology(), bufferFlags) )
+				{
+					return nullptr;
+				}
 			}
 
 			/* VBO format for model matrices. */
@@ -421,11 +447,14 @@ namespace EmEn::Graphics
 					}
 				}
 
-				this->endBinding(Graphics::Topology::CustomData, PerInstance | IsDynamicVertexBuffer);
+				if ( !this->endBinding(Topology::CustomData, PerInstance | IsDynamicVertexBuffer) )
+				{
+					return nullptr;
+				}
 			}
 		}
 
-		const auto vertexBufferFormat = m_vertexBufferFormats.emplace_back(m_vertexBufferFormat);
+		const auto vertexBufferFormat = m_vertexBufferFormats.emplace_back(m_stagingVertexBufferFormat);
 
 		this->resetBuildingParameters();
 
@@ -441,7 +470,7 @@ namespace EmEn::Graphics
 	}
 
 	std::string
-	VertexBufferFormatManager::getVertexBufferObjectUsage (const Geometry::Interface & geometry, VertexBufferFormat & vertexBufferFormat) noexcept
+	VertexBufferFormatManager::getVertexBufferObjectUsage (const Geometry::Interface & geometry, const VertexBufferFormat & vertexBufferFormat) noexcept
 	{
 		std::stringstream output;
 

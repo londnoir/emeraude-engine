@@ -520,37 +520,6 @@ namespace EmEn::Vulkan
 		);
 	}
 
-	VkSampleCountFlagBits
-	Instance::findSampleCount (uint32_t samples) noexcept
-	{
-		switch ( samples )
-		{
-			case 1 :
-				return VK_SAMPLE_COUNT_1_BIT;
-
-			case 2 :
-				return VK_SAMPLE_COUNT_2_BIT;
-
-			case 4 :
-				return VK_SAMPLE_COUNT_4_BIT;
-
-			case 8 :
-				return VK_SAMPLE_COUNT_8_BIT;
-
-			case 16 :
-				return VK_SAMPLE_COUNT_16_BIT;
-
-			case 32 :
-				return VK_SAMPLE_COUNT_32_BIT;
-
-			case 64 :
-				return VK_SAMPLE_COUNT_64_BIT;
-
-			default :
-				return VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
-		}
-	}
-
 	std::map< size_t, std::shared_ptr< PhysicalDevice > >
 	Instance::getScoredGraphicsDevices (Window * window) const noexcept
 	{
@@ -952,9 +921,17 @@ namespace EmEn::Vulkan
 
 		if ( features.sampleRateShading == 0 )
 		{
-			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sampleRateShading' feature !";
+			// TODO: Maybe incorrect assertion !
+			if ( m_primaryServices.settings().get< uint32_t >(VideoFramebufferSamplesKey, DefaultVideoFramebufferSamples) > 1 )
+			{
+				TraceError{ClassId} <<
+					"MSAA is enabled in settings !"
+					"The physical device '" << properties.deviceName << "' cannot perform multisampling !";
 
-			//return false;
+				return false;
+			}
+
+			TraceWarning{ClassId} << "The physical device '" << properties.deviceName << "' is missing 'sampleRateShading' feature !";
 		}
 
 		if ( features.dualSrcBlend == 0 )

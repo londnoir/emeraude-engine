@@ -570,7 +570,7 @@ namespace EmEn::Graphics
 	[[nodiscard]]
 	constexpr
 	size_t
-	attributeSize (VertexAttributeType type) noexcept
+	getAttributeSize (VertexAttributeType type) noexcept
 	{
 		switch ( type )
 		{

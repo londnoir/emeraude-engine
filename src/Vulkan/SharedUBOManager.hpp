@@ -51,7 +51,7 @@ namespace EmEn::Vulkan
 		public:
 
 			/** @brief Class identifier. */
-			static constexpr auto ClassId{"SharedUBOManager"};
+			static constexpr auto ClassId{"SharedUBOManagerService"};
 
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;

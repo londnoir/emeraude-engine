@@ -263,14 +263,6 @@ namespace EmEn::Vulkan
 			}
 
 			/**
-			 * @brief Finds the right Vulkan token for multisampling.
-			 * @param samples The number of samples desired.
-			 * @return VkSampleCountFlagBits
-			 */
-			[[nodiscard]]
-			static VkSampleCountFlagBits findSampleCount (uint32_t samples) noexcept;
-
-			/**
 			 * @brief Returns a list of supported validations layers with the current system from a requested list.
 			 * @param requestedValidationLayers A reference to a vector of requested validation layer names.
 			 * @param availableValidationLayers A reference to a vector of available validation layer properties.

@@ -490,6 +490,14 @@ namespace EmEn::Vulkan
 			size_t getTotalQueueCount () const noexcept;
 
 			/**
+			 * @brief Gets the maximum sample the GPU can handle for multisample rendering.
+			 * @note This method check the smallest support between the color buffer and the depth buffer.
+			 * @return VkSampleCountFlagBits
+			 */
+			[[nodiscard]]
+			VkSampleCountFlagBits getMaxAvailableSampleCount () const noexcept;
+
+			/**
 			 * @brief Converts UUID from vulkan to a printable string.
 			 * @param uuid A point to uuid structure.
 			 * @return std::string

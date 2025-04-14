@@ -176,7 +176,7 @@ namespace EmEn::Graphics::RenderableInstance
 			if ( !this->isFacingCamera() )
 			{
 				/* Advance offset for the normal matrix (16 floats). */
-				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+				elementOffset += 4UL * getAttributeSize(VertexAttributeType::ModelMatrixR0);
 
 				/* Write normal matrix for this instance. */
 				const auto normalModelMatrix = modelMatrix.inverse().transpose().toMatrix3();
@@ -241,14 +241,14 @@ namespace EmEn::Graphics::RenderableInstance
 				modelMatrix.copy(m_localData.data() + elementOffset);
 
 				/* Advance offset for the normal matrix (16 floats). */
-				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+				elementOffset += 4UL * getAttributeSize(VertexAttributeType::ModelMatrixR0);
 
 				/* Write normal matrix for this instance. */
 				const auto normalModelMatrix = modelMatrix.inverse().transpose().toMatrix3();
 				normalModelMatrix.copy(m_localData.data() + elementOffset);
 
 				/* Advance offset for the next instance model matrix (9 floats). */
-				elementOffset += 3UL * attributeSize(VertexAttributeType::NormalModelMatrixR0);
+				elementOffset += 3UL * getAttributeSize(VertexAttributeType::NormalModelMatrixR0);
 			}
 		}
 
@@ -293,12 +293,12 @@ namespace EmEn::Graphics::RenderableInstance
 				identity4.copy(m_localData.data() + elementOffset);
 
 				/* Advance offset for the normal matrix (16 floats). */
-				elementOffset += 4UL * attributeSize(VertexAttributeType::ModelMatrixR0);
+				elementOffset += 4UL * getAttributeSize(VertexAttributeType::ModelMatrixR0);
 
 				identity3.copy(m_localData.data() + elementOffset);
 
 				/* Advance offset for the next instance model matrix (9 floats). */
-				elementOffset += 3UL * attributeSize(VertexAttributeType::NormalModelMatrixR0);
+				elementOffset += 3UL * getAttributeSize(VertexAttributeType::NormalModelMatrixR0);
 			}
 		}
 

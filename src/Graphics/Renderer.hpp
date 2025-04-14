@@ -533,10 +533,17 @@ namespace EmEn::Graphics
 
 			/** @copydoc EmEn::Libs::ObserverTrait::onNotification() */
 			[[nodiscard]]
-			bool onNotification (const Libs::ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
+			bool onNotification (const ObservableTrait * observable, int notificationCode, const std::any & data) noexcept override;
 
 			/** @copydoc EmEn::Console::Controllable::onRegisterToConsole. */
 			void onRegisterToConsole () noexcept override;
+
+			/**
+			 * @brief Initialize all sub services of the renderer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool initializeSubServices () noexcept;
 
 			/**
 			 * @brief @brief Returns a command buffer for a specific render target.
@@ -601,7 +608,6 @@ namespace EmEn::Graphics
 			Vulkan::TransferManager m_transferManager;
 			Vulkan::LayoutManager m_layoutManager;
 			Vulkan::SharedUBOManager m_sharedUBOManager;
-			std::vector< ServiceInterface * > m_subServicesEnabled;
 			VertexBufferFormatManager m_vertexBufferFormatManager;
 			std::shared_ptr< Vulkan::DescriptorPool > m_descriptorPool;
 			std::vector< std::shared_ptr< Vulkan::CommandPool > > m_commandPools;
@@ -615,6 +621,7 @@ namespace EmEn::Graphics
 			std::map< size_t, std::shared_ptr< Vulkan::Sampler > > m_samplers;
 			Libs::Time::Statistics::RealTime< std::chrono::high_resolution_clock > m_statistics{30};
 			std::array< VkClearValue, 2 > m_clearColors{};
+			std::vector< ServiceInterface * > m_subServicesEnabled;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
 				false/*DebugMode*/,

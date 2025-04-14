@@ -147,7 +147,7 @@ namespace EmEn::Vulkan
 
 			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::framebuffer() const */
 			[[nodiscard]]
-			const Vulkan::Framebuffer *
+			const Framebuffer *
 			framebuffer () const noexcept override
 			{
 				return m_frames[m_currentFrame].framebuffer.get();
@@ -155,7 +155,7 @@ namespace EmEn::Vulkan
 
 			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::image() const */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::Image >
+			std::shared_ptr< Image >
 			image () const noexcept override
 			{
 				return m_frames[m_currentFrame].colorImage;
@@ -163,7 +163,7 @@ namespace EmEn::Vulkan
 
 			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::imageView() const */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::ImageView >
+			std::shared_ptr< ImageView >
 			imageView () const noexcept override
 			{
 				return m_frames[m_currentFrame].colorImageView;
@@ -287,27 +287,26 @@ namespace EmEn::Vulkan
 			std::shared_ptr< RenderPass > createRenderPass (Graphics::Renderer & renderer) const noexcept override;
 
 			/**
-			 * @brief Creates the images and the image views for each swap chain frame.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool createImages () noexcept;
-
-			/**
-			 * @brief Creates the framebuffer swap chain frame.
-			 * @param renderPass A reference to the render pass smart pointer.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool createFramebuffers (const std::shared_ptr< RenderPass > & renderPass) noexcept;
-
-			/**
 			 * @brief Returns the minimum image count desired in the swap chain.
 			 * @param capabilities
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
 			uint32_t selectImageCount (const VkSurfaceCapabilitiesKHR & capabilities) noexcept;
+
+			/**
+			 * @brief Creates the base swap chain object.
+			 * @param oldSwapChain A handle to the previous swap chain. Default none.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createBaseSwapChain (VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE) noexcept;
+
+			/**
+			 * @brief Destroys the base swap chain object.
+			 * @return void
+			 */
+			void destroyBaseSwapChain () noexcept;
 
 			/**
 			 * @brief Returns the best surface format.
@@ -339,20 +338,6 @@ namespace EmEn::Vulkan
 			bool checkPrerequisites () const noexcept;
 
 			/**
-			 * @brief Creates the base swap chain object.
-			 * @param oldSwapChain A handle to the previous swap chain. Default none.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool createBaseSwapChain (VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE) noexcept;
-
-			/**
-			 * @brief Destroys the base swap chain object.
-			 * @return void
-			 */
-			void destroyBaseSwapChain () noexcept;
-
-			/**
 			 * @brief Prepares data to complete the swap chain framebuffer.
 			 * @return bool
 			 */
@@ -365,25 +350,6 @@ namespace EmEn::Vulkan
 			 */
 			[[nodiscard]]
 			std::vector< VkImage > retrieveSwapChainImages () noexcept;
-
-			/**
-			 * @brief Creates the global framebuffer metaphor.
-			 * @param renderer A reference to the renderer.
-			 * @return bool
-			 */
-			bool createFramebuffer (Graphics::Renderer & renderer) noexcept;
-
-			/**
-			 * @brief Resets the global framebuffer metaphor.
-			 * @return void
-			 */
-			void resetFramebuffer () noexcept;
-
-			/**
-			 * @brief Destroys the global framebuffer metaphor.
-			 * @return void
-			 */
-			void destroyFramebuffer () noexcept;
 
 			/**
 			 * @brief Creates a color buffer.
@@ -409,6 +375,40 @@ namespace EmEn::Vulkan
 			bool createDepthStencilBuffer (const std::shared_ptr< Device > & device, std::shared_ptr< Image > & image, std::shared_ptr< ImageView > & depthImageView, std::shared_ptr< ImageView > & stencilImageView, const std::string & purposeId) noexcept override;
 
 			/**
+			 * @brief Creates the images and the image views for each swap chain frame.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createImageArray () noexcept;
+
+			/**
+			 * @brief Creates the framebuffer swap chain frame.
+			 * @param renderPass A reference to the render pass smart pointer.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool createFramebufferArray (const std::shared_ptr< RenderPass > & renderPass) noexcept;
+
+			/**
+			 * @brief Creates the swap-chain framebuffer.
+			 * @param renderer A reference to the renderer.
+			 * @return bool
+			 */
+			bool createFramebuffer (Graphics::Renderer & renderer) noexcept;
+
+			/**
+			 * @brief Resets the swap-chain framebuffer.
+			 * @return void
+			 */
+			void resetFramebuffer () noexcept;
+
+			/**
+			 * @brief Destroys the swap-chain framebuffer.
+			 * @return void
+			 */
+			void destroyFramebuffer () noexcept;
+
+			/**
 			 * @brief Creates the synchronization primitives.
 			 * @return bool
 			 */
@@ -418,9 +418,10 @@ namespace EmEn::Vulkan
 			/* Flag names. */
 			static constexpr auto ShowInformation{0UL};
 			static constexpr auto Ready{1UL};
-			static constexpr auto TripleBufferingEnabled{2UL};
-			static constexpr auto VSyncEnabled{3UL};
-			static constexpr auto SwapChainRecreationRequested{4UL};
+			static constexpr auto SwapChainRecreationRequested{2UL};
+			static constexpr auto TripleBufferingEnabled{3UL};
+			static constexpr auto VSyncEnabled{4UL};
+			static constexpr auto MultisamplingEnabled{5UL};
 
 			Window * m_window;
 			VkSwapchainKHR m_handle{VK_NULL_HANDLE};
@@ -432,10 +433,10 @@ namespace EmEn::Vulkan
 			std::array< bool, 8 > m_flags{
 				false/*ShowInformation*/,
 				false/*Ready*/,
+				false/*SwapChainRecreationRequested*/,
 				false/*TripleBufferingEnabled*/,
 				false/*VSyncEnabled*/,
-				false/*SwapChainRecreationRequested*/,
-				false/*UNUSED*/,
+				false/*MultisamplingEnabled*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/
 			};

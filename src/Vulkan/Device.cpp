@@ -592,4 +592,42 @@ namespace EmEn::Vulkan
 
 		return VK_FORMAT_UNDEFINED;
 	}
+
+	VkSampleCountFlagBits
+	Device::findSampleCount (uint32_t samples) const noexcept
+	{
+		const auto maxSamples = m_physicalDevice->getMaxAvailableSampleCount();
+
+		if ( samples > static_cast< uint32_t >(maxSamples) )
+		{
+			return maxSamples;
+		}
+
+		switch ( samples )
+		{
+			case 1 :
+				return VK_SAMPLE_COUNT_1_BIT;
+
+			case 2 :
+				return VK_SAMPLE_COUNT_2_BIT;
+
+			case 4 :
+				return VK_SAMPLE_COUNT_4_BIT;
+
+			case 8 :
+				return VK_SAMPLE_COUNT_8_BIT;
+
+			case 16 :
+				return VK_SAMPLE_COUNT_16_BIT;
+
+			case 32 :
+				return VK_SAMPLE_COUNT_32_BIT;
+
+			case 64 :
+				return VK_SAMPLE_COUNT_64_BIT;
+
+			default :
+				return VK_SAMPLE_COUNT_1_BIT;
+		}
+	}
 }

@@ -158,7 +158,7 @@ namespace EmEn::Overlay
 		const auto surfaceY = static_cast< size_t >(screenY - static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top());
 
 		/* Get that pixel color from the pixmap. */
-		const auto pixelColor = m_localData.pixel(surfaceX, surfaceY);
+		const auto pixelColor = m_localData.safePixel(surfaceX, surfaceY);
 		const auto blocked = pixelColor.alpha() > m_alphaThreshold;
 
 		return blocked;

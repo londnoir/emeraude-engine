@@ -628,6 +628,32 @@ namespace EmEn::Vulkan
 		return queueCount;
 	}
 
+	VkSampleCountFlagBits
+	PhysicalDevice::getMaxAvailableSampleCount () const noexcept
+	{
+		/* NOTE: We are using the smallest support between a color buffer and the depth buffer. */
+		const VkSampleCountFlags supportedSampleCount = std::min(m_properties.limits.framebufferColorSampleCounts, m_properties.limits.framebufferDepthSampleCounts);
+
+		constexpr std::array< VkSampleCountFlagBits, 6 > samples {
+			VK_SAMPLE_COUNT_64_BIT,
+			VK_SAMPLE_COUNT_32_BIT,
+			VK_SAMPLE_COUNT_16_BIT,
+			VK_SAMPLE_COUNT_8_BIT,
+			VK_SAMPLE_COUNT_4_BIT,
+			VK_SAMPLE_COUNT_2_BIT
+		};
+
+		for ( const auto sample : samples )
+		{
+			if ( supportedSampleCount & sample )
+			{
+				return sample;
+			}
+		}
+
+		return VK_SAMPLE_COUNT_1_BIT;
+	}
+
 	std::string
 	PhysicalDevice::UUIDToString (const uint8_t uuid[]) noexcept
 	{
@@ -643,6 +669,9 @@ namespace EmEn::Vulkan
 				case 7 :
 				case 11 :
 					output << '-';
+					break;
+
+				default:
 					break;
 			}
 		}
