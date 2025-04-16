@@ -32,9 +32,9 @@
 /* STL inclusions. */
 #include <cstdint>
 #include <cstddef>
-#include <cassert>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -43,6 +43,9 @@
 #include <functional>
 #include <limits>
 #include <type_traits>
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 /* Local inclusions for usage. */
 #include "Libs/Algorithms/PerlinNoise.hpp"
@@ -99,10 +102,14 @@ namespace EmEn::Libs::PixelFactory
 			{
 				m_data.resize(this->elementCount(), 0);
 
+#ifdef DEBUG
 				if ( !this->initAlphaChannel() )
 				{
-					assert("Unable to check alpha channel initialization !");
+					std::cerr << "Unable to check alpha channel initialization !" "\n";
 				}
+#else
+				this->initAlphaChannel();
+#endif
 			}
 
 			/**
@@ -121,10 +128,14 @@ namespace EmEn::Libs::PixelFactory
 			{
 				m_data.resize(this->elementCount(), 0);
 
+#ifdef DEBUG
 				if ( !this->fill(color) )
 				{
-					assert("Unable to initialize color !");
+					std::cerr << "Unable to initialize color !" "\n";
 				}
+#else
+				this->fill(color);
+#endif
 			}
 
 			/**
@@ -139,7 +150,9 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( width == 0 || height == 0 )
 				{
-					assert("Invalid pixmap dimensions !");
+#ifdef DEBUG
+					std::cerr << "Invalid pixmap dimensions !" "\n";
+#endif
 
 					return false;
 				}
@@ -2400,6 +2413,39 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			/**
+			 * @brief Returns the zero value for a pixmap component.
+			 * @return pixel_data_t
+			 */
+			[[nodiscard]]
+			static
+			constexpr
+			pixel_data_t
+			zero () noexcept
+			{
+				return static_cast< pixel_data_t >(0);
+			}
+
+			/**
+			 * @brief Returns the one value for a pixmap component.
+			 * @return pixel_data_t
+			 */
+			[[nodiscard]]
+			static
+			constexpr
+			pixel_data_t
+			one () noexcept
+			{
+				if constexpr ( std::is_floating_point_v< pixel_data_t > )
+				{
+					return static_cast< pixel_data_t >(1);
+				}
+				else
+				{
+					return std::numeric_limits< pixel_data_t >::max();
+				}
+			}
+
+			/**
 			 * @brief STL streams printable object.
 			 * @param out A reference to the stream output.
 			 * @param obj A reference to the object to print.
@@ -2474,10 +2520,10 @@ namespace EmEn::Libs::PixelFactory
 			{
 				const auto pixelCount = this->pixelCount();
 
+				static_assert(pixelIndex >= pixelCount, "Pixel index overflow !");
+
 				if ( pixelIndex >= pixelCount )
 				{
-					assert("Pixel index overflow !");
-
 					pixelIndex = pixelCount - 1;
 				}
 			}
@@ -2499,39 +2545,6 @@ namespace EmEn::Libs::PixelFactory
 				if ( coordY >= m_height )
 				{
 					coordY = m_height - 1;
-				}
-			}
-
-			/**
-			 * @brief Returns the zero value for a pixmap component.
-			 * @return pixel_data_t
-			 */
-			[[nodiscard]]
-			static
-			constexpr
-			pixel_data_t
-			zero () noexcept
-			{
-				return static_cast< pixel_data_t >(0);
-			}
-
-			/**
-			 * @brief Returns the one value for a pixmap component.
-			 * @return pixel_data_t
-			 */
-			[[nodiscard]]
-			static
-			constexpr
-			pixel_data_t
-			one () noexcept
-			{
-				if constexpr ( std::is_floating_point_v< pixel_data_t > )
-				{
-					return static_cast< pixel_data_t >(1);
-				}
-				else
-				{
-					return std::numeric_limits< pixel_data_t >::max();
 				}
 			}
 

@@ -557,3 +557,51 @@ TEST(PixelFactoryProcessor, copy)
 
 	ASSERT_TRUE(FileIO::write(source, {RES_BASE_PATH "/test-assets/tmp_copy.png"}, true));
 }
+
+TEST(PixelFactoryProcessor, addAlphaChannel)
+{
+	Pixmap< uint8_t > source;
+	Pixmap< uint8_t > destination;
+
+	ASSERT_TRUE(FileIO::read(MediumRGB, source));
+
+	ASSERT_EQ(source.width(), 512);
+	ASSERT_EQ(source.height(), 512);
+	ASSERT_EQ(source.colorCount(), 3);
+
+	{
+		PrintScopeRealTime stat{"Processor::addAlphaChannel()"};
+
+		ASSERT_TRUE(Processor< uint8_t >::addAlphaChannel(source, destination));
+
+		ASSERT_EQ(destination.width(), 512);
+		ASSERT_EQ(destination.height(), 512);
+		ASSERT_EQ(destination.colorCount(), 4);
+	}
+
+	ASSERT_TRUE(FileIO::write(destination, {RES_BASE_PATH "/test-assets/tmp_addAlphaChannel.png"}, true));
+}
+
+TEST(PixelFactoryProcessor, removeAlphaChannel)
+{
+	Pixmap< uint8_t > source;
+	Pixmap< uint8_t > destination;
+
+	ASSERT_TRUE(FileIO::read(MediumRGBA, source));
+
+	ASSERT_EQ(source.width(), 512);
+	ASSERT_EQ(source.height(), 512);
+	ASSERT_EQ(source.colorCount(), 4);
+
+	{
+		PrintScopeRealTime stat{"Processor::removeAlphaChannel()"};
+
+		ASSERT_TRUE(Processor< uint8_t >::removeAlphaChannel(source, destination));
+
+		ASSERT_EQ(destination.width(), 512);
+		ASSERT_EQ(destination.height(), 512);
+		ASSERT_EQ(destination.colorCount(), 3);
+	}
+
+	ASSERT_TRUE(FileIO::write(destination, {RES_BASE_PATH "/test-assets/tmp_removeAlphaChannel.png"}, true));
+}

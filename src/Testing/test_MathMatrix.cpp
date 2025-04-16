@@ -200,7 +200,7 @@ TYPED_TEST(MathMatrix, Rotation2)
 	if constexpr ( !std::is_integral_v< TypeParam > )
 	{
 		/* NOTE: 2D rotation (or around Z axis) */
-		constexpr auto Angle = Pi< TypeParam > / 6; // 30°
+		constexpr auto Angle = std::numbers::pi_v< TypeParam > / 6; // 30°
 		const auto rotation = Matrix< 2, TypeParam >::rotationZ(Angle);
 		const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 0, 1).toMatrix2();
 
@@ -217,7 +217,7 @@ TYPED_TEST(MathMatrix, Rotation3)
 	{
 		/* NOTE: 3D rotation around X axis. */
 		{
-			constexpr auto Angle = Pi< TypeParam > / 4; // 45°
+			constexpr auto Angle = std::numbers::pi_v< TypeParam > / 4; // 45°
 			const auto rotation = Matrix< 3, TypeParam >::rotationX(Angle);
 			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 1, 0, 0);
 
@@ -229,7 +229,7 @@ TYPED_TEST(MathMatrix, Rotation3)
 
 		/* NOTE: 3D rotation around Y axis. */
 		{
-			constexpr auto Angle = 3 * Pi< TypeParam > / 4; // 135°
+			constexpr auto Angle = 3 * std::numbers::pi_v< TypeParam > / 4; // 135°
 			const auto rotation = Matrix< 3, TypeParam >::rotationY(Angle);
 			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 1, 0);
 
@@ -241,7 +241,7 @@ TYPED_TEST(MathMatrix, Rotation3)
 
 		/* NOTE: 3D rotation around Z axis. */
 		{
-			constexpr auto Angle = 7 * Pi< TypeParam > / 4; // 315°
+			constexpr auto Angle = 7 * std::numbers::pi_v< TypeParam > / 4; // 315°
 			const auto rotation = Matrix< 3, TypeParam >::rotationZ(Angle);
 			const auto rotationCustom = Matrix< 3, TypeParam >::rotation(Angle, 0, 0, 1);
 
@@ -259,7 +259,7 @@ TYPED_TEST(MathMatrix, Rotation4)
 	{
 		/* NOTE: 3D rotation around X axis. */
 		{
-			constexpr auto Angle = Pi< TypeParam > / 4; // 120°
+			constexpr auto Angle = std::numbers::pi_v< TypeParam > / 4; // 120°
 			const auto rotation = Matrix< 4, TypeParam >::rotationX(Angle);
 			const auto rotationCustom = Matrix< 4, TypeParam >::rotation(Angle, 1, 0, 0);
 
@@ -271,7 +271,7 @@ TYPED_TEST(MathMatrix, Rotation4)
 
 		/* NOTE: 3D rotation around Y axis. */
 		{
-			constexpr auto Angle = Pi< TypeParam > / 4; // 225°
+			constexpr auto Angle = std::numbers::pi_v< TypeParam > / 4; // 225°
 			const auto rotation = Matrix< 4, TypeParam >::rotationY(Angle);
 			const auto rotationCustom = Matrix< 4, TypeParam >::rotation(Angle, 0, 1, 0);
 
