@@ -7,7 +7,7 @@ set(GLFW_BUILD_DOCS Off CACHE BOOL "" FORCE)
 set(GLFW_INSTALL Off CACHE BOOL "" FORCE)
 set(GLFW_USE_HYBRID_HPG On)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw glfw EXCLUDE_FROM_ALL)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw EXCLUDE_FROM_ALL)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw/include)
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)

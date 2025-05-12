@@ -59,7 +59,7 @@ namespace EmEn::PlatformSpecific::Desktop
 			return ProgressMode::Error;
 		}
 
-		if (string == "paused")
+		if ( string == "paused" )
 		{
 			return ProgressMode::Paused;
 		}
@@ -77,53 +77,45 @@ namespace EmEn::PlatformSpecific::Desktop
 			return false;
 		}
 
-		runDesktopApplication(url);
-
-		return true;
+		return runDesktopApplication(url);
 	}
 
 	bool
 	openFile (const std::filesystem::path & filepath) noexcept
 	{
-		if ( !std::filesystem::is_regular_file(filepath) )
+		if ( !is_regular_file(filepath) )
 		{
 			TraceWarning{TracerTag} << "The file '" << filepath.string() << "' does not exist !";
 
 			return false;
 		}
 
-		runDesktopApplication(filepath.string());
-
-		return true;
+		return runDesktopApplication(filepath.string());
 	}
 
 	bool
 	openFolder (const std::filesystem::path & filepath) noexcept
 	{
-		if ( !std::filesystem::is_directory(filepath) )
+		if ( !is_directory(filepath) )
 		{
 			TraceWarning{TracerTag} << "The file '" << filepath.string() << "' does not exist !";
 
 			return false;
 		}
 
-		runDesktopApplication(filepath.string());
-
-		return true;
+		return runDesktopApplication(filepath.string());
 	}
 
 	bool
 	showInFolder (const std::filesystem::path & filepath) noexcept
 	{
-		if ( !std::filesystem::is_regular_file(filepath) )
+		if ( !is_regular_file(filepath) )
 		{
 			TraceWarning{TracerTag} << "The file '" << filepath.string() << "' does not exist !";
 
 			return false;
 		}
 
-		runDesktopApplication(filepath.parent_path().string());
-
-		return true;
+		return runDesktopApplication(filepath.parent_path().string());
 	}
 }

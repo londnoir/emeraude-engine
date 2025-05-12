@@ -226,6 +226,12 @@ namespace EmEn::Overlay
 			bool destroyScreen (const std::string & name) noexcept;
 
 			/**
+			 * @brief Deletes all screens.
+			 * @return void
+			 */
+			void clearScreens () noexcept;
+
+			/**
 			 * @brief Gets the named screen and if it's found it will be active on top.
 			 * @param name A reference to a string.
 			 * @return bool
@@ -442,7 +448,8 @@ namespace EmEn::Overlay
 			std::shared_ptr< Vulkan::DescriptorPool > m_ImGUIDescriptorPool;
 			std::unordered_map< std::string, std::shared_ptr< ImGUIScreen > > m_ImGUIScreens;
 #endif
-			mutable std::mutex m_updateMutex;
+			mutable std::mutex m_physicalRepresentationUpdateMutex;
+			mutable std::mutex m_screensMutex;
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
 				false/*Enabled*/,

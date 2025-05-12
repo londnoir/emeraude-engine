@@ -42,8 +42,10 @@ namespace EmEn::Saphir::Generator
 	using namespace Vulkan;
 	using namespace Keys;
 
-	OverlayRendering::OverlayRendering (Overlay::Manager & overlayManager, const std::shared_ptr< const RenderTarget::Abstract > & renderTarget) noexcept
-		: Abstract(overlayManager.primaryServices().settings(), ClassId, renderTarget), m_overlayManager(overlayManager)
+	OverlayRendering::OverlayRendering (Overlay::Manager & overlayManager, const std::shared_ptr< const RenderTarget::Abstract > & renderTarget, ColorConversion conversion) noexcept
+		: Abstract(overlayManager.primaryServices().settings(), ClassId, renderTarget),
+		m_overlayManager(overlayManager),
+		m_colorConversion(conversion)
 	{
 
 	}
@@ -183,11 +185,6 @@ namespace EmEn::Saphir::Generator
 			return false;
 		}
 
-		/*if ( !fragmentShader->declare(Declaration::Sampler{program.setIndex(SetType::PerModel), 0, GLSL::Sampler2DRectangle, Uniform::PrimarySampler}) )
-		{
-			return false;
-		}*/
-
 		if ( !fragmentShader->declare(Declaration::Sampler{program.setIndex(SetType::PerModel), 0, GLSL::Sampler2D, Uniform::PrimarySampler}) )
 		{
 			return false;
@@ -198,14 +195,39 @@ namespace EmEn::Saphir::Generator
 			return false;
 		}
 
-		Code{*fragmentShader, Location::Output} <<
-			ShaderVariable::OutputFragment << " = texture(" << Uniform::PrimarySampler << ", " << ShaderVariable::Primary2DTextureCoordinates << ").bgra;";
+		switch ( m_colorConversion )
+		{
+			case ColorConversion::ToSRGB :
+				if ( !fragmentShader->declare(FragmentShader::generateToSRGBColorFunction()) )
+				{
+					return false;
+				}
 
-		/*Code{*fragmentShader} <<
-			"const ivec2 sizes = textureSize(" << Uniform::PrimarySampler << ", 0);";
+				Code{*fragmentShader, Location::Output} <<
+					"const vec4 color = texture(" << Uniform::PrimarySampler << ", " << ShaderVariable::Primary2DTextureCoordinates << ").bgra;" "\n" <<
+					ShaderVariable::OutputFragment << " = toSRGBColor(color);";
+				break;
 
-		Code{*fragmentShader, Location::Output} <<
-			ShaderVariable::OutputFragment << " = texture(" << Uniform::PrimarySampler << ", vec2(sizes) * " << ShaderVariable::Primary2DTextureCoordinates << ");";*/
+			case ColorConversion::ToLinear :
+				if ( !fragmentShader->declare(FragmentShader::generateToLinearColorFunction()) )
+				{
+					return false;
+				}
+
+				Code{*fragmentShader, Location::Output} <<
+					"const vec4 color = texture(" << Uniform::PrimarySampler << ", " << ShaderVariable::Primary2DTextureCoordinates << ").bgra;" "\n" <<
+					ShaderVariable::OutputFragment << " = toLinearColor(color);";
+				break;
+
+			case ColorConversion::None :
+			default:
+				Code{*fragmentShader, Location::Output} <<
+					ShaderVariable::OutputFragment << " = texture(" << Uniform::PrimarySampler << ", " << ShaderVariable::Primary2DTextureCoordinates << ").bgra;";
+				break;
+		}
+
+
+
 
 		return fragmentShader->generateSourceCode(*this);
 	}

@@ -26,9 +26,6 @@
 
 #include "ObservableTrait.hpp"
 
-/* Emeraude-Engine configuration. */
-#include "emeraude_config.hpp"
-
 /* STL inclusions. */
 #ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
 #include <iostream>
@@ -92,7 +89,7 @@ namespace EmEn::Libs
 		}
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) && IS_LINUX
 	std::unique_ptr< std::map< size_t, const char * > > ObservableTrait::s_classUIDs{nullptr};
 
 	const char *

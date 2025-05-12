@@ -376,6 +376,11 @@ namespace EmEn
 		{
 			const Time::Elapsed::PrintScopeRealTimeThreshold stat{"MainLoop", 1000.0 / 60};
 
+			/* EventInput: Update user events.
+			 * DirectInput: Copy the state of every input
+			 * device to use it in engine cycle. */
+			m_inputManager.pollSystemEvents();
+
 			/* Let the child class get call event from the main loop. */
 			this->onMainLoopCycle();
 
@@ -412,10 +417,7 @@ namespace EmEn
 			}
 #endif
 
-			/* EventInput: Update user events.
-			 * DirectInput: Copy the state of every input
-			 * device to use it in engine cycle. */
-			m_inputManager.pollSystemEvents();
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 
 		/* Stopping the logics and rendering loops. */

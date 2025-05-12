@@ -27,17 +27,14 @@
 #include "UIScreen.hpp"
 
 /* STL inclusions. */
-#include <array>
 #include <cstddef>
-#include <map>
-#include <memory>
-#include <string>
 #include <ranges>
 
 /* Local inclusions. */
-#include "FramebufferProperties.hpp"
-#include "Graphics/TextureResource/Abstract.hpp"
 #include "Libs/NameableTrait.hpp"
+#include "Vulkan/CommandBuffer.hpp"
+#include "Graphics/Geometry/IndexedVertexResource.hpp"
+#include "FramebufferProperties.hpp"
 #include "Surface.hpp"
 #include "Tracer.hpp"
 
@@ -45,6 +42,7 @@ namespace EmEn::Overlay
 {
 	using namespace EmEn::Libs;
 	using namespace Graphics;
+	using namespace Vulkan;
 
 	UIScreen::UIScreen (const std::string & name, const FramebufferProperties & framebufferProperties, Renderer & graphicsRenderer, bool enableKeyboardListener, bool enablePointerListener) noexcept
 		: NameableTrait(name),
@@ -81,9 +79,53 @@ namespace EmEn::Overlay
 		return errors == 0;
 	}
 
+	void
+	UIScreen::render (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const CommandBuffer & commandBuffer, const PipelineLayout & pipelineLayout, const Geometry::IndexedVertexResource & surfaceGeometry) const noexcept
+	{
+		const std::lock_guard< std::mutex > lock{m_surfacesMutex};
+
+		for ( const auto & surface : m_sortedSurfaces )
+		{
+			if ( !surface->isVisible() )
+			{
+				continue;
+			}
+
+			if ( surface->descriptorSet() == nullptr || !surface->descriptorSet()->isCreated() )
+			{
+				TraceWarning{ClassId} << "The surface " << surface->name() << " doesn't have a descriptor set !";
+
+				continue;
+			}
+
+			/* [VULKAN-PUSH-CONSTANT:4] Push the transformation matrix. */
+			vkCmdPushConstants(
+				commandBuffer.handle(),
+				pipelineLayout.handle(),
+				VK_SHADER_STAGE_VERTEX_BIT,
+				0,
+				Matrix4Alignment * sizeof(float),
+				surface->modelMatrix().data()
+			);
+
+			/* Bind the surface texture. */
+			commandBuffer.bind(
+				*surface->descriptorSet(),
+				pipelineLayout,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				0
+			);
+
+			/* Draw the surface. */
+			commandBuffer.draw(surfaceGeometry);
+		}
+	}
+
 	bool
 	UIScreen::destroySurface (const std::string & name) noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_surfacesMutex};
+
 		const auto surfaceIt = m_surfaces.find(name);
 
 		if ( surfaceIt == m_surfaces.cend() )
@@ -97,7 +139,18 @@ namespace EmEn::Overlay
 
 		m_surfaces.erase(surfaceIt);
 
+		this->sortSurfacesByDepth();
+
 		return true;
+	}
+
+	void
+	UIScreen::clearSurfaces () noexcept
+	{
+		const std::lock_guard< std::mutex > lock{m_surfacesMutex};
+
+		m_surfaces.clear();
+		m_sortedSurfaces.clear();
 	}
 
 	std::shared_ptr< const Surface >
@@ -146,7 +199,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
+	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) const noexcept
 	{
 		const auto dispatchEvent = [key, scancode, modifiers, repeat] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -165,16 +218,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
+	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [key, scancode, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -193,16 +251,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onCharacterType (uint32_t unicode) noexcept
+	UIScreen::onCharacterType (uint32_t unicode) const noexcept
 	{
 		const auto dispatchEvent = [unicode] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -221,16 +284,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onPointerMove (float positionX, float positionY) noexcept
+	UIScreen::onPointerMove (float positionX, float positionY) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -275,16 +343,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -307,16 +380,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -335,16 +413,21 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
 	}
 
 	bool
-	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
+	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, xOffset, yOffset] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -363,11 +446,72 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
+	}
+
+	void
+	UIScreen::sortSurfacesByDepth ()
+	{
+		std::vector< std::pair< float, std::shared_ptr< Surface > > > tmpSurfaces;
+		tmpSurfaces.reserve(m_surfaces.size());
+
+		for ( auto & surface : m_surfaces | std::views::values )
+		{
+			tmpSurfaces.emplace_back(surface->depth(), surface);
+		}
+
+		std::ranges::sort(tmpSurfaces, [] (const auto & x, const auto & y) {
+			return x.first < y.first;
+		});
+
+		m_sortedSurfaces.clear();
+
+		for ( auto & surface: tmpSurfaces | std::views::values )
+		{
+			m_sortedSurfaces.emplace_back(surface);
+		}
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const UIScreen & obj)
+	{
+		out << "UI screen data :" "\n"
+			"Has input exclusive surface : " << (obj.m_inputExclusiveSurface == nullptr ? "[No]" : obj.m_inputExclusiveSurface->name() ) << '\n';
+
+		if ( obj.m_surfaces.empty() )
+		{
+			out << "No surfaces present." "\n";
+		}
+		else
+		{
+			out << "Surfaces : " "\n";
+
+			for ( const auto & surface : obj.m_sortedSurfaces )
+			{
+				out << *surface << '\n';
+			}
+		}
+
+		return out;
+	}
+
+	std::string
+	to_string (const UIScreen & obj)
+	{
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

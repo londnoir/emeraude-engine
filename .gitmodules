@@ -19,6 +19,6 @@
 [submodule "dependencies/asio"]
 	path = dependencies/asio
 	url = https://github.com/chriskohlhoff/asio
-[submodule "dependencies/subprocess.h"]
-	path = dependencies/subprocess.h
-	url = https://github.com/sheredom/subprocess.h
+[submodule "dependencies/reproc"]
+	path = dependencies/reproc
+	url = https://github.com/DaanDeMeyer/reproc

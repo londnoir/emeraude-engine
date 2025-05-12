@@ -209,9 +209,9 @@ namespace EmEn::Overlay
 			return false;
 		}
 
+		/* NOTE: At first creation, we swap automatically. */
 		m_flags[ReadyToSwap] = true;
 
-		/* NOTE: At first creation, we swap automatically. */
 		return this->swapFramebuffers();
 	}
 
@@ -434,6 +434,8 @@ namespace EmEn::Overlay
 	bool
 	Surface::swapFramebuffers () noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_framebufferAccess};
+
 		if ( !m_flags[ReadyToSwap] )
 		{
 			TraceWarning{ClassId} << "The surface '" << this->name() << "' is not ready to swap !";
@@ -492,34 +494,27 @@ namespace EmEn::Overlay
 		const auto textureWidth = framebuffer.getSurfaceWidth(geometry.width());
 		const auto textureHeight = framebuffer.getSurfaceHeight(geometry.height());
 
-		if ( m_backLocalData.width() == textureWidth && m_backLocalData.height() == textureHeight )
+		/* NOTE: If the back buffer is different, we prepare it before the swap. */
+		if ( m_backLocalData.width() != textureWidth || m_backLocalData.height() != textureHeight )
 		{
-			return true;
-		}
+			if ( !m_backLocalData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
+			{
+				TraceError{ClassId} << "Unable to resize the pixmap for the surface '" << this->name() << "' !";
 
-#ifdef DEBUG
-		TraceDebug{ClassId} <<
-			"Resizing the surface '" << this->name() << "' "
-			"from " << m_backLocalData.width() << 'x' << m_backLocalData.height() << " "
-			"to " << textureWidth << 'x' << textureHeight << " ...";
-#endif
+				return false;
+			}
 
-		if ( !m_backLocalData.initialize(textureWidth, textureHeight, ChannelMode::RGBA) )
-		{
-			TraceError{ClassId} << "Unable to resize the pixmap for the surface '" << this->name() << "' !";
-
-			return false;
-		}
-
-		this->clearBackFramebuffer();
-
-		if ( !this->createImage(renderer) || !this->createImageView() || !this->createDescriptorSet(renderer) )
-		{
 			this->clearBackFramebuffer();
 
-			return false;
+			if ( !this->createImage(renderer) || !this->createImageView() || !this->createDescriptorSet(renderer) )
+			{
+				this->clearBackFramebuffer();
+
+				return false;
+			}
 		}
 
+		/* NOTE: Prepare to swap manually or automatically. */
 		m_flags[ReadyToSwap] = true;
 
 		if ( m_flags[AutoSwapEnabled] )
@@ -528,5 +523,22 @@ namespace EmEn::Overlay
 		}
 
 		return true;
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const Surface & obj)
+	{
+		return out << "Surface '" << obj.name() << "' [depth:" << obj.depth() << "] " << obj.geometry() <<
+			"Model matrix : " << obj.modelMatrix();
+	}
+
+	std::string
+	to_string (const Surface & obj)
+	{
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

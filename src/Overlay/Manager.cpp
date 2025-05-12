@@ -292,7 +292,7 @@ namespace EmEn::Overlay
 	bool
 	Manager::generateGraphicsPipeline () noexcept
 	{
-		Generator::OverlayRendering generator{*this, m_graphicsRenderer.swapChain()};
+		Generator::OverlayRendering generator{*this, m_graphicsRenderer.swapChain(), Generator::OverlayRendering::ColorConversion::ToLinear};
 		generator.enableDebugging(m_graphicsRenderer.shaderManager().showSourceCode());
 
 		/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
@@ -407,6 +407,8 @@ namespace EmEn::Overlay
 	std::shared_ptr< UIScreen >
 	Manager::createScreen (const std::string & name, bool enableKeyboardListener, bool enablePointerListener) noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_screensMutex};
+
 #ifdef DEBUG
 		if ( !m_framebufferProperties.isValid() )
 		{
@@ -454,6 +456,8 @@ namespace EmEn::Overlay
 	bool
 	Manager::destroyScreen (const std::string & name) noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_screensMutex};
+
 		const auto screenIt = m_screens.find(name);
 
 		if ( screenIt == m_screens.end() )
@@ -470,6 +474,27 @@ namespace EmEn::Overlay
 		this->notify(UIScreenDestroyed, name);
 
 		return true;
+	}
+
+	void
+	Manager::clearScreens () noexcept
+	{
+		const std::lock_guard< std::mutex > lock{m_screensMutex};
+
+		/* [ERASE IN LOOP] */
+		auto screenIt = m_screens.begin();
+
+		while ( screenIt != m_screens.end() )
+		{
+			/* Get a copy */
+			const auto name = screenIt->first;
+
+			this->notify(UIScreenDestroying, screenIt->second);
+
+			screenIt = m_screens.erase(screenIt);
+
+			this->notify(UIScreenDestroyed, name);
+		}
 	}
 
 	bool
@@ -631,7 +656,7 @@ namespace EmEn::Overlay
 	Manager::updateVideoMemory () noexcept
 	{
 		/* NOTE: This can collide with the resize event from Manager::updatePhysicalRepresentation() in another thread. */
-		const std::lock_guard< std::mutex > lock{m_updateMutex};
+		const std::lock_guard< std::mutex > lock{m_physicalRepresentationUpdateMutex};
 
 		if ( !this->isEnabled() || m_screens.empty() )
 		{
@@ -660,7 +685,7 @@ namespace EmEn::Overlay
 	Manager::updatePhysicalRepresentation () noexcept
 	{
 		/* NOTE: This can collide with the successive call to Manager::updateVideoMemory() the rendering loop. */
-		const std::lock_guard< std::mutex > lock{m_updateMutex};
+		const std::lock_guard< std::mutex > lock{m_physicalRepresentationUpdateMutex};
 
 		this->updateFramebufferProperties();
 
@@ -693,8 +718,10 @@ namespace EmEn::Overlay
 	}
 
 	void
-	Manager::render (const std::shared_ptr< RenderTarget::Abstract > & /*renderTarget*/, const CommandBuffer & commandBuffer) const noexcept
+	Manager::render (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const CommandBuffer & commandBuffer) const noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_screensMutex};
+
 		/* Check if the overlay is enabled or there is something to render. */
 		if ( !this->isEnabled() || m_screens.empty() )
 		{
@@ -710,20 +737,21 @@ namespace EmEn::Overlay
 		}
 #endif
 
-		if ( !m_updateMutex.try_lock() )
+		/* NOTE: To avoid locking the render thread, we only try to lock the mutex or skip the render. */
+		if ( !m_physicalRepresentationUpdateMutex.try_lock() )
 		{
 			TraceDebug{ClassId} << "Overlay rendering skipped ..." "\n";
 
 			return;
 		}
 
-		const auto pipelineLayout = m_program->pipelineLayout();
-
 		/* Bind the graphics pipeline. */
 		commandBuffer.bind(*m_program->graphicsPipeline());
 
 		/* Bind the geometry VBO and the optional IBO. */
 		commandBuffer.bind(*m_surfaceGeometry, 0);
+
+		const auto pipelineLayout = m_program->pipelineLayout();
 
 		for ( const auto & screen : m_screens | std::views::values )
 		{
@@ -732,42 +760,7 @@ namespace EmEn::Overlay
 				continue;
 			}
 
-			for ( const auto & surface : screen->surfaces() | std::views::values )
-			{
-				if ( !surface->isVisible() )
-				{
-					continue;
-				}
-
-				// TODO: Surface should have a render() function to use a mutex between surface update and render it.
-				if ( surface->descriptorSet() == nullptr || !surface->descriptorSet()->isCreated() )
-				{
-					TraceWarning{ClassId} << "The surface " << surface->name() << " doesn't have a descriptor set !";
-
-					continue;
-				}
-
-				/* [VULKAN-PUSH-CONSTANT:4] Push the transformation matrix. */
-				vkCmdPushConstants(
-					commandBuffer.handle(),
-					pipelineLayout->handle(),
-					VK_SHADER_STAGE_VERTEX_BIT,
-					0,
-					Matrix4Alignment * sizeof(float),
-					surface->modelMatrix().data()
-				);
-
-				/* Bind the surface texture. */
-				commandBuffer.bind(
-					*surface->descriptorSet(),
-					*pipelineLayout,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					0
-				);
-
-				/* Draw the surface. */
-				commandBuffer.draw(*m_surfaceGeometry);
-			}
+			screen->render(renderTarget, commandBuffer, *pipelineLayout, *m_surfaceGeometry);
 		}
 
 #ifdef IMGUI_ENABLED
@@ -782,7 +775,7 @@ namespace EmEn::Overlay
 		}
 #endif
 
-		m_updateMutex.unlock();
+		m_physicalRepresentationUpdateMutex.unlock();
 	}
 
 	bool
