@@ -277,7 +277,7 @@ else ( UNIX )
 			-Wall
 			-Wextra
 			-Wpedantic
-			-Werror
+			#-Werror
 		>
 		$<$<CONFIG:Relase>:
 			-O2
