@@ -59,7 +59,7 @@ namespace EmEn::PlatformSpecific::Desktop
 			return ProgressMode::Error;
 		}
 
-		if (string == "paused")
+		if ( string == "paused" )
 		{
 			return ProgressMode::Paused;
 		}

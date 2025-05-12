@@ -32,8 +32,16 @@
 #include <cstdlib>
 #include <sstream>
 
+/* Third-party inclusions. */
+#include "reproc++/run.hpp"
+
+/* Local inclusions. */
+#include "Tracer.hpp"
+
 namespace EmEn::PlatformSpecific::Desktop
 {
+	static constexpr auto TracerTag{"Commands"};
+
 	void
 	runDesktopApplication (const std::string & argument) noexcept
 	{
@@ -42,10 +50,14 @@ namespace EmEn::PlatformSpecific::Desktop
 			return;
 		}
 
-		std::stringstream commandStream;
-		commandStream << "xdg-open \"" << argument << "\"";
+		const std::array< const char *, 3 > args{"xdg-open", argument.data(), nullptr};
 
-		system(commandStream.str().c_str());
+		const auto result = reproc::run(args.data());
+
+		if ( result.first != 0 )
+		{
+			TraceError{TracerTag} << "Failed to run a subprocess : " << result.second.message();
+		}
 	}
 
 	void
