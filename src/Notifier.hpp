@@ -165,7 +165,7 @@ namespace EmEn
 			std::shared_ptr< Overlay::Surface > m_surface;
 			std::shared_ptr< Graphics::FontResource > m_font;
 			Libs::PixelFactory::TextProcessor< uint8_t > m_processor;
-			Libs::Time::TimerID m_timerID;
+			Libs::Time::TimerID m_timerID{0};
 			std::vector< std::pair< std::string, int32_t > > m_notifications;
 			mutable std::mutex m_notificationAccess;
 	};
