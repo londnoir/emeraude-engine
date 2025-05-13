@@ -15,8 +15,10 @@ set(REPROC_OBJECT_LIBRARIES ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/reproc EXCLUDE_FROM_ALL)
 
-target_compile_options(reproc PRIVATE -fPIC)
-target_compile_options(reproc++ PRIVATE -fPIC)
+if ( UNIX )
+	target_compile_options(reproc PRIVATE -fPIC)
+	target_compile_options(reproc++ PRIVATE -fPIC)
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/reproc/reproc/include
