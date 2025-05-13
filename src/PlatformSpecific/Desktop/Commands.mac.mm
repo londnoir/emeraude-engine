@@ -34,21 +34,32 @@
 
 /* Third-party inclusions. */
 #import <AppKit/AppKit.h>
+#include "reproc++/run.hpp"
 
 namespace EmEn::PlatformSpecific::Desktop
 {
-	void
+	bool
 	runDesktopApplication (const std::string & argument) noexcept
 	{
 		if ( argument.empty() )
 		{
-			return;
+			Tracer::error(TracerTag, "No argument to open with desktop terminal.");
+
+			return false;
 		}
 
-		std::stringstream commandStream;
-		commandStream << "open \"" << argument << "\"";
+		const std::array< const char *, 3 > args{"open", argument.data(), nullptr};
 
-		system(commandStream.str().c_str());
+		const auto [exitCode, errorCode] = reproc::run(args.data());
+
+		if ( exitCode != 0 )
+		{
+			TraceError{TracerTag} << "Failed to run a subprocess : " << errorCode.message();
+
+			return false;
+		}
+
+		return true;
 	}
 
 	void

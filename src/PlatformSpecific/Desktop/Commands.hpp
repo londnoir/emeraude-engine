@@ -85,9 +85,9 @@ namespace EmEn::PlatformSpecific::Desktop
 	/**
 	 * @brief Tries to open the directory of a file in an external file browser.
 	 * @param argument A reference to a string.
-	 * @return void
+	 * @return bool
 	 */
-	void runDesktopApplication (const std::string & argument) noexcept;
+	bool runDesktopApplication (const std::string & argument) noexcept;
 
 	/**
 	 * @brief Makes the taskbar icon of the application flashing to alert the user.

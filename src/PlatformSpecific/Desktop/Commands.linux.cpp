@@ -42,22 +42,28 @@ namespace EmEn::PlatformSpecific::Desktop
 {
 	static constexpr auto TracerTag{"Commands"};
 
-	void
+	bool
 	runDesktopApplication (const std::string & argument) noexcept
 	{
 		if ( argument.empty() )
 		{
-			return;
+			Tracer::error(TracerTag, "No argument to open with desktop terminal.");
+
+			return false;
 		}
 
 		const std::array< const char *, 3 > args{"xdg-open", argument.data(), nullptr};
 
-		const auto result = reproc::run(args.data());
+		const auto [exitCode, errorCode] = reproc::run(args.data());
 
-		if ( result.first != 0 )
+		if ( exitCode != 0 )
 		{
-			TraceError{TracerTag} << "Failed to run a subprocess : " << result.second.message();
+			TraceError{TracerTag} << "Failed to run a subprocess : " << errorCode.message();
+
+			return false;
 		}
+
+		return true;
 	}
 
 	void
