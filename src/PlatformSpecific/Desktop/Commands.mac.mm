@@ -36,8 +36,13 @@
 #import <AppKit/AppKit.h>
 #include "reproc++/run.hpp"
 
+/* Local inclusions. */
+#include "Tracer.hpp"
+
 namespace EmEn::PlatformSpecific::Desktop
 {
+	static constexpr auto TracerTag{"Commands"};
+
 	bool
 	runDesktopApplication (const std::string & argument) noexcept
 	{
