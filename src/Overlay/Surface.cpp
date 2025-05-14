@@ -209,9 +209,9 @@ namespace EmEn::Overlay
 			return false;
 		}
 
+		/* NOTE: At first creation, we swap automatically. */
 		m_flags[ReadyToSwap] = true;
 
-		/* NOTE: At first creation, we swap automatically. */
 		return this->swapFramebuffers();
 	}
 
@@ -434,6 +434,8 @@ namespace EmEn::Overlay
 	bool
 	Surface::swapFramebuffers () noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_framebufferAccess};
+
 		if ( !m_flags[ReadyToSwap] )
 		{
 			TraceWarning{ClassId} << "The surface '" << this->name() << "' is not ready to swap !";
