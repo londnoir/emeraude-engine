@@ -53,7 +53,7 @@ namespace EmEn::PlatformSpecific::Desktop
 			return false;
 		}
 
-		const std::array< const char *, 3 > args{"open", argument.data(), nullptr};
+		/*const std::array< const char *, 3 > args{"open", argument.data(), nullptr};
 
 		const auto [exitCode, errorCode] = reproc::run(args.data());
 
@@ -62,7 +62,12 @@ namespace EmEn::PlatformSpecific::Desktop
 			TraceError{TracerTag} << "Failed to run a subprocess : " << errorCode.message();
 
 			return false;
-		}
+		}*/
+
+		std::stringstream commandStream;
+		commandStream << "open \"" << argument << "\"";
+
+		system(commandStream.str().c_str());
 
 		return true;
 	}
