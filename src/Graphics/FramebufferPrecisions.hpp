@@ -28,6 +28,8 @@
 
 /* STL inclusions. */
 #include <cstdint>
+#include <ostream>
+#include <string>
 
 /* Local inclusions. */
 #include "SettingKeys.hpp"
@@ -145,6 +147,21 @@ namespace EmEn::Graphics
 			{
 				return m_samples;
 			}
+
+			/**
+			 * @brief STL streams printable object.
+			 * @param out A reference to the stream output.
+			 * @param obj A reference to the object to print.
+			 * @return std::ostream &
+			 */
+			friend std::ostream & operator<< (std::ostream & out, const FramebufferPrecisions & obj);
+
+			/**
+			 * @brief Stringifies the object.
+			 * @param obj A reference to the object to print.
+			 * @return std::string
+			 */
+			friend std::string to_string (const FramebufferPrecisions & obj);
 
 		private:
 

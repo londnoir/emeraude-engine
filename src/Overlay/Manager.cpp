@@ -732,7 +732,7 @@ namespace EmEn::Overlay
 				continue;
 			}
 
-			for ( const auto & surface : screen->surfaces() | std::views::values )
+			for ( const auto & surface : screen->sortedSurfaces() )
 			{
 				if ( !surface->isVisible() )
 				{

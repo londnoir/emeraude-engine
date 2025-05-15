@@ -26,11 +26,40 @@
 
 #include "FramebufferPrecisions.hpp"
 
+/* STL inclusions. */
+#include <sstream>
+
 namespace EmEn::Graphics
 {
 	FramebufferPrecisions::FramebufferPrecisions (uint32_t redBits, uint32_t greenBits, uint32_t blueBits, uint32_t alphaBits, uint32_t depthBits, uint32_t stencilBits, uint32_t samples) noexcept
-		: m_redBits(redBits), m_greenBits(greenBits), m_blueBits(blueBits), m_alphaBits(alphaBits), m_depthBits(depthBits), m_stencilBits(stencilBits), m_samples(samples)
+		: m_redBits(redBits),
+		m_greenBits(greenBits),
+		m_blueBits(blueBits),
+		m_alphaBits(alphaBits),
+		m_depthBits(depthBits),
+		m_stencilBits(stencilBits),
+		m_samples(samples)
 	{
 
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const FramebufferPrecisions & obj)
+	{
+		return out << "Framebuffer precisions data :" "\n"
+			"Color buffer bits : " << obj.m_redBits << ", " << obj.m_greenBits << ", " << obj.m_blueBits << ", " << obj.m_alphaBits << "\n"
+			"Depth buffer bits : " << obj.m_depthBits << "\n"
+			"Stencil buffer bits : " << obj.m_stencilBits << "\n"
+			"Samples : " << obj.m_samples;
+	}
+
+	std::string
+	to_string (const FramebufferPrecisions & obj)
+	{
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

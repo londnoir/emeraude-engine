@@ -97,6 +97,8 @@ namespace EmEn::Overlay
 
 		m_surfaces.erase(surfaceIt);
 
+		this->sortSurfacesByDepth();
+
 		return true;
 	}
 
@@ -146,7 +148,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
+	UIScreen::onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) const noexcept
 	{
 		const auto dispatchEvent = [key, scancode, modifiers, repeat] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -165,7 +167,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -174,7 +176,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
+	UIScreen::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [key, scancode, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -193,7 +195,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -202,7 +204,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onCharacterType (uint32_t unicode) noexcept
+	UIScreen::onCharacterType (uint32_t unicode) const noexcept
 	{
 		const auto dispatchEvent = [unicode] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -221,7 +223,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & [surfaceName, surface] : m_surfaces )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -230,7 +232,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onPointerMove (float positionX, float positionY) noexcept
+	UIScreen::onPointerMove (float positionX, float positionY) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -275,7 +277,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -284,7 +286,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -307,7 +309,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -316,7 +318,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+	UIScreen::onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, buttonNumber, modifiers] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -335,7 +337,7 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
@@ -344,7 +346,7 @@ namespace EmEn::Overlay
 	}
 
 	bool
-	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
+	UIScreen::onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) const noexcept
 	{
 		const auto dispatchEvent = [positionX, positionY, xOffset, yOffset] (const std::shared_ptr< Surface > & surface) -> bool
 		{
@@ -363,11 +365,69 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface: m_surfaces | std::views::values )
+		for ( const auto & surface : m_sortedSurfaces )
 		{
 			somethingHappens = dispatchEvent(surface);
 		}
 
 		return somethingHappens;
+	}
+
+	void
+	UIScreen::sortSurfacesByDepth ()
+	{
+		const std::lock_guard< std::mutex > lock{m_surfacesOrderAccess};
+
+		std::vector< std::pair< float, std::shared_ptr< Surface > > > tmpSurfaces;
+		tmpSurfaces.reserve(m_surfaces.size());
+
+		for ( auto & surface : m_surfaces | std::views::values )
+		{
+			tmpSurfaces.emplace_back(surface->depth(), surface);
+		}
+
+		std::ranges::sort(tmpSurfaces, [] (const auto & x, const auto & y) {
+			return x.first < y.first;
+		});
+
+		m_sortedSurfaces.clear();
+
+		for ( auto & surface: tmpSurfaces | std::views::values )
+		{
+			m_sortedSurfaces.emplace_back(surface);
+		}
+	}
+
+	std::ostream &
+	operator<< (std::ostream & out, const UIScreen & obj)
+	{
+		out << "UI screen data :" "\n"
+			"Has input exclusive surface : " << (obj.m_inputExclusiveSurface == nullptr ? "[No]" : obj.m_inputExclusiveSurface->name() ) << '\n';
+
+		if ( obj.m_surfaces.empty() )
+		{
+			out << "No surfaces present." "\n";
+		}
+		else
+		{
+			out << "Surfaces : " "\n";
+
+			for ( const auto & surface : obj.m_sortedSurfaces )
+			{
+				out << *surface << '\n';
+			}
+		}
+
+		return out;
+	}
+
+	std::string
+	to_string (const UIScreen & obj)
+	{
+		std::stringstream output;
+
+		output << obj;
+
+		return output.str();
 	}
 }

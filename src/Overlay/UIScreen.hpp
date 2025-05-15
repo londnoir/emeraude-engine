@@ -181,6 +181,8 @@ namespace EmEn::Overlay
 
 				m_surfaces[name] = surface;
 
+				this->sortSurfacesByDepth();
+
 				return surface;
 			}
 
@@ -191,7 +193,10 @@ namespace EmEn::Overlay
 			void
 			clearSurfaces () noexcept
 			{
+				const std::lock_guard< std::mutex > lock{m_surfacesOrderAccess};
+
 				m_surfaces.clear();
+				m_sortedSurfaces.clear();
 			}
 
 			/**
@@ -209,14 +214,25 @@ namespace EmEn::Overlay
 			bool destroySurface (const std::string & name) noexcept;
 
 			/**
-			 * @brief Returns the screen surfaces list.
+			 * @brief Returns the screen name surfaces list.
 			 * @return const std::map< std::string, std::shared_ptr< Surface > > &
 			 */
 			[[nodiscard]]
 			const std::map< std::string, std::shared_ptr< Surface > > &
-			surfaces () const noexcept
+			namedSurfaces () const noexcept
 			{
 				return m_surfaces;
+			}
+
+			/**
+			 * @brief Returns the screen surfaces list sorted by depth.
+			 * @return const std::vector< std::shared_ptr< Surface > > &
+			 */
+			[[nodiscard]]
+			const std::vector< std::shared_ptr< Surface > > &
+			sortedSurfaces () const noexcept
+			{
+				return m_sortedSurfaces;
 			}
 
 			/**
@@ -284,7 +300,7 @@ namespace EmEn::Overlay
 			 * @param repeat Repeat state.
 			 * @return bool
 			 */
-			bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept;
+			bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) const noexcept;
 
 			/**
 			 * @brief Transfers the key release event to surfaces.
@@ -293,14 +309,14 @@ namespace EmEn::Overlay
 			 * @param modifiers The modifier keys mask.
 			 * @return bool
 			 */
-			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept;
+			bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) const noexcept;
 
 			/**
 			 * @brief Transfers the character typed event to surfaces.
 			 * @param unicode The Unicode number.
 			 * @return bool
 			 */
-			bool onCharacterType (uint32_t unicode) noexcept;
+			bool onCharacterType (uint32_t unicode) const noexcept;
 
 			/**
 			 * @brief Transfers the pointer movement event to surfaces.
@@ -308,7 +324,7 @@ namespace EmEn::Overlay
 			 * @param positionY The Y position of the cursor.
 			 * @return bool
 			 */
-			bool onPointerMove (float positionX, float positionY) noexcept;
+			bool onPointerMove (float positionX, float positionY) const noexcept;
 
 			/**
 			 * @brief Transfers the pointer press event to surfaces.
@@ -318,7 +334,7 @@ namespace EmEn::Overlay
 			 * @param modifiers Modification keys held.
 			 * @return bool
 			 */
-			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
+			bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept;
 
 			/**
 			 * @brief Transfers the pointer release event to surfaces.
@@ -328,7 +344,7 @@ namespace EmEn::Overlay
 			 * @param modifiers Modification keys held.
 			 * @return bool
 			 */
-			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept;
+			bool onButtonRelease (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) const noexcept;
 
 			/**
 			 * @brief Transfers the mouse wheel event to surfaces.
@@ -338,9 +354,30 @@ namespace EmEn::Overlay
 			 * @param yOffset The mouse wheel y offset.
 			 * @return bool
 			 */
-			bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept;
+			bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) const noexcept;
+
+			/**
+			 * @brief STL streams printable object.
+			 * @param out A reference to the stream output.
+			 * @param obj A reference to the object to print.
+			 * @return std::ostream &
+			 */
+			friend std::ostream & operator<< (std::ostream & out, const UIScreen & obj);
+
+			/**
+			 * @brief Stringifies the object.
+			 * @param obj A reference to the object to print.
+			 * @return std::string
+			 */
+			friend std::string to_string (const UIScreen & obj);
 
 		private:
+
+			/**
+			 * @brief Sort surfaces by depth when adding or removing surface from the screen.
+			 * @return void
+			 */
+			void sortSurfacesByDepth ();
 
 			/* Flag names. */
 			static constexpr auto IsVisible{0UL};
@@ -350,7 +387,9 @@ namespace EmEn::Overlay
 			Graphics::Renderer & m_graphicsRenderer;
 			const FramebufferProperties & m_framebufferProperties;
 			std::map< std::string, std::shared_ptr< Surface > > m_surfaces;
+			std::vector< std::shared_ptr< Surface > > m_sortedSurfaces;
 			std::shared_ptr< Surface > m_inputExclusiveSurface;
+			mutable std::mutex m_surfacesOrderAccess;
 			std::array< bool, 8 > m_flags{
 				false/*IsVisible*/,
 				false/*IsListeningKeyboard*/,
