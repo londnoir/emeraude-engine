@@ -167,9 +167,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -195,9 +200,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -223,9 +233,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -277,9 +292,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -309,9 +329,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -337,9 +362,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
@@ -365,9 +395,14 @@ namespace EmEn::Overlay
 
 		auto somethingHappens = false;
 
-		for ( const auto & surface : m_sortedSurfaces )
+		for ( const auto & surface : std::views::reverse(m_sortedSurfaces) )
 		{
 			somethingHappens = dispatchEvent(surface);
+
+			if ( somethingHappens && surface->isBlockingEvent() )
+			{
+				break;
+			}
 		}
 
 		return somethingHappens;
