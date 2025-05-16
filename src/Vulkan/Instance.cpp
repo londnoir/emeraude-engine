@@ -144,7 +144,7 @@ namespace EmEn::Vulkan
 						TraceFatal trace{ClassId};
 
 						trace <<
-							"Unable to create a Vulkan instance : " << vkResultToCString(result) << " !"
+							"Unable to create a Vulkan instance : " << vkResultToCString(result) << " !" "\n"
 							"Required extensions :" "\n";
 
 						for ( const auto & extension : m_requiredInstanceExtensions )
@@ -354,11 +354,16 @@ namespace EmEn::Vulkan
 		}
 
 		/* If debug mode enabled, push back debug utilities. */
-		if ( this->isDebugModeEnabled() && this->isUsingDebugMessenger() )
+		if ( this->isDebugModeEnabled() )
 		{
-			/* NOTE: VK_EXT_debug_report (vk 1.0) has been deprecated in favor of VK_EXT_debug_utils (vk 1.2 ?). */
-			//m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-			m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			//m_requiredGraphicsDeviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
+
+			if ( this->isUsingDebugMessenger() )
+			{
+				/* NOTE: VK_EXT_debug_report (vk 1.0) has been deprecated in favor of VK_EXT_debug_utils (vk 1.2 ?). */
+				//m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+				m_requiredInstanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			}
 		}
 
 		/* NOTE: This extension allows applications to control whether devices
