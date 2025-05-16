@@ -39,6 +39,8 @@ namespace EmEn::Saphir
 {
 	using namespace EmEn::Libs;
 	using namespace Declaration;
+	using namespace Graphics;
+	using namespace Keys;
 
 	FragmentShader::FragmentShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept
 		: AbstractShader(name, GLSLVersion, GLSLProfile)
@@ -226,5 +228,43 @@ namespace EmEn::Saphir
 
 			"Vertex shader output declarations : " "\n"
 			" - Output fragment (FS) : " << m_outputFragments.size() << "\n";
+	}
+
+	Function
+	FragmentShader::generateToSRGBColorFunction () noexcept
+	{
+		std::stringstream functionCode;
+
+		functionCode <<
+			"\t" "bvec4 cutoff = lessThan(linearRGB, vec4(0.0031308));" "\n"
+			"\t" "vec4 higher = vec4(1.055) * pow(linearRGB, vec4(1.0 / 2.4)) - vec4(0.055);" "\n"
+			"\t" "vec4 lower = linearRGB * vec4(12.92);" "\n\n"
+
+			"\t" "return mix(higher, lower, cutoff);" "\n";
+
+		Function function{"toSRGBColor", GLSL::FloatVector4};
+		function.addInParameter(GLSL::FloatVector4, "linearRGB", true);
+		function.addInstruction(functionCode.str());
+
+		return function;
+	}
+
+	Function
+	FragmentShader::generateToLinearColorFunction () noexcept
+	{
+		std::stringstream functionCode;
+
+		functionCode <<
+			"\t" "bvec4 cutoff = lessThan(sRGB, vec4(0.04045));" "\n"
+			"\t" "vec4 higher = pow((sRGB + vec4(0.055)) / vec4(1.055), vec4(2.4));" "\n"
+			"\t" "vec4 lower = sRGB / vec4(12.92);" "\n\n"
+
+			"\t" "return mix(higher, lower, cutoff);" "\n";
+
+		Function function{"toLinearColor", GLSL::FloatVector4};
+		function.addInParameter(GLSL::FloatVector4, "sRGB", true);
+		function.addInstruction(functionCode.str());
+
+		return function;
 	}
 }

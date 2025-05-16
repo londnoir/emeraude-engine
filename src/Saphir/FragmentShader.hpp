@@ -61,6 +61,8 @@ namespace EmEn::Saphir
 			/**
 			 * @brief Constructs a fragment shader.
 			 * @param name The name of the shader for identification.
+			 * @param GLSLVersion A reference to a string.
+			 * @param GLSLProfile A reference to a string.
 			 */
 			FragmentShader (const std::string & name, const std::string & GLSLVersion, const std::string & GLSLProfile) noexcept;
 
@@ -168,7 +170,7 @@ namespace EmEn::Saphir
 
 			/**
 			 * @brief Copies output from a tesselation evaluation shader to this fragment shader.
-			 * @param vertexShader A reference to a tesselation evaluation shader.
+			 * @param tesselationEvaluationShader A reference to a tesselation evaluation shader.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -176,11 +178,17 @@ namespace EmEn::Saphir
 
 			/**
 			 * @brief Copies output from a geometry shader to this fragment shader.
-			 * @param vertexShader A reference to a geometry shader.
+			 * @param geometryShader A reference to a geometry shader.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool connectFromPreviousShader (const GeometryShader & geometryShader) noexcept;
+
+			[[nodiscard]]
+			static Declaration::Function generateToSRGBColorFunction () noexcept;
+
+			[[nodiscard]]
+			static Declaration::Function generateToLinearColorFunction () noexcept;
 
 		private:
 
@@ -191,9 +199,9 @@ namespace EmEn::Saphir
 			/** @copydoc EmEn::Saphir::AbstractShader::onGetDeclarationStats() */
 			void onGetDeclarationStats (std::stringstream & output) const noexcept override;
 
-			std::vector< Declaration::StageInput > m_stageInputs{};
-			std::vector< Declaration::InputBlock > m_inputBlocks{};
-			std::vector< Declaration::OutputFragment > m_outputFragments{};
+			std::vector< Declaration::StageInput > m_stageInputs;
+			std::vector< Declaration::InputBlock > m_inputBlocks;
+			std::vector< Declaration::OutputFragment > m_outputFragments;
 			uint32_t m_samples{1};
 	};
 }

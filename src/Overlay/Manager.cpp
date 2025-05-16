@@ -292,7 +292,7 @@ namespace EmEn::Overlay
 	bool
 	Manager::generateGraphicsPipeline () noexcept
 	{
-		Generator::OverlayRendering generator{*this, m_graphicsRenderer.swapChain()};
+		Generator::OverlayRendering generator{*this, m_graphicsRenderer.swapChain(), Generator::OverlayRendering::ColorConversion::ToLinear};
 		generator.enableDebugging(m_graphicsRenderer.shaderManager().showSourceCode());
 
 		/* The vertex buffer format, responsible for the specific VBO is handled with the shaders. */
