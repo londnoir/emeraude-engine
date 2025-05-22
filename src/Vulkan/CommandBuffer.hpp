@@ -440,7 +440,7 @@ namespace EmEn::Vulkan
 			 * @param subGeometryIndex A sub geometry layer index being drawn. Default 0.
 			 * @return void
 			 */
-			void bind (const Graphics::Geometry::Interface & geometry, size_t subGeometryIndex = 0) const noexcept;
+			void bind (const Graphics::Geometry::Interface & geometry, uint32_t subGeometryIndex = 0) const noexcept;
 
 			/**
 			 * @brief Binds a single geometry using a model vertex buffer object for location.
@@ -450,7 +450,7 @@ namespace EmEn::Vulkan
 			 * @param modelVBOOffset The offset in the model vertex buffer object. Default 0.
 			 * @return void
 			 */
-			void bind (const Graphics::Geometry::Interface & geometry, const VertexBufferObject & modelVBO, size_t subGeometryIndex = 0, VkDeviceSize modelVBOOffset = 0) const noexcept;
+			void bind (const Graphics::Geometry::Interface & geometry, const VertexBufferObject & modelVBO, uint32_t subGeometryIndex = 0, VkDeviceSize modelVBOOffset = 0) const noexcept;
 
 			/**
 			 * @brief Registers a draw command.
@@ -459,7 +459,7 @@ namespace EmEn::Vulkan
 			 * @param instanceCount The number of instance. Default 1.
 			 * @return void
 			 */
-			void draw (const Graphics::Geometry::Interface & geometry, size_t subGeometryIndex = 0, uint32_t instanceCount = 1) const noexcept;
+			void draw (const Graphics::Geometry::Interface & geometry, uint32_t subGeometryIndex = 0, uint32_t instanceCount = 1) const noexcept;
 
 		private:
 

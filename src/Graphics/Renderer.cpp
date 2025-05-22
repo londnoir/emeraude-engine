@@ -30,17 +30,11 @@
 #include "emeraude_config.hpp"
 
 /* STL inclusions. */
-#include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <iostream>
-#include <memory>
 #include <ranges>
-#include <vector>
 
 /* Local inclusions. */
-#include "Libs/PixelFactory/Color.hpp"
-#include "Libs/Time/Statistics/RealTime.hpp"
 #include "Libs/Time/Elapsed/PrintScopeRealTime.hpp"
 #include "Vulkan/Sync/ImageMemoryBarrier.hpp"
 #include "Vulkan/Device.hpp"
@@ -416,18 +410,19 @@ namespace EmEn::Graphics
 			return nullptr;
 		}
 
-		const auto result = m_samplers.emplace(type, sampler);
+		const auto [samplerPair, success] = m_samplers.emplace(type, sampler);
 
-#ifdef DEBUG
-		if ( !result.second )
+		if constexpr ( IsDebug )
 		{
-			Tracer::fatal(ClassId, "Unable to insert the sampler into map !");
+			if ( !success )
+			{
+				Tracer::fatal(ClassId, "Unable to insert the sampler into map !");
 
-			return {};
+				return {};
+			}
 		}
-#endif
 
-		return result.first->second;
+		return samplerPair->second;
 	}
 
 	[[nodiscard]]
@@ -731,21 +726,20 @@ namespace EmEn::Graphics
 					break;
 
 				default :
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from the window ignored.";
-#endif
+					if constexpr ( ObserverDebugEnabled )
+					{
+						TraceDebug{ClassId} << "Event #" << notificationCode << " from the window ignored.";
+					}
 					break;
 			}
 
 			return true;
 		}
 
-#ifdef DEBUG
-		/* NOTE: Don't know what is it, goodbye ! */
-		TraceInfo{ClassId} <<
+		/* NOTE: Don't know what is it, goodbye! */
+		TraceDebug{ClassId} <<
 			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
-#endif
 
 		return false;
 	}

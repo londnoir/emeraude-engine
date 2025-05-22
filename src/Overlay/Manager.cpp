@@ -409,14 +409,15 @@ namespace EmEn::Overlay
 	{
 		const std::lock_guard< std::mutex > lock{m_screensMutex};
 
-#ifdef DEBUG
-		if ( !m_framebufferProperties.isValid() )
+		if constexpr ( IsDebug )
 		{
-			TraceError{ClassId} << "The screen size are not initialized !";
+			if ( !m_framebufferProperties.isValid() )
+			{
+				TraceError{ClassId} << "The screen size are not initialized !";
 
-			return nullptr;
+				return nullptr;
+			}
 		}
-#endif
 
 		if ( m_screens.contains(name) )
 		{
@@ -728,14 +729,15 @@ namespace EmEn::Overlay
 			return;
 		}
 
-#ifdef DEBUG
-		if ( m_surfaceGeometry == nullptr || !m_surfaceGeometry->isCreated() )
+		if constexpr ( IsDebug )
 		{
-			TraceError{ClassId} << "The surface geometry is no ready !";
+			if ( m_surfaceGeometry == nullptr || !m_surfaceGeometry->isCreated() )
+			{
+				TraceError{ClassId} << "The surface geometry is no ready !";
 
-			return;
+				return;
+			}
 		}
-#endif
 
 		/* NOTE: To avoid locking the render thread, we only try to lock the mutex or skip the render. */
 		if ( !m_physicalRepresentationUpdateMutex.try_lock() )
@@ -803,21 +805,20 @@ namespace EmEn::Overlay
 					break;
 
 				default :
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from the window ignored.";
-#endif
+					if constexpr ( ObserverDebugEnabled )
+					{
+						TraceDebug{ClassId} << "Event #" << notificationCode << " from the window ignored.";
+					}
 					break;
 			}
 
 			return true;
 		}
 
-#ifdef DEBUG
-		/* NOTE: Don't know what is it, goodbye ! */
-		TraceInfo{ClassId} <<
+		/* NOTE: Don't know what is it, goodbye! */
+		TraceDebug{ClassId} <<
 			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
-#endif
 
 		return false;
 	}

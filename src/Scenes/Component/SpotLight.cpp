@@ -65,7 +65,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	SpotLight::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	SpotLight::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{
@@ -109,12 +109,6 @@ namespace EmEn::Scenes::Component
 		this->updateAnimations(scene.cycle());
 	}
 
-	bool
-	SpotLight::shouldRemove () const noexcept
-	{
-		return false;
-	}
-
 	void
 	SpotLight::move (const CartesianFrame< float > & worldCoordinates) noexcept
 	{
@@ -123,7 +117,7 @@ namespace EmEn::Scenes::Component
 			return;
 		}
 
-		if ( this->isShadowEnabled() )
+		if ( this->isShadowCastingEnabled() )
 		{
 			this->updateDeviceFromCoordinates(worldCoordinates, this->getWorldVelocity());
 		}
@@ -215,7 +209,7 @@ namespace EmEn::Scenes::Component
 				{
 					TraceSuccess{ClassId} << "2D shadow map successfully created for spotlight '" << this->name() << "'.";
 
-					this->enableShadow(true);
+					this->enableShadowCasting(true);
 				}
 				else
 				{
@@ -247,12 +241,6 @@ namespace EmEn::Scenes::Component
 		}
 
 		this->removeFromSharedUniformBuffer();
-	}
-
-	std::shared_ptr< RenderTarget::ShadowMap::Abstract >
-	SpotLight::shadowMap () const noexcept
-	{
-		return std::static_pointer_cast< RenderTarget::ShadowMap::Abstract >(m_shadowMap);
 	}
 
 	Declaration::UniformBlock
@@ -288,42 +276,6 @@ namespace EmEn::Scenes::Component
 		this->setOuterAngle(outerAngle);
 
 		this->requestVideoMemoryUpdate();
-	}
-
-	const char *
-	SpotLight::getComponentType () const noexcept
-	{
-		return ClassId;
-	}
-
-	const Cuboid< float > &
-	SpotLight::boundingBox () const noexcept
-	{
-		return NullBoundingBox;
-	}
-
-	const Sphere< float > &
-	SpotLight::boundingSphere () const noexcept
-	{
-		return NullBoundingSphere;
-	}
-
-	float
-	SpotLight::radius () const noexcept
-	{
-		return m_radius;
-	}
-
-	float
-	SpotLight::innerAngle () const noexcept
-	{
-		return m_innerAngle;
-	}
-
-	float
-	SpotLight::outerAngle () const noexcept
-	{
-		return m_outerAngle;
 	}
 
 	void
@@ -364,7 +316,7 @@ namespace EmEn::Scenes::Component
 			"Inner angle : " << obj.m_innerAngle << "° (" << Radian(obj.m_innerAngle) << " rad) (cosine : " << std::cos(Radian(obj.m_innerAngle)) << ")\n"
 			"Outer angle : " << obj.m_outerAngle << "° (" << Radian(obj.m_outerAngle) << " rad) (cosine : " << std::cos(Radian(obj.m_outerAngle)) << ")\n"
 			"Activity : " << ( obj.isEnabled() ? "true" : "false" ) << "\n"
-			"Shadow caster : " << ( obj.isShadowEnabled() ? "true" : "false" ) << '\n';
+			"Shadow caster : " << ( obj.isShadowCastingEnabled() ? "true" : "false" ) << '\n';
 	}
 
 	std::string

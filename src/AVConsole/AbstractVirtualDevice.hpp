@@ -246,9 +246,9 @@ namespace EmEn::AVConsole
 			 */
 			virtual
 			void
-			updateProperties (bool isPerspectiveProjection, float distance, float fovOrNear) noexcept
+			updateProperties (bool /*isPerspectiveProjection*/, float /*distance*/, float /*fovOrNear*/) noexcept
 			{
-				/* NOTE: A video device should override this method ! */
+				/* NOTE: A video device should override this method! */
 				assert(m_type == DeviceType::Audio);
 			}
 
@@ -258,7 +258,7 @@ namespace EmEn::AVConsole
 			 * @param sourceDevice A pointer to the virtual device.
 			 * @return void
 			 */
-			virtual void onSourceConnected (AbstractVirtualDevice * sourceDevice) noexcept
+			virtual void onSourceConnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 			{
 
 			}
@@ -269,7 +269,7 @@ namespace EmEn::AVConsole
 			 * @param targetDevice A pointer to the virtual device.
 			 * @return void
 			 */
-			virtual void onTargetConnected (AbstractVirtualDevice * targetDevice) noexcept
+			virtual void onTargetConnected (AbstractVirtualDevice * /*targetDevice*/) noexcept
 			{
 
 			}
@@ -280,7 +280,7 @@ namespace EmEn::AVConsole
 			 * @param sourceDevice A pointer to the virtual device.
 			 * @return void
 			 */
-			virtual void onSourceDisconnected (AbstractVirtualDevice * sourceDevice) noexcept
+			virtual void onSourceDisconnected (AbstractVirtualDevice * /*sourceDevice*/) noexcept
 			{
 
 			}
@@ -291,7 +291,7 @@ namespace EmEn::AVConsole
 			 * @param targetDevice A pointer to the virtual device.
 			 * @return void
 			 */
-			virtual void onTargetDisconnected (AbstractVirtualDevice * targetDevice) noexcept
+			virtual void onTargetDisconnected (AbstractVirtualDevice * /*targetDevice*/) noexcept
 			{
 
 			}

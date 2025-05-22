@@ -91,3 +91,20 @@
 		#define __PRETTY_FUNCTION__ __FUNCTION__
 	#endif
 #endif
+
+namespace EmEn
+{
+	constexpr bool IsX86Arch{IS_X86_ARCH};
+	constexpr bool IsARMArch{IS_ARM_ARCH};
+	constexpr bool Is32BitPlatform{IS_32BIT_PLATFORM};
+	constexpr bool Is64BitPlatform{IS_64BIT_PLATFORM};
+	constexpr auto PlatformPrecision{PLATFORM_PRECISION};
+	constexpr auto PlatformArch{PLATFORM_ARCH};
+	constexpr auto PlatformArchNiceName{PLATFORM_ARCH_NICENAME};
+	constexpr auto PlatformTargeted{PLATFORM_TARGETED};
+
+	constexpr bool IsLinux{IS_LINUX};
+	constexpr bool IsWindows{IS_WINDOWS};
+	constexpr bool IsMacOS{IS_MACOS};
+	constexpr auto OSName{OS_NAME};
+}

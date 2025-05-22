@@ -56,28 +56,10 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	MeshResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
 	bool
-	MeshResource::is (size_t classUID) const noexcept
+	MeshResource::isOpaque (uint32_t layerIndex) const noexcept
 	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	MeshResource::layerCount () const noexcept
-	{
-		return m_layers.size();
-	}
-
-	bool
-	MeshResource::isOpaque (size_t layerIndex) const noexcept
-	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::isOpaque(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -94,16 +76,10 @@ namespace EmEn::Graphics::Renderable
 		return true;
 	}
 
-	const Geometry::Interface *
-	MeshResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
 	const Material::Interface *
-	MeshResource::material (size_t layerIndex) const noexcept
+	MeshResource::material (uint32_t layerIndex) const noexcept
 	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::material(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -114,9 +90,9 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	const RasterizationOptions *
-	MeshResource::layerRasterizationOptions (size_t layerIndex) const noexcept
+	MeshResource::layerRasterizationOptions (uint32_t layerIndex) const noexcept
 	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::layerRasterizationOptions(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -124,34 +100,6 @@ namespace EmEn::Graphics::Renderable
 		}
 
 		return &m_layers[layerIndex].rasterizationOptions();
-	}
-
-	const Cuboid< float > &
-	MeshResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingBox;
-		}
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	MeshResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingSphere;
-		}
-
-		return m_geometry->boundingSphere();
-	}
-
-	const char *
-	MeshResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
@@ -268,7 +216,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	std::shared_ptr< Material::Interface >
-	MeshResource::parseLayer (const Json::Value & data) noexcept
+	MeshResource::parseLayer (const Json::Value & data) const noexcept
 	{
 		if ( !data.isMember(MaterialTypeKey) || !data[MaterialTypeKey].isString() )
 		{
@@ -303,7 +251,7 @@ namespace EmEn::Graphics::Renderable
 			return materialResource;
 		}
 
-		TraceWarning{ClassId} << "Material resource type '" << materialType << "' is not handled !";
+		TraceWarning{ClassId} << "Material resource type '" << materialType << "' for mesh '" << this->name() << "' is not handled !";
 
 		return StandardResource::getDefault();
 	}
@@ -360,7 +308,7 @@ namespace EmEn::Graphics::Renderable
 		for ( const auto & layerRule : layerRules )
 		{
 			/* Parse material definition and get default if error occurs. */
-			auto materialResource = MeshResource::parseLayer(layerRule);
+			auto materialResource = this->parseLayer(layerRule);
 
 			/* Gets a default material. */
 			if ( materialResource == nullptr )
@@ -465,7 +413,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometry;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -484,7 +432,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_layers.emplace_back(layerName, material, options, flags);
 
-		return this->addDependency(material.get());
+		return this->addDependency(material);
 	}
 
 	float

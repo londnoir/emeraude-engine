@@ -449,14 +449,15 @@ namespace EmEn::Scenes
 			bool
 			update (const std::shared_ptr< element_t > & element) noexcept
 			{
-#ifdef DEBUG
-				if ( !this->isRoot() )
+				if constexpr ( IsDebug )
 				{
-					TraceError{ClassId} << "You can't call update() on a sub-sector !";
+					if ( !this->isRoot() )
+					{
+						TraceError{ClassId} << "You can't call update() on a sub-sector !";
 
-					return false;
+						return false;
+					}
 				}
-#endif
 
 				/* NOTE: If the root sector is not split down, there is no need to check. */
 				if ( !m_flags[IsExpanded] )

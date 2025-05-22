@@ -107,11 +107,19 @@ namespace EmEn::Graphics::TextureResource
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCreated() */
 			[[nodiscard]]
@@ -125,7 +133,11 @@ namespace EmEn::Graphics::TextureResource
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::type() */
 			[[nodiscard]]
-			Type type () const noexcept override;
+			Type
+			type () const noexcept override
+			{
+				return Type::Texture2DArray;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isGrayScale() */
 			[[nodiscard]]
@@ -137,11 +149,19 @@ namespace EmEn::Graphics::TextureResource
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::dimensions() */
 			[[nodiscard]]
-			uint32_t dimensions () const noexcept override;
+			uint32_t
+			dimensions () const noexcept override
+			{
+				return 2;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::isCubemapTexture() */
 			[[nodiscard]]
-			bool isCubemapTexture () const noexcept override;
+			bool
+			isCubemapTexture () const noexcept override
+			{
+				return false;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameCount() */
 			[[nodiscard]]
@@ -153,27 +173,47 @@ namespace EmEn::Graphics::TextureResource
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameIndexAt() */
 			[[nodiscard]]
-			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
+			uint32_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::image() */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::Image > image () const noexcept override;
+			std::shared_ptr< Vulkan::Image >
+			image () const noexcept override
+			{
+				return m_image;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::imageView() */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::ImageView > imageView () const noexcept override;
+			std::shared_ptr< Vulkan::ImageView >
+			imageView () const noexcept override
+			{
+				return m_imageView;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::sampler() */
 			[[nodiscard]]
-			std::shared_ptr< Vulkan::Sampler > sampler () const noexcept override;
+			std::shared_ptr< Vulkan::Sampler >
+			sampler () const noexcept override
+			{
+				return m_sampler;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::request3DTextureCoordinates() */
 			[[nodiscard]]
-			bool request3DTextureCoordinates () const noexcept override;
+			bool
+			request3DTextureCoordinates () const noexcept override
+			{
+				return true;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::load() */
 			bool load () noexcept override;

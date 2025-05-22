@@ -67,35 +67,67 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
-			size_t layerCount () const noexcept override;
+			uint32_t
+			layerCount () const noexcept override
+			{
+				return 1;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
-			bool isOpaque (size_t layerIndex = 0) const noexcept override;
+			bool
+			isOpaque (uint32_t /*layerIndex*/) const noexcept override
+			{
+				return true;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
-			const Geometry::Interface * geometry () const noexcept override;
+			const Geometry::Interface *
+			geometry () const noexcept override
+			{
+				return m_geometry.get();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
-			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
+			const Material::Interface *
+			material (uint32_t /*layerIndex*/) const noexcept override
+			{
+				return m_material.get();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
-			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
+			const RasterizationOptions *
+			layerRasterizationOptions (uint32_t /*layerIndex*/) const noexcept override
+			{
+				return nullptr;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;

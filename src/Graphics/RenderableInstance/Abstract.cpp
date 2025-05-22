@@ -36,14 +36,15 @@
 #include <string>
 
 /* Local inclusions. */
+#include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/GraphicsPipeline.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Resources/ResourceTrait.hpp"
 #include "Saphir/Generator/SceneRendering.hpp"
 #include "Saphir/Program.hpp"
 #include "Scenes/Component/AbstractLightEmitter.hpp"
+#include "PrimaryServices.hpp"
 #include "Tracer.hpp"
-#include "Vulkan/CommandBuffer.hpp"
-#include "Vulkan/GraphicsPipeline.hpp"
 
 namespace EmEn::Graphics::RenderableInstance
 {
@@ -52,7 +53,7 @@ namespace EmEn::Graphics::RenderableInstance
 	using namespace Saphir;
 	using namespace Keys;
 
-	static constexpr auto TracerTag{"RenderableInstance"};
+	constexpr auto TracerTag{"RenderableInstance"};
 
 	const size_t Abstract::ClassUID{getClassUID("AbstractRenderableInstance")};
 
@@ -110,36 +111,37 @@ namespace EmEn::Graphics::RenderableInstance
 
 		const auto layerCount = m_renderable->layerCount();
 
-#ifdef DEBUG
-		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
-		if ( layerCount == 0 )
+		if constexpr ( IsDebug )
 		{
-			std::stringstream errorMessage;
-			errorMessage <<
-				"The renderable interface has no layer ! It must have at least one. "
-				"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
+			/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+			if ( layerCount == 0 )
+			{
+				std::stringstream errorMessage;
+				errorMessage <<
+					"The renderable interface has no layer ! It must have at least one. "
+					"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
 
-			this->setBroken(errorMessage.str());
+				this->setBroken(errorMessage.str());
 
-			return false;
+				return false;
+			}
+
+			/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
+			const auto * geometry = m_renderable->geometry();
+
+			/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
+			if ( geometry == nullptr )
+			{
+				std::stringstream errorMessage;
+				errorMessage <<
+					"The renderable interface has no geometry interface ! "
+					"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
+
+				this->setBroken(errorMessage.str());
+
+				return false;
+			}
 		}
-
-		/* NOTE : The geometry interface is the same for every layer of the renderable interface. */
-		const auto * geometry = m_renderable->geometry();
-
-		/* NOTE : This test only exists in debug mode because it is already performed beyond isReadyForInstantiation(). */
-		if ( geometry == nullptr )
-		{
-			std::stringstream errorMessage;
-			errorMessage <<
-				"The renderable interface has no geometry interface ! "
-				"Unable to setup the renderable instance '" << m_renderable->name() << "' for rendering.";
-
-			this->setBroken(errorMessage.str());
-
-			return false;
-		}
-#endif
 
 		auto renderTargetIt = m_renderTargets.find(renderTarget);
 
@@ -150,17 +152,17 @@ namespace EmEn::Graphics::RenderableInstance
 
 		for ( const auto renderPassType : renderPassTypes )
 		{
-			auto & renderTargets = renderTargetIt->second;
+			auto & [renderPasses, isReadyToRender] = renderTargetIt->second;
 
-			auto renderPassIt = renderTargets.renderPasses.find(renderPassType);
+			auto renderPassIt = renderPasses.find(renderPassType);
 
-			if ( renderPassIt == renderTargets.renderPasses.end() )
+			if ( renderPassIt == renderPasses.end() )
 			{
-				renderPassIt = renderTargets.renderPasses.try_emplace(renderPassType).first;
+				renderPassIt = renderPasses.try_emplace(renderPassType).first;
 				renderPassIt->second.resize(layerCount);
 			}
 
-			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+			for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
 				std::stringstream name;
 				name << "RenderableInstance" << to_string(renderPassType);
@@ -258,7 +260,7 @@ namespace EmEn::Graphics::RenderableInstance
 			return false;
 		}
 
-		size_t error = 0;
+		uint32_t error = 0;
 
 		for ( const auto & programs : std::ranges::views::values(renderTargetIt->second.renderPasses) )
 		{
@@ -343,13 +345,13 @@ namespace EmEn::Graphics::RenderableInstance
 			);
 		}
 
-		for ( size_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
 		{
 			this->bindInstanceModelLayer(commandBuffer, layerIndex);
 
 			this->pushMatrices(commandBuffer, *pipelineLayout, renderTarget->viewMatrices(), *m_shadowProgram);
 
-			commandBuffer.draw(*m_renderable->geometry(), layerIndex, static_cast< uint32_t >(this->instanceCount()));
+			commandBuffer.draw(*m_renderable->geometry(), layerIndex, this->instanceCount());
 		}
 	}
 
@@ -382,8 +384,9 @@ namespace EmEn::Graphics::RenderableInstance
 
 		const auto * geometry = m_renderable->geometry();
 		const auto & programs = renderPassTypeIt->second;
+		const auto programCount = static_cast< uint32_t >(programs.size());
 
-		for ( size_t layerIndex = 0; layerIndex < programs.size(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < programCount; layerIndex++ )
 		{
 			const auto & program = programs[layerIndex];
 
@@ -437,11 +440,11 @@ namespace EmEn::Graphics::RenderableInstance
 
 			if ( material->isAnimated() )
 			{
-				commandBuffer.draw(*geometry, m_frameIndex, static_cast< uint32_t >(this->instanceCount()));
+				commandBuffer.draw(*geometry, m_frameIndex, this->instanceCount());
 			}
 			else
 			{
-				commandBuffer.draw(*geometry, layerIndex, static_cast< uint32_t >(this->instanceCount()));
+				commandBuffer.draw(*geometry, layerIndex, this->instanceCount());
 			}
 		}
 	}
@@ -471,13 +474,13 @@ namespace EmEn::Graphics::RenderableInstance
 			);
 		}
 
-		for ( size_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
 		{
 			this->bindInstanceModelLayer(commandBuffer, layerIndex);
 
 			this->pushMatrices(commandBuffer, *pipelineLayout, renderTarget->viewMatrices(), *m_TBNSpaceProgram);
 
-			commandBuffer.draw(*m_renderable->geometry(), layerIndex, static_cast< uint32_t >(this->instanceCount()));
+			commandBuffer.draw(*m_renderable->geometry(), layerIndex, this->instanceCount());
 		}
 	}
 

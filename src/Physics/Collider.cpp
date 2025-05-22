@@ -42,13 +42,15 @@ namespace EmEn::Physics
 	bool
 	Collider::checkCollisionAgainstMovable (AbstractEntity & movableEntityA, AbstractEntity & movableEntityB) noexcept
 	{
-#ifdef DEBUG
-		if ( &movableEntityA ==  &movableEntityB )
+		if constexpr ( IsDebug )
 		{
-			Tracer::error(ClassId, "Collision search on the same entity detected !");
-			return false;
+			if ( &movableEntityA == &movableEntityB )
+			{
+				Tracer::error(ClassId, "Collision search on the same entity detected !");
+
+				return false;
+			}
 		}
-#endif
 
 		Vector< 3, float > collisionDirection;
 		auto collisionOverflow = 0.0F;

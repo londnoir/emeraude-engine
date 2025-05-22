@@ -27,7 +27,7 @@
 #include "PostProcessor.hpp"
 
 /* Local inclusions. */
-#include "Graphics/RenderTarget/View/Abstract.hpp"
+#include "Graphics/RenderTarget/View.hpp"
 #include "Saphir/FramebufferEffectInterface.hpp"
 #include "Tracer.hpp"
 

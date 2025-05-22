@@ -123,19 +123,19 @@ namespace EmEn::Scenes
 		auto hasMicrophone = false;
 
 		{
-			NodeCrawler< const Node > crawler(m_rootNode);
+			NodeCrawler< const Node > crawler{m_rootNode};
 
 			std::shared_ptr< const Node > currentNode;
 
 			while ( (currentNode = crawler.nextNode()) != nullptr )
 			{
-				for ( const auto & component : std::ranges::views::values(currentNode->components()) )
+				for ( const auto & component: currentNode->components() | std::views::values )
 				{
-					if ( std::static_pointer_cast< Component::Camera >(component) != nullptr )
+					if ( component->isComponent(Component::Camera::ClassId) )
 					{
 						hasCamera = true;
 					}
-					else if ( std::static_pointer_cast< Component::Microphone >(component) != nullptr )
+					else if ( component->isComponent(Component::Microphone::ClassId) )
 					{
 						hasMicrophone = true;
 					}
@@ -191,7 +191,7 @@ namespace EmEn::Scenes
 		{
 			this->registerSceneVisualComponents();
 
-			/* Create missing camera and/or microphone. */
+			/* Create a missing camera and/or microphone. */
 			if ( !this->initializeBaseComponents() )
 			{
 				return false;
@@ -629,7 +629,7 @@ namespace EmEn::Scenes
 			return;
 		}
 
-		/* If sector is not a leaf, we test sub-sectors. */
+		/* If the sector is not a leaf, we test subsectors. */
 		if ( !sector.isLeaf() )
 		{
 			//#pragma omp parallel for
@@ -669,7 +669,7 @@ namespace EmEn::Scenes
 				{
 					auto & colliderA = entityA->getMovableTrait()->collider();
 
-					/* Check for cross sector collisions duplicates. */
+					/* Check for cross-sector collisions duplicates. */
 					if ( colliderA.hasCollisionWith(*entityB) )
 					{
 						continue;
@@ -700,13 +700,13 @@ namespace EmEn::Scenes
 
 					auto & colliderB = entityB->getMovableTrait()->collider();
 
-					/* Check for cross sector collisions duplicates. */
+					/* Check for cross-sector collisions duplicates. */
 					if ( colliderB.hasCollisionWith(*entityA) )
 					{
 						continue;
 					}
 
-					/* NOTE: Here the entity A is static and B cannot be static.
+					/* NOTE: Here the entity A is static, and B cannot be static.
 					 * We will check the collision from entity B. */
 					colliderB.checkCollisionAgainstStatic(*entityB, *entityA);
 				}
@@ -801,7 +801,7 @@ namespace EmEn::Scenes
 		/* Running the subtest first. */
 		if ( m_sceneArea != nullptr )
 		{
-			/* Gets the four points of the bottom of the box. */
+			/* Gets the four points of the box bottom. */
 			const std::array< Vector< 3, float >, 4 > points{
 				AABB.bottomSouthEast(),
 				AABB.bottomSouthWest(),
@@ -900,24 +900,25 @@ namespace EmEn::Scenes
 		/* This is a raw pointer to the renderable interface. */
 		const auto * renderable = renderableInstance->renderable();
 
-#ifdef DEBUG
-		if ( renderable == nullptr )
+		if constexpr ( IsDebug )
 		{
-			Tracer::fatal(ClassId, "The renderable interface pointer is a null !");
+			if ( renderable == nullptr )
+			{
+				Tracer::fatal(ClassId, "The renderable interface pointer is a null !");
 
-			return;
+				return;
+			}
+
+			/* NOTE: Check whether the renderable is ready to draw.
+			 * Only done in debug mode because a renderable instance ready to
+			 * render implies the renderable is ready to draw. */
+			if ( !renderable->isReadyForInstantiation() )
+			{
+				Tracer::fatal(ClassId, "The renderable interface is not ready !");
+
+				return;
+			}
 		}
-
-		/* NOTE: Check whether the renderable is ready to draw.
-		 * Only done in debug mode, because a renderable instance ready to
-		 * render implies the renderable is ready to draw. */
-		if ( !renderable->isReadyForInstantiation() )
-		{
-			Tracer::fatal(ClassId, "The renderable interface is not ready !");
-
-			return;
-		}
-#endif
 
 		const auto layerCount = renderable->layerCount();
 
@@ -930,7 +931,7 @@ namespace EmEn::Scenes
 		}
 		else
 		{
-			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+			for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
 				const auto isOpaque = renderable->isOpaque(layerIndex);
 
@@ -978,7 +979,7 @@ namespace EmEn::Scenes
 			m_renderLists[TranslucentLighted].clear();
 		}
 
-		/* NOTE : The camera position doesn't move during calculation. */
+		/* NOTE: The camera position doesn't move during calculation. */
 		const auto & cameraPosition = renderTarget->viewMatrices().position();
 		Vector< 3, float > entityPosition{};
 
@@ -1089,9 +1090,9 @@ namespace EmEn::Scenes
 		/* Sort the scene according to the point of view. */
 		if ( this->populateRenderLists(renderTarget, true) )
 		{
-			for ( const auto & renderBatch : m_renderLists[Shadows] )
+			for ( const auto & renderBatch: m_renderLists[Shadows] | std::views::values )
 			{
-				renderBatch.second.renderableInstance()->castShadows(renderTarget, commandBuffer);
+				renderBatch.renderableInstance()->castShadows(renderTarget, commandBuffer);
 			}
 		}
 	}
@@ -1101,7 +1102,7 @@ namespace EmEn::Scenes
 	{
 		if ( !unlightedObjects.empty() )
 		{
-			for ( const auto & [distance, renderBatch] : unlightedObjects )
+			for ( const auto & renderBatch : unlightedObjects | std::views::values )
 			{
 				renderBatch.renderableInstance()->render(renderTarget, nullptr, RenderPassType::SimplePass, commandBuffer);
 			}
@@ -1114,7 +1115,7 @@ namespace EmEn::Scenes
 
 		if ( m_lightSet.isUsingStaticLighting() )
 		{
-			for ( const auto & [distance, renderBatch] : lightedObjects )
+			for ( const auto & renderBatch : lightedObjects | std::views::values )
 			{
 				renderBatch.renderableInstance()->render(renderTarget, nullptr, RenderPassType::SimplePass, commandBuffer);
 			}
@@ -1123,7 +1124,7 @@ namespace EmEn::Scenes
 		}
 
 		/* For all objects. */
-		for ( const auto & [distance, renderBatch] : lightedObjects )
+		for ( const auto & renderBatch : lightedObjects | std::views::values )
 		{
 			const std::lock_guard< std::mutex > lock{m_lightSet.mutex()};
 
@@ -1248,12 +1249,10 @@ namespace EmEn::Scenes
 		{
 			case AVConsole::Manager::VideoDeviceAdded :
 				TraceDebug{ClassId} << "A new video device is available.";
-
 				break;
 
 			case AVConsole::Manager::VideoDeviceRemoved :
 				TraceDebug{ClassId} << "A video device has been removed.";
-
 				break;
 
 			case AVConsole::Manager::AudioDeviceAdded :
@@ -1262,52 +1261,25 @@ namespace EmEn::Scenes
 
 			case AVConsole::Manager::AudioDeviceRemoved :
 				TraceDebug{ClassId} << "An audio device has been removed.";
-
 				break;
 
 			case AVConsole::Manager::RenderToShadowMapAdded :
-			{
-				TraceDebug{ClassId} <<
-					"A new render to shadow map is available ! "
-					"Updating renderable instances from the scene ...";
-
-				/* FIXME: Set a better check ! */
-				const auto renderToShadowMap = std::any_cast< std::shared_ptr< RenderTarget::ShadowMap::Abstract > >(data);
-
-				this->initializeRenderTarget(renderToShadowMap);
-			}
+				//this->initializeRenderTarget(std::any_cast< std::shared_ptr< RenderTarget::Abstract > >(data));
 				break;
 
 			case AVConsole::Manager::RenderToTextureAdded :
-			{
-				TraceDebug{ClassId} <<
-					"A new render to texture is available ! "
-					"Updating renderable instances from the scene ...";
-
-				/* FIXME: Set a better check ! */
-				const auto renderToTexture = std::any_cast< std::shared_ptr< RenderTarget::Texture::Abstract > >(data);
-
-				this->initializeRenderTarget(renderToTexture);
-			}
+				this->initializeRenderTarget(std::any_cast< std::shared_ptr< RenderTarget::Abstract > >(data));
 				break;
 
 			case AVConsole::Manager::RenderToViewAdded :
-			{
-				TraceDebug{ClassId} <<
-					"A new render to view is available ! "
-					"Updating renderable instances from the scene ...";
-
-				/* FIXME: Set a better check ! */
-				const auto renderToView = std::any_cast< std::shared_ptr< RenderTarget::View::Abstract > >(data);
-
-				this->initializeRenderTarget(renderToView);
-			}
+				this->initializeRenderTarget(std::any_cast< std::shared_ptr< RenderTarget::Abstract > >(data));
 				break;
 
 			default :
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-				TraceDebug{ClassId} << "Event #" << notificationCode << " from a master control console ignored.";
-#endif
+				if constexpr ( ObserverDebugEnabled )
+				{
+					TraceDebug{ClassId} << "Event #" << notificationCode << " from a master control console ignored.";
+				}
 				break;
 		}
 	}
@@ -1325,12 +1297,12 @@ namespace EmEn::Scenes
 			case Node::SubNodeCreated :
 				return true;
 
-			/* NOTE: A node is destroying one of its child. The data will be a smart pointer to the child node. */
+			/* NOTE: A node is destroying one of its children. The data will be a smart pointer to the child node. */
 			case Node::SubNodeDeleting :
 			{
 				const auto node = std::any_cast< std::shared_ptr< Node > >(data);
 
-				/* NOTE: If node controller was set up with this node, we stop it. */
+				/* NOTE: If a node controller was set up with this node, we stop it. */
 				if ( m_nodeController.node() == node )
 				{
 					m_nodeController.releaseNode();
@@ -1356,9 +1328,12 @@ namespace EmEn::Scenes
 				return true;
 
 			default:
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-				TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << observableNode->name() << "' ignored.";
-#endif
+				if constexpr ( ObserverDebugEnabled )
+				{
+					const auto node = std::any_cast< std::shared_ptr< Node > >(data);
+
+					TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << node->name() << "' ignored.";
+				}
 				return false;
 		}
 	}
@@ -1487,9 +1462,12 @@ namespace EmEn::Scenes
 				return true;
 
 			default:
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-				TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << observableEntity->name() << "' ignored.";
-#endif
+				if constexpr ( ObserverDebugEnabled )
+				{
+					const auto component = std::any_cast< std::shared_ptr< Component::Abstract > >(data);
+
+					TraceDebug{ClassId} << "Event #" << notificationCode << " from '" << component->name() << "' ignored.";
+				}
 				return false;
 		}
 	}
@@ -1552,12 +1530,10 @@ namespace EmEn::Scenes
 			return true;
 		}
 
-#ifdef DEBUG
-		/* NOTE: Don't know what is it, goodbye ! */
-		TraceInfo{ClassId} <<
+		/* NOTE: Don't know what is it, goodbye! */
+		TraceDebug{ClassId} <<
 			"Received an unhandled notification (Code:" << notificationCode << ") from observable '" << whoIs(observable->classUID()) << "' (UID:" << observable->classUID() << ")  ! "
 			"Forgetting it ...";
-#endif
 
 		return false;
 	}
@@ -1624,6 +1600,8 @@ namespace EmEn::Scenes
 	void
 	Scene::initializeRenderTarget (const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
+		TraceDebug{ClassId} << "A new render target is available " << to_cstring(renderTarget->renderType()) << " ! Updating renderable instances from the scene ...";
+
 		this->forEachRenderableInstance([this, renderTarget] (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance) {
 			if ( !this->getRenderableInstanceReadyForRender(renderableInstance, renderTarget) )
 			{
@@ -1822,7 +1800,7 @@ namespace EmEn::Scenes
 	{
 		const std::lock_guard< std::mutex > lock{m_lightSet.mutex()};
 
-		std::vector< RenderPassType > renderPassTypes{};
+		std::vector< RenderPassType > renderPassTypes;
 
 		if ( !m_lightSet.isEnabled() || !renderableInstance.isLightingEnabled() || m_lightSet.isUsingStaticLighting() )
 		{
@@ -1857,7 +1835,7 @@ namespace EmEn::Scenes
 	bool
 	Scene::getRenderableInstanceReadyForRender (const std::shared_ptr< RenderableInstance::Abstract > & renderableInstance, const std::shared_ptr< RenderTarget::Abstract > & renderTarget) const noexcept
 	{
-		/* If the object is ready to render, there is nothing more to do ! */
+		/* If the object is ready to render, there is nothing more to do! */
 		if ( renderableInstance->isReadyToRender(renderTarget) )
 		{
 			return true;
@@ -1869,7 +1847,7 @@ namespace EmEn::Scenes
 			return false;
 		}
 
-		/* NOTE : Check how many render pass this renderable instance needs. */
+		/* NOTE: Check how many render pass this renderable instance needs. */
 		const auto renderPassTypes = this->prepareRenderPassTypes(*renderableInstance);
 
 		if ( renderPassTypes.empty() )

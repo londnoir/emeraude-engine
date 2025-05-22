@@ -56,13 +56,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	SphericalPushModifier::shouldRemove () const noexcept
-	{
-		return false;
-	}
-
-	bool
-	SphericalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	SphericalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

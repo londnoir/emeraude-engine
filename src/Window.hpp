@@ -316,18 +316,52 @@ namespace EmEn
 
 			/**
 			 * @brief Sets a gamma ramp to a specific monitor.
-			 * @TODO Finish this method.
+			 * @param generateRampFn A reference to a function to generate de gamma ramp.
+			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
+			 * @return bool
+			 */
+			template< size_t color_count_t >
+			bool
+			setCustomGamma (const std::function< void (std::array< uint16_t, color_count_t > &, std::array< uint16_t, color_count_t > &, std::array< uint16_t, color_count_t > &) > & generateRampFn, int32_t desiredMonitor = -1) const noexcept
+			{
+				auto * monitor = Window::getMonitor(desiredMonitor);
+
+				if ( monitor == nullptr )
+				{
+					return false;
+				}
+
+				std::array< uint16_t, color_count_t > red{};
+				std::array< uint16_t, color_count_t > green{};
+				std::array< uint16_t, color_count_t > blue{};
+
+				generateRampFn(red, green, blue);
+
+				/* Creates a gamma ramp to pass to monitor. */
+				GLFWgammaramp ramp;
+				ramp.red = red.data();
+				ramp.green = green.data();
+				ramp.blue = blue.data();
+				ramp.size = color_count_t;
+
+				glfwSetGammaRamp(monitor, &ramp);
+
+				return true;
+			}
+
+			/**
+			 * @brief Switch the application to fullscreen mode.
+			 * @param useNativeResolution Overrides the settings and fetch the monitor resolution. Default false.
 			 * @param desiredMonitor The number of the monitor for multiple monitors configuration. Default initial monitor.
 			 * @return void
 			 */
-			void setCustomGamma (int32_t desiredMonitor = -1) const noexcept;
+			void switchToFullscreenMode (bool useNativeResolution = false, int32_t desiredMonitor = -1) const noexcept;
 
 			/**
-			 * @brief Sets fullscreen mode.
-			 * @param state The state.
+			 * @brief Switch the application to windowed mode.
 			 * @return void
 			 */
-			void setFullscreenMode (bool state) const noexcept;
+			void switchToWindowedMode () const noexcept;
 
 			/**
 			 * @brief Returns the centered position for the window.
@@ -440,11 +474,21 @@ namespace EmEn
 			void show () const noexcept;
 
 			/**
-			 * @brief Returns whether the fullscreen mode is enabled.
+			 * @brief Returns whether the application is currently in fullscreen mode.
 			 * @return bool
 			 */
 			[[nodiscard]]
 			bool isFullscreenMode () const noexcept;
+
+			/**
+			 * @brief Returns whether the application is currently in windowed mode.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool isWindowedMode () const noexcept
+			{
+				return !this->isFullscreenMode();
+			}
 
 			/**
 			 * @brief Returns the position, in screen coordinates, of the upper-left corner of the content area of the window.
@@ -614,19 +658,20 @@ namespace EmEn
 			bool createSurface (bool useNativeCode) noexcept;
 
 			/**
+			 * @brief Returns the monitor handles at monitor desired index.
+			 * @note If the desired monitor is -1, the settings will be used then, if the desired monitor index is invalid, the primary one will be used.
+			 * @param monitorIndex The desired monitor index. Default -1.
+			 * @return GLFWmonitor *
+			 */
+			[[nodiscard]]
+			GLFWmonitor * getMonitor (int32_t monitorIndex = -1) const noexcept;
+
+			/**
 			 * @brief Returns a list of available monitors on the system.
 			 * @return std::vector< GLFWmonitor * >
 			 */
 			[[nodiscard]]
 			static std::vector< GLFWmonitor * > getMonitors () noexcept;
-
-			/**
-			 * @brief Returns the monitor handles at monitor index.
-			 * @param monitorIndex The monitor index.
-			 * @return GLFWmonitor *
-			 */
-			[[nodiscard]]
-			static GLFWmonitor * getMonitor (uint32_t monitorIndex) noexcept;
 
 			/**
 			 * @brief Returns a list of available mode for a specified monitor.

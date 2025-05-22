@@ -81,8 +81,6 @@ namespace EmEn::Vulkan
 		std::unique_ptr< Sync::Fence > inFlightFence;
 	};
 
-
-
 	/**
 	 * @brief The vulkan swap chain class.
 	 * @extends EmEn::Vulkan::AbstractDeviceDependentObject This object needs a device.
@@ -147,6 +145,19 @@ namespace EmEn::Vulkan
 			videoType () const noexcept override
 			{
 				return AVConsole::VideoType::View;
+			}
+
+			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::aspectRatio() */
+			[[nodiscard]]
+			float
+			aspectRatio () const noexcept override
+			{
+				if ( this->extent().height == 0 )
+				{
+					return 0.0F;
+				}
+
+				return static_cast< float >(this->extent().width) / static_cast< float >(this->extent().height);
 			}
 
 			/** @copydoc EmEn::Graphics::RenderTarget::Abstract::isCubemap() const */

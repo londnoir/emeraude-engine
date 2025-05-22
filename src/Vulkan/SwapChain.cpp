@@ -325,19 +325,17 @@ namespace EmEn::Vulkan
 	VkExtent2D
 	SwapChain::chooseSwapExtent (const VkSurfaceCapabilitiesKHR & capabilities) const noexcept
 	{
-		if ( capabilities.currentExtent.width <= std::numeric_limits< uint32_t >::max() )
-		{
-			return capabilities.currentExtent;
-		}
-
-		const auto & min = capabilities.minImageExtent;
-		const auto & max = capabilities.maxImageExtent;
-
 		const auto framebufferSize = m_window->getFramebufferSize();
 
+		TraceDebug{ClassId} <<
+			"Vulkan minimum extent detected : " << capabilities.minImageExtent.width << 'X' << capabilities.minImageExtent.height << "\n"
+			"Vulkan maximum extent detected : " << capabilities.maxImageExtent.width << 'X' << capabilities.maxImageExtent.height << "\n"
+			"Vulkan current extent detected : " << capabilities.currentExtent.width << 'X' << capabilities.currentExtent.height << "\n"
+			"GLFW framebuffer : " << framebufferSize.at(0) << 'X' << framebufferSize.at(1);
+
 		return {
-			std::max(min.width, std::min(max.width, framebufferSize[0])),
-			std::max(min.height, std::min(max.height, framebufferSize[1]))
+			std::clamp(framebufferSize[0], capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+			std::clamp(framebufferSize[1], capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
 		};
 	}
 

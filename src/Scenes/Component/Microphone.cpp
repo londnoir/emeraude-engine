@@ -48,24 +48,6 @@ namespace EmEn::Scenes::Component
 
 	}
 
-	const char *
-	Microphone::getComponentType () const noexcept
-	{
-		return ClassId;
-	}
-
-	const Cuboid< float > &
-	Microphone::boundingBox () const noexcept
-	{
-		return NullBoundingBox;
-	}
-
-	const Sphere< float > &
-	Microphone::boundingSphere () const noexcept
-	{
-		return NullBoundingSphere;
-	}
-
 	void
 	Microphone::move (const CartesianFrame< float > & worldCoordinates) noexcept
 	{
@@ -76,12 +58,6 @@ namespace EmEn::Scenes::Component
 	Microphone::processLogics (const Scene & /*scene*/) noexcept
 	{
 
-	}
-
-	bool
-	Microphone::shouldRemove () const noexcept
-	{
-		return false;
 	}
 
 	void

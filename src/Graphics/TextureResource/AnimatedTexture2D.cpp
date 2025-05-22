@@ -34,13 +34,15 @@
 
 /* Local inclusions. */
 #include "Libs/PixelFactory/Color.hpp"
-#include "Graphics/ImageResource.hpp"
-#include "Graphics/Renderer.hpp"
-#include "Resources/Manager.hpp"
+#include "Vulkan/Instance.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Sampler.hpp"
+#include "Graphics/ImageResource.hpp"
+#include "Graphics/Renderer.hpp"
+#include "Resources/Manager.hpp"
 #include "Tracer.hpp"
+
 
 /* Defining the resource manager class id. */
 template<>
@@ -92,6 +94,14 @@ namespace EmEn::Graphics::TextureResource
 	bool
 	AnimatedTexture2D::createOnHardware (Renderer & renderer) noexcept
 	{
+		for ( const auto & pixmap: m_localData->frames() | std::views::keys )
+		{
+			if ( !this->validateTexture(pixmap, !renderer.vulkanInstance().isStandardTextureCheckEnabled()) )
+			{
+				return false;
+			}
+		}
+
 		/* Create a Vulkan image. */
 		m_image = std::make_shared< Image >(
 			renderer.device(),
@@ -176,24 +186,6 @@ namespace EmEn::Graphics::TextureResource
 		return true;
 	}
 
-	size_t
-	AnimatedTexture2D::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	AnimatedTexture2D::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	Type
-	AnimatedTexture2D::type () const noexcept
-	{
-		return Type::Texture2DArray;
-	}
-
 	bool
 	AnimatedTexture2D::isGrayScale () const noexcept
 	{
@@ -214,18 +206,6 @@ namespace EmEn::Graphics::TextureResource
 		}
 
 		return m_localData->averageColor();
-	}
-
-	uint32_t
-	AnimatedTexture2D::dimensions () const noexcept
-	{
-		return 2;
-	}
-
-	bool
-	AnimatedTexture2D::isCubemapTexture () const noexcept
-	{
-		return false;
 	}
 
 	uint32_t
@@ -250,7 +230,7 @@ namespace EmEn::Graphics::TextureResource
 		return m_localData->duration();
 	}
 
-	size_t
+	uint32_t
 	AnimatedTexture2D::frameIndexAt (uint32_t sceneTime) const noexcept
 	{
 		if ( !this->isLoaded() )
@@ -259,36 +239,6 @@ namespace EmEn::Graphics::TextureResource
 		}
 
 		return m_localData->frameIndexAt(sceneTime);
-	}
-
-	std::shared_ptr< Image >
-	AnimatedTexture2D::image () const noexcept
-	{
-		return m_image;
-	}
-
-	std::shared_ptr< ImageView >
-	AnimatedTexture2D::imageView () const noexcept
-	{
-		return m_imageView;
-	}
-
-	std::shared_ptr< Sampler >
-	AnimatedTexture2D::sampler () const noexcept
-	{
-		return m_sampler;
-	}
-
-	bool
-	AnimatedTexture2D::request3DTextureCoordinates () const noexcept
-	{
-		return true;
-	}
-
-	const char *
-	AnimatedTexture2D::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
@@ -301,7 +251,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = MovieResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -312,7 +262,14 @@ namespace EmEn::Graphics::TextureResource
 	bool
 	AnimatedTexture2D::load (const std::filesystem::path & filepath) noexcept
 	{
-		return this->load(MovieResource::get(getResourceNameFromFilepath(filepath, "Movies"), true));
+		/* Looking for a movie resource by extracting the resource name from filepath.
+		 * NOTE: The loading process are synchronous here. */
+		const auto movieResource = Resources::Manager::instance()->movies().getResource(
+			getResourceNameFromFilepath(filepath, "Movies"),
+			false
+		);
+
+		return this->load(movieResource);
 	}
 
 	bool
@@ -342,7 +299,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = movieResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the movie '" << movieResource->name() << "' as dependency !";
 

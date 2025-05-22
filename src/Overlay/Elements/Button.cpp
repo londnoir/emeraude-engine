@@ -101,7 +101,7 @@ namespace EmEn::Overlay::Elements
 		/* Executing the function linked to the button. */
 		if ( m_function == nullptr )
 		{
-			Tracer::debug(ClassId, "There is no function attached to this button !");
+			TraceDebug{ClassId} << "There is no function attached to this button !";
 
 			return false;
 		}

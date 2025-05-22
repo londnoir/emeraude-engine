@@ -43,9 +43,7 @@
 #include <functional>
 #include <limits>
 #include <type_traits>
-#ifdef DEBUG
 #include <iostream>
-#endif
 
 /* Local inclusions for usage. */
 #include "Libs/Algorithms/PerlinNoise.hpp"
@@ -102,14 +100,17 @@ namespace EmEn::Libs::PixelFactory
 			{
 				m_data.resize(this->elementCount());
 
-#ifdef DEBUG
-				if ( !this->initAlphaChannel() )
+				if constexpr ( IsDebug )
 				{
-					std::cerr << "Unable to check alpha channel initialization !" "\n";
+					if ( !this->initAlphaChannel() )
+					{
+						std::cerr << "Unable to check alpha channel initialization !" "\n";
+					}
 				}
-#else
-				this->initAlphaChannel();
-#endif
+				else
+				{
+					this->initAlphaChannel();
+				}
 			}
 
 			/**
@@ -128,14 +129,17 @@ namespace EmEn::Libs::PixelFactory
 			{
 				m_data.resize(this->elementCount());
 
-#ifdef DEBUG
-				if ( !this->fill(color) )
+				if constexpr ( IsDebug )
 				{
-					std::cerr << "Unable to initialize color !" "\n";
+					if ( !this->fill(color) )
+					{
+						std::cerr << "Unable to initialize color !" "\n";
+					}
 				}
-#else
-				this->fill(color);
-#endif
+				else
+				{
+					this->fill(color);
+				}
 			}
 
 			/**
@@ -150,9 +154,10 @@ namespace EmEn::Libs::PixelFactory
 			{
 				if ( width == 0 || height == 0 )
 				{
-#ifdef DEBUG
-					std::cerr << "Invalid pixmap dimensions !" "\n";
-#endif
+					if constexpr ( IsDebug )
+					{
+						std::cerr << "Invalid pixmap dimensions !" "\n";
+					}
 
 					return false;
 				}
@@ -656,7 +661,10 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					this->markPixelUpdated(pixelIndex % m_width, pixelIndex / m_width);
+					this->markPixelUpdated(
+						static_cast< dimension_t >(pixelIndex) % m_width,
+						static_cast< dimension_t >(pixelIndex) / m_width
+					);
 				}
 			}
 

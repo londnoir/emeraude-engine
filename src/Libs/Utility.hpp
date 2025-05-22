@@ -74,7 +74,7 @@ namespace EmEn::Libs::Utility
 	}
 
 	/**
-	 * @brief Contains method version for STL vector using a pair as key/value.
+	 * @brief Contains a method version for STL vector using a pair as key/value.
 	 * @tparam x_t The key and needle type.
 	 * @tparam y_t The value type.
 	 * @param haystack A reference to a vector of pairs.
@@ -141,7 +141,7 @@ namespace EmEn::Libs::Utility
 	}
 
 	/**
-	 * @brief Returns the ratio between two number.
+	 * @brief Returns the ratio between two numbers.
 	 * @tparam number_t The type of floating point number. Default float.
 	 * @param total The divisor.
 	 * @param part The dividend.
@@ -163,7 +163,7 @@ namespace EmEn::Libs::Utility
 	}
 
 	/**
-	 * @brief Returns the ratio between two number.
+	 * @brief Returns the ratio between two numbers.
 	 * @tparam number_t The type of integral number. Default int32_t.
 	 * @param total The divisor.
 	 * @param part The dividend.
@@ -188,7 +188,7 @@ namespace EmEn::Libs::Utility
 	 * @brief Rounds up a number.
 	 * @tparam number_t The type of floating point number. Default float.
 	 * @param value The number to round.
-	 * @param precision The number of decimal.
+	 * @param precision The amount of decimal.
 	 * @return number_t
 	 */
 	template< typename number_t = float >

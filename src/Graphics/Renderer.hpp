@@ -27,10 +27,10 @@
 #pragma once
 
 /* STL inclusions. */
-#include <any>
-#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <any>
+#include <array>
 #include <map>
 #include <memory>
 #include <vector>
@@ -44,12 +44,12 @@
 /* Local inclusions for usages. */
 #include "Libs/PixelFactory/Color.hpp"
 #include "Libs/Time/Statistics/RealTime.hpp"
-#include "VertexBufferFormatManager.hpp"
 #include "RenderTarget/Abstract.hpp"
 #include "Vulkan/LayoutManager.hpp"
 #include "Vulkan/SharedUBOManager.hpp"
 #include "Vulkan/TransferManager.hpp"
 #include "Saphir/ShaderManager.hpp"
+#include "VertexBufferFormatManager.hpp"
 
 /* Forward declarations. */
 namespace EmEn

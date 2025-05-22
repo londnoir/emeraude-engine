@@ -26,8 +26,25 @@
 
 #pragma once
 
+/*****************************************************************
+ * Warning: This file is configured by cmake, do not modify it ! *
+ *****************************************************************/
+
+#if defined(DEBUG) && defined(NDEBUG)
+#error "DEBUG and NDEBUG flags are set together ! Check the project configuration."
+#endif
+
 /* Include platform macros. */
 #include "platform.hpp"
+
+/* NOTE: MSVC workaround for the GCC function identification macro. */
+#ifndef __PRETTY_FUNCTION__
+	#ifdef _MSC_VER
+		#define __PRETTY_FUNCTION__ __FUNCSIG__
+	#else
+		#define __PRETTY_FUNCTION__ __FUNCTION__
+	#endif
+#endif
 
 #define EMERAUDE_ENGINE 1
 #define ENGINE_NAME "@PROJECT_NAME@"
@@ -37,35 +54,15 @@
 #define ENGINE_VERSION_STRING "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@"
 
 #ifdef DEBUG
-	#define BOOLEAN_FOLLOWING_DEBUG true
-	#define BOOLEAN_FOLLOWING_RELEASE false
-
-	/* Libraries debug controls at compile-time. */
 	#cmakedefine EMERAUDE_DEBUG_OBSERVER_PATTERN
 	#cmakedefine EMERAUDE_DEBUG_PIXEL_FACTORY
 	#cmakedefine EMERAUDE_DEBUG_VERTEX_FACTORY
 	#cmakedefine EMERAUDE_DEBUG_WAVE_FACTORY
-	#cmakedefine KEYBOARD_INPUT_DEBUG_ENABLED
-	#cmakedefine POINTER_INPUT_DEBUG_ENABLED
-	#cmakedefine WINDOW_EVENTS_DEBUG_ENABLED
-	#cmakedefine VK_TRACKING_ENABLED
-#else
-	#define BOOLEAN_FOLLOWING_DEBUG false
-	#define BOOLEAN_FOLLOWING_RELEASE false
+	#cmakedefine EMERAUDE_DEBUG_KEYBOARD_INPUT
+	#cmakedefine EMERAUDE_DEBUG_POINTER_INPUT
+	#cmakedefine EMERAUDE_DEBUG_WINDOW_EVENTS
+	#cmakedefine EMERAUDE_DEBUG_VULKAN_TRACKING
 #endif
-
-#ifndef __PRETTY_FUNCTION__
-	#ifdef _MSC_VER
-		#define __PRETTY_FUNCTION__ __FUNCSIG__
-	#else
-		#define __PRETTY_FUNCTION__ __FUNCTION__
-	#endif
-#endif
-
-/* Some constants */
-#define EMERAUDE_INTERNET_CHECK_DOMAIN "@EMERAUDE_INTERNET_CHECK_DOMAIN@"
-
-#define GLFW_INCLUDE_VULKAN
 
 /* Third-party libraries enabled at compile-time. */
 #cmakedefine EMERAUDE_USE_SYSTEM_LIBS
@@ -78,4 +75,58 @@
 #cmakedefine BULLET_ENABLED
 #cmakedefine CPUFEATURES_ENABLED
 #cmakedefine HWLOC_ENABLED
-#cmakedefine GTK3_ENABLED
+
+/* NOTE: Be sure this define is always set for GLFW.
+ * FIXME: Check if this is useful ! */
+#define GLFW_INCLUDE_VULKAN
+
+
+
+/* ===== Modern C++ macro like constants ===== */
+
+#define ON true
+#define On true
+#define OFF false
+#define Off false
+
+namespace EmEn
+{
+    constexpr auto EngineName{"@PROJECT_NAME@"};
+    constexpr unsigned int VersionMajor{@PROJECT_VERSION_MAJOR@};
+    constexpr unsigned int VersionMinor{@PROJECT_VERSION_MINOR@};
+    constexpr unsigned int VersionPatch{@PROJECT_VERSION_PATCH@};
+    constexpr auto VersionString{"@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@"};
+    constexpr auto InternetCheckDomain{"@EMERAUDE_INTERNET_CHECK_DOMAIN@"};
+    constexpr auto DefaultUserAgent{"@PROJECT_NAME@/@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@ (" PLATFORM_TARGETED ")"};
+
+    #ifdef DEBUG
+    	constexpr bool IsDebug{true};
+        constexpr bool IsRelease{false};
+
+        constexpr bool ObserverDebugEnabled{@EMERAUDE_DEBUG_OBSERVER_PATTERN@};
+        constexpr bool PixelFactoryDebugEnabled{@EMERAUDE_DEBUG_PIXEL_FACTORY@};
+        constexpr bool VertexFactoryDebugEnabled{@EMERAUDE_DEBUG_VERTEX_FACTORY@};
+        constexpr bool WaveFactoryDebugEnabled{@EMERAUDE_DEBUG_WAVE_FACTORY@};
+        constexpr bool KeyboardInputDebugEnabled{@EMERAUDE_DEBUG_KEYBOARD_INPUT@};
+        constexpr bool PointerInputDebugEnabled{@EMERAUDE_DEBUG_POINTER_INPUT@};
+        constexpr bool WindowEventsDebugEnabled{@EMERAUDE_DEBUG_WINDOW_EVENTS@};
+        constexpr bool VulkanTrackingDebugEnabled{@EMERAUDE_DEBUG_VULKAN_TRACKING@};
+    #else
+    	constexpr bool IsDebug{false};
+        constexpr bool IsRelease{true};
+
+        constexpr bool ObserverDebugEnabled{false};
+        constexpr bool PixelFactoryDebugEnabled{false};
+        constexpr bool VertexFactoryDebugEnabled{false};
+        constexpr bool WaveFactoryDebugEnabled{false};
+        constexpr bool KeyboardInputDebugEnabled{false};
+        constexpr bool PointerInputDebugEnabled{false};
+        constexpr bool WindowEventsDebugEnabled{false};
+        constexpr bool VulkanTrackingDebugEnabled{false};
+    #endif
+}
+
+#undef ON
+#undef On
+#undef OFF
+#undef Off

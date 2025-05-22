@@ -6,6 +6,7 @@
 ## GENERAL BUGS
 - Check for light coherence, create a built-in scene with a fixed directional light and multiple materials.
 - Unloading objets from the scene do not release vulkan memory.
+- Issue on Linux with X11, multi-monitors and NVIDIA proprietary driver. More info : https://forums.developer.nvidia.com/t/external-monitor-freezes-when-using-dedicated-gpu/265406
 
 ## CONSOLE
 - Bring back a useful console behavior.
