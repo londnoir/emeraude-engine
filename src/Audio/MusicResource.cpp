@@ -111,6 +111,8 @@ namespace EmEn::Audio
 		m_title = tag->title().to8Bit(true);
 		m_artist = tag->artist().to8Bit(true);
 #else
+		TraceWarning{ClassId} << "TagLib has been disabled! Unable to read audio metadata from '" << filepath << "' !";
+
 		m_title = "UnknownTitle";
 		m_artist = "UnknownArtist";
 #endif

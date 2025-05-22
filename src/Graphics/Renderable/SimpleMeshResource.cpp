@@ -50,76 +50,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	SimpleMeshResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	SimpleMeshResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	SimpleMeshResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	bool
-	SimpleMeshResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		return true;
-	}
-
-	const Geometry::Interface *
-	SimpleMeshResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	SimpleMeshResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	SimpleMeshResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const Cuboid< float > &
-	SimpleMeshResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingBox;
-		}
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	SimpleMeshResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingSphere;
-		}
-
-		return m_geometry->boundingSphere();
-	}
-
-	const char *
-	SimpleMeshResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	SimpleMeshResource::load () noexcept
 	{
@@ -194,7 +124,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometryResource;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -213,7 +143,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = materialResource;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< SimpleMeshResource >

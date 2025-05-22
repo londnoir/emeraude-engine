@@ -57,75 +57,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	BasicFloorResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	BasicFloorResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	BasicFloorResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	bool
-	BasicFloorResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		if ( m_material != nullptr )
-		{
-			return m_material->isOpaque();
-		}
-
-		return true;
-	}
-
-	const Geometry::Interface *
-	BasicFloorResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	BasicFloorResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	BasicFloorResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const Cuboid< float > &
-	BasicFloorResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingBox;
-		}
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	BasicFloorResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingSphere;
-		}
-
-		return m_geometry->boundingSphere();
-	}
-
 	float
 	BasicFloorResource::getLevelAt (const Vector< 3, float > & worldPosition) const noexcept
 	{
@@ -163,12 +94,6 @@ namespace EmEn::Graphics::Renderable
 		}
 
 		return m_geometry->localData().getNormalAt(worldPosition[X], worldPosition[Z]);
-	}
-
-	const char *
-	BasicFloorResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
@@ -359,7 +284,7 @@ namespace EmEn::Graphics::Renderable
 		}
 		else
 		{
-			TraceWarning{ClassId} << "Material resource type '" << materialType << "' is not handled !";
+			TraceWarning{ClassId} << "Material resource type '" << materialType << "' for basic floor '" << this->name() << "' is not handled !";
 		}
 
 		/* 3. Use the common func. */
@@ -394,7 +319,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::load (float size, size_t division, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
+	BasicFloorResource::load (float size, uint32_t division, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
 		const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometry", DefaultGeometryFlags);
 
@@ -409,7 +334,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::loadDiamondSquare (float size, size_t division, float factor, float roughness, int32_t seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
+	BasicFloorResource::loadDiamondSquare (float size, uint32_t division, float factor, float roughness, int32_t seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
 		Grid< float > grid{};
 
@@ -439,7 +364,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	BasicFloorResource::loadPerlinNoise (float size, size_t division, float noiseSize, float noiseFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
+	BasicFloorResource::loadPerlinNoise (float size, uint32_t division, float noiseSize, float noiseFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier) noexcept
 	{
 		Grid< float > grid{};
 
@@ -482,7 +407,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometryResource;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -499,7 +424,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = materialResource;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< BasicFloorResource >

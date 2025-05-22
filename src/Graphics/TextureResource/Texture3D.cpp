@@ -184,7 +184,7 @@ namespace EmEn::Graphics::TextureResource
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	Texture3D::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		return 0;
@@ -232,11 +232,11 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData.resize(size * size * size * 4);
 
-		for ( size_t xIndex = 0; xIndex < size; xIndex++ )
+		for ( uint32_t xIndex = 0; xIndex < size; xIndex++ )
 		{
-			for ( size_t yIndex = 0; yIndex < size; yIndex++ )
+			for ( uint32_t yIndex = 0; yIndex < size; yIndex++ )
 			{
-				for ( size_t zIndex = 0; zIndex < size; zIndex++ )
+				for ( uint32_t zIndex = 0; zIndex < size; zIndex++ )
 				{
 					const auto index = (xIndex * yIndex * size) * zIndex;
 
@@ -286,7 +286,7 @@ namespace EmEn::Graphics::TextureResource
 
 		/*m_localData = imageResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the image '" << imageResource->name() << "' as dependency !";
 

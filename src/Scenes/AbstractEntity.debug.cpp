@@ -39,13 +39,13 @@ namespace EmEn::Scenes
 	using namespace EmEn::Libs::Math;
 	using namespace Graphics;
 
-	static constexpr auto TracerTag{"AbstractEntity.debug"};
+	constexpr auto TracerTag{"AbstractEntity.debug"};
 
-	static constexpr auto AxisDebugName{"+EntityAxis"};
-	static constexpr auto VelocityDebugName{"+EntityVelocity"};
-	static constexpr auto BoundingBoxDebugName{"+EntityBoundingBox"};
-	static constexpr auto BoundingSphereDebugName{"+EntityBoundingSphere"};
-	static constexpr auto CameraDebugName{"+EntityCamera"};
+	constexpr auto AxisDebugName{"+EntityAxis"};
+	constexpr auto VelocityDebugName{"+EntityVelocity"};
+	constexpr auto BoundingBoxDebugName{"+EntityBoundingBox"};
+	constexpr auto BoundingSphereDebugName{"+EntityBoundingSphere"};
+	constexpr auto CameraDebugName{"+EntityCamera"};
 
 	void
 	AbstractEntity::enableVisualDebug (VisualDebugType type) noexcept

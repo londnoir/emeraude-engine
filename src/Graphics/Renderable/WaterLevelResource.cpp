@@ -51,79 +51,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	WaterLevelResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	WaterLevelResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	WaterLevelResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	bool
-	WaterLevelResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		if ( m_material == nullptr )
-			return true;
-
-		return m_material->isOpaque();
-	}
-
-	const Geometry::Interface *
-	WaterLevelResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	WaterLevelResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	WaterLevelResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const Cuboid< float > &
-	WaterLevelResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingBox;
-		}
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	WaterLevelResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingSphere;
-		}
-
-		return m_geometry->boundingSphere();
-	}
-
-	const char *
-	WaterLevelResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	WaterLevelResource::load () noexcept
 	{
@@ -212,7 +139,7 @@ namespace EmEn::Graphics::Renderable
 		m_geometry = geometryResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -233,7 +160,7 @@ namespace EmEn::Graphics::Renderable
 		m_material = materialResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< WaterLevelResource >

@@ -192,7 +192,7 @@ namespace EmEn::Graphics::TextureResource
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	Texture1D::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		return 0;
@@ -238,7 +238,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = ImageResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -279,7 +279,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = imageResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the image '" << imageResource->name() << "' as dependency !";
 

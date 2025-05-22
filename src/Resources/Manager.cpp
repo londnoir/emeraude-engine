@@ -35,6 +35,7 @@
 
 /* Local inclusions. */
 #include "PrimaryServices.hpp"
+#include "SettingKeys.hpp"
 
 namespace EmEn::Resources
 {
@@ -45,7 +46,9 @@ namespace EmEn::Resources
 	Manager * Manager::s_instance{nullptr};
 
 	Manager::Manager (PrimaryServices & primaryServices, NetworkManager & networkManager) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices), m_networkManager(networkManager)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices),
+		m_networkManager(networkManager)
 	{
 		if ( s_instance != nullptr )
 		{
@@ -100,8 +103,6 @@ namespace EmEn::Resources
 			unloadedResources += m_musics.unloadUnusedResources();
 			unloadedResources += m_fonts.unloadUnusedResources();
 			unloadedResources += m_images.unloadUnusedResources();
-			unloadedResources += m_renderToTexture2Ds.unloadUnusedResources();
-			unloadedResources += m_renderToCubemaps.unloadUnusedResources();
 			unloadedResources += m_sceneDefinitions.unloadUnusedResources();
 
 			/* Sum up for output. */
@@ -131,9 +132,11 @@ namespace EmEn::Resources
 			return false;
 		}
 
+		ResourceTrait::s_quietConversion = m_primaryServices.settings().get< bool >(ResourcesQuietConversionKey, DefaultResourcesQuietConversion);
+
 		/* Initialize every resource managers. */
 		{
-			const std::array< ServiceInterface *, 28 > resourceContainers{
+			const std::array< ServiceInterface *, 26 > resourceContainers{
 				&m_sounds,
 				&m_musics,
 				&m_fonts,
@@ -145,8 +148,6 @@ namespace EmEn::Resources
 				&m_texture3Ds,
 				&m_textureCubemaps,
 				&m_animatedTexture2Ds,
-				&m_renderToTexture2Ds,
-				&m_renderToCubemaps,
 				&m_vertexGeometries,
 				&m_indexedVertexGeometries,
 				&m_vertexGridGeometries,

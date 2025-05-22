@@ -40,6 +40,7 @@
 #include "Libs/PixelFactory/Color.hpp"
 #include "Resources/Container.hpp"
 #include "Resources/Manager.hpp"
+#include "Vulkan/Instance.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Sampler.hpp"
@@ -95,6 +96,11 @@ namespace EmEn::Graphics::TextureResource
 	bool
 	Texture2D::createOnHardware (Renderer & renderer) noexcept
 	{
+		if ( !this->validateTexture(m_localData->data(), !renderer.vulkanInstance().isStandardTextureCheckEnabled()) )
+		{
+			return false;
+		}
+
 		auto & settings = renderer.primaryServices().settings();
 
 		const auto mipLevels = std::min(
@@ -255,7 +261,7 @@ namespace EmEn::Graphics::TextureResource
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	Texture2D::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		return 0;
@@ -301,7 +307,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = ImageResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -342,7 +348,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = imageResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the image '" << imageResource->name() << "' as dependency !";
 

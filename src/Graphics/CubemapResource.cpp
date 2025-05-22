@@ -130,7 +130,7 @@ namespace EmEn::Graphics
 		}
 		
 		/* Tries to read the pixmap. */
-		Pixmap< uint8_t > basemap{};
+		Pixmap< uint8_t, uint32_t > basemap{};
 
 		if ( !FileIO::read(filepath, basemap) )
 		{
@@ -205,7 +205,7 @@ namespace EmEn::Graphics
 				return this->setLoadSuccess(false);
 			}
 
-			if ( !TextureResource::Abstract::validatePixmap(ClassId, m_data.at(faceIndex)) )
+			if ( !TextureResource::Abstract::validatePixmap(ClassId, this->name(), m_data.at(faceIndex)) )
 			{
 				TraceError{ClassId} << "Unable to use the pixmap #" << faceIndex << " for face '" << CubemapFaceNames.at(faceIndex) << "' to create a cubemap !";
 
@@ -234,7 +234,7 @@ namespace EmEn::Graphics
 		const auto width = static_cast< uint32_t >(pixmap.width() / 3);
 		const auto height = static_cast< uint32_t >(pixmap.height() / 2);
 
-		const std::array< Rectangle< uint32_t >, CubemapFaceCount > rectangles{{
+		const std::array< Space2D::AARectangle< uint32_t >, CubemapFaceCount > rectangles{{
 			/* PositiveX */
 			{0, 0, width, height},
 			/* NegativeX */
@@ -253,7 +253,7 @@ namespace EmEn::Graphics
 		{
 			m_data.at(faceIndex) = Processor< uint8_t >::crop(pixmap, rectangles.at(faceIndex));
 
-			if ( !TextureResource::Abstract::validatePixmap(ClassId, m_data.at(faceIndex)) )
+			if ( !TextureResource::Abstract::validatePixmap(ClassId, this->name(), m_data.at(faceIndex)) )
 			{
 				TraceError{ClassId} << "Unable to use the pixmap #" << faceIndex << " for face '" << CubemapFaceNames.at(faceIndex) << "' to create a cubemap !";
 
@@ -276,7 +276,7 @@ namespace EmEn::Graphics
 		{
 			m_data.at(faceIndex) = pixmaps.at(faceIndex);
 
-			if ( !TextureResource::Abstract::validatePixmap(ClassId, m_data.at(faceIndex)) )
+			if ( !TextureResource::Abstract::validatePixmap(ClassId, this->name(), m_data.at(faceIndex)) )
 			{
 				TraceError{ClassId} << "Unable to use the pixmap #" << faceIndex << " for face '" << CubemapFaceNames.at(faceIndex) << "' to create a cubemap !";
 

@@ -27,9 +27,9 @@
 #pragma once
 
 /* STL inclusions. */
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -280,7 +280,7 @@ namespace EmEn::Libs::PixelFactory
 					const auto coordY = static_cast< uint32_t >(std::floor(index / FontMapDivisor)); // Vulkan API
 					//const auto coordY = static_cast< uint32_t >(15 - ((charNum - coordX) / FontMapDivisor)); // OpenGL API
 
-					/* Crop the target out of the chars map. */
+					/* Crop the target out of the character map. */
 					auto glyph = Processor< precision_t >::crop(charsMap, {
 						coordX * glyphWidth, coordY * glyphHeight,
 						glyphWidth, glyphHeight
@@ -291,7 +291,7 @@ namespace EmEn::Libs::PixelFactory
 						glyph = Processor< precision_t >::crop(glyph, Font::getUsableWidth(glyph));
 					}
 
-					/* If the height fits, just output the pixmap. */
+					/* If the height fits, output the pixmap. */
 					if ( glyph.height() == fontSize )
 					{
 						return glyph;
@@ -389,11 +389,11 @@ namespace EmEn::Libs::PixelFactory
 			/**
 			 * @brief Returns a rectangle around the valid pixels on X axis.
 			 * @param glyph A reference to a pixmap.
-			 * @return Math::Rectangle< uint32_t >
+			 * @return Math::Space2D::AARectangle< uint32_t >
 			 */
 			[[nodiscard]]
 			static
-			Math::Rectangle< uint32_t >
+			Math::Space2D::AARectangle< uint32_t >
 			getUsableWidth (const Pixmap< precision_t > & glyph) noexcept
 			{
 				const auto isColumnEmpty = [&glyph] (uint32_t coordX)
@@ -544,10 +544,10 @@ namespace EmEn::Libs::PixelFactory
 
 				const auto success = glyphs.writeGlyphData([&] (size_t index) {
 					/* Gets the correct glyph index inside the font for the iso code. */
-					const auto glyphIndex = FT_Get_Char_Index(face, index);
+					const auto glyphIndex = FT_Get_Char_Index(face, static_cast< FT_ULong >(index));
 
 					/* Gets the glyph loaded.
-					 * NOTE : Only one font can be loaded at a time. */
+					 * NOTE: Only one font can be loaded at a time. */
 					if ( FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) > 0 )
 					{
 						std::cerr << "[ERROR] Glyph " << glyphIndex << " failed to load !" "\n";
@@ -555,9 +555,9 @@ namespace EmEn::Libs::PixelFactory
 						return Pixmap< precision_t >{};
 					}
 
-					const auto glyphWidth = face->glyph->bitmap.width;
-					const auto glyphHeight = face->glyph->bitmap.rows;
-					const auto size = glyphWidth * glyphHeight;
+					//const auto glyphWidth = face->glyph->bitmap.width;
+					//const auto glyphHeight = face->glyph->bitmap.rows;
+					//const auto size = glyphWidth * glyphHeight;
 
 					/*if ( size > 0 )
 					{

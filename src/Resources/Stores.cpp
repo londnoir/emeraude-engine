@@ -50,7 +50,8 @@ namespace EmEn::Resources
 	bool Stores::s_downloadEnabled{true};
 
 	Stores::Stores (PrimaryServices & primaryServices) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices)
 	{
 
 	}
@@ -99,7 +100,7 @@ namespace EmEn::Resources
 	Stores::onInitialize () noexcept
 	{
 		s_operationVerboseEnabled = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation);
-		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultCoreResourcesDownloadEnabled);
+		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultResourcesDownloadEnabled);
 
 		const auto indexes = this->getResourcesIndexFiles();
 

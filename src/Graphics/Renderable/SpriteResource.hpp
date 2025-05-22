@@ -84,7 +84,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			layerCount () const noexcept override
 			{
 				return 1;
@@ -93,7 +93,7 @@ namespace EmEn::Graphics::Renderable
 			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
 			bool
-			isOpaque (size_t layerIndex = 0) const noexcept override
+			isOpaque (uint32_t /*layerIndex*/) const noexcept override
 			{
 				if ( m_material != nullptr )
 				{
@@ -114,7 +114,7 @@ namespace EmEn::Graphics::Renderable
 			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
 			const Material::Interface *
-			material (size_t layerIndex = 0) const noexcept override
+			material (uint32_t /*layerIndex*/) const noexcept override
 			{
 				return m_material.get();
 			}
@@ -122,14 +122,14 @@ namespace EmEn::Graphics::Renderable
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
 			const RasterizationOptions *
-			layerRasterizationOptions (size_t layerIndex = 0) const noexcept override
+			layerRasterizationOptions (uint32_t /*layerIndex*/) const noexcept override
 			{
 				return nullptr;
 			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > &
+			const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept override
 			{
 				if ( m_geometry == nullptr )
@@ -142,7 +142,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > &
+			const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				if ( m_geometry == nullptr )
@@ -280,7 +280,7 @@ namespace EmEn::Graphics::Renderable
 			static constexpr auto JKCenterAtBottomKey{"CenterAtBottom"};
 			static constexpr auto JKFlipKey{"Flip"};
 
-			static constexpr size_t MaxFrames{120};
+			static constexpr uint32_t MaxFrames{120};
 			static std::mutex s_lockGeometryLoading;
 
 			std::shared_ptr< Geometry::Interface > m_geometry;

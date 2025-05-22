@@ -52,54 +52,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	DynamicSkyResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	DynamicSkyResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	bool
-	DynamicSkyResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		return true;
-	}
-
-	size_t
-	DynamicSkyResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	const Geometry::Interface *
-	DynamicSkyResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	DynamicSkyResource::material (size_t) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	DynamicSkyResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const char *
-	DynamicSkyResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	DynamicSkyResource::load () noexcept
 	{
@@ -131,7 +83,7 @@ namespace EmEn::Graphics::Renderable
 	{
 		if ( geometry == nullptr )
 		{
-			Tracer::error(ClassId, BlobTrait() << "Geometry pointer tried to be attached to renderable object '" << this->name() << "' " << this << " is null !");
+			TraceError{ClassId} << "Geometry pointer tried to be attached to renderable object '" << this->name() << "' " << this << " is null !";
 
 			return false;
 		}
@@ -140,7 +92,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometry;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -148,7 +100,7 @@ namespace EmEn::Graphics::Renderable
 	{
 		if ( material == nullptr )
 		{
-			Tracer::error(ClassId, BlobTrait() << "Material pointer tried to be attached to renderable object '" << this->name() << "' " << this << " is null !");
+			TraceError{ClassId} << "Material pointer tried to be attached to renderable object '" << this->name() << "' " << this << " is null !";
 
 			return false;
 		}
@@ -157,7 +109,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = material;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< DynamicSkyResource >

@@ -38,9 +38,12 @@
 #include <type_traits>
 
 /* Local inclusions for inheritances. */
-#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Space3D/AACuboid.hpp"
 
 /* Local inclusions for usages. */
+#include "Libs/Math/Space3D/Collisions/SamePrimitive.hpp"
+#include "Libs/Math/Space3D/Collisions/PointCuboid.hpp"
+#include "Libs/Math/Space3D/Collisions/SphereCuboid.hpp"
 #include "LocatableInterface.hpp"
 #include "Tracer.hpp"
 
@@ -51,11 +54,11 @@ namespace EmEn::Scenes
 	 * @tparam element_t The type of inserted element, it must inherit from EmEn::Scenes::LocatableInterface.
 	 * @tparam enable_volume Enable the use of the element volume instead of their position. This implies multiple insertions at the same depth level.
 	 * @extends std::enable_shared_from_this A sector must be able to give his own smart pointer.
-	 * @extends EmEn::Libs::Math::Cuboid A sector is a cube in the 3D space and thus provide intersection detection with primitives.
+	 * @extends EmEn::Libs::Math::Space3D::AACuboid A sector is a cube in the 3D space and thus provides intersection detection with primitives.
 	 */
 	template< typename element_t, bool enable_volume >
 	requires (std::is_base_of_v< Libs::NameableTrait, element_t >, std::is_base_of_v< LocatableInterface, element_t >)
-	class OctreeSector final : public std::enable_shared_from_this< OctreeSector< element_t, enable_volume > >, public Libs::Math::Cuboid< float >
+	class OctreeSector final : public std::enable_shared_from_this< OctreeSector< element_t, enable_volume > >, public Libs::Math::Space3D::AACuboid< float >
 	{
 		public:
 
@@ -83,7 +86,7 @@ namespace EmEn::Scenes
 			 * @param enableAutoCollapse Enable a leaf sector to be automatically removed if empty. Default false.
 			 */
 			OctreeSector (const Libs::Math::Vector< 3, float > & maximum, const Libs::Math::Vector< 3, float > & minimum, size_t maxElementPerSector = DefaultSectorElementLimit, bool enableAutoCollapse = false) noexcept
-				: Cuboid(maximum, minimum), m_maxElementPerSector(std::max< size_t >(DefaultSectorElementLimit, maxElementPerSector))
+				: AACuboid(maximum, minimum), m_maxElementPerSector(std::max< size_t >(DefaultSectorElementLimit, maxElementPerSector))
 			{
 				m_flags[AutoCollapseEnabled] = enableAutoCollapse;
 			}
@@ -93,10 +96,10 @@ namespace EmEn::Scenes
 			 * @param maximum The highest limit of the child sector.
 			 * @param minimum The lowest limit of the child sector.
 			 * @param parentSector A reference to the parent sector smart pointer.
-			 * @param slot The slot where the sub-sector is built.
+			 * @param slot The slot where the subsector is built.
 			 */
 			OctreeSector (const Libs::Math::Vector< 3, float > & maximum, const Libs::Math::Vector< 3, float > & minimum, const std::shared_ptr< OctreeSector > & parentSector, size_t slot) noexcept
-				: Cuboid(maximum, minimum), m_parentSector(parentSector), m_slot(slot), m_maxElementPerSector(parentSector->m_maxElementPerSector)
+				: AACuboid(maximum, minimum), m_parentSector(parentSector), m_slot(slot), m_maxElementPerSector(parentSector->m_maxElementPerSector)
 			{
 				m_flags[AutoCollapseEnabled] = parentSector->m_flags[AutoCollapseEnabled];
 			}
@@ -130,7 +133,7 @@ namespace EmEn::Scenes
 			/**
 			 * @brief Destructs the octree sector.
 			 */
-			~OctreeSector () override = default;
+			~OctreeSector () = default;
 
 			/**
 			 * @brief Returns true if the sector is the top of the tree.
@@ -155,7 +158,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns whether the sector has sub-sectors.
+			 * @brief Returns whether the sector has subsectors.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -167,8 +170,8 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns whether this sector has no element registered in it.
-			 * @warning This method does not indicate whether there are no more sub-sectors below.
-			 * But it is guaranteed that there can only be empty sub-sectors underneath.
+			 * @warning This method does not indicate whether there are no more subsectors below.
+			 * But it is guaranteed that there can only be empty subsectors underneath.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -179,7 +182,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns the slot of a sub-sector.
+			 * @brief Returns the slot of a subsector.
 			 * @warning It this sector is root, the value will be the max for a size_t.
 			 * @return size_t
 			 */
@@ -270,7 +273,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns the sector count below this one (included).
+			 * @brief Returns the sectors count below this one (included).
 			 * @return size_t
 			 */
 			[[nodiscard]]
@@ -292,7 +295,7 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns the parent sector.
-			 * @warning this can be nullptr. Check if the sector is root before.
+			 * @warning This can be nullptr. Check if the sector is root before.
 			 * @return std::weak_ptr< OctreeSector >
 			 */
 			[[nodiscard]]
@@ -304,7 +307,7 @@ namespace EmEn::Scenes
 
 			/**
 			 * @brief Returns the parent sector.
-			 * @warning this can be nullptr. Check if the sector is root before.
+			 * @warning This can be nullptr. Check if the sector is root before.
 			 * @return std::weak_ptr< const OctreeSector >
 			 */
 			[[nodiscard]]
@@ -351,7 +354,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns the sub sector list.
+			 * @brief Returns the subsector list.
 			 * @warning This can be a list of empty sector. Check if the sector is leaf before.
 			 * @return std::array< std::shared_ptr< OctreeSector >, 8 > &
 			 */
@@ -363,7 +366,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns the sub sector list.
+			 * @brief Returns the subsector list.
 			 * @warning This can be a list of empty sector. Check if the sector is leaf before.
 			 * @return const std::array< std::shared_ptr< OctreeSector >, 8 > &
 			 */
@@ -375,7 +378,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Reserves sub-sectors by specifying the desired depth.
+			 * @brief Reserves subsectors by specifying the desired depth.
 			 * @note This won't have any effect with automatic collapse enabled.
 			 * @param depth
 			 * @return void
@@ -385,7 +388,7 @@ namespace EmEn::Scenes
 			{
 				if ( m_flags[AutoCollapseEnabled] )
 				{
-					Tracer::warning(ClassId, "Automatic empty sub-sectors removal is enabled !");
+					Tracer::warning(ClassId, "Automatic empty subsectors removal is enabled !");
 
 					return;
 				}
@@ -414,6 +417,20 @@ namespace EmEn::Scenes
 			contains (const std::shared_ptr< element_t > & element) const noexcept
 			{
 				return m_elements.contains(element);
+			}
+
+			/**
+			 * @brief Returns whether a primitive is colling with the octree sector.
+			 * @tparam primitive_t The type of primitive.
+			 * @param primitive A reference to a primitive.
+			 * @return bool
+			 */
+			template< typename primitive_t >
+			[[nodiscard]]
+			bool
+			isCollidingWith (const primitive_t & primitive) const noexcept
+			{
+				return Libs::Math::Space3D::isColliding(*this, primitive);
 			}
 
 			/**
@@ -449,14 +466,15 @@ namespace EmEn::Scenes
 			bool
 			update (const std::shared_ptr< element_t > & element) noexcept
 			{
-#ifdef DEBUG
-				if ( !this->isRoot() )
+				if constexpr ( IsDebug )
 				{
-					TraceError{ClassId} << "You can't call update() on a sub-sector !";
+					if ( !this->isRoot() )
+					{
+						TraceError{ClassId} << "You can't call update() on a subsector !";
 
-					return false;
+						return false;
+					}
 				}
-#endif
 
 				/* NOTE: If the root sector is not split down, there is no need to check. */
 				if ( !m_flags[IsExpanded] )
@@ -477,10 +495,10 @@ namespace EmEn::Scenes
 				{
 					const auto position = element->getWorldCoordinates().position();
 
-					/* NOTE: Does the element moved out the last registered sub-sector boundaries ? */
+					/* NOTE: Does the element moved out the last registered subsector boundaries? */
 					const auto * lastSubSector = this->getDeepestSubSector(element);
 
-					if ( lastSubSector->isCollidingWith(position) )
+					if ( Libs::Math::Space3D::isColliding(*lastSubSector, position) )
 					{
 						return true;
 					}
@@ -611,7 +629,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Executes a function on every sub-sector inside the area.
+			 * @brief Executes a function on every subsector inside the area.
 			 * @tparam primitive_t The type of primitive for collision detection.
 			 * @param primitive A reference to the primitive.
 			 * @param function A reference to lambda.
@@ -643,7 +661,7 @@ namespace EmEn::Scenes
 			}
 
 			/**
-			 * @brief Returns a pointer to a sub-sector when an element appears.
+			 * @brief Returns a pointer to a subsector when an element appears.
 			 * @note This assumes the element is part of this sector.
 			 * @param element A reference to an element smart pointer.
 			 * @return const OctreeSector *
@@ -652,7 +670,7 @@ namespace EmEn::Scenes
 			const OctreeSector *
 			getDeepestSubSector (const std::shared_ptr< element_t > & element) const noexcept
 			{
-				/* NOTE: If there is no sub-sector below this one. */
+				/* NOTE: If there is no subsector below this one. */
 				if ( !m_flags[IsExpanded] )
 				{
 					return this;
@@ -693,7 +711,7 @@ namespace EmEn::Scenes
 
 				if ( m_flags[AutoCollapseEnabled] )
 				{
-					/* If the number of elements is below the sector limit, we merge the sub-sectors. */
+					/* If the number of elements is below the sector limit, we merge the subsectors. */
 					if ( m_flags[IsExpanded] && m_elements.size() < m_maxElementPerSector / 2 )
 					{
 						this->collapse();
@@ -852,7 +870,7 @@ namespace EmEn::Scenes
 
 				m_subSectors[XNegativeYNegativeZNegative] = std::make_shared< OctreeSector >(tmp, tmp - size, parent, XNegativeYNegativeZNegative);
 
-				/* Now, we redistribute the sector elements to the sub-sectors. */
+				/* Now, we redistribute the sector elements to the subsectors. */
 				for ( const auto & element : m_elements )
 				{
 					for ( const auto & subSector : m_subSectors )

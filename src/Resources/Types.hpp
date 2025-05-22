@@ -86,7 +86,7 @@ namespace EmEn::Resources
 	[[nodiscard]]
 	SourceType to_SourceType (const std::string & value) noexcept;
 
-	/** @brief This enum define every stages of resource loading. */
+	/** @brief This enum define every stage of resource loading. */
 	enum class Status : uint8_t
 	{
 		/* This is the status of a new resource instantiation. */

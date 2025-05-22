@@ -121,7 +121,7 @@ namespace EmEn::Scenes
 	{
 		if ( m_root.empty() )
 		{
-			Tracer::error(ClassId, BlobTrait() << "No data ! Load a JSON file or set a JSON string before.");
+			Tracer::error(ClassId, "No data ! Load a JSON file or set a JSON string before.");
 
 			return false;
 		}
@@ -152,7 +152,7 @@ namespace EmEn::Scenes
 	{
 		if ( !m_root.isMember(FastJSON::PropertiesKey) || !m_root[FastJSON::PropertiesKey].isObject() )
 		{
-			Tracer::warning(ClassId, BlobTrait() << "There is no '" << FastJSON::PropertiesKey << "' definition or is invalid !");
+			TraceWarning{ClassId} << "There is no '" << FastJSON::PropertiesKey << "' definition or is invalid !";
 
 			return false;
 		}

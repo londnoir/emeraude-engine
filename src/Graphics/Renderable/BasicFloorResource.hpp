@@ -27,7 +27,6 @@
 #pragma once
 
 /* STL inclusions. */
-#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <memory>
@@ -43,7 +42,7 @@ namespace EmEn::Graphics::Renderable
 {
 	/**
 	 * @brief The basic floor resource class.
-	 * @extends EmEn::Graphics::Renderable::SceneAreaInterface The is a scene area.
+	 * @extends EmEn::Graphics::Renderable::SceneAreaInterface This is a scene area.
 	 */
 	class BasicFloorResource final : public SceneAreaInterface
 	{
@@ -81,15 +80,27 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::classLabel() const */
 			[[nodiscard]]
-			const char * classLabel () const noexcept override;
+			const char *
+			classLabel () const noexcept override
+			{
+				return ClassId;
+			}
 
 			/** @copydoc EmEn::Resources::ResourceTrait::load() */
 			bool load () noexcept override;
@@ -102,31 +113,73 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerCount() const */
 			[[nodiscard]]
-			size_t layerCount () const noexcept override;
+			uint32_t layerCount () const noexcept override
+			{
+				return 1;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::isOpaque() const */
 			[[nodiscard]]
-			bool isOpaque (size_t layerIndex = 0) const noexcept override;
+			bool
+			isOpaque (uint32_t /*layerIndex*/) const noexcept override
+			{
+				if ( m_material != nullptr )
+				{
+					return m_material->isOpaque();
+				}
+
+				return true;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::geometry() const */
 			[[nodiscard]]
-			const Geometry::Interface * geometry () const noexcept override;
+			const Geometry::Interface *
+			geometry () const noexcept override
+			{
+				return m_geometry.get();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::material() const */
 			[[nodiscard]]
-			const Material::Interface * material (size_t layerIndex = 0) const noexcept override;
+			const Material::Interface *
+			material (uint32_t /*layerIndex*/) const noexcept override
+			{
+				return m_material.get();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::layerRasterizationOptions() const */
 			[[nodiscard]]
-			const RasterizationOptions * layerRasterizationOptions (size_t layerIndex = 0) const noexcept override;
+			const RasterizationOptions *
+			layerRasterizationOptions (uint32_t /*layerIndex*/) const noexcept override
+			{
+				return nullptr;
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > & boundingBox () const noexcept override;
+			const Libs::Math::Space3D::AACuboid< float > &
+			boundingBox () const noexcept override
+			{
+				if ( m_geometry == nullptr )
+				{
+					return NullBoundingBox;
+				}
+
+				return m_geometry->boundingBox();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > & boundingSphere () const noexcept override;
+			const Libs::Math::Space3D::Sphere< float > &
+			boundingSphere () const noexcept override
+			{
+				if ( m_geometry == nullptr )
+				{
+					return NullBoundingSphere;
+				}
+
+				return m_geometry->boundingSphere();
+			}
 
 			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getLevelAt(const Libs::Math::Vector< 3, float > &) const */
 			[[nodiscard]]
@@ -134,7 +187,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getLevelAt(float, float, float) const */
 			[[nodiscard]]
-			Libs::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY = 0.0F) const noexcept override;
+			Libs::Math::Vector< 3, float > getLevelAt (float positionX, float positionZ, float deltaY) const noexcept override;
 
 			/** @copydoc EmEn::Graphics::Renderable::SceneAreaInterface::getNormalAt() const */
 			[[nodiscard]]
@@ -156,7 +209,7 @@ namespace EmEn::Graphics::Renderable
 			 * @param UVMultiplier Texture coordinates multiplier.
 			 * @return bool
 			 */
-			bool load (float size, size_t division, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
+			bool load (float size, uint32_t division, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
 
 			/**
 			 * @brief Loads a basic floor by using parameters to generate the ground with diamond square and a material to paint it.
@@ -169,7 +222,7 @@ namespace EmEn::Graphics::Renderable
 			 * @param UVMultiplier Texture coordinates multiplier.
 			 * @return bool
 			 */
-			bool loadDiamondSquare (float size, size_t division, float factor, float roughness, int32_t seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
+			bool loadDiamondSquare (float size, uint32_t division, float factor, float roughness, int32_t seed, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
 
 			/**
 			 * @brief Loads a basic floor by using parameters to generate the ground with diamond square and a material to paint it.
@@ -181,7 +234,7 @@ namespace EmEn::Graphics::Renderable
 			 * @param UVMultiplier Texture coordinates multiplier.
 			 * @return bool
 			 */
-			bool loadPerlinNoise (float size, size_t division, float noiseSize, float noiseFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
+			bool loadPerlinNoise (float size, uint32_t division, float noiseSize, float noiseFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept;
 
 			/**
 			 * @brief Loads a basic floor by using parameters to generate the ground with displacement map and a material to paint it.
@@ -196,7 +249,7 @@ namespace EmEn::Graphics::Renderable
 			 */
 			template< typename pixmapData_t >
 			bool
-			load (float size, size_t division, const Libs::PixelFactory::Pixmap< pixmapData_t > & displacementMap, float displacementFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept requires (std::is_arithmetic_v< pixmapData_t >)
+			load (float size, uint32_t division, const Libs::PixelFactory::Pixmap< pixmapData_t > & displacementMap, float displacementFactor, const std::shared_ptr< Material::Interface > & materialResource, float UVMultiplier = 1.0F) noexcept requires (std::is_arithmetic_v< pixmapData_t >)
 			{
 				const auto geometryResource = std::make_shared< Geometry::VertexGridResource >(this->name() + "GridGeometryDisplaced");
 

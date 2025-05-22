@@ -55,8 +55,6 @@ namespace EmEn::Audio
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static bool s_quietConversion;
-
 			/**
 			 * @brief Constructs a sound resource.
 			 * @param name The name of the resource.
@@ -91,7 +89,7 @@ namespace EmEn::Audio
 			/** @copydoc EmEn::Audio::PlayableInterface::buffer() */
 			[[nodiscard]]
 			std::shared_ptr< const Buffer >
-			buffer (size_t bufferIndex = 0) const noexcept override
+			buffer (size_t /*bufferIndex*/) const noexcept override
 			{
 				return m_buffer;
 			}

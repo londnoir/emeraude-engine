@@ -26,9 +26,6 @@
 
 #include "SpriteResource.hpp"
 
-/* STL inclusions. */
-#include <cmath>
-
 /* Local inclusions. */
 #include "Libs/VertexFactory/ShapeBuilder.hpp"
 #include "Libs/FastJSON.hpp"
@@ -84,7 +81,7 @@ namespace EmEn::Graphics::Renderable
 			return this->setLoadSuccess(false);
 		}
 
-		return this->setLoadSuccess(this->addDependency(m_material.get()));
+		return this->setLoadSuccess(this->addDependency(m_material));
 	}
 
 	bool
@@ -237,23 +234,23 @@ namespace EmEn::Graphics::Renderable
 			resourceName.str(),
 			[isAnimated, centerAtBottom, flip] (Geometry::IndexedVertexResource & newGeometry)
 			{
-				Shape< float_t > shape{2 * MaxFrames};
-				ShapeBuilder< float_t > builder{shape};
+				Shape< float, uint32_t > shape{2 * MaxFrames};
 
+				ShapeBuilder< float, uint32_t > builder{shape};
 				builder.beginConstruction(ConstructionMode::TriangleStrip);
-				builder.options().enableGlobalNormal(Vector< 3, float_t >::positiveZ());
+				builder.options().enableGlobalNormal(Vector< 3, float >::positiveZ());
 
 				const auto Ua = flip ? 1.0F : 0.0F;
 				const auto Ub = flip ? 0.0F : 1.0F;
 
-				const Vector< 3, float_t > positionA{-0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
-				const Vector< 3, float_t > positionB{-0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
-				const Vector< 3, float_t > positionC{ 0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
-				const Vector< 3, float_t > positionD{ 0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
+				const Vector< 3, float > positionA{-0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
+				const Vector< 3, float > positionB{-0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
+				const Vector< 3, float > positionC{ 0.5F, centerAtBottom ? -1.0F : -0.5F, 0.0F};
+				const Vector< 3, float > positionD{ 0.5F, centerAtBottom ?  0.0F :  0.5F, 0.0F};
 
 				if ( isAnimated )
 				{
-					for ( size_t frameIndex = 0; frameIndex < MaxFrames; frameIndex++ )
+					for ( uint32_t frameIndex = 0; frameIndex < MaxFrames; frameIndex++ )
 					{
 						const auto depth = static_cast< float >(frameIndex);
 
@@ -315,7 +312,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometryResource;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -334,7 +331,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = materialResource;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	bool

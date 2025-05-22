@@ -110,12 +110,13 @@ namespace EmEn::Libs::WaveFactory
 					m_data.resize(bufferSize);
 				}
 
-#ifdef EMERAUDE_DEBUG_WAVE_FACTORY
-				/* Shows memory usage */
-				auto memoryAllocated = m_data.size() * sizeof(precision_t);
+				if constexpr ( WaveFactoryDebugEnabled )
+				{
+					/* Shows memory usage */
+					auto memoryAllocated = m_data.size() * sizeof(precision_t);
 
-				std::cout << "[DEBUG] " << __PRETTY_FUNCTION__ << ", " << ( static_cast< float >(memoryAllocated) / 1048576 ) << " Mib" "\n";
-#endif
+					std::cout << "[DEBUG] " << __PRETTY_FUNCTION__ << ", " << ( static_cast< float >(memoryAllocated) / 1048576 ) << " Mib" "\n";
+				}
 
 				return true;
 			}
@@ -342,11 +343,12 @@ namespace EmEn::Libs::WaveFactory
 					output.bytes -= ((count * chunkSize) - m_data.size());
 				}
 
-#ifdef EMERAUDE_DEBUG_WAVE_FACTORY
-				std::cout << "Chunk #" << chunkIndex << " (size: " << chunkSize << ") -> offset " << output.offset << " of " << m_data.size() << "." "\n";
-#endif
+				if constexpr ( WaveFactoryDebugEnabled )
+				{
+					std::cout << "Chunk #" << chunkIndex << " (size: " << chunkSize << ") -> offset " << output.offset << " of " << m_data.size() << "." "\n";
+				}
 
-				/* Sizeof = 2 */
+				/* Note: sizeof = 2 */
 				output.bytes *= sizeof(precision_t);
 
 				return output;

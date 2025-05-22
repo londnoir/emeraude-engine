@@ -118,9 +118,11 @@ namespace EmEn::Graphics
 			return this->setLoadSuccess(false);
 		}
 
-		if ( !TextureResource::Abstract::validatePixmap(ClassId, m_data) )
+		if ( !TextureResource::Abstract::validatePixmap(ClassId, this->name(), m_data) )
 		{
 			TraceError{ClassId} << "Unable to use the pixmap from file '" << filepath << "' to create an image !";
+
+			m_data.clear();
 
 			return this->setLoadSuccess(false);
 		}
