@@ -26,61 +26,29 @@
 
 #pragma once
 
-/* STL inclusions. */
-#include <cstddef>
-#include <memory>
-#include <vector>
-
 /* Local inclusions for inheritances. */
 #include "Abstract.hpp"
-
-/* Local inclusions for usages. */
-#include "Graphics/RenderableInstance/Abstract.hpp"
 
 namespace EmEn::Saphir::Generator
 {
 	/**
 	 * @brief The shadow shader generator. This will build the stack of shaders requested to render shadows in a scene.
-	 * @extends EmEn::Saphir::Generator::Abstract This a shader generator.
+	 * @extends EmEn::Saphir::Generator::Abstract This is a shader generator.
 	 */
-	class ShadowRendering final : public Abstract
+	class ShadowCasting final : public Abstract
 	{
 		public:
 
 			/** @brief Class identifier. */
-			static constexpr auto ClassId{"ShadowRendering"};
+			static constexpr auto ClassId{"ShadowCasting"};
 
 			/** 
 			 * @brief Constructs a shadow shader generator.
-			 * @param settings A reference to the core settings.
 			 * @param renderTarget A reference to the render target smart pointer.
 			 * @param renderableInstance A reference to the renderable instance.
+			 * @param layerIndex The renderable instance layer index.
 			 */
-			ShadowRendering (Settings & settings, const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const Graphics::RenderableInstance::Abstract > & renderableInstance) noexcept;
-
-			/** @copydoc EmEn::Saphir::Generator::Abstract::materialEnabled() */
-			[[nodiscard]]
-			bool
-			materialEnabled () const noexcept override
-			{
-				return false;
-			}
-
-			/** @copydoc EmEn::Saphir::Generator::Abstract::material() */
-			[[nodiscard]]
-			const Graphics::Material::Interface *
-			material () const noexcept override
-			{
-				return nullptr;
-			}
-
-			/** @copydoc EmEn::Saphir::Generator::Abstract::geometry() */
-			[[nodiscard]]
-			const Graphics::Geometry::Interface *
-			geometry () const noexcept override
-			{
-				return m_renderableInstance->renderable()->geometry();
-			}
+			ShadowCasting (const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const Graphics::RenderableInstance::Abstract > & renderableInstance, uint32_t layerIndex) noexcept;
 
 			/**
 			 * @brief Enables color output to show the depth.
@@ -97,13 +65,13 @@ namespace EmEn::Saphir::Generator
 			/** @copydoc EmEn::Saphir::Generator::Abstract::prepareUniformSets() */
 			void prepareUniformSets (SetIndexes & setIndexes) noexcept override;
 
-			/** @copydoc EmEn::Saphir::Generator::Abstract::onGenerateProgram() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::onGenerateShadersCode() */
 			[[nodiscard]]
-			bool onGenerateProgram (Program & program) noexcept override;
+			bool onGenerateShadersCode (Program & program) noexcept override;
 
-			/** @copydoc EmEn::Saphir::Generator::Abstract::onGenerateProgramLayout() */
+			/** @copydoc EmEn::Saphir::Generator::Abstract::onCreateDataLayouts() */
 			[[nodiscard]]
-			bool onGenerateProgramLayout (const SetIndexes & setIndexes, std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts, std::vector< VkPushConstantRange > & pushConstantRanges) noexcept override;
+			bool onCreateDataLayouts (const SetIndexes & setIndexes, std::vector< std::shared_ptr< Vulkan::DescriptorSetLayout > > & descriptorSetLayouts, std::vector< VkPushConstantRange > & pushConstantRanges) noexcept override;
 
 			/** @copydoc EmEn::Saphir::Generator::Abstract::onGraphicsPipelineConfiguration() */
 			[[nodiscard]]
@@ -133,7 +101,6 @@ namespace EmEn::Saphir::Generator
 			[[nodiscard]]
 			bool generateFragmentShader (Program & program) noexcept;
 
-			std::shared_ptr< const Graphics::RenderableInstance::Abstract > m_renderableInstance;
 			bool m_enableColorOutput{false};
 	};
 }

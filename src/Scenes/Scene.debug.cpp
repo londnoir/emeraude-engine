@@ -151,7 +151,7 @@ namespace EmEn::Scenes
 		}
 
 		const auto planeSize = m_boundary * Double< float >;
-		const auto planeDivision = static_cast< size_t >(m_boundary / 100.0F);
+		const auto planeDivision = static_cast< uint32_t >(m_boundary / 100.0F);
 
 		auto * resources = Resources::Manager::instance();
 
@@ -228,7 +228,7 @@ namespace EmEn::Scenes
 		}
 
 		const auto planeSize = m_boundary * Double< float >;
-		const auto planeDivision = static_cast< size_t >(m_boundary / 100.0F);
+		const auto planeDivision = static_cast< uint32_t >(m_boundary / 100.0F);
 
 		auto * resources = Resources::Manager::instance();
 

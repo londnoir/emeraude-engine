@@ -46,11 +46,11 @@ namespace EmEn::Libs::Math
 {
 	/**
 	 * @brief Defines a geometric circle.
-	 * @tparam data_t The type used for geometric distance and dimensions. Default float.
+	 * @tparam precision_t The precision type. Default float.
 	 * @extends EmEn::Libs::Math::Shape2DInterface This is a 2D shape.
 	 */
-	template< typename data_t = float > requires (std::is_floating_point_v< data_t >)
-	class Circle final : public Shape2DInterface< data_t >
+	template< typename precision_t = float > requires (std::is_floating_point_v< precision_t >)
+	class Circle final : public Shape2DInterface< precision_t >
 	{
 		public:
 
@@ -61,7 +61,7 @@ namespace EmEn::Libs::Math
 			 */
 			explicit
 			constexpr
-			Circle (data_t radius = 0, const Vector< 2, data_t > & position = {}) noexcept
+			Circle (precision_t radius = 0, const Vector< 2, precision_t > & position = {}) noexcept
 				: m_position(position), m_radius(radius < 0 ? -radius : radius)
 			{
 
@@ -81,7 +81,7 @@ namespace EmEn::Libs::Math
 					return false;
 				}
 
-				return std::abs(m_radius - operand.m_radius) <= std::numeric_limits< data_t >::epsilon() * std::max(data_t(1.0), std::max(std::abs(m_radius), std::abs(operand.m_radius)));
+				return std::abs(m_radius - operand.m_radius) <= std::numeric_limits< precision_t >::epsilon() * std::max(precision_t(1.0), std::max(std::abs(m_radius), std::abs(operand.m_radius)));
 			}
 
 			/**
@@ -99,7 +99,7 @@ namespace EmEn::Libs::Math
 			/** @copydoc EmEn::Libs::Math::Shape2DInterface::getPerimeter() */
 			[[nodiscard]]
 			constexpr
-			data_t
+			precision_t
 			getPerimeter () const noexcept override
 			{
 				return circleCircumference(m_radius);
@@ -108,7 +108,7 @@ namespace EmEn::Libs::Math
 			/** @copydoc EmEn::Libs::Math::Shape2DInterface::getArea() */
 			[[nodiscard]]
 			constexpr
-			data_t
+			precision_t
 			getArea () const noexcept override
 			{
 				return circleArea(m_radius);
@@ -119,7 +119,7 @@ namespace EmEn::Libs::Math
 			 * @param position A reference to a vector.
 			 */
 			void
-			setPosition (const Vector< 2, data_t > & position) noexcept
+			setPosition (const Vector< 2, precision_t > & position) noexcept
 			{
 				m_position = position;
 			}
@@ -129,7 +129,7 @@ namespace EmEn::Libs::Math
 			 * @param radius The radius in engine metrics.
 			 */
 			void
-			setRadius (data_t radius) noexcept
+			setRadius (precision_t radius) noexcept
 			{
 				m_radius = std::abs(radius);
 			}
@@ -143,7 +143,7 @@ namespace EmEn::Libs::Math
 			bool
 			isValid () const noexcept
 			{
-				return m_radius > static_cast< data_t >(0);
+				return m_radius > static_cast< precision_t >(0);
 			}
 
 			/**
@@ -151,7 +151,7 @@ namespace EmEn::Libs::Math
 			 * @return const Vector< 2, data_t > &
 			 */
 			[[nodiscard]]
-			const Vector< 2, data_t > &
+			const Vector< 2, precision_t > &
 			position () const noexcept
 			{
 				return m_position;
@@ -162,7 +162,7 @@ namespace EmEn::Libs::Math
 			 * @return data_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			radius () const noexcept
 			{
 				return m_radius;
@@ -179,8 +179,8 @@ namespace EmEn::Libs::Math
 			bool
 			intersects (const Circle & other) const noexcept
 			{
-				const data_t radiiSum = m_radius + other.m_radius;
-				const Vector< 2, data_t > distance = m_position - other.m_position;
+				const precision_t radiiSum = m_radius + other.m_radius;
+				const Vector< 2, precision_t > distance = m_position - other.m_position;
 
 				return distance.lengthSquared() <= radiiSum * radiiSum;
 			}
@@ -193,9 +193,9 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			contains (const Vector< 2, data_t > & point) const noexcept
+			contains (const Vector< 2, precision_t > & point) const noexcept
 			{
-				const Vector< 2, data_t > distance = point - m_position;
+				const Vector< 2, precision_t > distance = point - m_position;
 
 				return distance.lengthSquared() <= m_radius * m_radius;
 			}
@@ -216,8 +216,8 @@ namespace EmEn::Libs::Math
 					return false;
 				}
 
-				const Vector< 2, data_t > distance = m_position - other.m_position;
-				const data_t radiiDiff = m_radius - other.m_radius;
+				const Vector< 2, precision_t > distance = m_position - other.m_position;
+				const precision_t radiiDiff = m_radius - other.m_radius;
 
 				return distance.lengthSquared() <= radiiDiff * radiiDiff;
 			}
@@ -228,7 +228,7 @@ namespace EmEn::Libs::Math
 			*/
 			[[nodiscard]]
 			constexpr
-			Rectangle< data_t >
+			Rectangle< precision_t >
 			getBoundingBox() const noexcept
 			{
 				if ( !this->isValid() )
@@ -236,7 +236,7 @@ namespace EmEn::Libs::Math
 					return {m_position.x(), m_position.y(), 0, 0};
 				}
 
-				const data_t diameter = static_cast< data_t >(2) * m_radius;
+				const precision_t diameter = static_cast< precision_t >(2) * m_radius;
 
 				return {
 					m_position.x() - m_radius,
@@ -279,7 +279,7 @@ namespace EmEn::Libs::Math
 
 		private:
 
-			Vector< 2, data_t > m_position;
-			data_t m_radius;
+			Vector< 2, precision_t > m_position;
+			precision_t m_radius;
 	};
 }

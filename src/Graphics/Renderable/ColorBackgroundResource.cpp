@@ -46,24 +46,6 @@ namespace EmEn::Graphics::Renderable
 		this->setAverageColor(color);
 	}
 
-	size_t
-	ColorBackgroundResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	ColorBackgroundResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	const char *
-	ColorBackgroundResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	ColorBackgroundResource::load () noexcept
 	{
@@ -90,35 +72,5 @@ namespace EmEn::Graphics::Renderable
 		this->setAverageColor(PixelFactory::Black);
 
 		return this->setLoadSuccess(true);
-	}
-
-	bool
-	ColorBackgroundResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		return true;
-	}
-
-	size_t
-	ColorBackgroundResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	const Geometry::Interface *
-	ColorBackgroundResource::geometry () const noexcept
-	{
-		return nullptr;
-	}
-
-	const Material::Interface *
-	ColorBackgroundResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const RasterizationOptions *
-	ColorBackgroundResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
 	}
 }

@@ -33,16 +33,16 @@
 #include <string>
 
 /* Local inclusions. */
-#include "Abstract.hpp"
-#include "Graphics/ImageResource.hpp"
-#include "Graphics/Renderer.hpp"
 #include "Libs/PixelFactory/Color.hpp"
-#include "Resources/Container.hpp"
-#include "Resources/Manager.hpp"
-#include "Tracer.hpp"
+#include "Vulkan/Instance.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Sampler.hpp"
+#include "Graphics/Renderer.hpp"
+#include "Resources/Container.hpp"
+#include "Resources/Manager.hpp"
+#include "Tracer.hpp"
+
 
 /* Defining the resource manager class id. */
 template<>
@@ -94,6 +94,14 @@ namespace EmEn::Graphics::TextureResource
 	bool
 	TextureCubemap::createOnHardware (Renderer & renderer) noexcept
 	{
+		for ( const auto & pixmap: m_localData->faces() )
+		{
+			if ( !this->validateTexture(pixmap, !renderer.vulkanInstance().isStandardTextureCheckEnabled()) )
+			{
+				return false;
+			}
+		}
+
 		/* Create a Vulkan image. */
 		m_image = std::make_shared< Image >(
 			renderer.device(),
@@ -247,7 +255,7 @@ namespace EmEn::Graphics::TextureResource
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	TextureCubemap::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		return 0;
@@ -293,7 +301,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = CubemapResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -334,7 +342,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = cubemapResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the cubemap '" << cubemapResource->name() << "' as dependency !";
 

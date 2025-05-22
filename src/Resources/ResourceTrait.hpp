@@ -53,11 +53,12 @@ namespace EmEn::Resources
 {
 	/**
 	 * @brief This class describe a loadable resource with dependencies.
+	 * @extends std::enable_shared_from_this A resource should self-replicate its smart-pointer.
 	 * @extends EmEn::Libs::NameableTrait A resource is always named.
 	 * @extends EmEn::Libs::FlagTrait A resource needs flags to change behavior of resource construction.
 	 * @extends EmEn::Libs::ObservableTrait A resource is observable to keep track of loading states.
 	 */
-	class ResourceTrait : public Libs::NameableTrait, public Libs::FlagTrait< uint32_t >, public Libs::ObservableTrait
+	class ResourceTrait : public std::enable_shared_from_this< ResourceTrait >, public Libs::NameableTrait, public Libs::FlagTrait< uint32_t >, public Libs::ObservableTrait
 	{
 		public:
 
@@ -69,6 +70,9 @@ namespace EmEn::Resources
 				/* Enumeration boundary. */
 				MaxEnum
 			};
+
+			/** @brief Enables the resources conversion warning messages in console. */
+			static bool s_quietConversion;
 
 			/**
 			 * @brief Copy constructor.
@@ -109,7 +113,7 @@ namespace EmEn::Resources
 			bool
 			isTopResource () const noexcept
 			{
-				return m_parents.empty();
+				return m_parentsToNotify.empty();
 			}
 
 			/**
@@ -120,7 +124,7 @@ namespace EmEn::Resources
 			size_t
 			dependencyCount () const noexcept
 			{
-				return m_dependencies.size();
+				return m_dependenciesToWaitFor.size();
 			}
 
 			/**
@@ -265,7 +269,7 @@ namespace EmEn::Resources
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool addDependency (ResourceTrait * dependency) noexcept;
+			bool addDependency (const std::shared_ptr< ResourceTrait > & dependency) noexcept;
 
 			/**
 			 * @brief Sets the current status of loading by the inherited class.
@@ -296,12 +300,11 @@ namespace EmEn::Resources
 		private:
 
 			/**
-			 * @brief This private method is called from a child resource through m_parents
-			 * set to relaunch the parent resource dependencies check.
+			 * @brief This private method is called from a child resource through m_parents set to relaunch the parent resource dependencies check.
 			 * @param dependency A pointer to the loaded dependency. Suitable to unlink the resource from dependency set.
 			 * @return void
 			 */
-			void dependencyLoaded (ResourceTrait * dependency) noexcept;
+			void dependencyLoaded (const std::shared_ptr< ResourceTrait > & dependency) noexcept;
 
 			/**
 			 * @brief Checks this resource for every dependency below it. If everything is loaded, the method launch
@@ -322,10 +325,12 @@ namespace EmEn::Resources
 			/* Flag names. */
 			static constexpr auto DirectLoading{0UL};
 
-			std::set< ResourceTrait * > m_parents;
-			std::set< ResourceTrait * > m_dependencies;
+
+			std::set< std::shared_ptr< ResourceTrait > > m_parentsToNotify;
+			std::set< std::shared_ptr< ResourceTrait > > m_dependenciesToWaitFor;
 			Status m_status{Status::Unloaded};
-			mutable std::mutex m_checkAccess;
+			mutable std::mutex m_dependenciesAccess;
+			/* FIXME: Remove this array and reserve the first flag with FlagTrait. */
 			std::array< bool, 8 > m_flags{
 				false/*DirectLoading*/,
 				false/*UNUSED*/,

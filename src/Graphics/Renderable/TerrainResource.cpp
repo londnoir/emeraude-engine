@@ -55,65 +55,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	TerrainResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	TerrainResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	TerrainResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	bool
-	TerrainResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		if ( m_material != nullptr )
-		{
-			return m_material->isOpaque();
-		}
-
-		return true;
-	}
-
-	const Geometry::Interface *
-	TerrainResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	TerrainResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	TerrainResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const Cuboid< float > &
-	TerrainResource::boundingBox () const noexcept
-	{
-		return m_localData.boundingBox();
-	}
-
-	const Sphere< float > &
-	TerrainResource::boundingSphere () const noexcept
-	{
-		return m_localData.boundingSphere();
-	}
-
 	/*void
 	Terrain::updateVisibility (const CartesianFrame< float > & coordinates) noexcept
 	{
@@ -175,7 +116,7 @@ namespace EmEn::Graphics::Renderable
 		m_geometry = geometryResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -194,7 +135,7 @@ namespace EmEn::Graphics::Renderable
 		m_material = materialResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	void
@@ -214,7 +155,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	TerrainResource::prepareGeometry (float size, size_t division) noexcept
+	TerrainResource::prepareGeometry (float size, uint32_t division) noexcept
 	{
 		/* 1. Create the local data. */
 		if ( !m_localData.initializeData(size, division) )
@@ -235,12 +176,6 @@ namespace EmEn::Graphics::Renderable
 		}
 
 		return true;
-	}
-
-	const char *
-	TerrainResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool
@@ -321,14 +256,14 @@ namespace EmEn::Graphics::Renderable
 
 		/* Checks size and division options... */
 		const auto size = FastJSON::getNumber< float >(data, FastJSON::SizeKey, DefaultSize);
-		const auto division = FastJSON::getNumber< size_t >(data, FastJSON::DivisionKey, DefaultDivision);
+		const auto division = FastJSON::getNumber< uint32_t >(data, FastJSON::DivisionKey, DefaultDivision);
 
 		/* Checks material type. */
 		const auto materialType = FastJSON::getString(data, MaterialTypeKey);
 
 		if ( materialType.empty() || materialType != Material::StandardResource::ClassId )
 		{
-			Tracer::error(ClassId, BlobTrait() << "Material resource type '" << materialType << "' is not handled yet !");
+			TraceError{ClassId} << "Material resource type '" << materialType << "' for terrain '" << this->name() << "' is not handled !";
 
 			return this->setLoadSuccess(false);
 		}
@@ -377,7 +312,7 @@ namespace EmEn::Graphics::Renderable
 		if ( vertexColorMap != nullptr )
 			m_farGeometry->enableVertexColor(vertexColorMap);*/
 
-		if ( !m_farGeometry->load(size, division / 64) )
+		if ( !m_farGeometry->load(size, division / 64U) )
 		{
 			Tracer::error(ClassId, "Unable to create the far geometry !");
 
@@ -503,7 +438,7 @@ namespace EmEn::Graphics::Renderable
 		m_farGeometry->localData().setUVMultiplier(value);
 
 		/* Checks if all is loaded */
-		if ( !this->addDependency(m_farGeometry.get()) )
+		if ( !this->addDependency(m_farGeometry) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -512,7 +447,7 @@ namespace EmEn::Graphics::Renderable
 		//	m_geometry->enableVertexColor(vertexColorMap);
 
 		/* Creates the adaptive geometry (visible part). */
-		if ( !m_geometry->load(m_localData, division / 16, {0.0F, 0.0F, 0.0F}) )
+		if ( !m_geometry->load(m_localData, division / 16U, {0.0F, 0.0F, 0.0F}) )
 		{
 			Tracer::error(ClassId, "Unable to create adaptive grid from local data !");
 
@@ -525,7 +460,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	bool
-	TerrainResource::load (float size, size_t division, const std::shared_ptr< Material::Interface > & material) noexcept
+	TerrainResource::load (float size, uint32_t division, const std::shared_ptr< Material::Interface > & material) noexcept
 	{
 		if ( !this->beginLoading() )
 		{

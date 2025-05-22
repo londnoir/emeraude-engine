@@ -24,15 +24,12 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include "ShadowRendering.hpp"
+#include "ShadowCasting.hpp"
 
 /* Local inclusions. */
 #include "Libs/SourceCodeParser.hpp"
-#include "Graphics/RenderTarget/Abstract.hpp"
-#include "Graphics/RenderableInstance/Abstract.hpp"
-#include "Graphics/Types.hpp"
 #include "Saphir/Code.hpp"
-#include "Tracer.hpp"
+#include "Graphics/RenderTarget/Abstract.hpp"
 
 namespace EmEn::Saphir::Generator
 {
@@ -41,24 +38,31 @@ namespace EmEn::Saphir::Generator
 	using namespace Vulkan;
 	using namespace Keys;
 
-	ShadowRendering::ShadowRendering (Settings & settings, const std::shared_ptr< const RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const RenderableInstance::Abstract > & renderableInstance) noexcept
-		: Abstract(settings, ClassId, renderTarget),
-		m_renderableInstance(renderableInstance)
+	ShadowCasting::ShadowCasting (const std::shared_ptr< const RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const RenderableInstance::Abstract > & renderableInstance, uint32_t layerIndex) noexcept
+		: Abstract(ClassId, renderTarget, renderableInstance, layerIndex)
 	{
+		if ( renderableInstance->instancingEnabled() )
+		{
+			this->enableFlag(IsInstancingEnabled);
+		}
 
+		if ( renderableInstance->isFacingCamera() )
+		{
+			this->enableFlag(IsRenderableFacingCamera);
+		}
 	}
 
 	void
-	ShadowRendering::prepareUniformSets (SetIndexes & setIndexes) noexcept
+	ShadowCasting::prepareUniformSets (SetIndexes & setIndexes) noexcept
 	{
-		if ( m_renderableInstance->instancingEnabled() )
+		if ( this->isFlagEnabled(IsInstancingEnabled) )
 		{
 			setIndexes.enableSet(SetType::PerView);
 		}
 	}
 
 	bool
-	ShadowRendering::onGenerateProgram (Program & program) noexcept
+	ShadowCasting::onGenerateShadersCode (Program & program) noexcept
 	{
 		/* Generate the vertex shader stage. */
 		if ( this->generateVertexShader(program) )
@@ -148,21 +152,21 @@ namespace EmEn::Saphir::Generator
 	}
 
 	bool
-	ShadowRendering::onGenerateProgramLayout (const SetIndexes & /*setIndexes*/, std::vector< std::shared_ptr< DescriptorSetLayout > > & /*descriptorSetLayouts*/, std::vector< VkPushConstantRange > & pushConstantRanges) noexcept
+	ShadowCasting::onCreateDataLayouts (const SetIndexes & /*setIndexes*/, std::vector< std::shared_ptr< DescriptorSetLayout > > & /*descriptorSetLayouts*/, std::vector< VkPushConstantRange > & pushConstantRanges) noexcept
 	{
-		Abstract::generatePushConstantRanges(this->program()->vertexShader()->pushConstantBlockDeclarations(), pushConstantRanges, VK_SHADER_STAGE_VERTEX_BIT);
+		Abstract::generatePushConstantRanges(this->shaderProgram()->vertexShader()->pushConstantBlockDeclarations(), pushConstantRanges, VK_SHADER_STAGE_VERTEX_BIT);
 
 		return true;
 	}
 
 	bool
-	ShadowRendering::generateVertexShader (Program & program) noexcept
+	ShadowCasting::generateVertexShader (Program & program) noexcept
 	{
 		auto * vertexShader = program.initVertexShader(
 			this->name( ) + "VertexShader",
-			m_renderableInstance->instancingEnabled(),
+			this->isFlagEnabled(IsInstancingEnabled),
 			false,
-			m_renderableInstance->isFacingCamera()
+			this->isFlagEnabled(IsRenderableFacingCamera)
 		);
 		vertexShader->setExtensionBehavior("GL_ARB_separate_shader_objects", "enable");
 
@@ -184,7 +188,7 @@ namespace EmEn::Saphir::Generator
 	}
 
 	bool
-	ShadowRendering::generateGeometryShader (Program & program) noexcept
+	ShadowCasting::generateGeometryShader (Program & program) noexcept
 	{
 		auto * geometryShader = program.initGeometryShader(
 			this->name( ) + "GeometryShader",
@@ -225,7 +229,7 @@ namespace EmEn::Saphir::Generator
 	}
 
 	bool
-	ShadowRendering::generateFragmentShader (Program & program) noexcept
+	ShadowCasting::generateFragmentShader (Program & program) noexcept
 	{
 		auto * fragmentShader = program.initFragmentShader(this->name( ) + "FragmentShader");
 		fragmentShader->setExtensionBehavior("GL_ARB_separate_shader_objects", "enable");
@@ -276,15 +280,8 @@ namespace EmEn::Saphir::Generator
 	}
 
 	bool
-	ShadowRendering::onGraphicsPipelineConfiguration (const Program & /*program*/, GraphicsPipeline & graphicsPipeline) noexcept
+	ShadowCasting::onGraphicsPipelineConfiguration (const Program & /*program*/, GraphicsPipeline & graphicsPipeline) noexcept
 	{
-		if ( m_renderableInstance == nullptr )
-		{
-			Tracer::error(ClassId, "The renderable instance pointer is null !");
-
-			return false;
-		}
-
 		if ( !graphicsPipeline.configureRasterizationState(RenderPassType::SimplePass) )
 		{
 			Tracer::error(ClassId, "Unable to configure the graphics pipeline rasterization state !");
@@ -292,9 +289,34 @@ namespace EmEn::Saphir::Generator
 			return false;
 		}
 
-		if ( !graphicsPipeline.configureDepthStencilState(RenderPassType::SimplePass, *m_renderableInstance) )
 		{
-			Tracer::error(ClassId, "Unable to configure the graphics pipeline depth/stencil state !");
+			VkPipelineDepthStencilStateCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			createInfo.pNext = nullptr;
+			createInfo.flags = 0;
+			createInfo.depthTestEnable = VK_FALSE;
+			createInfo.depthWriteEnable = VK_FALSE;
+			createInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+			createInfo.depthBoundsTestEnable = VK_FALSE;
+			createInfo.stencilTestEnable = VK_FALSE;
+			createInfo.minDepthBounds = 0.0F;
+			createInfo.maxDepthBounds = 1.0F;
+
+			if ( !graphicsPipeline.configureDepthStencilState(createInfo) )
+			{
+				Tracer::error(ClassId, "Unable to configure the graphics pipeline depth/stencil state !");
+
+				return false;
+			}
+		}
+
+		const std::vector< VkDynamicState > dynamicStates{
+			VK_DYNAMIC_STATE_VIEWPORT
+		};
+
+		if ( !graphicsPipeline.configureDynamicStates(dynamicStates) )
+		{
+			Tracer::error(ClassId, "Unable to configure the graphics pipeline dynamic state !");
 
 			return false;
 		}

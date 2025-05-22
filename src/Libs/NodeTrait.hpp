@@ -1,5 +1,5 @@
 /*
- * src/Libs/Node.hpp
+ * src/Libs/NodeTrait.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -31,6 +31,8 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <stack>
+#include <iostream>
 
 /* Local inclusions for usages. */
 #include "Math/CartesianFrame.hpp"
@@ -39,9 +41,12 @@ namespace EmEn::Libs
 {
 	/**
 	 * @brief Node class to define a skin.
+	 * @tparam precision_t The location data precision type. Default float.
 	 * @extends std::enable_shared_from_this< Node >
 	 */
-	class Node : public std::enable_shared_from_this< Node >
+	template< typename precision_t = float >
+	requires (std::is_floating_point_v< precision_t >)
+	class NodeTrait : public std::enable_shared_from_this< NodeTrait< precision_t > >
 	{
 		public:
 
@@ -50,45 +55,51 @@ namespace EmEn::Libs
 			/**
 			 * @brief Constructs the root node.
 			 */
-			Node () noexcept = default;
+			NodeTrait () noexcept = default;
 
 			/**
 			 * @brief Constructs a child node.
 			 * @param parent a reference to the smart pointer of the parent.
 			 * @param coordinates A reference to a coordinates. Default Origin.
 			 */
-			explicit Node (const std::shared_ptr< Node > & parent, const Math::CartesianFrame< float > & coordinates = {}) noexcept;
+			explicit
+			NodeTrait (const std::shared_ptr< NodeTrait > & parent, const Math::CartesianFrame< precision_t > & coordinates = {}) noexcept
+				: m_parent(parent),
+				m_cartesianFrame(coordinates)
+			{
+
+			}
 
 			/**
 			 * @brief Copy constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			Node (const Node & copy) noexcept = delete;
+			NodeTrait (const NodeTrait & copy) noexcept = delete;
 
 			/**
 			 * @brief Move constructor.
 			 * @param copy A reference to the copied instance.
 			 */
-			Node (Node && copy) noexcept = delete;
+			NodeTrait (NodeTrait && copy) noexcept = delete;
 
 			/**
 			 * @brief Copy assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return node &
 			 */
-			Node & operator= (const Node & copy) noexcept = delete;
+			NodeTrait & operator= (const NodeTrait & copy) noexcept = delete;
 
 			/**
 			 * @brief Move assignment.
 			 * @param copy A reference to the copied instance.
 			 * @return node &
 			 */
-			Node & operator= (Node && copy) noexcept = delete;
+			NodeTrait & operator= (NodeTrait && copy) noexcept = delete;
 
 			/**
 			 * @brief Destructs the node.
 			 */
-			virtual ~Node () = default;
+			virtual ~NodeTrait () = default;
 
 			/**
 			 * @brief Returns whether the node is the top tree one. Parent pointer is nullptr.
@@ -117,15 +128,35 @@ namespace EmEn::Libs
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			size_t getDepth () const noexcept;
+			size_t
+			getDepth () const noexcept
+			{
+				if ( this->isRoot() )
+				{
+					return 0;
+				}
+
+				size_t depth = 0;
+
+				auto parent = m_parent.lock();
+
+				while ( !parent->isRoot() )
+				{
+					depth++;
+
+					parent = parent->m_parent.lock();
+				}
+
+				return depth;
+			}
 
 			/**
 			 * @brief Returns the parent node smart pointer.
 			 * @warning If the node is root, it will be nullptr.
-			 * @return std::shared_ptr< Node >
+			 * @return std::shared_ptr< NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node >
+			std::shared_ptr< NodeTrait >
 			parent () noexcept
 			{
 				return m_parent.lock();
@@ -134,10 +165,10 @@ namespace EmEn::Libs
 			/**
 			 * @brief Returns the parent node smart pointer.
 			 * @warning If the node is root, it will be nullptr.
-			 * @return std::shared_ptr< const Node >
+			 * @return std::shared_ptr< const NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< const Node >
+			std::shared_ptr< const NodeTrait >
 			parent () const noexcept
 			{
 				return m_parent.lock();
@@ -145,10 +176,10 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns the children nodes.
-			 * @return const std::map< std::string, std::shared_ptr< Node > > &
+			 * @return const std::map< std::string, std::shared_ptr< NodeTrait > > &
 			 */
 			[[nodiscard]]
-			const std::map< std::string, std::shared_ptr< Node > > &
+			const std::map< std::string, std::shared_ptr< NodeTrait > > &
 			children () const noexcept
 			{
 				return m_children;
@@ -156,10 +187,10 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns the children nodes.
-			 * @return std::map< std::string, std::shared_ptr< Node > > &
+			 * @return std::map< std::string, std::shared_ptr< NodeTrait > > &
 			 */
 			[[nodiscard]]
-			std::map< std::string, std::shared_ptr< Node > > &
+			std::map< std::string, std::shared_ptr< NodeTrait > > &
 			children () noexcept
 			{
 				return m_children;
@@ -167,57 +198,116 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns the root node.
-			 * @return std::shared_ptr< Node >
+			 * @return std::shared_ptr< NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > getRoot () noexcept;
+			std::shared_ptr< NodeTrait >
+			getRoot () noexcept
+			{
+				auto currentNode = this->shared_from_this();
+
+				while ( !currentNode->isRoot() )
+				{
+					currentNode = currentNode->m_parent.lock();
+				}
+
+				return currentNode;
+			}
 
 			/**
 			 * @brief Returns the root node.
-			 * @return std::shared_ptr< const Node >
+			 * @return std::shared_ptr< const NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< const Node > getRoot () const noexcept;
+			std::shared_ptr< const NodeTrait >
+			getRoot () const noexcept
+			{
+				auto currentNode = this->shared_from_this();
+
+				while ( !currentNode->isRoot() )
+				{
+					currentNode = currentNode->m_parent.lock();
+				}
+
+				return currentNode;
+			}
 
 			/**
 			 * @brief Creates a sub node at a given coordinates.
 			 * @warning If the node already exists, the method will return a null pointer.
 			 * @param name A reference to a string.
 			 * @param coordinates Set the coordinates of the new node. Default Origin.
-			 * @return std::shared_ptr< Node >
+			 * @return std::shared_ptr< NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > createChild (const std::string & name, const Math::CartesianFrame< float > & coordinates = {}) noexcept;
+			std::shared_ptr< NodeTrait >
+			createChild (const std::string & name, const Math::CartesianFrame< precision_t > & coordinates = {}) noexcept
+			{
+				if ( name == Root )
+				{
+					std::cerr << "The node name '" << Root << "' is reserved !" "\n";
+
+					return nullptr;
+				}
+
+				if ( m_children.contains(name) )
+				{
+					std::cerr << "The node name '" << name << "' is already used at this level !" "\n";
+
+					return nullptr;
+				}
+
+				return m_children.emplace(name, std::make_shared< NodeTrait >(this->shared_from_this(), coordinates)).first->second;
+			}
 
 			/**
 			 * @brief Creates a sub node at a given position.
 			 * @warning If the node already exists, the method will return a null pointer.
 			 * @param name A reference to a string.
 			 * @param position Set the position of the new node.
-			 * @return std::shared_ptr< Node >
+			 * @return std::shared_ptr< NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node >
-			createChild (const std::string & name, const Math::Vector< 3, float > & position) noexcept
+			std::shared_ptr< NodeTrait >
+			createChild (const std::string & name, const Math::Vector< 3, precision_t > & position) noexcept
 			{
-				return this->createChild(name, Math::CartesianFrame< float >{position});
+				return this->createChild(name, Math::CartesianFrame< precision_t >{position});
 			}
 
 			/**
 			 * @brief Returns a child by its name.
 			 * @warning Can be nullptr !
 			 * @param name A reference to a string.
-			 * @return std::shared_ptr< Node >
+			 * @return std::shared_ptr< NodeTrait >
 			 */
 			[[nodiscard]]
-			std::shared_ptr< Node > findChild (const std::string & name) const noexcept;
+			std::shared_ptr< NodeTrait >
+			findChild (const std::string & name) const noexcept
+			{
+				const auto nodeIt = m_children.find(name);
+
+				return nodeIt != m_children.cend() ? nodeIt->second : nullptr;
+			}
 
 			/**
 			 * @brief Destroys a child by its name and returns true if the child existed.
 			 * @param name A reference to a string.
 			 * @return bool
 			 */
-			bool destroyChild (const std::string & name) noexcept;
+			bool
+			destroyChild (const std::string & name) noexcept
+			{
+				const auto nodeIt = m_children.find(name);
+
+				if ( nodeIt == m_children.end() )
+				{
+					return false;
+				}
+
+				m_children.erase(nodeIt);
+
+				return true;
+			}
 
 			/**
 			 * @brief Destroys children.
@@ -231,10 +321,10 @@ namespace EmEn::Libs
 
 			/**
 			* @brief Returns the cartesian frame in local space.
-			* @return const Math::CartesianFrame< float > &
+			* @return const Math::CartesianFrame< precision_t > &
 			*/
 			[[nodiscard]]
-			const Math::CartesianFrame< float > &
+			const Math::CartesianFrame< precision_t > &
 			cartesianFrame () const noexcept
 			{
 				return m_cartesianFrame;
@@ -242,10 +332,10 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns the cartesian frame in local space.
-			 * @return Math::CartesianFrame< float > &
+			 * @return Math::CartesianFrame< precision_t > &
 			 */
 			[[nodiscard]]
-			Math::CartesianFrame< float > &
+			Math::CartesianFrame< precision_t > &
 			cartesianFrame () noexcept
 			{
 				return m_cartesianFrame;
@@ -253,16 +343,53 @@ namespace EmEn::Libs
 
 			/**
 			 * @brief Returns the cartesian frame in world space.
-			 * @return Math::CartesianFrame< float >
+			 * @return Math::CartesianFrame< precision_t >
 			 */
 			[[nodiscard]]
-			Math::CartesianFrame< float > getWorldCartesianFrame () const noexcept;
+			Math::CartesianFrame< precision_t >
+			getWorldCartesianFrame () const noexcept
+			{
+				/* NOTE: As root, return the origin!
+				 * If the parent is the root node, return the frame. */
+				if ( this->isRoot() || this->parent()->isRoot() )
+				{
+					return m_cartesianFrame;
+				}
+
+				/* Stack up a reversed tree for each cartesian frame. */
+				std::stack< Math::CartesianFrame< precision_t > > reversedTree;
+
+				{
+					const auto * node = this;
+
+					/* While the parent is not root. */
+					while ( node != nullptr )
+					{
+						reversedTree.emplace(node->m_cartesianFrame);
+
+						node = node->m_parent.lock().get();
+					}
+				}
+
+				Math::Matrix< 4, precision_t > matrix;
+				Math::Vector< 3, precision_t > scalingVector{1, 1, 1};
+
+				while ( !reversedTree.empty() )
+				{
+					matrix *= reversedTree.top().getModelMatrix();
+					scalingVector *= reversedTree.top().scalingFactor();
+
+					reversedTree.pop();
+				}
+
+				return Math::CartesianFrame< precision_t >{matrix, scalingVector};
+			}
 
 		private:
 
 			/* NOTE : If nullptr, this node is the root. */
-			std::weak_ptr< Node > m_parent;
-			std::map< std::string, std::shared_ptr< Node > > m_children;
-			Math::CartesianFrame< float > m_cartesianFrame;
+			std::weak_ptr< NodeTrait > m_parent;
+			std::map< std::string, std::shared_ptr< NodeTrait > > m_children;
+			Math::CartesianFrame< precision_t > m_cartesianFrame;
 	};
 }

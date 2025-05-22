@@ -36,6 +36,7 @@ namespace EmEn::Libs::Math
 {
 	/**
 	 * @brief The abstract 2D shape class.
+	 * @FIXME: Removes this idea, this bring confusion between 2D and 3D.
 	 * @tparam data_t The type used for geometric distance and dimensions. Default float.
 	 * @extends EmEn::Libs::Math::ShapeInterface This is a geometric shape.
 	 */

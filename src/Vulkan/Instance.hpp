@@ -182,6 +182,17 @@ namespace EmEn::Vulkan
 			}
 
 			/**
+			 * @brief Returns whether textures must be checked for standard requirements like sizes being power of two.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isStandardTextureCheckEnabled () const noexcept
+			{
+				return m_flags[StandardTextureCheckEnabled];
+			}
+
+			/**
 			 * @brief Returns a logical device with graphics capabilities.
 			 * @param window A reference to a Window to check the device with presentation. Default Off-screen rendering.
 			 * @return std::shared_ptr< Device >
@@ -377,6 +388,7 @@ namespace EmEn::Vulkan
 			static constexpr auto DebugMode{1UL};
 			static constexpr auto UseDebugMessenger{2UL};
 			static constexpr auto DynamicStateExtensionEnabled{3UL};
+			static constexpr auto StandardTextureCheckEnabled{4UL};
 
 			PrimaryServices & m_primaryServices;
 			VkInstance m_instance{VK_NULL_HANDLE};
@@ -412,7 +424,7 @@ namespace EmEn::Vulkan
 				false/*DebugMode*/,
 				false/*UseDebugMessenger*/,
 				false/*DynamicStateExtensionEnabled*/,
-				false/*UNUSED*/,
+				false/*StandardTextureCheckEnabled*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/,
 				false/*UNUSED*/

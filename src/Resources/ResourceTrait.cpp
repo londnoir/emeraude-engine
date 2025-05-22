@@ -28,16 +28,10 @@
 
 /* STL inclusions. */
 #include <algorithm>
-#include <cstdint>
-#include <fstream>
-#include <mutex>
-#include <string>
 
 /* Local inclusions. */
 #include "Libs/FastJSON.hpp"
 #include "Libs/String.hpp"
-#include "Stores.hpp"
-#include "Types.hpp"
 #include "Manager.hpp"
 #include "Tracer.hpp"
 
@@ -45,10 +39,13 @@ namespace EmEn::Resources
 {
 	using namespace EmEn::Libs;
 
-	static constexpr auto TracerTag{"ResourceChain"};
+	constexpr auto TracerTag{"ResourceChain"};
+
+	bool ResourceTrait::s_quietConversion{true};
 
 	ResourceTrait::ResourceTrait (const std::string & resourceName, uint32_t initialResourceFlagBits) noexcept
-		: NameableTrait(resourceName), FlagTrait(initialResourceFlagBits)
+		: NameableTrait(resourceName),
+		FlagTrait(initialResourceFlagBits)
 	{
 
 	}
@@ -80,17 +77,16 @@ namespace EmEn::Resources
 
 			case Status::Loaded :
 				/* NOTE: Check the parent list. It should be empty ! */
-				if ( !m_parents.empty() )
+				if ( !m_parentsToNotify.empty() )
 				{
-					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this << ") is destroyed while still having " << m_parents.size() << " parent pointer(s) !";
+					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this << ") is destroyed while still having " << m_parentsToNotify.size() << " parent pointer(s) !";
 				}
 
 				/* NOTE: Check the dependency list. It should be empty ! */
-				if ( !m_dependencies.empty() )
+				if ( !m_dependenciesToWaitFor.empty() )
 				{
-					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this << ") is destroyed while still having " << m_dependencies.size() << " dependency pointer(s) !";
+					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this << ") is destroyed while still having " << m_dependenciesToWaitFor.size() << " dependency pointer(s) !";
 				}
-
 				break;
 
 			case Status::Failed :
@@ -135,8 +131,10 @@ namespace EmEn::Resources
 	}
 
 	bool
-	ResourceTrait::addDependency (ResourceTrait * dependency) noexcept
+	ResourceTrait::addDependency (const std::shared_ptr< ResourceTrait > & dependency) noexcept
 	{
+		const std::lock_guard< std::mutex > lock{m_dependenciesAccess};
+
 		/* First, we check the current resource status. */
 		switch ( m_status )
 		{
@@ -180,9 +178,8 @@ namespace EmEn::Resources
 			return false;
 		}
 
-		/* If the dependency is loaded or already present.
-		 * we don't need to add it. */
-		if ( dependency->isLoaded() || m_dependencies.contains(dependency) )
+		/* If the dependency is loaded or already present. we don't need to add it. */
+		if ( dependency->isLoaded() || m_dependenciesToWaitFor.contains(dependency) )
 		{
 			if ( Stores::s_operationVerboseEnabled )
 			{
@@ -194,19 +191,19 @@ namespace EmEn::Resources
 			return true;
 		}
 
-		const auto result = m_dependencies.emplace(dependency);
+		const auto result = m_dependenciesToWaitFor.emplace(dependency);
 
 		/* Set this resource as parent of the dependency (double-link). */
 		if ( result.second )
 		{
-			dependency->m_parents.emplace(this);
+			dependency->m_parentsToNotify.emplace(this->shared_from_this());
 
 			if ( Stores::s_operationVerboseEnabled )
 			{
 				TraceInfo{TracerTag} <<
 					"Resource dependency '" << dependency->name() << "' (" << dependency->classLabel() << ") "
 					"added to resource '" << this->name() << "' (" << this->classLabel() << "). "
-					"Dependency count : " << m_dependencies.size() << ".";
+					"Dependency count : " << m_dependenciesToWaitFor.size() << ".";
 			}
 
 			return true;
@@ -225,7 +222,7 @@ namespace EmEn::Resources
 	}
 
 	void
-	ResourceTrait::dependencyLoaded (ResourceTrait * dependency) noexcept
+	ResourceTrait::dependencyLoaded (const std::shared_ptr< ResourceTrait > & dependency) noexcept
 	{
 		if ( Stores::s_operationVerboseEnabled )
 		{
@@ -235,7 +232,7 @@ namespace EmEn::Resources
 		}
 
 		/* Removes the resource from dependencies. */
-		m_dependencies.erase(dependency);
+		m_dependenciesToWaitFor.erase(dependency);
 
 		/* Launch an overall check for dependencies loading. */
 		this->checkDependencies();
@@ -244,7 +241,7 @@ namespace EmEn::Resources
 	void
 	ResourceTrait::checkDependencies () noexcept
 	{
-		const std::lock_guard< std::mutex > lock{m_checkAccess};
+		const std::lock_guard< std::mutex > lock{m_dependenciesAccess};
 
 		/* NOTE: First we check the resource current status. */
 		switch ( m_status )
@@ -263,7 +260,7 @@ namespace EmEn::Resources
 			case Status::Loading :
 			{
 				/* NOTE: If any of dependencies are in a loading state. */
-				if ( std::ranges::any_of(m_dependencies, [] (const auto & dependency) {return !dependency->isLoaded();}) )
+				if ( std::ranges::any_of(m_dependenciesToWaitFor, [] (const auto & dependency) {return !dependency->isLoaded();}) )
 				{
 					return;
 				}
@@ -287,13 +284,13 @@ namespace EmEn::Resources
 					if ( !this->isTopResource() )
 					{
 						/* We want to notice parents the resource is loaded. */
-						for ( auto * parent : m_parents )
+						for ( const auto & parent : m_parentsToNotify )
 						{
-							parent->dependencyLoaded(this);
+							parent->dependencyLoaded(this->shared_from_this());
 						}
 
-						/* We don't need to keep tracks of parents. */
-						m_parents.clear();
+						/* Once notified, we don't need to keep tracks of parents. */
+						m_parentsToNotify.clear();
 					}
 				}
 				else
@@ -311,9 +308,9 @@ namespace EmEn::Resources
 				break;
 
 			case Status::Loaded :
-				if ( !m_dependencies.empty() )
+				if ( !m_dependenciesToWaitFor.empty() )
 				{
-					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") status is loaded, but still have " << m_dependencies.size() << " dependencies.";
+					TraceError{TracerTag} << "The resource '" << this->name() << "' (" << this->classLabel() << ") status is loaded, but still have " << m_dependenciesToWaitFor.size() << " dependencies.";
 				}
 
 				/* NOTE: We don't want to check again dependencies. */
@@ -425,11 +422,14 @@ namespace EmEn::Resources
 	{
 		const auto filename = String::right(filepath.string(), storeName + IO::Separator);
 
-#if IS_WINDOWS
-		/* NOTE: Resource name use the UNIX convention. */
-		return String::replace(IO::Separator, '/', String::removeFileExtension(filename));
-#else
-		return String::removeFileExtension(filename);
-#endif
+		if constexpr ( EmEn::IsWindows )
+		{
+			/* NOTE: Resource name use the UNIX convention. */
+			return String::replace(IO::Separator, '/', String::removeFileExtension(filename));
+		}
+		else
+		{
+			return String::removeFileExtension(filename);
+		}
 	}
 }

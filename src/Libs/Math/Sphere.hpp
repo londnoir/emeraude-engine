@@ -44,12 +44,12 @@ namespace EmEn::Libs::Math
 {
 	/**
 	 * @brief Defines a sphere.
-	 * @tparam data_t The type used for geometric distance and dimensions. Default float.
+	 * @tparam precision_t The precision type. Default float.
 	 * @extends EmEn::Libs::Math::Shape3DInterface This is a 3D shape.
 	 */
-	template< typename data_t = float >
-	requires (std::is_arithmetic_v< data_t >)
-	class Sphere final : public Shape3DInterface< data_t >
+	template< typename precision_t = float >
+	requires (std::is_floating_point_v< precision_t >)
+	class Sphere final : public Shape3DInterface< precision_t >
 	{
 		public:
 
@@ -65,7 +65,7 @@ namespace EmEn::Libs::Math
 			 */
 			explicit
 			constexpr
-			Sphere (data_t radius) noexcept
+			Sphere (precision_t radius) noexcept
 				: m_radius(radius)
 			{
 
@@ -77,7 +77,7 @@ namespace EmEn::Libs::Math
 			 * @param position A reference to a position vector.
 			 */
 			constexpr
-			Sphere (data_t radius, const Vector< 3, data_t > & position) noexcept
+			Sphere (precision_t radius, const Vector< 3, precision_t > & position) noexcept
 				: m_position(position), m_radius(radius)
 			{
 
@@ -85,7 +85,7 @@ namespace EmEn::Libs::Math
 
 			/** @copydoc EmEn::Libs::Math::Shape3DInterface::getVolume() */
 			[[nodiscard]]
-			data_t
+			precision_t
 			getVolume () const noexcept override
 			{
 				return sphereVolume(m_radius);
@@ -97,7 +97,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setPosition (const Vector< 3, data_t > & position) noexcept
+			setPosition (const Vector< 3, precision_t > & position) noexcept
 			{
 				m_position = position;
 			}
@@ -107,7 +107,7 @@ namespace EmEn::Libs::Math
 			 * @return const Vector< 3, data_t > &
 			 */
 			[[nodiscard]]
-			const Vector< 3, data_t > &
+			const Vector< 3, precision_t > &
 			position () const noexcept
 			{
 				return m_position;
@@ -119,7 +119,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setRadius (data_t radius) noexcept
+			setRadius (precision_t radius) noexcept
 			{
 				m_radius = std::abs(radius);
 			}
@@ -129,7 +129,7 @@ namespace EmEn::Libs::Math
 			 * @return data_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			radius () const noexcept
 			{
 				return m_radius;
@@ -152,7 +152,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			merge (const Sphere< data_t > & other) noexcept
+			merge (const Sphere< precision_t > & other) noexcept
 			{
 				/* If the other sphere is the same or is invalid, we skip it. */
 				if ( this == &other || !other.isValid() )
@@ -171,9 +171,9 @@ namespace EmEn::Libs::Math
 				}
 
 				/* FIXME: Check this algorithm ! */
-				const auto delta = Vector< 3, data_t >::distance(m_position, other.m_position) - m_radius - other.m_radius;
+				const auto delta = Vector< 3, precision_t >::distance(m_position, other.m_position) - m_radius - other.m_radius;
 
-				m_position = Vector< 3, data_t >::midPoint(m_position, other.m_position);
+				m_position = Vector< 3, precision_t >::midPoint(m_position, other.m_position);
 				m_radius = (m_radius + other.m_radius) + delta;
 			}
 
@@ -191,7 +191,7 @@ namespace EmEn::Libs::Math
 					return false;
 				}
 
-				const auto D = Vector< 3, data_t >::distanceSquared(m_position, other.m_position);
+				const auto D = Vector< 3, precision_t >::distanceSquared(m_position, other.m_position);
 				const auto R2 = std::pow(m_radius + other.m_radius, 2);
 
 				return Sphere::isOverlapping(D, R2);
@@ -204,9 +204,9 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isCollidingWith (const Vector< 3, data_t > & point) const noexcept
+			isCollidingWith (const Vector< 3, precision_t > & point) const noexcept
 			{
-				const auto D = Vector< 3, data_t >::distanceSquared(m_position, point);
+				const auto D = Vector< 3, precision_t >::distanceSquared(m_position, point);
 				const auto R2 = m_radius * m_radius;
 
 				return Sphere::isOverlapping(D, R2);
@@ -220,14 +220,14 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isCollidingWith (const Vector< 4, data_t > & point, bool useFourthValueAsRadius = false) const noexcept
+			isCollidingWith (const Vector< 4, precision_t > & point, bool useFourthValueAsRadius = false) const noexcept
 			{
 				if ( useFourthValueAsRadius )
 				{
-					return this->isCollidingWith(Vector<3, data_t>(point), point[Vector<3, data_t>::W]);
+					return this->isCollidingWith(Vector<3, precision_t>(point), point[Vector<3, precision_t>::W]);
 				}
 
-				return this->isCollidingWith(Vector< 3, data_t >(point));
+				return this->isCollidingWith(Vector< 3, precision_t >(point));
 			}
 
 			/**
@@ -238,9 +238,9 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isCollidingWith (const Vector< 3, data_t > & point, float radius) const noexcept
+			isCollidingWith (const Vector< 3, precision_t > & point, float radius) const noexcept
 			{
-				const auto D = Vector< 3, data_t >::distanceSquared(m_position, point);
+				const auto D = Vector< 3, precision_t >::distanceSquared(m_position, point);
 				const auto R2 = std::pow(m_radius + radius, 2);
 
 				return Sphere::isOverlapping(D, R2);
@@ -254,9 +254,9 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isCollidingWith (const Vector< 4, data_t > & point, float radius) const noexcept
+			isCollidingWith (const Vector< 4, precision_t > & point, float radius) const noexcept
 			{
-				return this->isCollidingWith(Vector< 3, data_t >(point), radius);
+				return this->isCollidingWith(Vector< 3, precision_t >(point), radius);
 			}
 
 			/**
@@ -267,7 +267,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			static
-			data_t
+			precision_t
 			getIntersectionOverlap (const Sphere & lhs, const Sphere & rhs) noexcept
 			{
 				if ( &lhs == &rhs || !lhs.isValid() || !rhs.isValid() )
@@ -275,7 +275,7 @@ namespace EmEn::Libs::Math
 					return 0;
 				}
 
-				const auto distance = Vector< 3, data_t >::distance(lhs.m_position, rhs.m_position);
+				const auto distance = Vector< 3, precision_t >::distance(lhs.m_position, rhs.m_position);
 				const auto radius = lhs.m_radius + rhs.m_radius;
 
 				return Sphere::overlap(distance, radius);
@@ -289,10 +289,10 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			static
-			data_t
-			getIntersectionOverlap (const Sphere & lhs, const Vector< 3, data_t > & point) noexcept
+			precision_t
+			getIntersectionOverlap (const Sphere & lhs, const Vector< 3, precision_t > & point) noexcept
 			{
-				const auto distance = Vector< 3, data_t >::distance(lhs.m_position, point);
+				const auto distance = Vector< 3, precision_t >::distance(lhs.m_position, point);
 
 				return Sphere::overlap(distance, lhs.m_radius);
 			}
@@ -306,10 +306,10 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			static
-			data_t
-			getIntersectionOverlap (const Sphere & lhs, const Vector< 3, data_t > & point, float radius) noexcept
+			precision_t
+			getIntersectionOverlap (const Sphere & lhs, const Vector< 3, precision_t > & point, float radius) noexcept
 			{
-				const auto distance = Vector< 3, data_t >::distance(lhs.m_position, point);
+				const auto distance = Vector< 3, precision_t >::distance(lhs.m_position, point);
 				const auto totalRadius = lhs.m_radius + radius;
 
 				return Sphere::overlap(distance, totalRadius);
@@ -324,15 +324,15 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			static
-			data_t
-			getIntersectionOverlap (const Sphere & lhs, const Vector< 4, data_t > & point, bool useFourthValueAsRadius = false) noexcept
+			precision_t
+			getIntersectionOverlap (const Sphere & lhs, const Vector< 4, precision_t > & point, bool useFourthValueAsRadius = false) noexcept
 			{
 				if ( useFourthValueAsRadius )
 				{
-					return Sphere::getIntersectionOverlap(lhs, Vector<3, data_t>(point), point[Vector<3, data_t>::W]);
+					return Sphere::getIntersectionOverlap(lhs, Vector<3, precision_t>(point), point[Vector<3, precision_t>::W]);
 				}
 
-				return Sphere::getIntersectionOverlap(lhs, Vector< 3, data_t >(point));
+				return Sphere::getIntersectionOverlap(lhs, Vector< 3, precision_t >(point));
 			}
 
 			/**
@@ -344,10 +344,10 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			static
-			data_t
-			getIntersectionOverlap (const Sphere & lhs, const Vector< 4, data_t > & point, float radius) noexcept
+			precision_t
+			getIntersectionOverlap (const Sphere & lhs, const Vector< 4, precision_t > & point, float radius) noexcept
 			{
-				return Sphere::getIntersectionOverlap(lhs, Vector< 3, data_t >(point), radius);
+				return Sphere::getIntersectionOverlap(lhs, Vector< 3, precision_t >(point), radius);
 			}
 
 			/**
@@ -403,7 +403,7 @@ namespace EmEn::Libs::Math
 			 */
 			static
 			bool
-			isOverlapping (data_t D, data_t R2)
+			isOverlapping (precision_t D, precision_t R2)
 			{
 				return D < R2;
 			}
@@ -415,13 +415,13 @@ namespace EmEn::Libs::Math
 			 * @return data_t
 			 */
 			static
-			data_t
-			overlap (data_t D, data_t R2)
+			precision_t
+			overlap (precision_t D, precision_t R2)
 			{
 				return D < R2 ? R2 - D : 0;
 			}
 
-			Vector< 3, data_t > m_position{};
-			data_t m_radius{0};
+			Vector< 3, precision_t > m_position{};
+			precision_t m_radius{0};
 	};
 }

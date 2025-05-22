@@ -1,5 +1,5 @@
 /*
- * src/Testing/test_Node.cpp
+* src/Libs/Math/Space2D/Point.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -24,14 +24,17 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include <gtest/gtest.h>
+#pragma once
 
 /* Local inclusions. */
-#include "../Libs/Node.hpp"
+#include "Libs/Math/Vector.hpp"
 
-using namespace EmEn::Libs;
-
-TEST(Node, init)
+namespace EmEn::Libs::Math::Space2D
 {
-
+	/**
+	 * @brief Vector specialization of a point in 2D space.
+	 */
+	template< typename precisions_t >
+	requires (std::is_floating_point_v< precisions_t >)
+	using Point = Vector< 2, precisions_t >;
 }

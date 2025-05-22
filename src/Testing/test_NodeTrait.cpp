@@ -1,5 +1,5 @@
 /*
- * src/Libs/Time/Elapsed/CPUTime.cpp
+ * src/Testing/test_Node.cpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -24,38 +24,14 @@
  * --- THIS IS AUTOMATICALLY GENERATED, DO NOT CHANGE ---
  */
 
-#include "CPUTime.hpp"
+#include <gtest/gtest.h>
 
-/* STL inclusions. */
-#include <ctime>
+/* Local inclusions. */
+#include "../Libs/NodeTrait.hpp"
 
-namespace EmEn::Libs::Time::Elapsed
+using namespace EmEn::Libs;
+
+TEST(NodeTrait, init)
 {
-	void
-	CPUTime::start () noexcept
-	{
-		m_startTime = std::clock();
-	}
 
-	void
-	CPUTime::stop () noexcept
-	{
-		if constexpr ( CLOCKS_PER_SEC == 1000 )
-		{
-			/* Duration is expressed in milliseconds. */
-			this->setDuration((std::clock() - m_startTime) * 1000000);
-		}
-
-		if constexpr ( CLOCKS_PER_SEC == 1000000 )
-		{
-			/* Duration is expressed in microseconds. */
-			this->setDuration((std::clock() - m_startTime) * 1000);
-		}
-
-		if constexpr ( CLOCKS_PER_SEC == 1000000000 )
-		{
-			/* Duration is expressed in nanoseconds. */
-			this->setDuration(std::clock() - m_startTime);
-		}
-	}
 }

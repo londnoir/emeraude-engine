@@ -630,9 +630,10 @@ namespace EmEn::Vulkan
 
 		DeviceRequirements requirements{DeviceJobHint::Graphics};
 		requirements.features().fillModeNonSolid = VK_TRUE; // Required for wireframe mode !
-#if !IS_MACOS
-		requirements.features().geometryShader = VK_TRUE; // Required for TBN space display
-#endif
+		if constexpr ( !IsMacOS )
+		{
+			requirements.features().geometryShader = VK_TRUE; // Required for TBN space display
+		}
 		requirements.features().samplerAnisotropy = VK_TRUE;
 		requirements.requireGraphicsQueues({1.0F}, {0.5F});
 		requirements.requireTransferQueues({1.0F});
@@ -651,6 +652,9 @@ namespace EmEn::Vulkan
 		}
 
 		m_graphicsDevice = logicalDevice;
+
+		/* NOTE: Basic GPU do not support flexible textures. */
+		m_flags[StandardTextureCheckEnabled] = m_graphicsDevice->hasBasicSupport();
 
 		return logicalDevice;
 	}

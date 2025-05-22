@@ -418,7 +418,7 @@ namespace EmEn::Scenes
 			 */
 			[[nodiscard]]
 			Libs::Math::Matrix< 4, float >
-			getViewMatrix (bool rotateOnly = false) const noexcept
+			getViewMatrix () const noexcept
 			{
 				return m_cartesianFrame.getViewMatrix();
 			}

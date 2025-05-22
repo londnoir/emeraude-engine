@@ -46,8 +46,6 @@
 #include "Graphics/Material/BasicResource.hpp"
 #include "Graphics/Material/StandardResource.hpp"
 #include "Graphics/MovieResource.hpp"
-#include "Graphics/RenderTarget/Texture/Cubemap.hpp"
-#include "Graphics/RenderTarget/Texture/Texture2D.hpp"
 #include "Graphics/Renderable/BasicFloorResource.hpp"
 #include "Graphics/Renderable/DynamicSkyResource.hpp"
 #include "Graphics/Renderable/MeshResource.hpp"
@@ -422,50 +420,6 @@ namespace EmEn::Resources
 			}
 
 			/**
-			 * @brief Returns the reference to the render to texture service.
-			 * @return RenderToTexture2Ds &
-			 */
-			[[nodiscard]]
-			RenderToTexture2Ds &
-			renderToTexture2Ds () noexcept
-			{
-				return m_renderToTexture2Ds;
-			}
-
-			/**
-			 * @brief Returns the reference to the render to texture service.
-			 * @return const RenderToTexture2Ds &
-			 */
-			[[nodiscard]]
-			const RenderToTexture2Ds &
-			renderToTexture2Ds () const noexcept
-			{
-				return m_renderToTexture2Ds;
-			}
-
-			/**
-			 * @brief Returns the reference to the render to cubemap service.
-			 * @return RenderToCubemaps &
-			 */
-			[[nodiscard]]
-			RenderToCubemaps &
-			renderToCubemaps () noexcept
-			{
-				return m_renderToCubemaps;
-			}
-
-			/**
-			 * @brief Returns the reference to the render to cubemap service.
-			 * @return const RenderToCubemaps &
-			 */
-			[[nodiscard]]
-			const RenderToCubemaps &
-			renderToCubemaps () const noexcept
-			{
-				return m_renderToCubemaps;
-			}
-
-			/**
 			 * @brief Returns the reference to the vertex geometry service.
 			 * @return VertexGeometries &
 			 */
@@ -832,8 +786,6 @@ namespace EmEn::Resources
 			Texture3Ds m_texture3Ds{m_primaryServices, m_networkManager, m_stores, "Texture 3D manager", "Images"};
 			TextureCubemaps m_textureCubemaps{m_primaryServices, m_networkManager, m_stores, "Texture cubemap manager", "Cubemaps"};
 			AnimatedTexture2Ds m_animatedTexture2Ds{m_primaryServices, m_networkManager, m_stores, "Animated texture 2D manager", "Movies"};
-			RenderToTexture2Ds m_renderToTexture2Ds{m_primaryServices, m_networkManager, m_stores, "Texture cubemap (RTT) manager"};
-			RenderToCubemaps m_renderToCubemaps{m_primaryServices, m_networkManager, m_stores, "Texture 2D (RTT) manager"};
 			VertexGeometries m_vertexGeometries{m_primaryServices, m_networkManager, m_stores, "Geometry manager", "Geometries"};
 			IndexedVertexGeometries m_indexedVertexGeometries{m_primaryServices, m_networkManager, m_stores, "Indexed geometry manager", "Geometries"};
 			VertexGridGeometries m_vertexGridGeometries{m_primaryServices, m_networkManager, m_stores, "Grid geometry manager", "Geometries"};

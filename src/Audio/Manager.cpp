@@ -105,8 +105,6 @@ namespace EmEn::Audio
 		/* Sets the music chunk size in bytes. */
 		m_musicChunkSize = m_primaryServices.settings().get< uint32_t >(AudioMusicChunkSizeKey, DefaultAudioMusicChunkSize);
 
-		SoundResource::s_quietConversion = m_primaryServices.settings().get< bool >(AudioQuietConversionKey, DefaultAudioQuietConversion);
-
 		this->queryDevices();
 
 		/* Take the default device. */
@@ -168,7 +166,7 @@ namespace EmEn::Audio
 		m_flags[ServiceInitialized] = true;
 		m_flags[Enabled] = true;
 
-		/* NOTE: Be sure of playback frequency allowed by ths OpenAL context. */
+		/* NOTE: Be sure of the playback frequency allowed by this OpenAL context. */
 		m_playbackFrequency = WaveFactory::toFrequency(m_contextAttributes[ALC_FREQUENCY]);
 
 		this->setMetersPerUnit(1.0F);
@@ -793,35 +791,6 @@ namespace EmEn::Audio
 			}
 
 			m_contextAttributes[attributes[index]] = attributes[index+1];
-		}
-
-		/* Forgotten device attributes... */
-		constexpr std::array< ALint, 9 > keys{
-			ALC_FORMAT_CHANNELS_SOFT, // Not handled on Linux platform
-			ALC_FORMAT_TYPE_SOFT, // Not handled on Linux platform
-			ALC_NUM_HRTF_SPECIFIERS_SOFT,
-			ALC_CONNECTED,
-			0x1997,//ALC_AMBISONIC_LAYOUT_SOFT, Not handled and tokenized on Linux platform
-			0x1998,//ALC_AMBISONIC_SCALING_SOFT, Not handled and tokenized on Linux platform
-			0x1999,//ALC_AMBISONIC_ORDER_SOFT, Not handled and tokenized on Linux platform
-			0x199B,//ALC_MAX_AMBISONIC_ORDER_SOFT, Not handled and tokenized on Linux platform
-			0x19AC//ALC_OUTPUT_MODE_SOFT, Not handled and tokenized on Linux platform
-		};
-
-		for ( auto key : keys )
-		{
-			ALCint value = 0;
-
-			alcGetIntegerv(m_device, key, 1, &value);
-
-			if ( alcGetErrors(m_device, "alcGetIntegerv", __FILE__, __LINE__) )
-			{
-				TraceWarning{ClassId} << "Unable to fetch device attribute 0x" << std::hex << key << " !";
-
-				continue;
-			}
-
-			m_contextAttributes[key] = value;
 		}
 
 		return true;

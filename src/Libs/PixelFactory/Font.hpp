@@ -544,7 +544,7 @@ namespace EmEn::Libs::PixelFactory
 
 				const auto success = glyphs.writeGlyphData([&] (size_t index) {
 					/* Gets the correct glyph index inside the font for the iso code. */
-					const auto glyphIndex = FT_Get_Char_Index(face, index);
+					const auto glyphIndex = FT_Get_Char_Index(face, static_cast< FT_ULong >(index));
 
 					/* Gets the glyph loaded.
 					 * NOTE : Only one font can be loaded at a time. */
@@ -555,9 +555,9 @@ namespace EmEn::Libs::PixelFactory
 						return Pixmap< precision_t >{};
 					}
 
-					const auto glyphWidth = face->glyph->bitmap.width;
-					const auto glyphHeight = face->glyph->bitmap.rows;
-					const auto size = glyphWidth * glyphHeight;
+					//const auto glyphWidth = face->glyph->bitmap.width;
+					//const auto glyphHeight = face->glyph->bitmap.rows;
+					//const auto size = glyphWidth * glyphHeight;
 
 					/*if ( size > 0 )
 					{

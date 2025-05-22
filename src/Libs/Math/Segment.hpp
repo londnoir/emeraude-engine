@@ -27,7 +27,6 @@
 #pragma once
 
 /* STL inclusions. */
-#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -37,11 +36,12 @@
 namespace EmEn::Libs::Math
 {
 	/**
-	 * @brief Defining a 2D segment.
-	 * @tparam data_t The data precision.
+	 * @brief Class for a segment.
+	 * @tparam dimension_t Specify is the segment is 2D or 3D.
+	 * @tparam precision_t The data precision. Default float.
 	 */
-	template< typename data_t = float >
-	requires (std::is_arithmetic_v< data_t >)
+	template< size_t dimension_t, typename precision_t = float >
+	requires (dimension_t == 2 || dimension_t == 3) && std::is_floating_point_v< precision_t >
 	class Segment final
 	{
 		public:
@@ -52,22 +52,22 @@ namespace EmEn::Libs::Math
 			Segment () noexcept = default;
 
 			/**
-			 * @brief Constructs a segment.
+			 * @brief Constructs a segment from origin to a point.
 			 * @param end A reference to a vector.
 			 */
 			explicit
-			Segment (const Vector< 2, data_t > & end) noexcept
-				: m_start(end)
+			Segment (const Vector< dimension_t, precision_t > & end) noexcept
+				: m_end(end)
 			{
 
 			}
 
 			/**
-			 * @brief Constructs a segment.
+			 * @brief Constructs a segment from two points.
 			 * @param start A reference to a vector.
 			 * @param end A reference to a vector.
 			 */
-			Segment (const Vector< 2, data_t > & start, const Vector< 2, data_t > & end) noexcept
+			Segment (const Vector< dimension_t, precision_t > & start, const Vector< dimension_t, precision_t > & end) noexcept
 				: m_start(start), m_end(end)
 			{
 
@@ -76,9 +76,10 @@ namespace EmEn::Libs::Math
 			/**
 			 * @brief Sets the starting point of the segment.
 			 * @param vector A reference to a vector.
+			 * @return void
 			 */
 			void
-			setStart (const Vector< 2, data_t > & vector) noexcept
+			setStart (const Vector< dimension_t, precision_t > & vector) noexcept
 			{
 				m_start = vector;
 			}
@@ -86,19 +87,20 @@ namespace EmEn::Libs::Math
 			/**
 			 * @brief Sets the ending point of the segment.
 			 * @param vector A reference to a vector.
+			 * @return void
 			 */
 			void
-			setEnd (const Vector< 2, data_t > & vector) noexcept
+			setEnd (const Vector< dimension_t, precision_t > & vector) noexcept
 			{
 				m_end = vector;
 			}
 
 			/**
 			 * @brief Returns the starting point of the segment.
-			 * @return const Vector< 2, data_t > &
+			 * @return const Vector< dimension_t, precision_t > &
 			 */
 			[[nodiscard]]
-			const Vector< 2, data_t > &
+			const Vector< dimension_t, precision_t > &
 			start () const noexcept
 			{
 				return m_start;
@@ -106,10 +108,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the starting point X value of the segment.
-			 * @return data_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			startX () const noexcept
 			{
 				return m_start[X];
@@ -117,21 +119,32 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the starting point Y value of the segment.
-			 * @return data_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			startY () const noexcept
 			{
 				return m_start[Y];
 			}
 
 			/**
-			 * @brief Returns the ending point of the segment.
-			 * @return const Vector< 2, data_t > &
+			 * @brief Returns the starting point Z value of the segment.
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			const Vector< 2, data_t > &
+			precision_t
+			startZ () const noexcept requires (dimension_t == 3)
+			{
+				return m_start[Z];
+			}
+
+			/**
+			 * @brief Returns the ending point of the segment.
+			 * @return const Vector< dimension_t, precision_t > &
+			 */
+			[[nodiscard]]
+			const Vector< dimension_t, precision_t > &
 			end () const noexcept
 			{
 				return m_end;
@@ -139,10 +152,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the ending point X value of the segment.
-			 * @return data_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			endX () const noexcept
 			{
 				return m_end[X];
@@ -150,13 +163,24 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the ending point Y value of the segment.
-			 * @return data_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			endY () const noexcept
 			{
 				return m_end[Y];
+			}
+
+			/**
+			 * @brief Returns the ending point Z value of the segment.
+			 * @return precision_t
+			 */
+			[[nodiscard]]
+			precision_t
+			endZ () const noexcept requires (dimension_t == 3)
+			{
+				return m_end[Z];
 			}
 
 			/**
@@ -201,70 +225,9 @@ namespace EmEn::Libs::Math
 				return output.str();
 			}
 
-			[[nodiscard]]
-			static
-			bool
-			intersect (const Segment & segmentA, const Segment & segmentB)
-			{
-				const auto d1x = segmentA.endX() - segmentA.startX(); // ad.x
-				const auto d1y = segmentA.endY() - segmentA.startY(); // ad.y
-				const auto d2x = segmentB.endX() - segmentB.startX(); // bd.x
-				const auto d2y = segmentB.endY() - segmentB.startY(); // bd.y
-				const auto det = d2y * d1x - d2x * d1y;
-
-				/* NOTE: Lines are parallel or collinear */
-				if ( det < 0.0001 && det > -0.0001 )
-				{
-					return false;
-				}
-
-				auto a = segmentA.startY() - segmentB.startY(); // origin dy
-				auto b = segmentA.startX() - segmentB.startX(); // origin dx
-				const auto n1 = d2x * a - d2y * b;
-				const auto n2 = d1x * a - d1y * b;
-
-				/* NOTE: roughly distance from l1 origin to l2 intersection. */
-				a = n1 / det;
-				/* NOTE: roughly distance from l2 origin to l1 intersection. */
-				b = n2 / det;
-
-				const bool ia = a >= -0.0001 && a <= 1.0001;
-				const bool ib = b >= -0.0001 && b <= 1.0001;
-
-				return ia && ib;
-			}
-
-			/**
-			 * @brief Finds the intersection between two line.
-			 * @param ax
-			 * @param ay
-			 * @param bx
-			 * @param by
-			 * @param cx
-			 * @param cy
-			 * @param dx
-			 * @param dy
-			 * @return Vector< 2, data_t >
-			 */
-			static
-			Vector< 2, data_t >
-			findIntersection (data_t ax, data_t ay, data_t bx, data_t by, data_t cx, data_t cy, data_t dx, data_t dy) noexcept
-			{
-				Vector< 2, data_t > intersection{};
-
-				data_t a = (ax * by - ay * bx);
-				data_t b = (cx * dy - cy * dx);
-				data_t det = (ax - bx) * (cy - dy) - (ay - by) * (cx - dx);
-
-				intersection[X] = (a * (cx - dx) - (ax - bx) * b) / det;
-				intersection[Y] = (a * (cy - dy) - (ay - by) * b) / det;
-
-				return intersection;
-			}
-
 		private:
 
-			Vector< 2, data_t > m_start{};
-			Vector< 2, data_t > m_end{};
+			Vector< dimension_t, precision_t > m_start;
+			Vector< dimension_t, precision_t > m_end;
 	};
 }

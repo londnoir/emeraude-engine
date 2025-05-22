@@ -30,17 +30,12 @@
 
 /* Third-party inclusions. */
 #define GLFW_EXPOSE_NATIVE_X11
-//#define GLFW_EXPOSE_NATIVE_WAYLAND
+#define GLFW_EXPOSE_NATIVE_WAYLAND
 #include "GLFW/glfw3native.h"
 
 #include <xcb/xcb.h>
 #include <vulkan/vulkan_xcb.h>
-//#include <vulkan/vulkan_wayland.h>
-
-#ifdef GTK3_ENABLED
-	#include <gtk/gtk.h>
-	#include <gdk/gdkx.h>
-#endif
+#include <vulkan/vulkan_wayland.h>
 
 /* NOTE: Under linux, including X.h defines the MACRO "Success"
  * and enter in conflicts with Severity enum. */
@@ -51,6 +46,7 @@
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/Surface.hpp"
 #include "PrimaryServices.hpp"
+#include "PlatformManager.hpp"
 
 namespace EmEn
 {
@@ -103,63 +99,13 @@ namespace EmEn
 		XChangeWindowAttributes(display, window, CWOverrideRedirect, &attributes);
 	}
 
-#ifdef GTK3_ENABLED
-	void
-	gtkRealizeCallback (GtkWidget * widget, gpointer user) noexcept
-	{
-		gtk_widget_set_window(widget, static_cast< GdkWindow * >(user));
-	}
-
 	bool
 	Window::initializeNativeWindow () noexcept
 	{
-		auto argc = m_primaryServices.arguments().getArgc();
-		auto argv = m_primaryServices.arguments().getArgv();
-
-		if ( gtk_init_check(&argc, &argv) == 0 )
-		{
-			return false;
-		}
-
-		//Display * glfwGetX11Display(void)
-
-		GdkDisplay * display = gdk_display_get_default();
-
-		if ( display == nullptr )
-		{
-			return false;
-		}
-
-		GdkWindow * gdkWindow = gdk_x11_window_foreign_new_for_display(display, glfwGetX11Window(m_handle.get()));
-
-		if ( gdkWindow == nullptr )
-		{
-			return false;
-		}
-
-		GtkWidget * widget = gtk_widget_new(GTK_TYPE_WINDOW, nullptr);
-
-		if ( widget == nullptr )
-		{
-			return false;
-		}
-
-		g_signal_connect(widget, "realize", G_CALLBACK(gtkRealizeCallback), gdkWindow);
-
-		gtk_widget_set_has_window(widget, TRUE);
-		gtk_widget_realize(widget);
-
-		m_gtkWindow = GTK_WINDOW(widget);
+		m_gtkWindow = nullptr;
 
 		return true;
 	}
-#else
-	bool
-	Window::initializeNativeWindow () noexcept
-	{
-		return false;
-	}
-#endif
 
 	void
 	Window::releaseNativeWindow () noexcept

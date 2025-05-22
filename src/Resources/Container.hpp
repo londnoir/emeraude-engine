@@ -27,10 +27,10 @@
 #pragma once
 
 /* STL inclusions. */
-#include <any>
-#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <any>
+#include <array>
 #include <functional>
 #include <memory>
 #include <string>
@@ -57,7 +57,7 @@
 namespace EmEn::Resources
 {
 	/**
-	 * @brief The resource manager template is responsible for loading asynchronously resources with dependencies and hold their lifetime.
+	 * @brief The resource manager template is responsible for loading asynchronous resources with dependencies and hold their lifetime.
 	 * @tparam resource_t The type of resources (The resource type is checked by LoadingRequest template).
 	 * @extends EmEn::ServiceInterface This is a service.
 	 * @extends EmEn::Libs::ObserverTrait The manager observer resource loading.
@@ -141,7 +141,7 @@ namespace EmEn::Resources
 			}
 
 			/**
-			 * @brief Clean up every unused resources.
+			 * @brief Clean up every unused resource.
 			 * @return size_t
 			 */
 			size_t
@@ -238,7 +238,7 @@ namespace EmEn::Resources
 					return nullptr;
 				}
 
-				/* First check in store, if the resource exists. */
+				/* First, check in store if the resource exists. */
 				if ( !m_storeName.empty() )
 				{
 					if ( m_resourcesStores.store(m_storeName).contains(resourceName) )
@@ -340,7 +340,7 @@ namespace EmEn::Resources
 			}
 
 			/**
-			 * @brief Returns a resource by its name. If the resource is unloaded, a thread will take care about it unless "asyncLoad" argument is set to "false".
+			 * @brief Returns a resource by its name. If the resource is unloaded, a thread will take care of it unless "asyncLoad" argument is set to "false".
 			 * @note The default resource of the store will be returned if nothing was found. A warning trace will be generated.
 			 * @param resourceName A reference to a string for the resource name.
 			 * @param asyncLoad Load the resource asynchronously. Default true.
@@ -758,7 +758,7 @@ namespace EmEn::Resources
 
 				const auto & name = baseInformation.name();
 
-				/* 1. Check if resource is not already in loading queue ... */
+				/* 1. Check if resource is not already in the loading queue ... */
 				const auto & resourceIt = m_resources.find(name);
 
 				if ( resourceIt != m_resources.cend() )
@@ -837,7 +837,7 @@ namespace EmEn::Resources
 
 			/**
 			 * @brief Task for loading a resource on a thread.
-			 * @note The request parameter must be passed by value.
+			 * @note Value must pass the request parameter.
 			 * @param request The loading request.
 			 */
 			void
@@ -875,12 +875,12 @@ namespace EmEn::Resources
 						success = request.resource()->load(infos.data());
 						break;
 
-					/* This should never happen ! ExternalData must be processed before. */
+					/* This should never happen! ExternalData must be processed before. */
 					case SourceType::ExternalData :
 						TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' should be downloaded first. Unable to load it ! [CONTAINER]";
 						break;
 
-					/* This should never happen ! Undefined is a bug. */
+					/* This should never happen! Undefined is a bug. */
 					case SourceType::Undefined :
 					default:
 						TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' information are invalid. Unable to load it ! [CONTAINER]";
@@ -901,7 +901,7 @@ namespace EmEn::Resources
 					TraceError{resource_t::ClassId} << "The resource (" << resource_t::ClassId << ") '" << infos.name() << "' failed to load ! [CONTAINER]";
 				}
 
-				/* Notify the end of loading process. */
+				/* Notify the end of the loading process. */
 				this->notify(LoadingProcessFinished);
 			}
 

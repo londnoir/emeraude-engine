@@ -638,7 +638,7 @@ namespace EmEn::Audio
 		/* Checks if the source is audible. */
 		if ( this->isMuted() )
 		{
-			Tracer::debug(ClassId, "Trying to play a sound on a muted source.");
+			TraceDebug{ClassId} << "Trying to play a sound on a muted source.";
 
 			return false;
 		}
@@ -709,7 +709,7 @@ namespace EmEn::Audio
 
 		if ( this->getIntValue(AL_SOURCE_STATE, AL_INITIAL) != AL_PLAYING )
 		{
-			Tracer::debug(ClassId, "Trying to pause a non-playing audio source !");
+			TraceDebug{ClassId} << "Trying to pause a non-playing audio source !";
 
 			return;
 		}
@@ -727,7 +727,7 @@ namespace EmEn::Audio
 
 		if ( this->getIntValue(AL_SOURCE_STATE, AL_INITIAL) != AL_PAUSED )
 		{
-			Tracer::debug(ClassId, "Trying to resume a non paused audio source !");
+			TraceDebug{ClassId} << "Trying to resume a non paused audio source !";
 
 			return;
 		}
@@ -752,7 +752,7 @@ namespace EmEn::Audio
 				break;
 
 			default:
-				Tracer::debug(ClassId, "Trying to rewind an empty audio source !");
+				TraceDebug{ClassId} << "Trying to rewind an empty audio source !";
 				break;
 		}
 	}
