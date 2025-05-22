@@ -27,7 +27,6 @@
 #pragma once
 
 /* STL inclusions. */
-#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -220,10 +219,10 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief subGeometryCount
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			virtual size_t subGeometryCount () const noexcept = 0;
+			virtual uint32_t subGeometryCount () const noexcept = 0;
 
 			/**
 			 * @brief Returns the sub-geometry range [offset, length].
@@ -231,7 +230,7 @@ namespace EmEn::Graphics::Geometry
 			 * @return std::array< uint32_t, 2 >
 			 */
 			[[nodiscard]]
-			virtual std::array< uint32_t, 2 > subGeometryRange (size_t subGeometryIndex) const noexcept = 0;
+			virtual std::array< uint32_t, 2 > subGeometryRange (uint32_t subGeometryIndex) const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.
@@ -299,9 +298,10 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the size of the primary texture coordinates attribute.
-			 * @return size_t
+			 * @return uint32_t
 			 */
-			size_t
+			[[nodiscard]]
+			uint32_t
 			getPrimaryTextureCoordinatesAttribSize () const noexcept
 			{
 				if ( !this->isFlagEnabled(EnablePrimaryTextureCoordinates) )
@@ -314,9 +314,10 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the size of the secondary texture coordinates attribute.
-			 * @return size_t
+			 * @return uint32_t
 			 */
-			size_t
+			[[nodiscard]]
+			uint32_t
 			getSecondaryTextureCoordinatesAttribSize () const noexcept
 			{
 				if ( !this->isFlagEnabled(EnableSecondaryTextureCoordinates) )
@@ -389,7 +390,7 @@ namespace EmEn::Graphics::Geometry
 			 * @param subGeometries A reference to a sub geometry list.
 			 * @return bool
 			 */
-			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, size_t length) noexcept;
+			static bool buildSubGeometries (std::vector< SubGeometry > & subGeometries, uint32_t length) noexcept;
 
 			/**
 			 * @brief Builds geometry batches from shape.

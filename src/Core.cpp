@@ -63,16 +63,15 @@ namespace EmEn
 		: KeyboardListenerInterface(false, false),
 		Controllable(ClassId),
 		m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
-		m_primaryServices(argc, wargv, m_identification, false)
+		m_primaryServices(argc, wargv, m_identification)
 #else
 	Core::Core (int argc, char * * argv, const char * applicationName, const Version & applicationVersion, const char * applicationOrganization, const char * applicationDomain) noexcept
 		: KeyboardListenerInterface(false, false),
 		Controllable(ClassId),
 		m_identification(applicationName, applicationVersion, applicationOrganization, applicationDomain),
-		m_primaryServices(argc, argv, m_identification, false)
+		m_primaryServices(argc, argv, m_identification)
 #endif
 	{
-		/* NOTE: Avoid to double construct the engine. */
 		if ( s_instance != nullptr )
 		{
 			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
@@ -112,8 +111,8 @@ namespace EmEn
 			m_coreHelp.registerShortcut("Open file explorer to application user data directory.", KeyF8, ModKeyShift);
 			m_coreHelp.registerShortcut("Clean up unused resources from managers.", KeyF9, ModKeyShift);
 			m_coreHelp.registerShortcut("Suspend core thread execution for 3 seconds.", KeyF10, ModKeyShift);
-			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF11, ModKeyShift);
-			m_coreHelp.registerShortcut("Toggle the window fullscreen mode.", KeyF12, ModKeyShift);
+			m_coreHelp.registerShortcut("Toggle the window fullscreen mode.", KeyF11, ModKeyShift);
+			m_coreHelp.registerShortcut("Unused yet. Reserved by the core.", KeyF12, ModKeyShift);
 		}
 
 		if ( m_primaryServices.initialize() )
@@ -157,7 +156,7 @@ namespace EmEn
 		{
 			TraceSuccess{ClassId} << m_networkManager.name() << " service up !";
 
-			/* We want to know at core level, when something is downloading ! */
+			/* We want to know at core level, when something is downloading! */
 			this->observe(&m_networkManager);
 		}
 		else
@@ -243,7 +242,7 @@ namespace EmEn
 			const auto top = std::chrono::steady_clock::now();
 
 			{
-				/* NOTE: Prevent an active scene deletion/switch during the logics update task without blocking the rendering task. */
+				/* NOTE: Prevent an active scene deletion/switch during the logic update task without blocking the rendering task. */
 				const std::shared_lock< std::shared_mutex > activeSceneLock{m_sceneManager.activeSceneAccess()};
 
 				const Time::Elapsed::PrintScopeRealTimeThreshold stat{"logicsTask", 1000.0 / 60.0};
@@ -290,7 +289,7 @@ namespace EmEn
 			}
 
 			{
-				/* NOTE: Prevent an active scene deletion/switch during the rendering task without blocking the logics update task. */
+				/* NOTE: Prevent an active scene deletion/switch during the rendering task without blocking the logic update task. */
 				const std::shared_lock< std::shared_mutex > activeSceneLock{m_sceneManager.activeSceneAccess()};
 
 				const Time::Elapsed::PrintScopeRealTimeThreshold stat{"renderingTask", 1000.0 / 30.0};
@@ -329,11 +328,13 @@ namespace EmEn
 				return this->executeToolsMode();
 
 			case StartupMode::Continue :
-				if ( this->readArgumentsBeforeInitialization(m_primaryServices.arguments()) )
+				/* NOTE: Let the application stop the run. */
+				if ( this->onBeforeSecondaryServicesInitialization() )
 				{
 					return this->terminate() == 0;
 				}
 
+				/* NOTE: Finish the core initialization with secondary services. */
 				if ( !this->initializeCoreLevel() )
 				{
 					return false;
@@ -346,7 +347,7 @@ namespace EmEn
 				break;
 		}
 
-		/* Create the logics loop. */
+		/* Create the logic loop. */
 		std::thread logicsThread{[this] {
 			this->logicsTask();
 		}};
@@ -378,17 +379,17 @@ namespace EmEn
 
 			/* EventInput: Update user events.
 			 * DirectInput: Copy the state of every input
-			 * device to use it in engine cycle. */
+			 * device to use it in the engine cycle. */
 			m_inputManager.pollSystemEvents();
 
-			/* Let the child class get call event from the main loop. */
+			/* Let the child class get the call event from the main loop. */
 			this->onMainLoopCycle();
 
 			/* NOTE: Checks whether the engine is running or paused.
-			 * If not, we wait a wake-up event with a blocking function. */
+			 * If not, we wait for a wake-up event with a blocking function. */
 			if ( m_flags[Paused] )
 			{
-				/* Stop all timers of active scene. */
+				/* Stop all timers of an active scene. */
 				if ( m_sceneManager.hasActiveScene() )
 				{
 					m_sceneManager.activeScene()->pauseTimers();
@@ -397,13 +398,13 @@ namespace EmEn
 				/* Wait until an event release the pause state. */
 				while ( m_flags[Paused] )
 				{
-					/* Let the child class get call event from the main loop. */
+					/* Let the child class get the call event from the main loop. */
 					this->onMainLoopCycle();
 
 					m_inputManager.waitSystemEvents(0.16);
 				}
 
-				/* Restart all timers of active scene. */
+				/* Restart all timers of the active scene. */
 				if ( m_sceneManager.hasActiveScene() )
 				{
 					m_sceneManager.activeScene()->resumeTimers();
@@ -522,7 +523,7 @@ namespace EmEn
 			m_inputManager.enableCopyKeyboardState(true);
 			m_inputManager.enableCopyPointerState(true);
 
-			/* Adds Core keyboard listener to input manager. */
+			/* Adds Core keyboard listener to the input manager. */
 			m_inputManager.addKeyboardListener(this);
 
 #if IS_MACOS
@@ -585,40 +586,43 @@ namespace EmEn
 		/* Initialize audio manager. */
 		if ( m_audioManager.initialize(m_secondaryServicesEnabled) )
 		{
-			TraceSuccess{ClassId} << m_audioManager.name() << " service up !";
-
-			m_audioManager.registerToObject(*this);
-
-			/* Initialize the track mixer. */
-			if ( m_trackMixer.initialize(m_secondaryServicesEnabled) )
+			if ( m_audioManager.isAudioEnabled() )
 			{
-				TraceSuccess{ClassId} << m_trackMixer.name() << " service up !";
+				TraceSuccess{ClassId} << m_audioManager.name() << " service up !";
 
-				this->observe(&m_trackMixer);
-			}
-			else
-			{
-				TraceWarning{ClassId} <<
-					m_trackMixer.name() << " service failed to execute." "\n"
-					"No music available !";
-			}
+				m_audioManager.registerToObject(*this);
 
-			/* Initialize the audio external input. */
-			if ( m_audioExternalInput.initialize(m_secondaryServicesEnabled) )
-			{
-				TraceSuccess{ClassId} << m_audioExternalInput.name() << " service up !";
-			}
-			else
-			{
-				TraceWarning{ClassId} <<
-					m_audioExternalInput.name() << " service failed to execute !" "\n"
-					"No audio input available !";
+				/* Initialize the track mixer. */
+				if ( m_trackMixer.initialize(m_secondaryServicesEnabled) )
+				{
+					TraceSuccess{ClassId} << m_trackMixer.name() << " service up !";
+
+					this->observe(&m_trackMixer);
+				}
+				else
+				{
+					TraceWarning{ClassId} <<
+						m_trackMixer.name() << " service failed to execute." "\n"
+						"No music available !";
+				}
+
+				/* Initialize the audio external input. */
+				if ( m_audioExternalInput.initialize(m_secondaryServicesEnabled) )
+				{
+					TraceSuccess{ClassId} << m_audioExternalInput.name() << " service up !";
+				}
+				else
+				{
+					TraceWarning{ClassId} <<
+						m_audioExternalInput.name() << " service failed to execute !" "\n"
+						"No audio input available !";
+				}
 			}
 		}
 		else
 		{
 			TraceWarning{ClassId} <<
-				m_audioExternalInput.name() << " service failed to execute !" "\n"
+				m_audioManager.name() << " service failed to execute !" "\n"
 				"No audio available !";
 		}
 
@@ -671,6 +675,21 @@ namespace EmEn
 		return true;
 	}
 
+	bool
+	Core::enableUserService (ServiceInterface * userService) noexcept
+	{
+		if ( !userService->initialize(m_userServiceEnabled) )
+		{
+			TraceError{ClassId} << userService->name() << " user service failed to execute !";
+
+			return false;
+		}
+
+		TraceSuccess{ClassId} << userService->name() << " user service up !";
+
+		return true;
+	}
+
 	void
 	Core::onRegisterToConsole () noexcept
 	{
@@ -709,7 +728,7 @@ namespace EmEn
 		}
 
 		/* Dispatch the pause event,
-		 * first by sending the event
+		 * first by sending the event,
 		 * then directly to the sub application. */
 		this->notify(ExecutionPaused);
 
@@ -731,7 +750,7 @@ namespace EmEn
 		m_flags[Paused] = false;
 
 		/* Dispatch the resume event,
-		 * first by sending the event
+		 * first by sending the event,
 		 * then directly to the sub application. */
 		this->notify(ExecutionResumed);
 
@@ -747,7 +766,7 @@ namespace EmEn
 			"*******************************" "\n\n";
 
 		/* Dispatch the stop event,
-		 * first by sending the event
+		 * first by sending the event,
 		 * then directly to the sub application. */
 		this->notify(ExecutionStopped);
 
@@ -762,9 +781,26 @@ namespace EmEn
 	unsigned int
 	Core::terminate () noexcept
 	{
-		/* Terminate secondary services. */
 		unsigned int error = 0;
 
+		/* Terminate user services. */
+		for ( auto * userService : std::ranges::reverse_view(m_userServiceEnabled) )
+		{
+			if ( userService->terminate() )
+			{
+				TraceSuccess{ClassId} << userService->name() << " user service terminated gracefully !";
+			}
+			else
+			{
+				error++;
+
+				TraceError{ClassId} << userService->name() << " user service failed to terminate properly !";
+			}
+		}
+
+		m_userServiceEnabled.clear();
+
+		/* Terminate secondary services. */
 		for ( auto * service : std::ranges::reverse_view(m_secondaryServicesEnabled) )
 		{
 			if ( service->terminate() )
@@ -888,7 +924,7 @@ namespace EmEn
 	bool
 	Core::onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
 	{
-		/* NOTE: When the shift modifiers is pressed,
+		/* NOTE: When the shift modifiers are pressed,
 		 * the core level has the priority to check the key released. */
 		if ( isKeyboardModifierPressed(ModKeyShift, modifiers) )
 		{
@@ -1027,16 +1063,24 @@ namespace EmEn
 					return true;
 
 				case KeyF11 :
-					Tracer::info(ClassId, "Core reserved SHIFT+F11 shortcut hit.");
+				{
+					Tracer::info(ClassId, "Toggling fullscreen mode ...");
+
+					if ( m_window.isFullscreenMode() )
+					{
+						m_window.switchToWindowedMode();
+					}
+					else
+					{
+						m_window.switchToFullscreenMode();
+					}
+				}
 
 					return true;
 
 				case KeyF12 :
-				{
-					Tracer::info(ClassId, "Toggling fullscreen mode ...");
+					Tracer::info(ClassId, "Core reserved SHIFT+F12 shortcut hit.");
 
-					m_window.setFullscreenMode(!m_window.isFullscreenMode());
-				}
 					return true;
 
 				case KeyPad1 :
@@ -1062,10 +1106,16 @@ namespace EmEn
 			return true;
 		}
 
-		/* NOTE: If the application do not catch any key, we let the core having a default behavior. */
+		/* NOTE: If the application does not catch any key, we let the core having a default behavior. */
+		if ( m_flags[PreventDefaultKeyBehaviors] )
+		{
+			return false;
+		}
+
 		switch ( key )
 		{
 			case KeyGraveAccent :
+				// TODO: Re-enable this method
 				//m_console.enable();
 
 				return true;

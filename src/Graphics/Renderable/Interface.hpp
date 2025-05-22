@@ -134,10 +134,10 @@ namespace EmEn::Graphics::Renderable
 
 			/**
 			 * @brief Returns the number of layout to render the whole object.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			virtual size_t layerCount () const noexcept = 0;
+			virtual uint32_t layerCount () const noexcept = 0;
 
 			/**
 			 * @brief Returns whether the renderable is opaque to get the way to order it with the render lists.
@@ -145,7 +145,7 @@ namespace EmEn::Graphics::Renderable
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool isOpaque (size_t layerIndex) const noexcept = 0;
+			virtual bool isOpaque (uint32_t layerIndex) const noexcept = 0;
 
 			/**
 			 * @brief Returns the geometry of the renderable.
@@ -161,7 +161,7 @@ namespace EmEn::Graphics::Renderable
 			 * @return const Material::Interface *
 			 */
 			[[nodiscard]]
-			virtual const Material::Interface * material (size_t layerIndex) const noexcept = 0;
+			virtual const Material::Interface * material (uint32_t layerIndex) const noexcept = 0;
 
 			/**
 			 * @brief Returns the rasterization options for the renderable layer.
@@ -170,7 +170,7 @@ namespace EmEn::Graphics::Renderable
 			 * @return const RasterizationOptions *
 			 */
 			[[nodiscard]]
-			virtual const RasterizationOptions * layerRasterizationOptions (size_t layerIndex) const noexcept = 0;
+			virtual const RasterizationOptions * layerRasterizationOptions (uint32_t layerIndex) const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.

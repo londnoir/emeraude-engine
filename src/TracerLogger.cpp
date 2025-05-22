@@ -26,73 +26,238 @@
 
 #include "TracerLogger.hpp"
 
+/* Engine configuration file. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <fstream>
 #include <thread>
 #include <utility>
 
+/* Local inclusions. */
+#include "Libs/IO/IO.hpp"
+
 namespace EmEn
 {
-	TracerLogger::TracerLogger (std::string filepath) noexcept
-	 : m_filepath(std::move(filepath))
+	TracerLogger::TracerLogger (std::filesystem::path filepath, LogFormat logFormat) noexcept
+		: m_filepath(std::move(filepath)),
+		m_logFormat(logFormat)
 	{
+		std::fstream file{m_filepath, std::ios::out | std::ios::trunc};
 
+		m_flags[IsUsable] = file.is_open();
+
+		file.close();
+
+#ifdef DEBUG
+		if ( m_flags[IsUsable] )
+		{
+			std::cout << "TracerLogger::TracerLogger() : Log file " << m_filepath << " opened !" "\n";
+		}
+		else
+		{
+			std::cerr << "TracerLogger::TracerLogger() : Unable to open the log file " << m_filepath << " !" "\n";
+		}
+#endif
 	}
 
 	void
 	TracerLogger::task () noexcept
 	{
-		std::ofstream log{m_filepath, std::ios_base::trunc};
-
-		if ( !log.is_open() )
+		if ( !m_flags[IsUsable] )
 		{
-			std::cerr << "TracerLogger::task() : Unable to open log file !" "\n";
-
 			return;
 		}
 
-		log <<
-		   "<!DOCTYPE html>" "\n"
-		   "<html>" "\n"
-		   "\t" "<head>" "\n"
-		   "\t\t" "<title>" ENGINE_NAME " " ENGINE_VERSION_STRING " execution</title>" "\n"
-		   "\t" "</head>" "\n"
-		   "\t" "<body>" "\n"
+		m_flags[IsRunning] = true;
 
-		   "\t\t" "<h1>" ENGINE_NAME " " ENGINE_VERSION_STRING " execution</h1>" "\n"
-		   "\t\t" "<p>Beginning at " << std::chrono::steady_clock::now().time_since_epoch().count() << "</p>" "\n";
-
-		while ( m_isRunning )
+		switch ( m_logFormat )
 		{
-			/* NOTE: Calm down this low priority process. We will write down logs every 100ms. */
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			case LogFormat::Text :
+				this->taskText();
+				break;
 
-			/* Clean up the entries queue. */
-			while ( !m_entries.empty() )
-			{
-				/* NOTE : Lock between the writing logs task in a file and the push/pop method. */
-				const std::lock_guard< std::mutex > lockGuard{m_entriesAccessMutex};
+			case LogFormat::JSON :
+				this->taskJSON();
+				break;
 
-				const auto & entry = m_entries.front();
+			case LogFormat::HTML :
+				this->taskHTML();
+				break;
+		}
+	}
 
-				log <<
-					"\t\t" "<div>" "\n"
-					"\t\t\t" "<h2 class=\"entry-tag\">" << entry.tag() << " @ <small><i>" << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
-					"\t\t\t" "<p class=\"entry-time\">Time: " << entry.time().time_since_epoch().count() << "</p>" "\n"
-					"\t\t\t" "<p class=\"entry-thread\">Thread: " << entry.threadId() << "</p>" "\n"
-					"\t\t\t" "<p class=\"entry-severity\">Severity: " << to_string(entry.severity()) << "<p/>" "\n"
-					"\t\t\t" "<pre class=\"entry-message\">" "\n"
-					<< entry.message() << "\n"
-					"\t\t\t" "</pre>" "\n"
-					"\t\t" "</div>" "\n";
+	void
+	TracerLogger::taskText () noexcept
+	{
+		/* NOTE: Write the file start. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
 
-				m_entries.pop();
-			}
+			file << "====== " ENGINE_NAME " " ENGINE_VERSION_STRING " execution. Beginning at " << std::chrono::steady_clock::now().time_since_epoch().count() << " ======" "\n";
+
+			file.close();
 		}
 
-		log <<
-		   "\t\t" "<p>Ending at " << std::chrono::steady_clock::now().time_since_epoch().count() << "</p>" "\n"
-		   "\t" "</body>" "\n"
-		   "</html>" "\n";
+		while ( m_flags[IsRunning] )
+		{
+			if ( !m_entries.empty() )
+			{
+				std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+				while ( !m_entries.empty() )
+				{
+					const std::lock_guard< std::mutex > lock{m_entriesAccess};
+
+					const auto & entry = m_entries.front();
+
+					file <<
+						"[" << entry.time().time_since_epoch().count() << "]"
+						"[" << entry.tag() << "]"
+						"[" << to_string(entry.severity()) << "]"
+						"[" << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << "`]" "\n"
+						<< entry.message() << '\n';
+
+					m_entries.pop();
+				}
+
+				file.close();
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		/* NOTE: Write the file end. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file << "====== Log file closed properly ======" "\n";
+
+			file.close();
+		}
+	}
+
+	void
+	TracerLogger::taskJSON () noexcept
+	{
+		/* NOTE: Write the file start. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file << "{" "\n";
+
+			file.close();
+		}
+
+		while ( m_flags[IsRunning] )
+		{
+			if ( !m_entries.empty() )
+			{
+				std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+				while ( !m_entries.empty() )
+				{
+					const std::lock_guard< std::mutex > lock{m_entriesAccess};
+
+					const auto & entry = m_entries.front();
+
+					file <<
+						"\t" "{" "\n"
+						"\t\t" "\"tag\" : " << entry.tag() << " @ <small><i>" << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"filename\" : " << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"line\" : " <<  entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"column\" :" << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"function\" : " << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "<p class=\"entry-time\">Time: " << entry.time().time_since_epoch().count() << "</p>" "\n"
+						"\t\t" "<p class=\"entry-thread\">Thread: " << entry.threadId() << "</p>" "\n"
+						"\t\t" "<p class=\"entry-severity\">Severity: " << to_string(entry.severity()) << "<p/>" "\n"
+						"\t\t" "<pre class=\"entry-message\">" "\n"
+						<< entry.message() << "\n"
+						"\t\t" "</pre>" "\n"
+						"\t" "}" "\n";
+
+					m_entries.pop();
+				}
+
+				file.close();
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		/* NOTE: Write the file end. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file << "}" "\n";
+
+			file.close();
+		}
+	}
+
+	void
+	TracerLogger::taskHTML () noexcept
+	{
+		/* NOTE: Write the file start. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file <<
+					"<!DOCTYPE html>" "\n"
+					"<html>" "\n"
+					"\t" "<head>" "\n"
+					"\t\t" "<title>" ENGINE_NAME " " ENGINE_VERSION_STRING " execution</title>" "\n"
+					"\t" "</head>" "\n"
+					"\t" "<body>" "\n"
+
+					"\t\t" "<h1>" ENGINE_NAME " " ENGINE_VERSION_STRING " execution</h1>" "\n"
+					"\t\t" "<p>Beginning at " << std::chrono::steady_clock::now().time_since_epoch().count() << "</p>" "\n";
+
+			file.close();
+		}
+
+		while ( m_flags[IsRunning] )
+		{
+			if ( !m_entries.empty() )
+			{
+				std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+				while ( !m_entries.empty() )
+				{
+					const std::lock_guard< std::mutex > lock{m_entriesAccess};
+
+					const auto & entry = m_entries.front();
+
+					file <<
+						"\t\t" "<div>" "\n"
+						"\t\t\t" "<h2 class=\"entry-tag\">" << entry.tag() << " @ <small><i>" << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t\t" "<p class=\"entry-time\">Time: " << entry.time().time_since_epoch().count() << "</p>" "\n"
+						"\t\t\t" "<p class=\"entry-thread\">Thread: " << entry.threadId() << "</p>" "\n"
+						"\t\t\t" "<p class=\"entry-severity\">Severity: " << to_string(entry.severity()) << "<p/>" "\n"
+						"\t\t\t" "<pre class=\"entry-message\">" "\n"
+						<< entry.message() << "\n"
+						"\t\t\t" "</pre>" "\n"
+						"\t\t" "</div>" "\n";
+
+					m_entries.pop();
+				}
+
+				file.close();
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		/* NOTE: Write the file end. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file <<
+			   "\t\t" "<p>Ending at " << std::chrono::steady_clock::now().time_since_epoch().count() << "</p>" "\n"
+			   "\t" "</body>" "\n"
+			   "</html>" "\n";
+
+			file.close();
+		}
 	}
 }

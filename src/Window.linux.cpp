@@ -116,24 +116,43 @@ namespace EmEn
 		auto argc = m_primaryServices.arguments().getArgc();
 		auto argv = m_primaryServices.arguments().getArgv();
 
-		if ( gtk_init_check(&argc, &argv) == 0 )
+		if ( gtk_init_check(&argc, &argv) == FALSE )
 		{
+			TraceError{ClassId} << "Unable to initialize GTK !";
+
 			return false;
 		}
 
-		//Display * glfwGetX11Display(void)
+		/* NOTE: First get the window ID from GLFW, which is the base X11 server window ID. */
+		const ::Window X11WindowID = glfwGetX11Window(m_handle.get());
 
+		if ( X11WindowID <= 0 )
+		{
+			TraceError{ClassId} << "GLFW returned an invalid X11 server window ID !";
+
+			return false;
+		}
+
+		TraceInfo{ClassId} << "X11 server window ID : " << X11WindowID;
+
+		/* NOTE: Get the GDK display.
+		 * This is the monitors, keyboards, cursors agglomeration, which is X11 display through GDK. */
 		GdkDisplay * display = gdk_display_get_default();
 
 		if ( display == nullptr )
 		{
+			TraceError{ClassId} << "Unable to get the default GDK display !";
+
 			return false;
 		}
 
-		GdkWindow * gdkWindow = gdk_x11_window_foreign_new_for_display(display, glfwGetX11Window(m_handle.get()));
+		/* NOTE: GdkWindow is a wrapper around Xlib's Window object. */
+		GdkWindow * gdkWindow = gdk_x11_window_foreign_new_for_display(display, X11WindowID);
 
 		if ( gdkWindow == nullptr )
 		{
+			TraceError{ClassId} << "Unable to get the GDK window !";
+
 			return false;
 		}
 

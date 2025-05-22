@@ -81,7 +81,7 @@ namespace EmEn::Saphir::Declaration
 			virtual bool isValid () const noexcept = 0;
 
 			/**
-			 * @brief Returns an unique name for this declaration.
+			 * @brief Returns a unique name for this declaration.
 			 * @return Key
 			 */
 			[[nodiscard]]
@@ -92,7 +92,7 @@ namespace EmEn::Saphir::Declaration
 			 * @return size_t
 			 */
 			[[nodiscard]]
-			virtual size_t bytes () const noexcept = 0;
+			virtual uint32_t bytes () const noexcept = 0;
 
 			/**
 			 * @brief Returns the source code for this declaration to write it into the final shader.

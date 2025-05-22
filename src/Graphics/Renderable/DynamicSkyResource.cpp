@@ -52,54 +52,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	DynamicSkyResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	DynamicSkyResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	bool
-	DynamicSkyResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		return true;
-	}
-
-	size_t
-	DynamicSkyResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	const Geometry::Interface *
-	DynamicSkyResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	DynamicSkyResource::material (size_t) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	DynamicSkyResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const char *
-	DynamicSkyResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	DynamicSkyResource::load () noexcept
 	{

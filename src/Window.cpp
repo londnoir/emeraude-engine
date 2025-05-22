@@ -127,6 +127,10 @@ namespace EmEn
 			{
 				Tracer::fatal(ClassId, "Unable to get a valid fullscreen window !");
 
+				/* NOTE: Set back settings to defaults to avoid failing start in loop. */
+				m_primaryServices.settings().set< int32_t >(VideoFullscreenWidthKey, DefaultVideoFullscreenWidth);
+				m_primaryServices.settings().set< int32_t >(VideoFullscreenHeightKey, DefaultVideoFullscreenHeight);
+
 				return false;
 			}
 		}
@@ -222,7 +226,12 @@ namespace EmEn
 
 			if ( this->create(windowWidth, windowHeight, preferredMonitor, false) )
 			{
-				this->resize(windowWidth, windowHeight);
+				/* NOTE: If the resize fails (invalid size), set back settings to defaults. */
+				if ( !this->resize(windowWidth, windowHeight) )
+				{
+					m_primaryServices.settings().set< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+					m_primaryServices.settings().set< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+				}
 			}
 			else
 			{
@@ -442,16 +451,11 @@ namespace EmEn
 	std::array< int32_t, 2 >
 	Window::getCenteredPosition (const std::array< uint32_t , 2 > & windowSize, int32_t desiredMonitor) const noexcept
 	{
-		const uint32_t monitorIndex =
-			desiredMonitor < 0 ?
-			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
-			static_cast< uint32_t >(desiredMonitor);
-
-		auto * monitor = Window::getMonitor(monitorIndex);
+		auto * monitor = Window::getMonitor(desiredMonitor);
 
 		/* Get the monitor virtual position and dimensions and the window dimension. */
-		const auto desktopPosition = getDesktopPosition(monitor);
-		const auto desktopSize = getDesktopSize(monitor);
+		const auto desktopPosition = Window::getDesktopPosition(monitor);
+		const auto desktopSize = Window::getDesktopSize(monitor);
 
 #ifdef DEBUG
 		TraceDebug{ClassId} <<
@@ -595,12 +599,7 @@ namespace EmEn
 	void
 	Window::setGamma (float value, int32_t desiredMonitor) const noexcept
 	{
-		const uint32_t monitorIndex =
-			desiredMonitor < 0 ?
-			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
-			static_cast< uint32_t >(desiredMonitor);
-
-		auto * monitor = Window::getMonitor(monitorIndex);
+		auto * monitor = Window::getMonitor(desiredMonitor);
 
 		if ( monitor != nullptr )
 		{
@@ -609,86 +608,85 @@ namespace EmEn
 	}
 
 	void
-	Window::setCustomGamma (int32_t desiredMonitor) const noexcept
+	Window::switchToFullscreenMode (bool useNativeResolution, int32_t desiredMonitor) const noexcept
 	{
-		const uint32_t monitorIndex =
-			desiredMonitor < 0 ?
-			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
-			static_cast< uint32_t >(desiredMonitor);
-
-		auto * monitor = Window::getMonitor(monitorIndex);
-
-		if ( monitor == nullptr )
+		if ( this->isFullscreenMode() )
 		{
 			return;
 		}
 
-		constexpr auto colorCount{256UL};
+		/* NOTE: Get the right system monitor. */
+		auto * monitor = Window::getMonitor(desiredMonitor);
 
-		std::array< uint16_t, colorCount > red{};
-		std::array< uint16_t, colorCount > green{};
-		std::array< uint16_t, colorCount > blue{};
+		auto & settings = m_primaryServices.settings();
 
-		/* TODO: Find a formula to compute a valid gamma ramp. */
-		for ( size_t index = 0;  index < colorCount;  index++ )
+		/* Save the current window size. */
 		{
-			red[index] = 0;
-			green[index] = 0;
-			blue[index] = 0;
+			const auto currentSize = this->getFramebufferSize();
+			settings.set<uint32_t>(VideoWindowWidthKey, currentSize[0]);
+			settings.set<uint32_t>(VideoWindowHeightKey, currentSize[1]);
 		}
 
-		/* Creates a gamma ramp to pass to monitor. */
-		GLFWgammaramp ramp;
-		ramp.red = red.data();
-		ramp.green = green.data();
-		ramp.blue = blue.data();
-		ramp.size = colorCount;
+		const auto refreshRate = settings.get< int32_t >(VideoFullscreenRefreshRateKey, DefaultVideoFullscreenRefreshRate);
 
-		glfwSetGammaRamp(monitor, &ramp);
-	}
-
-	void
-	Window::setFullscreenMode (bool state) const noexcept
-	{
-		/* State still the same. */
-		if ( this->isFullscreenMode() == state )
+		if ( useNativeResolution )
 		{
-			return;
-		}
-
-		const auto preferredMonitor = m_primaryServices.settings().get< int32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor);
-
-		if ( state )
-		{
-			auto * monitor = getMonitor(preferredMonitor);
-
-			const auto fullscreenWidth = m_primaryServices.settings().get< int32_t >(VideoFullscreenWidthKey, DefaultVideoFullscreenWidth);
-			const auto fullscreenHeight = m_primaryServices.settings().get< int32_t >(VideoFullscreenHeightKey, DefaultVideoFullscreenHeight);
-			const auto refreshRate = m_primaryServices.settings().get< int32_t >(VideoFullscreenRefreshRateKey, DefaultVideoFullscreenRefreshRate);
+			const auto monitorSize = getDesktopSize(monitor);
 
 			glfwSetWindowMonitor(
 				m_handle.get(),
 				monitor,
 				0, 0,
-				fullscreenWidth, fullscreenHeight,
+				static_cast< int32_t >(monitorSize[0]), static_cast< int32_t >(monitorSize[1]),
 				refreshRate
 			);
 		}
 		else
 		{
-			const auto windowWidth = m_primaryServices.settings().get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
-			const auto windowHeight = m_primaryServices.settings().get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
-			const auto XPosition = m_primaryServices.settings().get< int32_t >(VideoWindowXPositionKey, DefaultVideoWindowXPosition);
-			const auto YPosition = m_primaryServices.settings().get< int32_t >(VideoWindowYPositionKey, DefaultVideoWindowYPosition);
+			auto width = settings.get< int32_t >(VideoFullscreenWidthKey, DefaultVideoFullscreenWidth);
+			auto height = settings.get< int32_t >(VideoFullscreenHeightKey, DefaultVideoFullscreenHeight);
+
+			if ( width == 0 || height == 0 )
+			{
+				width = DefaultVideoFullscreenWidth;
+				height = DefaultVideoFullscreenHeight;
+
+				/* Save fullscreen settings. */
+				settings.set< uint32_t >(VideoFullscreenWidthKey, width);
+				settings.set< uint32_t >(VideoFullscreenHeightKey, height);
+			}
 
 			glfwSetWindowMonitor(
 				m_handle.get(),
-				nullptr,
-				XPosition, YPosition,
-				windowWidth, windowHeight,
-				GLFW_DONT_CARE
+				monitor,
+				0, 0,
+				width, height,
+				refreshRate
 			);
 		}
+	}
+
+	void
+	Window::switchToWindowedMode () const noexcept
+	{
+		if ( this->isWindowedMode() )
+		{
+			return;
+		}
+
+		const auto & settings = m_primaryServices.settings();
+		const auto windowWidth = settings.get< int32_t >(VideoWindowWidthKey, DefaultVideoWindowWidth);
+		const auto windowHeight = settings.get< int32_t >(VideoWindowHeightKey, DefaultVideoWindowHeight);
+		const auto XPosition = settings.get< int32_t >(VideoWindowXPositionKey, DefaultVideoWindowXPosition);
+		const auto YPosition = settings.get< int32_t >(VideoWindowYPositionKey, DefaultVideoWindowYPosition);
+
+		glfwSetWindowMonitor(
+			m_handle.get(),
+			nullptr,
+			XPosition, YPosition,
+			windowWidth, windowHeight,
+			GLFW_DONT_CARE
+		);
 	}
 
 	bool
@@ -1028,7 +1026,7 @@ namespace EmEn
 
 		if ( fullscreenMode )
 		{
-			monitor = getMonitor(monitorNumber);
+			monitor = Window::getMonitor(monitorNumber);
 
 			/* If one of the size is automatic,
 			 * we use the current mode of the monitor */
@@ -1181,7 +1179,7 @@ namespace EmEn
 	}
 
 	GLFWmonitor *
-	Window::getMonitor (uint32_t monitorIndex) noexcept
+	Window::getMonitor (int32_t desiredMonitorIndex) const noexcept
 	{
 		const auto monitors = Window::getMonitors();
 
@@ -1191,6 +1189,10 @@ namespace EmEn
 
 			return nullptr;
 		}
+
+		const auto monitorIndex = desiredMonitorIndex < 0 ?
+			m_primaryServices.settings().get< uint32_t >(VideoPreferredMonitorKey, DefaultVideoPreferredMonitor) :
+			static_cast< uint32_t >(desiredMonitorIndex);
 
 		if ( monitorIndex >= monitors.size() )
 		{
@@ -1207,7 +1209,7 @@ namespace EmEn
 	std::vector< GLFWvidmode >
 	Window::getMonitorModes (GLFWmonitor * monitor) noexcept
 	{
-		std::vector< GLFWvidmode > list{};
+		std::vector< GLFWvidmode > list;
 
 		int count = 0;
 

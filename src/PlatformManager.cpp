@@ -46,7 +46,8 @@ namespace EmEn
 	const size_t PlatformManager::ClassUID{getClassUID(ClassId)};
 
 	PlatformManager::PlatformManager (PrimaryServices & primaryServices) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices)
 	{
 
 	}

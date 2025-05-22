@@ -139,7 +139,7 @@ namespace EmEn::Graphics::Geometry
 
 			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			subGeometryCount () const noexcept override
 			{
 				/* If sub-geometry mechanism is not used, we return 1. */
@@ -148,13 +148,13 @@ namespace EmEn::Graphics::Geometry
 					return 1;
 				}
 
-				return m_subGeometries.size();
+				return static_cast< uint32_t >(m_subGeometries.size());
 			}
 
 			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
 			std::array< uint32_t, 2 >
-			subGeometryRange (size_t subGeometryIndex) const noexcept override
+			subGeometryRange (uint32_t subGeometryIndex) const noexcept override
 			{
 				/* If sub-geometry mechanism is not used, we return 0 as offset. */
 				if ( m_subGeometries.empty() )
@@ -297,11 +297,11 @@ namespace EmEn::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, size_t vertexCount, size_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept;
+			bool createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, uint32_t vertexCount, uint32_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept;
 
 			std::unique_ptr< Vulkan::VertexBufferObject > m_vertexBufferObject;
 			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
-			Libs::VertexFactory::Shape< float > m_localData;
+			Libs::VertexFactory::Shape< float, uint32_t > m_localData;
 			std::vector< SubGeometry > m_subGeometries;
 	};
 }

@@ -67,7 +67,7 @@ namespace EmEn::Saphir::Generator
 			 * @param layerIndex The renderable instance layer.
 			 * @param scene A reference to a scene.
 			 */
-			SceneRendering (Settings & settings, const std::string & name, const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const Graphics::RenderableInstance::Abstract > & renderableInstance, size_t layerIndex, Graphics::RenderPassType renderPassType, const Scenes::Scene & scene) noexcept;
+			SceneRendering (Settings & settings, const std::string & name, const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const Graphics::RenderableInstance::Abstract > & renderableInstance, uint32_t layerIndex, Graphics::RenderPassType renderPassType, const Scenes::Scene & scene) noexcept;
 
 			/** @copydoc EmEn::Saphir::Generator::Abstract::materialEnabled() const */
 			[[nodiscard]]
@@ -147,7 +147,7 @@ namespace EmEn::Saphir::Generator
 			Graphics::RenderPassType m_renderPassType;
 			LightGenerator m_lightGenerator;
 			std::shared_ptr< const Graphics::RenderableInstance::Abstract > m_renderableInstance;
-			size_t m_layerIndex;
+			uint32_t m_layerIndex;
 			const Scenes::Scene * m_scene{nullptr};
 	};
 }

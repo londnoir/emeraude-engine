@@ -91,7 +91,7 @@ namespace EmEn::Audio
 			/** @copydoc EmEn::Audio::PlayableInterface::buffer() */
 			[[nodiscard]]
 			std::shared_ptr< const Buffer >
-			buffer (size_t bufferIndex = 0) const noexcept override
+			buffer (size_t /*bufferIndex*/) const noexcept override
 			{
 				return m_buffer;
 			}

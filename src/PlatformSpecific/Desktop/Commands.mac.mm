@@ -94,7 +94,7 @@ namespace EmEn::PlatformSpecific::Desktop
 	}
 
 	void
-	setTaskbarIconProgression (float progress, ProgressMode /*mode*/) noexcept
+	setTaskbarIconProgression (float /*progress*/, ProgressMode /*mode*/) noexcept
 	{
 
 	}

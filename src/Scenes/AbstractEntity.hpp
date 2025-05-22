@@ -435,7 +435,7 @@ namespace EmEn::Scenes
 			 * @param componentName The name of the component. Default "ParticlesEmitter".
 			 * @return std::shared_ptr< Component::ParticlesEmitter >
 			 */
-			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
+			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::SpriteResource > & resource, uint32_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
 
 			/**
 			 * @brief Creates a particles emitter using a mesh resource.
@@ -444,7 +444,7 @@ namespace EmEn::Scenes
 			 * @param componentName The name of the component. Default "ParticlesEmitter".
 			 * @return std::shared_ptr< Component::ParticlesEmitter >
 			 */
-			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, size_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
+			std::shared_ptr< Component::ParticlesEmitter > newParticlesEmitter (const std::shared_ptr< Graphics::Renderable::MeshResource > & resource, uint32_t maxParticleCount, const std::string & componentName = "ParticlesEmitter") noexcept;
 
 			/**
 			 * @brief Creates a directional push modifier.

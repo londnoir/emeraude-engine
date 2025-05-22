@@ -43,7 +43,8 @@ namespace EmEn::Audio
 	const size_t ExternalInput::ClassUID{getClassUID(ClassId)};
 
 	ExternalInput::ExternalInput (PrimaryServices & primaryServices) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices)
 	{
 
 	}

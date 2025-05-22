@@ -58,7 +58,7 @@ namespace EmEn::Graphics
 		public:
 
 			/** @brief A frame from the movie with duration in milliseconds. */
-			using Frame = std::pair< Libs::PixelFactory::Pixmap< uint8_t >, size_t >;
+			using Frame = std::pair< Libs::PixelFactory::Pixmap< uint8_t >, uint32_t >;
 
 			/** @brief Class identifier. */
 			static constexpr auto ClassId{"MovieResource"};
@@ -188,10 +188,10 @@ namespace EmEn::Graphics
 			/**
 			 * @brief Returns the index of the frame at specific time.
 			 * @param timePoint A time point in milliseconds.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			size_t frameIndexAt (uint32_t timePoint) const noexcept;
+			uint32_t frameIndexAt (uint32_t timePoint) const noexcept;
 
 			/**
 			 * @brief Sets whether the animation is looping.
@@ -261,18 +261,18 @@ namespace EmEn::Graphics
 			 * @brief Returns the frame duration from the json resource description.
 			 * @param data A reference to a json node.
 			 * @param frameCount The animation frame count for calculation.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			static size_t extractFrameDuration (const Json::Value & data, size_t frameCount) noexcept;
+			static uint32_t extractFrameDuration (const Json::Value & data, uint32_t frameCount) noexcept;
 
 			/**
 			 * @brief extractCountWidth
 			 * @param basename
 			 * @param replaceKey
-			 * @return size_t
+			 * @return uint32_t
 			 */
-			static size_t extractCountWidth (const std::string & basename, std::string & replaceKey) noexcept;
+			static uint32_t extractCountWidth (const std::string & basename, std::string & replaceKey) noexcept;
 
 			static constexpr uint32_t BaseTime{1000};
 			static constexpr uint32_t DefaultFrameDuration{BaseTime / 30};

@@ -76,6 +76,10 @@ namespace EmEn
 		static constexpr auto DefaultShowLocation{false};
 		static constexpr auto TracerShowThreadInfosKey{"Core/Tracer/ShowThreadInfos"};
 		static constexpr auto DefaultShowThreadInfos{false};
+		static constexpr auto TracerEnableLoggerKey{"Core/Tracer/EnableLogger"};
+		static constexpr auto DefaultTracerEnableLogger{false};
+		static constexpr auto TracerLogFormatKey{"Core/Tracer/LogFormat"};
+		static constexpr auto DefaultLogFormat{"Text"};
 
 		/* Input manager */
 		static constexpr auto InputShowInformationKey{"Core/Input/ShowInformation"}; // Logs
