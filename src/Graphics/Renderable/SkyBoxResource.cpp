@@ -53,54 +53,6 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	SkyBoxResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	SkyBoxResource::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
-	bool
-	SkyBoxResource::isOpaque (size_t /*layerIndex*/) const noexcept
-	{
-		return true;
-	}
-
-	size_t
-	SkyBoxResource::layerCount () const noexcept
-	{
-		return 1;
-	}
-
-	const Geometry::Interface *
-	SkyBoxResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
-	const Material::Interface *
-	SkyBoxResource::material (size_t /*layerIndex*/) const noexcept
-	{
-		return m_material.get();
-	}
-
-	const RasterizationOptions *
-	SkyBoxResource::layerRasterizationOptions (size_t /*layerIndex*/) const noexcept
-	{
-		return nullptr;
-	}
-
-	const char *
-	SkyBoxResource::classLabel () const noexcept
-	{
-		return ClassId;
-	}
-
 	bool
 	SkyBoxResource::load () noexcept
 	{

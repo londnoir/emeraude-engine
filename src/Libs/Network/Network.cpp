@@ -221,6 +221,11 @@ namespace EmEn::Libs::Network
 
 		return false;
 #else
+		if ( verbose )
+		{
+			std::cout << "ASIO has been disabled, unable to download " << uri << " to " << filepath.string() << " !" "\n";
+		}
+
 		return false;
 #endif
 	}

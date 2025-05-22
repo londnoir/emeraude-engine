@@ -26,17 +26,14 @@
 
 #pragma once
 
-/* Project configuration. */
-#include "emeraude_config.hpp"
-
 /* STL inclusions. */
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <array>
 #include <vector>
 #include "Libs/std_source_location.hpp"
 
@@ -52,13 +49,14 @@
 namespace EmEn
 {
 	class Arguments;
+	class FileSystem;
 	class Settings;
 }
 
 namespace EmEn
 {
 	/**
-	 * @brief The tracer service class.
+	 * @brief The tracer service class responsible for logging messages, errors, warnings, etc. to the terminal or in a log file.
 	 * @extends EmEn::ServiceInterface This is a service.
 	 */
 	class Tracer final : public ServiceInterface
@@ -97,10 +95,10 @@ namespace EmEn
 			/**
 			 * @brief Constructs the tracer.
 			 * @param arguments A reference to Arguments.
-			 * @param settings A reference to core settings. Warning this can't be used at this time.
+			 * @param processName A string to identify the instance with multi-processes application.
 			 * @param childProcess Declares a child process.
 			 */
-			Tracer (const Arguments & arguments, Settings & settings, bool childProcess) noexcept;
+			Tracer (const Arguments & arguments, std::string processName, bool childProcess) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -133,19 +131,43 @@ namespace EmEn
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
-			 * @brief Adds a term to only print out trace message containing it.
-			 * @note This only affect the standard console output.
+			 * @brief Returns the process name.
+			 * @note This is useful for multi-processes application.
+			 * @return const std::string &
+			 */
+			[[nodiscard]]
+			const std::string &
+			processName () const noexcept
+			{
+				return m_processName;
+			}
+
+			/**
+			 * @brief Adds a term to only print out a trace message containing it.
+			 * @note This only affects the standard console output.
 			 * @param filter The term to filter.
 			 * @return void
 			 */
@@ -166,7 +188,7 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Enables only the errors to be print in the standard console. By default, this is option is disabled.
+			 * @brief Enables only the errors to be print in the standard console. By default, this option is disabled.
 			 * @note This won't affect the log file.
 			 * @param state The state.
 			 * @return void
@@ -189,7 +211,7 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Enables the location "[file:number]" section in the standard console. By default, this options is enabled.
+			 * @brief Enables the location "[file:number]" section in the standard console. By default, this option is enabled.
 			 * @note This won't affect the log file.
 			 * @param state The state.
 			 * @return void
@@ -212,7 +234,7 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Enables the thread information section in the standard console. By default, this options is enabled.
+			 * @brief Enables the thread information section in the standard console. By default, this option is enabled.
 			 * @note This won't affect the log file.
 			 * @param state The state.
 			 * @return void
@@ -257,11 +279,34 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Prepares the logger to write into a logfile.
-			 * @param filepath A reference to a string for the filepath.
+			 * @brief Returns whether the tracer is requested to enable logger at startup.
 			 * @return bool
 			 */
-			bool enableLogger (const std::string & filepath) noexcept;
+			[[nodiscard]]
+			bool
+			isLoggerRequestedAtStartup () const noexcept
+			{
+				return m_flags[EnableLoggerAtStartup];
+			}
+
+			/**
+			 * @brief Prepares the logger to write into a logfile.
+			 * @param filepath A reference to a string for the filepath. Default path.
+			 * @return bool
+			 */
+			bool enableLogger (const std::string & filepath = {}) noexcept;
+
+			/**
+			 * @brief Returns whether the tracer is writing into the logfile.
+			 * @note Returns always false if the logger is disabled.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool
+			isLoggerEnabled () const noexcept
+			{
+				return m_logger != nullptr;
+			}
 
 			/**
 			 * @brief Removes the logger and closes the logfile.
@@ -270,46 +315,20 @@ namespace EmEn
 			void disableLogger () noexcept;
 
 			/**
-			 * @brief Turns ON/OFF the tracer writing into the logfile.
-			 * @param state The state.
-			 * @return void
-			 */
-			void
-			enableLogging (bool state) noexcept
-			{
-				if ( m_logger == nullptr )
-				{
-					return;
-				}
-
-				m_flags[EnableLogging] = state;
-			}
-
-			/**
-			 * @brief Returns whether the tracer is writing into the logfile.
-			 * @note Returns always false, if the logger is disabled.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isLoggingEnabled () const noexcept
-			{
-				return m_flags[EnableLogging];
-			}
-
-			/**
 			 * @brief Reads the application settings.
-			 * @warning This can't be done at startup because the Tracer service is the first to be setup.
+			 * @warning This can't be done at startup because the Tracer service is the first to be set up.
+			 * @param fileSystem A reference to the file system.
+			 * @param settings A reference to the settings.
 			 * @return void
 			 */
-			void readSettings () noexcept;
+			void readSettings (const FileSystem & fileSystem, Settings & settings) noexcept;
 
 			/**
 			 * @brief Creates a log.
 			 * @param severity The type of log.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
-			 * @param location A pointer to a C-string to describe the location. Use LOCATION for default behavior.
+			 * @param location A pointer to a C-string to describe the location. Use LOCATION for the default behavior.
 			 * @return void
 			 */
 			void trace (Severity severity, const char * tag, const std::string & message, const char * location) const noexcept;
@@ -317,9 +336,9 @@ namespace EmEn
 			/**
 			 * @brief Creates a log with the Blob class.
 			 * @param severity The type of log.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
-			 * @param location A pointer to a C-string to describe the location. Use LOCATION for default behavior.
+			 * @param location A pointer to a C-string to describe the location. Use LOCATION for the default behavior.
 			 * @return void
 			 */
 			void
@@ -331,7 +350,7 @@ namespace EmEn
 			/**
 			 * @brief Creates a log.
 			 * @param severity The type of log.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -341,7 +360,7 @@ namespace EmEn
 			/**
 			 * @brief Creates a log with the Blob class.
 			 * @param severity The type of log.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -354,13 +373,21 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a log for a specific API.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param functionName A pointer on a c-string for the API function.
 			 * @param message A reference to a string for the message. Default none.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
 			 */
 			void traceAPI (const char * tag, const char * functionName, const std::string & message = {}, const std::source_location & location = std::source_location::current()) const noexcept;
+
+			/**
+			 * @brief Generates the name of a log file based on a name.
+			 * @param name A reference to a string
+			 * @return std::string
+			 */
+			[[nodiscard]]
+			std::string generateLogFilename (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Returns the instance of tracer.
@@ -376,7 +403,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Info as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -390,7 +417,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Info as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -404,7 +431,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Success as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -418,7 +445,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Success as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -432,7 +459,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Warning as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -446,7 +473,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Warning as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -460,7 +487,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Error as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -474,7 +501,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Error as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -488,7 +515,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Fatal as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -502,7 +529,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Fatal as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -516,7 +543,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Debug as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a string for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -532,7 +559,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log with Debug as severity.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
 			 * @return void
@@ -548,7 +575,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log for API usage.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param functionName A pointer on a c-string for the API function.
 			 * @param message A reference to a string for the log content. Default none.
 			 * @param location A reference to a source_location. Default constructed in place.
@@ -563,7 +590,7 @@ namespace EmEn
 
 			/**
 			 * @brief Creates a quick log for API usage.
-			 * @param tag A pointer on a c-string for identify and sort logs.
+			 * @param tag A pointer on a c-string to identify and sort logs.
 			 * @param functionName A pointer on a c-string for the API function.
 			 * @param message A reference to a blob for the log content.
 			 * @param location A reference to a source_location. Default constructed in place.
@@ -578,8 +605,8 @@ namespace EmEn
 
 			/**
 			 * @brief Converts GLFW log facility to trace()
-			 * @param error The error number from GLFW library.
-			 * @param description The message associated to the error code.
+			 * @param error The error number from the GLFW library.
+			 * @param description The message associated with the error code.
 			 * @return void
 			 */
 			static void traceGLFW (int error, const char * description) noexcept;
@@ -640,7 +667,7 @@ namespace EmEn
 			void injectProcessInfo (std::stringstream & stream) const noexcept;
 
 			/**
-			 * @brief Filters the current tag. If the method return true, the message with the tag is allowed to be displayed.
+			 * @brief Filters the current tag. If the method returns true, the message with the tag is allowed to be displayed.
 			 * @param tag The tag to filter.
 			 * @return bool
 			 */
@@ -648,36 +675,37 @@ namespace EmEn
 
 			/* Flag names. */
 			static constexpr auto ServiceInitialized{0UL};
-			static constexpr auto ChildProcess{1UL};
+			static constexpr auto IsChildProcess{1UL};
 			static constexpr auto PrintOnlyErrors{2UL};
 			static constexpr auto ShowLocation{3UL};
 			static constexpr auto ShowThreadInfos{4UL};
 			static constexpr auto EnableTracing{5UL};
-			static constexpr auto EnableLogging{6UL};
+			static constexpr auto EnableLoggerAtStartup{6UL};
 
 			static Tracer * s_instance;
 
 			const Arguments & m_arguments;
-			Settings & m_settings;
+			std::string m_processName;
 			std::vector< std::string > m_filters;
 			std::unique_ptr< TracerLogger > m_logger;
 			std::thread m_loggerProcess;
+			LogFormat m_logFormat{LogFormat::Text};
 			int m_parentProcessID{-1};
 			int m_processID{-1};
 			std::array< bool, 8 > m_flags{
 				false/*ServiceInitialized*/,
-				false/*ChildProcess*/,
+				false/*IsChildProcess*/,
 				false/*PrintOnlyErrors*/,
 				false/*ShowLocation*/,
 				true/*ShowThreadInfos*/,
 				true/*EnableTracing*/,
-				false/*EnableLogging*/,
+				false/*EnableLoggerAtStartup*/,
 				false/*UNUSED*/
 			};
 	};
 
 	/**
-	 * @brief This utils class create a debug trace object.
+	 * @brief This utils class creates a debug trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceDebug final : public Libs::BlobTrait
@@ -743,7 +771,7 @@ namespace EmEn
 	};
 
 	/**
-	 * @brief This utils class create a success trace object.
+	 * @brief This utils class creates a success trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceSuccess final : public Libs::BlobTrait
@@ -809,7 +837,7 @@ namespace EmEn
 	};
 
 	/**
-	 * @brief This utils class create an info trace object.
+	 * @brief This utils class creates an info trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceInfo final : public Libs::BlobTrait
@@ -875,7 +903,7 @@ namespace EmEn
 	};
 
 	/**
-	 * @brief This utils class create a warning trace object.
+	 * @brief This utils class creates a warning trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceWarning final : public Libs::BlobTrait
@@ -1007,7 +1035,7 @@ namespace EmEn
 	};
 
 	/**
-	 * @brief This utils class create a fatal trace object.
+	 * @brief This utils class creates a fatal trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceFatal final : public Libs::BlobTrait
@@ -1079,7 +1107,7 @@ namespace EmEn
 	};
 
 	/**
-	 * @brief This utils class create an API trace object.
+	 * @brief This utils class creates an API trace object.
 	 * @extends EmEn::Libs::BlobTrait
 	 */
 	class TraceAPI final : public Libs::BlobTrait

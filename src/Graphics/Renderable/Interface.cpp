@@ -73,7 +73,9 @@ namespace EmEn::Graphics::Renderable
 		}
 
 		/* NOTE: Check material resources. */
-		for ( size_t layerIndex = 0; layerIndex < this->layerCount(); layerIndex++ )
+		const auto layerCount = this->layerCount();
+
+		for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 		{
 			if ( !this->material(layerIndex)->isCreated() )
 			{

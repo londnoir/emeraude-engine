@@ -26,22 +26,23 @@
 
 #include "Tracer.hpp"
 
+/* Project configuration. */
+#include "emeraude_config.hpp"
+
 /* STL inclusions. */
 #include <algorithm>
 #include <cstring>
 #include <exception>
 #include <iostream>
-#include <memory>
-#include <sstream>
-#include <thread>
 
 /* Local inclusions. */
+#include "Arguments.hpp"
+#include "FileSystem.hpp"
 #include "Libs/BlobTrait.hpp"
 #include "Libs/String.hpp"
-#include "Arguments.hpp"
 #include "ServiceInterface.hpp"
-#include "Settings.hpp"
 #include "SettingKeys.hpp"
+#include "Settings.hpp"
 #include "TracerLogger.hpp"
 #include "Types.hpp"
 #if IS_WINDOWS
@@ -61,11 +62,13 @@ namespace EmEn
 
 	Tracer * Tracer::s_instance{nullptr};
 
-	Tracer::Tracer (const Arguments & arguments, Settings & settings, bool childProcess) noexcept
+	Tracer::Tracer (const Arguments & arguments, std::string processName, bool childProcess) noexcept
 		: ServiceInterface(ClassId),
 		m_arguments(arguments),
-		m_settings(settings)
+		m_processName(std::move(processName))
 	{
+		m_flags[IsChildProcess] = childProcess;
+
 		if ( s_instance != nullptr )
 		{
 			std::cerr << __PRETTY_FUNCTION__ << ", constructor called twice !" "\n";
@@ -74,25 +77,11 @@ namespace EmEn
 		}
 
 		s_instance = this;
-
-		m_flags[ChildProcess] = childProcess;
 	}
 
 	Tracer::~Tracer ()
 	{
 		s_instance = nullptr;
-	}
-
-	size_t
-	Tracer::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	Tracer::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
 	}
 
 	bool
@@ -127,16 +116,15 @@ namespace EmEn
 
 			m_flags[EnableTracing] = false;
 		}
-
-		argument = m_arguments.get("-l", "--enable-log");
-
-		if ( argument.isPresent() )
+		/* NOTE: Special case to delay the logger start in multi-processes application. */
+		else if ( !m_arguments.get("--disable-log").isPresent() )
 		{
-			m_logger = std::make_unique< TracerLogger >(argument.value());
+			argument = m_arguments.get("-l", "--enable-log");
 
-			m_flags[EnableLogging] = true;
-
-			m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
+			if ( this->isLoggerRequestedAtStartup() || argument.isPresent() )
+			{
+				this->enableLogger(argument.value());
+			}
 		}
 
 		m_flags[ServiceInitialized] = true;
@@ -149,25 +137,33 @@ namespace EmEn
 	{
 		m_flags[ServiceInitialized] = false;
 
-		if ( m_logger != nullptr )
-		{
-			m_logger->stop();
-
-			if ( m_loggerProcess.joinable() )
-			{
-				m_loggerProcess.join();
-			}
-
-			m_logger.reset();
-		}
+		this->disableLogger();
 
 		return true;
 	}
 
-	bool
-	Tracer::usable () const noexcept
+	std::string
+	Tracer::generateLogFilename (const std::string & name) const noexcept
 	{
-		return m_flags[ServiceInitialized];
+		std::stringstream filename;
+		filename << "journal-" << name;
+
+		switch ( m_logFormat )
+		{
+			case LogFormat::Text :
+				filename << ".log";
+				break;
+
+			case LogFormat::JSON :
+				filename << ".json";
+				break;
+
+			case LogFormat::HTML :
+				filename << ".html";
+				break;
+		}
+
+		return filename.str();
 	}
 
 	bool
@@ -178,20 +174,25 @@ namespace EmEn
 			return true;
 		}
 
-		m_logger = std::make_unique< TracerLogger >(filepath);
+		if ( filepath.empty() )
+		{
+			m_logger = std::make_unique< TracerLogger >(this->generateLogFilename(m_processName), m_logFormat);
+		}
+		else
+		{
+			m_logger = std::make_unique< TracerLogger >(filepath, m_logFormat);
+		}
 
 		if ( !m_logger->usable() )
 		{
 			m_logger.reset();
 
-			this->trace(Severity::Error, "Tracer", Libs::BlobTrait() << "Unable to enable the logger with the file '" << filepath << "' !");
+			this->trace(Severity::Error, ClassId, "Unable to enable the tracer logger!");
 
 			return false;
 		}
 
 		m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
-
-		m_flags[EnableLogging] = true;
 
 		return true;
 	}
@@ -199,7 +200,6 @@ namespace EmEn
 	void
 	Tracer::disableLogger () noexcept
 	{
-		/* FIXME: Detach ?! */
 		if ( m_logger != nullptr )
 		{
 			m_logger->stop();
@@ -214,11 +214,16 @@ namespace EmEn
 	}
 
 	void
-	Tracer::readSettings () noexcept
+	Tracer::readSettings (const FileSystem & fileSystem, Settings & settings) noexcept
 	{
-		this->enablePrintOnlyErrors(m_settings.get< bool >(TracerPrintOnlyErrorsKey, DefaultPrintOnlyErrors));
-		this->enableShowLocation(m_settings.get< bool >(TracerShowLocationKey, DefaultShowLocation));
-		this->enableShowThreadInfos(m_settings.get< bool >(TracerShowThreadInfosKey, DefaultShowThreadInfos));
+		this->enablePrintOnlyErrors(settings.get< bool >(TracerPrintOnlyErrorsKey, DefaultPrintOnlyErrors));
+		this->enableShowLocation(settings.get< bool >(TracerShowLocationKey, DefaultShowLocation));
+		this->enableShowThreadInfos(settings.get< bool >(TracerShowThreadInfosKey, DefaultShowThreadInfos));
+
+		//auto cache = fileSystem.cacheDirectory();
+
+		m_logFormat = to_LogFormat(settings.get< std::string >(TracerLogFormatKey, DefaultLogFormat));
+		m_flags[EnableLoggerAtStartup] = settings.get< bool >(TracerEnableLoggerKey, DefaultTracerEnableLogger);
 	}
 
 	void
@@ -229,7 +234,7 @@ namespace EmEn
 			return;
 		}
 
-		std::stringstream trace{};
+		std::stringstream trace;
 
 		trace << '[' << to_string(severity) << "][" << tag << ']';
 
@@ -272,7 +277,7 @@ namespace EmEn
 			return;
 		}
 
-		std::stringstream trace{};
+		std::stringstream trace;
 
 		trace << '[' << to_string(severity) << "][" << tag << ']';
 
@@ -315,7 +320,7 @@ namespace EmEn
 	void
 	Tracer::traceAPI (const char * tag, const char * functionName, const std::string & message, const std::source_location & location) const noexcept
 	{
-		std::stringstream trace{};
+		std::stringstream trace;
 
 		trace << "[" << tag << "] ";
 
@@ -380,7 +385,7 @@ namespace EmEn
 			return true;
 		}
 
-		/* Checks if a term match the filter. */
+		/* Checks if a term matches the filter. */
 		return std::ranges::any_of(m_filters, [tag](const auto & filteredTag) {
 			return std::strcmp(tag, filteredTag.c_str()) == 0;
 		});

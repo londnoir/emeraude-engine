@@ -23,10 +23,10 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 # Declare project and options.
 project(
 	Emeraude
-	VERSION 0.7.42
+	VERSION 0.7.43
 	DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20."
 	HOMEPAGE_URL "https://github.com/londnoir/emeraude-engine"
-	LANGUAGES CXX
+	LANGUAGES C CXX
 )
 
 set(CMAKE_VERBOSE_MAKEFILE On)
@@ -284,12 +284,14 @@ else ( UNIX )
 			-Wextra
 			-Wpedantic
 			#-Werror
+			-Wno-nullability-extension # macOS Clang warnings from external zip lib
 		>
 		$<$<CONFIG:Relase>:
 			-O2
 			-ffast-math
 			-fdata-sections
 			-ffunction-sections
+			-Wno-nullability-extension # macOS Clang warnings from external zip lib
 		>
 	)
 endif ()

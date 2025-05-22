@@ -53,23 +53,41 @@ namespace EmEn
 			static constexpr auto ClassId{"PrimaryServices"};
 
 			/**
-			 * @brief Constructs primary services manager.
+			 * @brief Constructs the primary services manager for a main process.
 			 * @param argc The argument count from the standard C/C++ main() function.
-			 * @param argv The argument values from the standard C/C++ main() function.
+			 * @param argv The argument values it from the standard C/C++ main() function.
 			 * @param identification A reference to the application identification.
-			 * @param childProcess Declares a child process.
 			 */
-			PrimaryServices (int argc, char * * argv, const Identification & identification, bool childProcess) noexcept;
+			PrimaryServices (int argc, char * * argv, const Identification & identification) noexcept;
+
+			/**
+			 * @brief Constructs the primary services manager for a child process.
+			 * @param argc The argument count from the standard C/C++ main() function.
+			 * @param argv The argument values it from the standard C/C++ main() function.
+			 * @param identification A reference to the application identification.
+			 * @param processName A reference to a string.
+			 * @param additionalArguments A reference to a vector of strings. Default none.
+			 */
+			PrimaryServices (int argc, char * * argv, const Identification & identification, const std::string & processName, const std::vector< std::string > & additionalArguments = {}) noexcept;
 
 #if IS_WINDOWS
 			/**
-			 * @brief Constructs primary services manager.
+			 * @brief Constructs the primary services manager for a main process.
 			 * @param argc The argument count from the standard C/C++ main() function.
-			 * @param wargv The argument values from the standard C/C++ main() function.
+			 * @param wargv The argument values it from the standard C/C++ main() function.
 			 * @param identification A reference to the application identification.
-			 * @param childProcess Declares a child process.
 			 */
-			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, bool childProcess) noexcept;
+			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification) noexcept;
+
+			/**
+			 * @brief Constructs the primary services manager for a child process.
+			 * @param argc The argument count from the standard C/C++ main() function.
+			 * @param wargv The argument values it from the standard C/C++ main() function.
+			 * @param identification A reference to the application identification.
+			 * @param processName A reference to a string.
+			 * @param additionalArguments A reference to a vector of strings. Default none.
+			 */
+			PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, const std::string & processName, const std::vector< std::string > & additionalArguments = {}) noexcept;
 #endif
 
 			/**
@@ -139,7 +157,7 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Returns the reference to the arguments service.
+			 * @brief Returns the reference to the argument service.
 			 * @return Arguments &
 			 */
 			[[nodiscard]]
@@ -150,7 +168,7 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Returns the reference to the arguments service.
+			 * @brief Returns the reference to the argument service.
 			 * @return const Arguments &
 			 */
 			[[nodiscard]]

@@ -648,10 +648,10 @@ namespace EmEn::Graphics::RenderableInstance
 			/**
 			 * @brief Returns the number of instance to draw.
 			 * @note This is a more convenient named method than get the vertex count from the VBO.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			virtual size_t instanceCount () const noexcept = 0;
+			virtual uint32_t instanceCount () const noexcept = 0;
 
 			/**
 			 * @brief Returns whether model matrices are created in video memory.
@@ -686,7 +686,7 @@ namespace EmEn::Graphics::RenderableInstance
 			 * @param layerIndex The current layer to bind.
 			 * @return void
 			 */
-			virtual void bindInstanceModelLayer (const Vulkan::CommandBuffer & commandBuffer, size_t layerIndex) const noexcept = 0;
+			virtual void bindInstanceModelLayer (const Vulkan::CommandBuffer & commandBuffer, uint32_t layerIndex) const noexcept = 0;
 
 			mutable std::mutex m_GPUMemoryAccess{};
 
@@ -701,7 +701,7 @@ namespace EmEn::Graphics::RenderableInstance
 				std::shared_ptr< RenderTarget::Abstract >,
 				RenderTargetPrograms
 			> m_renderTargets;
-			size_t m_frameIndex{0};
+			uint32_t m_frameIndex{0};
 			Libs::Math::Matrix< 4, float > m_transformationMatrix;
 			std::shared_ptr< Saphir::Program > m_shadowProgram;
 			std::shared_ptr< Saphir::Program > m_TBNSpaceProgram;
