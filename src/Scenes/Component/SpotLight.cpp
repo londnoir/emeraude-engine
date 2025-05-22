@@ -65,7 +65,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	SpotLight::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	SpotLight::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

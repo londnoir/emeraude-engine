@@ -80,7 +80,7 @@ namespace EmEn::Overlay
 	}
 
 	void
-	UIScreen::render (const std::shared_ptr< RenderTarget::Abstract > & renderTarget, const CommandBuffer & commandBuffer, const PipelineLayout & pipelineLayout, const Geometry::IndexedVertexResource & surfaceGeometry) const noexcept
+	UIScreen::render (const std::shared_ptr< RenderTarget::Abstract > & /*renderTarget*/, const CommandBuffer & commandBuffer, const PipelineLayout & pipelineLayout, const Geometry::IndexedVertexResource & surfaceGeometry) const noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_surfacesMutex};
 
@@ -135,7 +135,8 @@ namespace EmEn::Overlay
 			return false;
 		}
 
-		surfaceIt->second->destroyFromHardware();
+		// TODO: Check why we can't explicitly kill the surface here.
+		//surfaceIt->second->destroyFromHardware();
 
 		m_surfaces.erase(surfaceIt);
 
@@ -485,8 +486,12 @@ namespace EmEn::Overlay
 	std::ostream &
 	operator<< (std::ostream & out, const UIScreen & obj)
 	{
-		out << "UI screen data :" "\n"
-			"Has input exclusive surface : " << (obj.m_inputExclusiveSurface == nullptr ? "[No]" : obj.m_inputExclusiveSurface->name() ) << '\n';
+		out <<
+			"UI screen '" << obj.name() << "' data :" "\n"
+			"Is visible : " << ( obj.isVisible() ? "YES" : "NO" ) << "\n" <<
+			"Is listening to the keyboard : " << ( obj.isListeningKeyboard() ? "YES" : "NO" ) << "\n" <<
+			"Is listening to the mouse/pointer : " << ( obj.isListeningPointer() ? "YES" : "NO" ) << "\n" <<
+			"Has input exclusive surface : " << ( obj.m_inputExclusiveSurface == nullptr ? "[No]" : obj.m_inputExclusiveSurface->name() ) << '\n';
 
 		if ( obj.m_surfaces.empty() )
 		{
@@ -494,11 +499,15 @@ namespace EmEn::Overlay
 		}
 		else
 		{
-			out << "Surfaces : " "\n";
+			out <<
+				"Surfaces : " "\n"
+				"==============================================================================" "\n";
 
 			for ( const auto & surface : obj.m_sortedSurfaces )
 			{
-				out << *surface << '\n';
+				out <<
+					*surface <<
+					"==============================================================================" "\n";
 			}
 		}
 

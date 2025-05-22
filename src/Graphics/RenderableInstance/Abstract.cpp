@@ -150,17 +150,17 @@ namespace EmEn::Graphics::RenderableInstance
 
 		for ( const auto renderPassType : renderPassTypes )
 		{
-			auto & renderTargets = renderTargetIt->second;
+			auto & [renderPasses, isReadyToRender] = renderTargetIt->second;
 
-			auto renderPassIt = renderTargets.renderPasses.find(renderPassType);
+			auto renderPassIt = renderPasses.find(renderPassType);
 
-			if ( renderPassIt == renderTargets.renderPasses.end() )
+			if ( renderPassIt == renderPasses.end() )
 			{
-				renderPassIt = renderTargets.renderPasses.try_emplace(renderPassType).first;
+				renderPassIt = renderPasses.try_emplace(renderPassType).first;
 				renderPassIt->second.resize(layerCount);
 			}
 
-			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+			for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
 				std::stringstream name;
 				name << "RenderableInstance" << to_string(renderPassType);
@@ -258,7 +258,7 @@ namespace EmEn::Graphics::RenderableInstance
 			return false;
 		}
 
-		size_t error = 0;
+		uint32_t error = 0;
 
 		for ( const auto & programs : std::ranges::views::values(renderTargetIt->second.renderPasses) )
 		{
@@ -343,7 +343,7 @@ namespace EmEn::Graphics::RenderableInstance
 			);
 		}
 
-		for ( size_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
 		{
 			this->bindInstanceModelLayer(commandBuffer, layerIndex);
 
@@ -382,8 +382,9 @@ namespace EmEn::Graphics::RenderableInstance
 
 		const auto * geometry = m_renderable->geometry();
 		const auto & programs = renderPassTypeIt->second;
+		const auto programCount = static_cast< uint32_t >(programs.size());
 
-		for ( size_t layerIndex = 0; layerIndex < programs.size(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < programCount; layerIndex++ )
 		{
 			const auto & program = programs[layerIndex];
 
@@ -471,7 +472,7 @@ namespace EmEn::Graphics::RenderableInstance
 			);
 		}
 
-		for ( size_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
+		for ( uint32_t layerIndex = 0; layerIndex < m_renderable->layerCount(); layerIndex++ )
 		{
 			this->bindInstanceModelLayer(commandBuffer, layerIndex);
 

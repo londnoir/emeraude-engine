@@ -565,11 +565,11 @@ namespace EmEn::Graphics
 	/**
 	 * @brief Returns the attribute type size (number of element).
 	 * @param type The type of attribute.
-	 * @return size_t
+	 * @return uint32_t
 	 */
 	[[nodiscard]]
 	constexpr
-	size_t
+	uint32_t
 	getAttributeSize (VertexAttributeType type) noexcept
 	{
 		switch ( type )

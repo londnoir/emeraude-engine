@@ -635,7 +635,7 @@ namespace EmEn::Scenes
 	}
 
 	std::shared_ptr< Component::ParticlesEmitter >
-	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::SpriteResource > & resource, size_t maxParticleCount, const std::string & componentName) noexcept
+	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::SpriteResource > & resource, uint32_t maxParticleCount, const std::string & componentName) noexcept
 	{
 		/* If no name were passed, we use the resource name. */
 		const auto name = componentName.empty() ? resource->name() : componentName;
@@ -660,7 +660,7 @@ namespace EmEn::Scenes
 	}
 
 	std::shared_ptr< Component::ParticlesEmitter >
-	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::MeshResource > & resource, size_t maxParticleCount, const std::string & componentName) noexcept
+	AbstractEntity::newParticlesEmitter (const std::shared_ptr< Renderable::MeshResource > & resource, uint32_t maxParticleCount, const std::string & componentName) noexcept
 	{
 		/* If no name were passed, we use the resource name. */
 		const auto name = componentName.empty() ? resource->name() : componentName;

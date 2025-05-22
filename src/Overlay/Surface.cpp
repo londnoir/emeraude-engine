@@ -156,8 +156,8 @@ namespace EmEn::Overlay
 		}
 
 		/* Get the pixel coordinates on the surface. */
-		const auto surfaceX = static_cast< size_t >(screenX - (static_cast< float >(m_framebufferProperties.width()) * m_rectangle.left()));
-		const auto surfaceY = static_cast< size_t >(screenY - (static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top()));
+		const auto surfaceX = static_cast< uint32_t >(screenX - (static_cast< float >(m_framebufferProperties.width()) * m_rectangle.left()));
+		const auto surfaceY = static_cast< uint32_t >(screenY - (static_cast< float >(m_framebufferProperties.height()) * m_rectangle.top()));
 
 		/* Get that pixel color from the pixmap. */
 		const auto pixelColor = m_frontLocalData.safePixel(surfaceX, surfaceY);

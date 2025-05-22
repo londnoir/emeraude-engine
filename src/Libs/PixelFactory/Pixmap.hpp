@@ -656,7 +656,10 @@ namespace EmEn::Libs::PixelFactory
 
 				if ( m_flags[UpdatedRegionMarkerEnabled] )
 				{
-					this->markPixelUpdated(pixelIndex % m_width, pixelIndex / m_width);
+					this->markPixelUpdated(
+						static_cast< dimension_t >(pixelIndex) % m_width,
+						static_cast< dimension_t >(pixelIndex) / m_width
+					);
 				}
 			}
 

@@ -130,7 +130,7 @@ namespace EmEn::Graphics
 		}
 		
 		/* Tries to read the pixmap. */
-		Pixmap< uint8_t > basemap{};
+		Pixmap< uint8_t, uint32_t > basemap{};
 
 		if ( !FileIO::read(filepath, basemap) )
 		{

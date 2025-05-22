@@ -166,7 +166,7 @@ namespace EmEn::Scenes
 	}
 
 	bool
-	StaticEntity::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	StaticEntity::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

@@ -67,7 +67,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	DirectionalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	DirectionalPushModifier::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

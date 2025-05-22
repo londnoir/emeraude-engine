@@ -543,7 +543,7 @@ namespace EmEn::Overlay
 			 * @param repeat Repeat state.
 			 * @return bool
 			 */
-			virtual bool onKeyPress (int32_t key, int32_t scancode, int32_t modifiers, bool repeat) noexcept
+			virtual bool onKeyPress (int32_t /*key*/, int32_t /*scancode*/, int32_t /*modifiers*/, bool /*repeat*/) noexcept
 			{
 				return false;
 			}
@@ -556,7 +556,7 @@ namespace EmEn::Overlay
 			 * @param modifiers The modifier keys mask.
 			 * @return bool
 			 */
-			virtual bool onKeyRelease (int32_t key, int32_t scancode, int32_t modifiers) noexcept
+			virtual bool onKeyRelease (int32_t /*key*/, int32_t /*scancode*/, int32_t /*modifiers*/) noexcept
 			{
 				return false;
 			}
@@ -567,7 +567,7 @@ namespace EmEn::Overlay
 			 * @param unicode The character Unicode value.
 			 * @return bool
 			 */
-			virtual bool onCharacterType (uint32_t unicode) noexcept
+			virtual bool onCharacterType (uint32_t /*unicode*/) noexcept
 			{
 				return false;
 			}
@@ -579,7 +579,7 @@ namespace EmEn::Overlay
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual void onPointerEnter (float positionX, float positionY) noexcept
+			virtual void onPointerEnter (float /*positionX*/, float /*positionY*/) noexcept
 			{
 
 			}
@@ -591,7 +591,7 @@ namespace EmEn::Overlay
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual void onPointerLeave (float positionX, float positionY) noexcept
+			virtual void onPointerLeave (float /*positionX*/, float /*positionY*/) noexcept
 			{
 
 			}
@@ -603,7 +603,7 @@ namespace EmEn::Overlay
 			 * @param positionY The pointer Y position.
 			 * @return bool
 			 */
-			virtual bool onPointerMove (float positionX, float positionY) noexcept
+			virtual bool onPointerMove (float /*positionX*/, float /*positionY*/) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -617,7 +617,7 @@ namespace EmEn::Overlay
 			 * @param modifiers The keyboard modifiers held when the button has been pressed.
 			 * @return bool
 			 */
-			virtual bool onButtonPress (float positionX, float positionY, int32_t buttonNumber, int32_t modifiers) noexcept
+			virtual bool onButtonPress (float /*positionX*/, float /*positionY*/, int32_t /*buttonNumber*/, int32_t /*modifiers*/) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -631,7 +631,7 @@ namespace EmEn::Overlay
 			 * @param modifiers The keyboard modifiers held when the button has been released.
 			 * @return bool
 			 */
-			virtual bool onButtonRelease (float positionX, float positionY, int buttonNumber, int modifiers) noexcept
+			virtual bool onButtonRelease (float /*positionX*/, float /*positionY*/, int /*buttonNumber*/, int /*modifiers*/) noexcept
 			{
 				return m_flags[IsOpaque];
 			}
@@ -645,7 +645,7 @@ namespace EmEn::Overlay
 			 * @param yOffset The scroll distance on the Y axis.
 			 * @return bool
 			 */
-			virtual bool onMouseWheel (float positionX, float positionY, float xOffset, float yOffset) noexcept
+			virtual bool onMouseWheel (float /*positionX*/, float /*positionY*/, float /*xOffset*/, float /*yOffset*/) noexcept
 			{
 				return m_flags[IsOpaque];
 			}

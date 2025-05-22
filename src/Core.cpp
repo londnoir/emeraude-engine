@@ -329,11 +329,13 @@ namespace EmEn
 				return this->executeToolsMode();
 
 			case StartupMode::Continue :
-				if ( this->readArgumentsBeforeInitialization(m_primaryServices.arguments()) )
+				/* NOTE: Let the application stop the run. */
+				if ( this->onBeforeSecondaryServicesInitialization() )
 				{
 					return this->terminate() == 0;
 				}
 
+				/* NOTE: Finish the core initialization with secondary services. */
 				if ( !this->initializeCoreLevel() )
 				{
 					return false;
@@ -585,40 +587,43 @@ namespace EmEn
 		/* Initialize audio manager. */
 		if ( m_audioManager.initialize(m_secondaryServicesEnabled) )
 		{
-			TraceSuccess{ClassId} << m_audioManager.name() << " service up !";
-
-			m_audioManager.registerToObject(*this);
-
-			/* Initialize the track mixer. */
-			if ( m_trackMixer.initialize(m_secondaryServicesEnabled) )
+			if ( m_audioManager.isAudioEnabled() )
 			{
-				TraceSuccess{ClassId} << m_trackMixer.name() << " service up !";
+				TraceSuccess{ClassId} << m_audioManager.name() << " service up !";
 
-				this->observe(&m_trackMixer);
-			}
-			else
-			{
-				TraceWarning{ClassId} <<
-					m_trackMixer.name() << " service failed to execute." "\n"
-					"No music available !";
-			}
+				m_audioManager.registerToObject(*this);
 
-			/* Initialize the audio external input. */
-			if ( m_audioExternalInput.initialize(m_secondaryServicesEnabled) )
-			{
-				TraceSuccess{ClassId} << m_audioExternalInput.name() << " service up !";
-			}
-			else
-			{
-				TraceWarning{ClassId} <<
-					m_audioExternalInput.name() << " service failed to execute !" "\n"
-					"No audio input available !";
+				/* Initialize the track mixer. */
+				if ( m_trackMixer.initialize(m_secondaryServicesEnabled) )
+				{
+					TraceSuccess{ClassId} << m_trackMixer.name() << " service up !";
+
+					this->observe(&m_trackMixer);
+				}
+				else
+				{
+					TraceWarning{ClassId} <<
+						m_trackMixer.name() << " service failed to execute." "\n"
+						"No music available !";
+				}
+
+				/* Initialize the audio external input. */
+				if ( m_audioExternalInput.initialize(m_secondaryServicesEnabled) )
+				{
+					TraceSuccess{ClassId} << m_audioExternalInput.name() << " service up !";
+				}
+				else
+				{
+					TraceWarning{ClassId} <<
+						m_audioExternalInput.name() << " service failed to execute !" "\n"
+						"No audio input available !";
+				}
 			}
 		}
 		else
 		{
 			TraceWarning{ClassId} <<
-				m_audioExternalInput.name() << " service failed to execute !" "\n"
+				m_audioManager.name() << " service failed to execute !" "\n"
 				"No audio available !";
 		}
 
@@ -667,6 +672,21 @@ namespace EmEn
 		}
 
 		Tracer::success(ClassId, "Engine at core level initialized ! Now initialization at the application level ...");
+
+		return true;
+	}
+
+	bool
+	Core::enableUserService (ServiceInterface * userService) noexcept
+	{
+		if ( !userService->initialize(m_userServiceEnabled) )
+		{
+			TraceError{ClassId} << userService->name() << " user service failed to execute !";
+
+			return false;
+		}
+
+		TraceSuccess{ClassId} << userService->name() << " user service up !";
 
 		return true;
 	}
@@ -762,9 +782,26 @@ namespace EmEn
 	unsigned int
 	Core::terminate () noexcept
 	{
-		/* Terminate secondary services. */
 		unsigned int error = 0;
 
+		/* Terminate user services. */
+		for ( auto * userService : std::ranges::reverse_view(m_userServiceEnabled) )
+		{
+			if ( userService->terminate() )
+			{
+				TraceSuccess{ClassId} << userService->name() << " user service terminated gracefully !";
+			}
+			else
+			{
+				error++;
+
+				TraceError{ClassId} << userService->name() << " user service failed to terminate properly !";
+			}
+		}
+
+		m_userServiceEnabled.clear();
+
+		/* Terminate secondary services. */
 		for ( auto * service : std::ranges::reverse_view(m_secondaryServicesEnabled) )
 		{
 			if ( service->terminate() )
@@ -1063,9 +1100,15 @@ namespace EmEn
 		}
 
 		/* NOTE: If the application do not catch any key, we let the core having a default behavior. */
+		if ( m_flags[PreventDefaultKeyBehaviors] )
+		{
+			return false;
+		}
+
 		switch ( key )
 		{
 			case KeyGraveAccent :
+				// TODO: Re-enable this method
 				//m_console.enable();
 
 				return true;

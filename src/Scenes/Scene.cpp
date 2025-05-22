@@ -930,7 +930,7 @@ namespace EmEn::Scenes
 		}
 		else
 		{
-			for ( size_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
+			for ( uint32_t layerIndex = 0; layerIndex < layerCount; layerIndex++ )
 			{
 				const auto isOpaque = renderable->isOpaque(layerIndex);
 

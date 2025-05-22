@@ -74,7 +74,7 @@ namespace EmEn::Physics
 	}
 
 	void
-	MovableTrait::addTorque (const Vector< 3, float > & torque) noexcept
+	MovableTrait::addTorque (const Vector< 3, float > & /*torque*/) noexcept
 	{
 		const auto & objectProperties = getObjectProperties();
 

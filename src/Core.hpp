@@ -679,6 +679,16 @@ namespace EmEn
 #endif
 
 			/**
+			 * @brief Prevents core to handle unhandled keys.
+			 * @return void
+			 */
+			void
+			preventDefaultKeyBehaviors () noexcept
+			{
+				m_flags[PreventDefaultKeyBehaviors] = true;
+			}
+
+			/**
 			 * @brief Returns the execution time of the engine in microseconds.
 			 * @return uint64_t
 			 */
@@ -807,6 +817,14 @@ namespace EmEn
 				m_cursorAtlas.resetCursor(m_window);
 			}
 
+			/**
+			 * @brief Enables an application service.
+			 * @param userService A pointer to a service interface.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			bool enableUserService (ServiceInterface * userService) noexcept;
+
 		private:
 
 			/** @copydoc EmEn::Input::KeyboardListenerInterface::onKeyPress() */
@@ -899,13 +917,12 @@ namespace EmEn
 			}
 
 			/**
-			 * @brief Called before the initialization of secondary services. This is the moment to show application information without starting.
+			 * @brief Called before the initialization of secondary services. For example, this is the moment to show application help in terminal without starting.
 			 * @note If the method return "true", the application will stop.
-			 * @param arguments A reference to the arguments.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			virtual bool readArgumentsBeforeInitialization (const Arguments & arguments) noexcept = 0;
+			virtual bool onBeforeSecondaryServicesInitialization () noexcept = 0;
 
 			/**
 			 * @brief Called before entering the main loop. All Services are available at this point.
@@ -994,6 +1011,7 @@ namespace EmEn
 			static constexpr auto Pausable{3UL};
 			static constexpr auto Paused{4UL};
 			static constexpr auto ShowHelp{5UL};
+			static constexpr auto PreventDefaultKeyBehaviors{6UL};
 
 			static Core * s_instance;
 
@@ -1019,6 +1037,7 @@ namespace EmEn
 			Scenes::Manager m_sceneManager{m_primaryServices, m_resourceManager, m_graphicsRenderer, m_audioManager};
 			std::vector< ServiceInterface * > m_primaryServicesEnabled;
 			std::vector< ServiceInterface * > m_secondaryServicesEnabled;
+			std::vector< ServiceInterface * > m_userServiceEnabled;
 			CursorAtlas m_cursorAtlas;
 			std::thread m_logicsThread;
 			std::thread m_renderingThread;
@@ -1034,7 +1053,7 @@ namespace EmEn
 				false/*Pausable*/,
 				false/*Paused*/,
 				false/*ShowHelp*/,
-				false/*UNUSED*/,
+				false/*PreventDefaultKeyBehaviors*/,
 				false/*UNUSED*/,
 				/* Flags for user application. */
 				false/*RESERVED*/,

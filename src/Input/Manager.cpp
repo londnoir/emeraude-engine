@@ -316,13 +316,13 @@ namespace EmEn::Input
 	}
 
 	void
-	Manager::charModsCallback (GLFWwindow * /*handle*/, unsigned int codepoint, int modifiers) noexcept
+	Manager::charModsCallback (GLFWwindow * /*handle*/, unsigned int codepoint, int /*modifiers*/) noexcept
 	{
 #ifdef KEYBOARD_INPUT_DEBUG_ENABLED
 		std::cout <<
 			"[DEBUG:KEYBOARD] Unicode input detected !" "\n"
 			"Unicode: " << codepoint << "\n"
-			"Keyboard modifiers: " << getModifierListString(modifiers) << "\n";
+			/*"Keyboard modifiers: " << getModifierListString(modifiers) << "\n"*/;
 #endif
 
 		for ( const auto & listener : s_instance->m_keyboardListeners )

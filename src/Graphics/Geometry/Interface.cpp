@@ -48,7 +48,7 @@ namespace EmEn::Graphics::Geometry
 	}
 
 	bool
-	Interface::buildSubGeometries (std::vector< SubGeometry > & subGeometries, size_t length) noexcept
+	Interface::buildSubGeometries (std::vector< SubGeometry > & subGeometries, uint32_t length) noexcept
 	{
 		if ( length == 0 )
 		{
@@ -56,7 +56,7 @@ namespace EmEn::Graphics::Geometry
 		}
 
 		subGeometries.clear();
-		subGeometries.emplace_back(0UL, length);
+		subGeometries.emplace_back(0, length);
 
 		return true;
 	}

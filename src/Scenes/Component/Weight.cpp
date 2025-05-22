@@ -88,7 +88,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	Weight::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	Weight::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

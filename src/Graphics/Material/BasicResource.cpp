@@ -470,7 +470,7 @@ namespace EmEn::Graphics::Material
 		return textureResource->duration();
 	}
 
-	size_t
+	uint32_t
 	BasicResource::frameIndexAt (uint32_t sceneTime) const noexcept
 	{
 		if ( !this->isFlagEnabled(Animated) || m_textureComponent == nullptr )

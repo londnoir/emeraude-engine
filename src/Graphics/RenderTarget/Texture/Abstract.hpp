@@ -177,7 +177,7 @@ namespace EmEn::Graphics::RenderTarget::Texture
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameIndexAt() */
 			[[nodiscard]]
-			size_t
+		uint32_t
 			frameIndexAt (uint32_t /*sceneTime*/) const noexcept override
 			{
 				return 0;

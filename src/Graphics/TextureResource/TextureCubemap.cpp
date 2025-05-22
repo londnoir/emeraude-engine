@@ -247,7 +247,7 @@ namespace EmEn::Graphics::TextureResource
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	TextureCubemap::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		return 0;
