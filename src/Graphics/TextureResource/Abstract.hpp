@@ -199,10 +199,10 @@ namespace EmEn::Graphics::TextureResource
 			/**
 			 * @brief Returns the index of the frame at specific time.
 			 * @param sceneTime The current scene time in milliseconds.
-			 * @return size_t
+			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			virtual size_t frameIndexAt (uint32_t sceneTime) const noexcept = 0;
+			virtual uint32_t frameIndexAt (uint32_t sceneTime) const noexcept = 0;
 
 			/**
 			 * @brief Returns the image of the texture.
@@ -235,12 +235,13 @@ namespace EmEn::Graphics::TextureResource
 			/**
 			 * @brief Validates a pixmap for Vulkan requirements.
 			 * @param classId A pointer to the class id validating the pixmap.
+			 * @param resourceName A reference to a string.
 			 * @param pixmap A reference to a pixmap.
 			 * @param disablePowerOfTwoCheck Disable the check for size pixmap check. Default false.
 			 * @return bool
 			 */
 			[[nodiscard]]
-			static bool validatePixmap (const char * classId, Libs::PixelFactory::Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck = false) noexcept;
+			static bool validatePixmap (const char * classId, const std::string & resourceName, Libs::PixelFactory::Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck = false) noexcept;
 
 		protected:
 

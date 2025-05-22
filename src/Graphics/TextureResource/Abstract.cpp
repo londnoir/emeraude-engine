@@ -116,18 +116,18 @@ namespace EmEn::Graphics::TextureResource
 	}
 
 	bool
-	Abstract::validatePixmap (const char * classId, Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck) noexcept
+	Abstract::validatePixmap (const char * classId, const std::string & resourceName, Pixmap< uint8_t > & pixmap, bool disablePowerOfTwoCheck) noexcept
 	{
 		if ( !pixmap.isValid() )
 		{
-			Tracer::error(classId, "The pixmap is invalid !");
+			TraceError{classId} << "The pixmap for resource '" << resourceName << "' is invalid !";
 
 			return false;
 		}
 
 		if ( !disablePowerOfTwoCheck && !pixmap.isPowerOfTwo() )
 		{
-			TraceError{classId} << "The pixmap size are not power of two (" << pixmap.width() << "X" << pixmap.height() << ") !";
+			TraceError{classId} << "The pixmap size for resource '" << resourceName << "' are not power of two (" << pixmap.width() << "X" << pixmap.height() << ") !";
 
 			return false;
 		}
@@ -135,14 +135,14 @@ namespace EmEn::Graphics::TextureResource
 		/* TODO: Sometimes gray scale GPU resources is useful ! */
 		if ( pixmap.colorCount() != 4 )
 		{
-			Tracer::warning(classId, "The pixmap color channel mismatch the system ! Converting to RGBA ...");
+			TraceWarning{classId} << "The pixmap for resource '" << resourceName << "' color channel mismatch the system ! Converting to RGBA ...";
 
 			pixmap = Processor< uint8_t >::toRGBA(pixmap);
 		}
 
 		if ( !pixmap.isValid() )
 		{
-			Tracer::error(classId, "The pixmap became invalid after validation !");
+			TraceError{classId} << "The pixmap for resource '" << resourceName << "' became invalid after validation !";
 
 			return false;
 		}

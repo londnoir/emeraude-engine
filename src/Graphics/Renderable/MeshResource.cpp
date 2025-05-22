@@ -56,28 +56,10 @@ namespace EmEn::Graphics::Renderable
 
 	}
 
-	size_t
-	MeshResource::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
 	bool
-	MeshResource::is (size_t classUID) const noexcept
+	MeshResource::isOpaque (uint32_t layerIndex) const noexcept
 	{
-		return classUID == ClassUID;
-	}
-
-	size_t
-	MeshResource::layerCount () const noexcept
-	{
-		return m_layers.size();
-	}
-
-	bool
-	MeshResource::isOpaque (size_t layerIndex) const noexcept
-	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::isOpaque(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -94,16 +76,10 @@ namespace EmEn::Graphics::Renderable
 		return true;
 	}
 
-	const Geometry::Interface *
-	MeshResource::geometry () const noexcept
-	{
-		return m_geometry.get();
-	}
-
 	const Material::Interface *
-	MeshResource::material (size_t layerIndex) const noexcept
+	MeshResource::material (uint32_t layerIndex) const noexcept
 	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::material(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -114,9 +90,9 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	const RasterizationOptions *
-	MeshResource::layerRasterizationOptions (size_t layerIndex) const noexcept
+	MeshResource::layerRasterizationOptions (uint32_t layerIndex) const noexcept
 	{
-		if ( layerIndex >= m_layers.size() )
+		if ( layerIndex >= static_cast< uint32_t >(m_layers.size()) )
 		{
 			TraceError{ClassId} << "MeshResource::layerRasterizationOptions(), layer index " << layerIndex << " overflow on '" << this->name() << "' !";
 
@@ -124,34 +100,6 @@ namespace EmEn::Graphics::Renderable
 		}
 
 		return &m_layers[layerIndex].rasterizationOptions();
-	}
-
-	const Cuboid< float > &
-	MeshResource::boundingBox () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingBox;
-		}
-
-		return m_geometry->boundingBox();
-	}
-
-	const Sphere< float > &
-	MeshResource::boundingSphere () const noexcept
-	{
-		if ( m_geometry == nullptr )
-		{
-			return NullBoundingSphere;
-		}
-
-		return m_geometry->boundingSphere();
-	}
-
-	const char *
-	MeshResource::classLabel () const noexcept
-	{
-		return ClassId;
 	}
 
 	bool

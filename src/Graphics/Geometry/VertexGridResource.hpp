@@ -139,7 +139,7 @@ namespace EmEn::Graphics::Geometry
 
 			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryCount() */
 			[[nodiscard]]
-			size_t
+			uint32_t
 			subGeometryCount () const noexcept override
 			{
 				return 1;
@@ -148,7 +148,7 @@ namespace EmEn::Graphics::Geometry
 			/** @copydoc EmEn::Graphics::Geometry::Interface::subGeometryRange() */
 			[[nodiscard]]
 			std::array< uint32_t, 2 >
-			subGeometryRange (size_t /*subGeometryIndex*/ = 0) const noexcept override
+			subGeometryRange (uint32_t /*subGeometryIndex*/ = 0) const noexcept override
 			{
 				return {0, static_cast< uint32_t >(m_indexBufferObject->indexCount())};
 			}
@@ -229,7 +229,7 @@ namespace EmEn::Graphics::Geometry
 			 * @param globalVertexColor A reference to a color. Default black.
 			 * @return bool
 			 */
-			bool load (float size, size_t division, float UVMultiplier = 1.0F, const VertexColorGenMode & vertexColorGenMode = VertexColorGenMode::UseRandom, const Libs::PixelFactory::Color< float > & globalVertexColor = Libs::PixelFactory::Black) noexcept;
+			bool load (float size, uint32_t division, float UVMultiplier = 1.0F, const VertexColorGenMode & vertexColorGenMode = VertexColorGenMode::UseRandom, const Libs::PixelFactory::Color< float > & globalVertexColor = Libs::PixelFactory::Black) noexcept;
 
 			/**
 			 * @brief This load a geometry from a parametric object.
@@ -289,7 +289,7 @@ namespace EmEn::Graphics::Geometry
 			 * @return bool
 			 */
 			[[nodiscard]]
-			bool createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, size_t vertexCount, size_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept;
+			bool createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, uint32_t vertexCount, uint32_t vertexElementCount, const std::vector< uint32_t > & indices) noexcept;
 
 			/**
 			 * @brief Adds a vertex to the local buffer.
@@ -299,7 +299,7 @@ namespace EmEn::Graphics::Geometry
 			 * @return uint32_t
 			 */
 			[[nodiscard]]
-			uint32_t addVertexToBuffer (size_t index, std::vector< float > & buffer, uint32_t vertexElementCount) const noexcept;
+			uint32_t addVertexToBuffer (uint32_t index, std::vector< float > & buffer, uint32_t vertexElementCount) const noexcept;
 
 			/* JSON key. */
 			static constexpr auto JKSize{"Size"};

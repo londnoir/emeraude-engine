@@ -1,5 +1,6 @@
 if ( NOT PNG_ENABLED )
-	if ( EMERAUDE_USE_SYSTEM_LIBS )
+	# FIXME: PNG and GTK 3 fails together
+	if ( EMERAUDE_USE_SYSTEM_LIBS OR (UNIX AND NOT APPLE) )
 		message("Enabling LibPNG library from system ...")
 
 		find_package(PkgConfig REQUIRED)

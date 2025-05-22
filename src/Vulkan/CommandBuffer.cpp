@@ -1100,7 +1100,7 @@ namespace EmEn::Vulkan
 	}
 
 	void
-	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, size_t /*subGeometryIndex*/) const noexcept
+	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, uint32_t /*subGeometryIndex*/) const noexcept
 	{
 #ifdef DEBUG
 		if ( !this->isCreated() )
@@ -1140,7 +1140,7 @@ namespace EmEn::Vulkan
 	}
 
 	void
-	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, const VertexBufferObject & modelVBO, size_t subGeometryIndex, VkDeviceSize modelVBOOffset) const noexcept
+	CommandBuffer::bind (const Graphics::Geometry::Interface & geometry, const VertexBufferObject & modelVBO, uint32_t subGeometryIndex, VkDeviceSize modelVBOOffset) const noexcept
 	{
 #ifdef DEBUG
 		if ( !this->isCreated() )
@@ -1191,7 +1191,7 @@ namespace EmEn::Vulkan
 	}
 
 	void
-	CommandBuffer::draw (const Graphics::Geometry::Interface & geometry, size_t subGeometryIndex, uint32_t instanceCount) const noexcept
+	CommandBuffer::draw (const Graphics::Geometry::Interface & geometry, uint32_t subGeometryIndex, uint32_t instanceCount) const noexcept
 	{
 #ifdef DEBUG
 		if ( !this->isCreated() )

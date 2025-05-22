@@ -112,9 +112,10 @@ namespace EmEn::Scenes::Component
 					break;
 
 				default:
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from a sound resource ignored.";
-#endif
+					if constexpr ( ObserverDebugEnabled )
+					{
+						TraceDebug{ClassId} << "Event #" << notificationCode << " from a sound resource ignored.";
+					}
 					break;
 			}
 
@@ -132,7 +133,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	SoundEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	SoundEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{
@@ -268,9 +269,8 @@ namespace EmEn::Scenes::Component
 		/* NOTE : Get an available audio source. */
 		if ( !this->requestSource() )
 		{
-#ifdef DEBUG
-			Tracer::debug(ClassId, "No more audio source available !");
-#endif
+			TraceDebug{ClassId} << "No more audio source available !";
+
 			return;
 		}
 

@@ -306,7 +306,7 @@ namespace EmEn::Vulkan
 	}
 
 	bool
-	TransferManager::transfer (const StagingBuffer & stagingBuffer, Image & dstImage, VkDeviceSize offset) noexcept
+	TransferManager::transfer (const StagingBuffer & stagingBuffer, Image & dstImage, VkDeviceSize /*offset*/) noexcept
 	{
 		const std::lock_guard< std::mutex > lock{m_transferMutex};
 

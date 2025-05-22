@@ -63,7 +63,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	PointLight::playAnimation (uint8_t identifier, const Variant & value, size_t cycle) noexcept
+	PointLight::playAnimation (uint8_t identifier, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( identifier )
 		{

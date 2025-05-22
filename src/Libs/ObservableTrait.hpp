@@ -155,7 +155,7 @@ namespace EmEn::Libs
 	#else
 			[[nodiscard]]
 			static const char *
-			whoIs (size_t UID) noexcept
+			whoIs (size_t /*UID*/) noexcept
 			{
 				return "FEATURE_UNAVAILABLE";
 			}

@@ -110,9 +110,9 @@ namespace EmEn::Scenes::Component
 
 			/** @copydoc EmEn::Scenes::Component::Abstract::move() */
 			void
-			move (const Libs::Math::CartesianFrame< float > & worldCoordinates) noexcept override
+			move (const Libs::Math::CartesianFrame< float > & /*worldCoordinates*/) noexcept override
 			{
-				// FIXME: Check the particles coordinates
+				// FIXME: Check the particle coordinates
 			}
 
 			/** @copydoc EmEn::Scenes::Component::Abstract::processLogics() */

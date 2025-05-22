@@ -300,10 +300,11 @@ namespace EmEn::Audio
 					break;
 
 				default:
-#ifdef EMERAUDE_DEBUG_OBSERVER_PATTERN
-					TraceDebug{ClassId} << "Event #" << notificationCode << " from a sound resource ignored.";
-#endif
-				break;
+					if constexpr ( ObserverDebugEnabled )
+					{
+						TraceDebug{ClassId} << "Event #" << notificationCode << " from a sound resource ignored.";
+					}
+					break;
 			}
 
 			return false;

@@ -42,8 +42,13 @@ namespace EmEn::Saphir::Generator
 	using namespace Vulkan;
 	using namespace Keys;
 
-	SceneRendering::SceneRendering (Settings & settings, const std::string & name, const std::shared_ptr< const RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const RenderableInstance::Abstract > & renderableInstance, size_t layerIndex, RenderPassType renderPassType, const Scenes::Scene & scene) noexcept
-		: Abstract(settings, name, renderTarget), m_renderPassType(renderPassType), m_lightGenerator(renderPassType), m_renderableInstance(renderableInstance), m_layerIndex(layerIndex), m_scene(&scene)
+	SceneRendering::SceneRendering (Settings & settings, const std::string & name, const std::shared_ptr< const RenderTarget::Abstract > & renderTarget, const std::shared_ptr< const RenderableInstance::Abstract > & renderableInstance, uint32_t layerIndex, RenderPassType renderPassType, const Scenes::Scene & scene) noexcept
+		: Abstract(settings, name, renderTarget),
+		m_renderPassType(renderPassType),
+		m_lightGenerator(renderPassType),
+		m_renderableInstance(renderableInstance),
+		m_layerIndex(layerIndex),
+		m_scene(&scene)
 	{
 
 	}

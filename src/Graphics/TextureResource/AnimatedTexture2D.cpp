@@ -250,7 +250,7 @@ namespace EmEn::Graphics::TextureResource
 		return m_localData->duration();
 	}
 
-	size_t
+	uint32_t
 	AnimatedTexture2D::frameIndexAt (uint32_t sceneTime) const noexcept
 	{
 		if ( !this->isLoaded() )

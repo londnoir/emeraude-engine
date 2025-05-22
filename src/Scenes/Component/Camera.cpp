@@ -260,7 +260,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	Camera::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	Camera::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

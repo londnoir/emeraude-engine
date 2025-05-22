@@ -23,10 +23,10 @@ message("Job processes used : ${CMAKE_BUILD_PARALLEL_LEVEL}")
 # Declare project and options.
 project(
 	Emeraude
-	VERSION 0.7.42
+	VERSION 0.7.43
 	DESCRIPTION "Emeraude Engine is an open-source (LGPLv3) 3D Graphics engine using Vulkan and written in C++20."
 	HOMEPAGE_URL "https://github.com/londnoir/emeraude-engine"
-	LANGUAGES CXX
+	LANGUAGES C CXX
 )
 
 set(CMAKE_VERBOSE_MAKEFILE On)
@@ -58,10 +58,10 @@ option(EMERAUDE_DEBUG_OBSERVER_PATTERN "Enable the debug output of observer patt
 option(EMERAUDE_DEBUG_PIXEL_FACTORY "Enable the debug output of pixel factory library (Default Off)." Off)
 option(EMERAUDE_DEBUG_VERTEX_FACTORY "Enable the debug output of vertex factory library (Default Off)." Off)
 option(EMERAUDE_DEBUG_WAVE_FACTORY "Enable the debug output of wave factory library (Default Off)." Off)
-option(KEYBOARD_INPUT_DEBUG_ENABLED "Enable printing of events to the console from keyboard inputs (Default Off)." Off)
-option(POINTER_INPUT_DEBUG_ENABLED "Enable printing of events to the console from pointer inputs (Default Off)." Off)
-option(WINDOW_EVENTS_DEBUG_ENABLED "Enable printing of events to the console from window events (Default Off)." Off)
-option(VK_TRACKING_ENABLED "Enable printing of Vulkan objects lifespan (Default Off)." Off)
+option(EMERAUDE_DEBUG_KEYBOARD_INPUT "Enable printing of events to the console from keyboard inputs (Default Off)." Off)
+option(EMERAUDE_DEBUG_POINTER_INPUT "Enable printing of events to the console from pointer inputs (Default Off)." Off)
+option(EMERAUDE_DEBUG_WINDOW_EVENTS "Enable printing of events to the console from window events (Default Off)." Off)
+option(EMERAUDE_DEBUG_VULKAN_TRACKING "Enable printing of Vulkan objects lifespan (Default Off)." Off)
 
 # Force the compilation directory for testing (Only if empty)
 if ( EMERAUDE_ENABLE_TESTS AND "${EMERAUDE_COMPILATION_DIR}" STREQUAL "" )
@@ -284,12 +284,14 @@ else ( UNIX )
 			-Wextra
 			-Wpedantic
 			#-Werror
+			-Wno-nullability-extension # macOS Clang warnings from external zip lib
 		>
 		$<$<CONFIG:Relase>:
 			-O2
 			-ffast-math
 			-fdata-sections
 			-ffunction-sections
+			-Wno-nullability-extension # macOS Clang warnings from external zip lib
 		>
 	)
 endif ()

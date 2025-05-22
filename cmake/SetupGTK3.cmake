@@ -7,7 +7,6 @@ if ( NOT GTK3_ENABLED )
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${GTK3_INCLUDE_DIRS})
     target_link_directories(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARY_DIRS})
-    #target_compile_definitions(${PROJECT_NAME} PRIVATE ${GTK3_CFLAGS_OTHER})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
 
     set(GTK3_ENABLED On)

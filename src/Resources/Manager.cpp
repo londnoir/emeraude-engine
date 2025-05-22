@@ -45,7 +45,9 @@ namespace EmEn::Resources
 	Manager * Manager::s_instance{nullptr};
 
 	Manager::Manager (PrimaryServices & primaryServices, NetworkManager & networkManager) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices), m_networkManager(networkManager)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices),
+		m_networkManager(networkManager)
 	{
 		if ( s_instance != nullptr )
 		{

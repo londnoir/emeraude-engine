@@ -50,7 +50,8 @@ namespace EmEn::Resources
 	bool Stores::s_downloadEnabled{true};
 
 	Stores::Stores (PrimaryServices & primaryServices) noexcept
-		: ServiceInterface(ClassId), m_primaryServices(primaryServices)
+		: ServiceInterface(ClassId),
+		m_primaryServices(primaryServices)
 	{
 
 	}
