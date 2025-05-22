@@ -120,9 +120,9 @@ namespace EmEn::Graphics::Geometry
 	}
 
 	bool
-	VertexResource::createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, size_t vertexCount, size_t vertexElementCount) noexcept
+	VertexResource::createVideoMemoryBuffers (const std::vector< float > & vertexAttributes, uint32_t vertexCount, uint32_t vertexElementCount) noexcept
 	{
-		auto * transferManager = Vulkan::TransferManager::instance(GPUWorkType::Graphics);
+		auto * transferManager = TransferManager::instance(GPUWorkType::Graphics);
 
 		m_vertexBufferObject = std::make_unique< VertexBufferObject >(transferManager->device(), vertexCount, vertexElementCount);
 		m_vertexBufferObject->setIdentifier(this->name() + "-VBO-VertexBufferObject");

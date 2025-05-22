@@ -91,14 +91,14 @@ namespace EmEn::Scenes
 	}
 
 	bool
-	SphericalInfluenceArea::isUnderInfluence (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
+	SphericalInfluenceArea::isUnderInfluence (const CartesianFrame< float > & /*worldCoordinates*/, const Cuboid< float > & /*worldBoundingBox*/) const noexcept
 	{
 		/* FIXME: TODO ! */
 		return false;
 	}
 
 	float
-	SphericalInfluenceArea::influenceStrength (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
+	SphericalInfluenceArea::influenceStrength (const CartesianFrame< float > & /*worldCoordinates*/, const Cuboid< float > & /*worldBoundingBox*/) const noexcept
 	{
 		/* FIXME: TODO ! */
 		return 0.0F;

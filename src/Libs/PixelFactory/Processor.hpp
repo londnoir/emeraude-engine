@@ -903,11 +903,11 @@ namespace EmEn::Libs::PixelFactory
 					return false;
 				}
 
-				for ( size_t y = 0; y < clip.height(); y++ )
+				for ( dimension_t y = 0; y < clip.height(); ++y )
 				{
 					const auto destinationY = clip.top() + y;
 
-					for ( size_t x = 0; x < clip.width(); x++ )
+					for ( dimension_t x = 0; x < clip.width(); ++x )
 					{
 						const auto destinationX = clip.left() + x;
 
@@ -934,7 +934,7 @@ namespace EmEn::Libs::PixelFactory
 			bool
 			stencil (const Pixmap< pixel_data_t, dimension_t > & source, Math::Rectangle< dimension_t > sourceClip, Math::Rectangle< dimension_t > destinationClip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace) const noexcept
 			{
-				if ( !mask.isValid() || !mask.isGrayScale() || !Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip) )
+				if ( !mask.isValid() || !mask.isGrayScale() || (!Processor::checkPixmapClipping(source, sourceClip) && !Processor::checkPixmapClipping(m_target, destinationClip)) )
 				{
 					return false;
 				}
@@ -987,7 +987,7 @@ namespace EmEn::Libs::PixelFactory
 			 */
 			template< typename color_data_t = float >
 			bool
-			stencil (const Color< color_data_t > & color, const Math::Rectangle< dimension_t > & clip, const Pixmap< pixel_data_t, dimension_t > & mask, DrawPixelMode mode = DrawPixelMode::Replace, float opacity = 1.0F) const noexcept
+			stencil (const Color< color_data_t > & /*color*/, const Math::Rectangle< dimension_t > & /*clip*/, const Pixmap< pixel_data_t, dimension_t > & /*mask*/, DrawPixelMode /*mode = DrawPixelMode::Replace*/, float /*opacity = 1.0F*/) const noexcept
 			{
 				// TODO ...
 
@@ -2542,7 +2542,7 @@ namespace EmEn::Libs::PixelFactory
 				const auto xRatio = static_cast< float >(source.width() - 1) / static_cast< float >(width);
 				const auto yRatio = static_cast< float >(source.height() - 1) / static_cast< float >(height);
 
-				const auto & sourceData = source.data();
+				//const auto & sourceData = source.data();
 				auto & targetData = target.data();
 
 				size_t dstIndex = 0;
@@ -2561,7 +2561,7 @@ namespace EmEn::Libs::PixelFactory
 
 						std::array< float, 4 > interpolatedValues{0.0F, 0.0F, 0.0F, 0.0F};
 
-						const auto numChannels = static_cast< size_t >(source.colorCount());
+						const auto numChannels = static_cast< size_t >(colorCount);
 
 						for ( size_t channel = 0; channel < numChannels; ++channel )
 						{

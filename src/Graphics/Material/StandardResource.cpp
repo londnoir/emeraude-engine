@@ -901,7 +901,7 @@ namespace EmEn::Graphics::Material
 		return 0;
 	}
 
-	size_t
+	uint32_t
 	StandardResource::frameIndexAt (uint32_t /*sceneTime*/) const noexcept
 	{
 		/*if ( !this->isFlagEnabled(Animated) )

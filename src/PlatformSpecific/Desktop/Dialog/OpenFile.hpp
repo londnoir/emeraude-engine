@@ -62,7 +62,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			bool execute (Window * window) noexcept override;
 
 			/**
-			 * @brief Sets file extensions filters.
+			 * @brief Sets file extension filters.
 			 * @param filters A reference to a vector.
 			 * @return void
 			 */
@@ -73,7 +73,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			}
 
 			/**
-			 * @brief Sets file extensions filters.
+			 * @brief Sets file extension filters.
 			 * @param filterName A reference to a string.
 			 * @param extensions A reference to a vector.
 			 * @return void
@@ -85,7 +85,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			}
 
 			/**
-			 * @brief Returns the selected files.
+			 * @brief Returns the file extension filters.
 			 * @return const std::vector< std::string > &
 			 */
 			[[nodiscard]]
@@ -152,7 +152,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			static constexpr auto SelectFolder{0UL};
 			static constexpr auto MultiSelect{1UL};
 
-			std::vector< std::pair< std::string, std::vector< std::string > > > m_extensionFilters; //Maybe change to std::map
+			std::vector< std::pair< std::string, std::vector< std::string > > > m_extensionFilters;
 			std::vector< std::string > m_filepaths;
 			std::array< bool, 8 > m_flags{
 				false/*SelectFolder*/,

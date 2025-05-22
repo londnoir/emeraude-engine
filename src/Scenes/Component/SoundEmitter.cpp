@@ -132,7 +132,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	bool
-	SoundEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t cycle) noexcept
+	SoundEmitter::playAnimation (uint8_t animationID, const Variant & value, size_t /*cycle*/) noexcept
 	{
 		switch ( animationID )
 		{

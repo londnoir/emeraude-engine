@@ -68,12 +68,19 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 				gtk_file_filter_add_pattern(filter, fileType.c_str());
 			}
 
-			gtk_file_chooser_add_filter(reinterpret_cast< GtkFileChooser * >(dialog), filter);
+			gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 		}
 
 		if ( gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT )
 		{
-			m_filepath = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+			gchar * filepath = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+
+			if ( filepath != nullptr )
+			{
+				m_filepath.assign(filepath);
+
+				g_free(filepath);
+			}
 		}
 
 		gtk_widget_destroy(dialog);

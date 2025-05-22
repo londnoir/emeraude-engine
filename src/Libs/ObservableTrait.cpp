@@ -139,7 +139,7 @@ namespace EmEn::Libs
 	}
 #else
 	size_t
-	ObservableTrait::getClassUID (const char * label) noexcept
+	ObservableTrait::getClassUID (const char * /*label*/) noexcept
 	{
 		/* NOTE: Lock the call to this function to be sure having a unique class identifier. */
 		const std::lock_guard< std::mutex > lock{s_UIDMutex};

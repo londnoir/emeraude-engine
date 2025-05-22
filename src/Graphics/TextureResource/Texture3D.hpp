@@ -153,7 +153,7 @@ namespace EmEn::Graphics::TextureResource
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::frameIndexAt() */
 			[[nodiscard]]
-			size_t frameIndexAt (uint32_t sceneTime) const noexcept override;
+			uint32_t frameIndexAt (uint32_t sceneTime) const noexcept override;
 
 			/** @copydoc EmEn::Graphics::TextureResource::Abstract::image() */
 			[[nodiscard]]

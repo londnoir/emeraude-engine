@@ -59,7 +59,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			bool execute (Window * window) noexcept override;
 
 			/**
-			 * @brief Sets file extensions filters.
+			 * @brief Sets file extension filters.
 			 * @param filters A reference to a vector.
 			 * @return void
 			 */
@@ -70,7 +70,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			}
 
 			/**
-			 * @brief Sets file extensions filters.
+			 * @brief Sets file extension filters.
 			 * @param filterName A reference to a string.
 			 * @param extensions A reference to a vector.
 			 * @return void
@@ -82,7 +82,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			}
 
 			/**
-			 * @brief Returns the selected files.
+			 * @brief Returns the file extension filters.
 			 * @return const std::vector< std::string > &
 			 */
 			[[nodiscard]]
@@ -107,7 +107,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			 * @brief Helper function to create a file box to choose file(s) [Shortcut].
 			 * @param title Title of the opened modal.
 			 * @param filters vector of the names of the filters paired to the associated file extension.
-			 * @param window (optional) Handler of the parent window, if left out or nullptr the created window will be orphaned
+			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned
 			 * @return std::string
 			 */
 			[[nodiscard]]
@@ -127,7 +127,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			 * @param title Title of the opened modal.
 			 * @param filterName Name of the filter.
 			 * @param extensions Vector of the selectable extensions.
-			 * @param window (optional) Handler of the parent window, if left out or nullptr the created window will be orphaned
+			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned
 			 * @return std::string
 			 */
 			[[nodiscard]]
@@ -144,7 +144,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 
 		private:
 
-			std::vector< std::pair< std::string, std::vector< std::string > > > m_extensionFilters{}; //Maybe change to std::map
+			std::vector< std::pair< std::string, std::vector< std::string > > > m_extensionFilters;
 			std::string m_filepath;
 			std::string m_defaultFilename{"untitled"};
 	};

@@ -68,7 +68,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 				gtk_file_filter_add_pattern(filter, fileType.c_str());
 			}
 
-			gtk_file_chooser_add_filter(reinterpret_cast< GtkFileChooser * >(dialog), filter);
+			gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 		}
 
 		if ( m_flags[MultiSelect] )
@@ -77,11 +77,25 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 
 			if ( gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT )
 			{
-				const GSList * files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+				GSList * files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
-				for ( const GSList * iterator = files; iterator; iterator = iterator->next )
+				if ( files != nullptr )
 				{
-					m_filepaths.emplace_back(static_cast< char * >(iterator->data));
+					for ( const GSList * iterator = files; iterator; iterator = iterator->next )
+					{
+						gchar * filepath = static_cast< gchar * >(iterator->data);
+
+						if ( filepath == nullptr )
+						{
+							continue;
+						}
+
+						m_filepaths.emplace_back(filepath);
+
+						g_free(filepath);
+					}
+
+					g_slist_free(files);
 				}
 			}
 		}
@@ -89,9 +103,14 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 		{
 			if ( gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT )
 			{
-				const auto * filepath = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+				gchar * filepath = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 
-				m_filepaths.emplace_back(filepath);
+				if ( filepath != nullptr )
+				{
+					m_filepaths.emplace_back(filepath);
+
+					g_free(filepath);
+				}
 			}
 		}
 
