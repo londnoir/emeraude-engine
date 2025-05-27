@@ -63,17 +63,6 @@ namespace EmEn
 			Identification (const char * name, const Libs::Version & version, const char * organization, const char * domain) noexcept;
 
 			/**
-			 * @brief Returns the engine identification.
-			 * @return const std::string &
-			 */
-			[[nodiscard]]
-			const std::string &
-			engineId () const noexcept
-			{
-				return m_engineId;
-			}
-
-			/**
 			 * @brief Returns the application name.
 			 * @return const std::string &
 			 */
@@ -86,7 +75,7 @@ namespace EmEn
 
 			/**
 			 * @brief Returns the application version.
-			 * @return const Libraries::Version &
+			 * @return const Libs::Version &
 			 */
 			[[nodiscard]]
 			const Libs::Version &
@@ -118,6 +107,17 @@ namespace EmEn
 			}
 
 			/**
+			 * @brief Returns the engine identification.
+			 * @return const std::string &
+			 */
+			[[nodiscard]]
+			const std::string &
+			engineId () const noexcept
+			{
+				return m_engineId;
+			}
+
+			/**
 			 * @brief Returns the full application identification.
 			 * @return std::string
 			 */
@@ -141,12 +141,12 @@ namespace EmEn
 
 		private:
 
-			std::string m_engineId;
-			std::string m_applicationId;
-			std::string m_applicationReverseId;
 			std::string m_applicationName;
 			Libs::Version m_applicationVersion;
 			std::string m_applicationOrganization;
 			std::string m_applicationDomain;
+			std::string m_engineId;
+			std::string m_applicationId;
+			std::string m_applicationReverseId;
 	};
 }

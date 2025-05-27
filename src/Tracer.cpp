@@ -124,7 +124,7 @@ namespace EmEn
 			{
 				if ( argument.value().empty() )
 				{
-					m_logger = std::make_unique< TracerLogger >("journal.log");
+					m_logger = std::make_unique< TracerLogger >("journal.html");
 				}
 				else
 				{
