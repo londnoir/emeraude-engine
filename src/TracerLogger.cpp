@@ -34,7 +34,7 @@
 namespace EmEn
 {
 	TracerLogger::TracerLogger (std::string filepath) noexcept
-	 : m_filepath(std::move(filepath))
+		: m_filepath(std::move(filepath))
 	{
 
 	}

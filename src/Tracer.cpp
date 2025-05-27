@@ -83,18 +83,6 @@ namespace EmEn
 		s_instance = nullptr;
 	}
 
-	size_t
-	Tracer::classUID () const noexcept
-	{
-		return ClassUID;
-	}
-
-	bool
-	Tracer::is (size_t classUID) const noexcept
-	{
-		return classUID == ClassUID;
-	}
-
 	bool
 	Tracer::onInitialize () noexcept
 	{
@@ -128,15 +116,25 @@ namespace EmEn
 			m_flags[EnableTracing] = false;
 		}
 
-		argument = m_arguments.get("-l", "--enable-log");
-
-		if ( argument.isPresent() )
+		if ( !m_flags[ChildProcess] )
 		{
-			m_logger = std::make_unique< TracerLogger >(argument.value());
+			argument = m_arguments.get("-l", "--enable-log");
 
-			m_flags[EnableLogging] = true;
+			if ( argument.isPresent() )
+			{
+				if ( argument.value().empty() )
+				{
+					m_logger = std::make_unique< TracerLogger >("journal.log");
+				}
+				else
+				{
+					m_logger = std::make_unique< TracerLogger >(argument.value());
+				}
 
-			m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
+				m_flags[EnableLogging] = true;
+
+				m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
+			}
 		}
 
 		m_flags[ServiceInitialized] = true;
@@ -165,12 +163,6 @@ namespace EmEn
 	}
 
 	bool
-	Tracer::usable () const noexcept
-	{
-		return m_flags[ServiceInitialized];
-	}
-
-	bool
 	Tracer::enableLogger (const std::string & filepath) noexcept
 	{
 		if ( m_logger != nullptr )
@@ -184,7 +176,7 @@ namespace EmEn
 		{
 			m_logger.reset();
 
-			this->trace(Severity::Error, "Tracer", Libs::BlobTrait() << "Unable to enable the logger with the file '" << filepath << "' !");
+			this->trace(Severity::Error, "Tracer", BlobTrait() << "Unable to enable the logger with the file '" << filepath << "' !");
 
 			return false;
 		}

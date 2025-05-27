@@ -133,15 +133,27 @@ namespace EmEn
 
 			/** @copydoc EmEn::Libs::ObservableTrait::classUID() const */
 			[[nodiscard]]
-			size_t classUID () const noexcept override;
+			size_t
+			classUID () const noexcept override
+			{
+				return ClassUID;
+			}
 
 			/** @copydoc EmEn::Libs::ObservableTrait::is() const */
 			[[nodiscard]]
-			bool is (size_t classUID) const noexcept override;
+			bool
+			is (size_t classUID) const noexcept override
+			{
+				return classUID == ClassUID;
+			}
 
 			/** @copydoc EmEn::ServiceInterface::usable() */
 			[[nodiscard]]
-			bool usable () const noexcept override;
+			bool
+			usable () const noexcept override
+			{
+				return m_flags[ServiceInitialized];
+			}
 
 			/**
 			 * @brief Adds a term to only print out trace message containing it.
