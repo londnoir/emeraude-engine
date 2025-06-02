@@ -140,7 +140,59 @@ namespace EmEn
 	void
 	TracerLogger::taskJSON () noexcept
 	{
+		/* NOTE: Write the file start. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
 
+			file << "{" "\n";
+
+			file.close();
+		}
+
+		while ( m_flags[IsRunning] )
+		{
+			if ( !m_entries.empty() )
+			{
+				std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+				while ( !m_entries.empty() )
+				{
+					const std::lock_guard< std::mutex > lock{m_entriesAccess};
+
+					const auto & entry = m_entries.front();
+
+					file <<
+						"\t" "{" "\n"
+						"\t\t" "\"tag\" : " << entry.tag() << " @ <small><i>" << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"filename\" : " << entry.location().file_name() << ':' << entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"line\" : " <<  entry.location().line() << ':' << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"column\" :" << entry.location().column() << " `" << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "\"function\" : " << entry.location().function_name() << '`' << "</i></small></h2>" "\n"
+						"\t\t" "<p class=\"entry-time\">Time: " << entry.time().time_since_epoch().count() << "</p>" "\n"
+						"\t\t" "<p class=\"entry-thread\">Thread: " << entry.threadId() << "</p>" "\n"
+						"\t\t" "<p class=\"entry-severity\">Severity: " << to_string(entry.severity()) << "<p/>" "\n"
+						"\t\t" "<pre class=\"entry-message\">" "\n"
+						<< entry.message() << "\n"
+						"\t\t" "</pre>" "\n"
+						"\t" "}" "\n";
+
+					m_entries.pop();
+				}
+
+				file.close();
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		/* NOTE: Write the file end. */
+		{
+			std::fstream file{m_filepath, std::ios::out | std::ios::app};
+
+			file << "}" "\n";
+
+			file.close();
+		}
 	}
 
 	void
