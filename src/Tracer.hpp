@@ -94,8 +94,8 @@ namespace EmEn
 
 			/**
 			 * @brief Constructs the tracer.
-			 * @param arguments A reference to Arguments.
-			 * @param processName A string to identify the instance with multi-processes application.
+			 * @param arguments A reference to the argument service.
+			 * @param processName A string to identify the instance with multi-processes application [std::move].
 			 * @param childProcess Declares a child process.
 			 */
 			Tracer (const Arguments & arguments, std::string processName, bool childProcess) noexcept;
@@ -286,15 +286,15 @@ namespace EmEn
 			bool
 			isLoggerRequestedAtStartup () const noexcept
 			{
-				return m_flags[EnableLoggerAtStartup];
+				return m_flags[LoggerRequestedAtStartup];
 			}
 
 			/**
 			 * @brief Prepares the logger to write into a logfile.
-			 * @param filepath A reference to a string for the filepath. Default path.
+			 * @param filepath A reference to a path.
 			 * @return bool
 			 */
-			bool enableLogger (const std::string & filepath = {}) noexcept;
+			bool enableLogger (const std::filesystem::path & filepath) noexcept;
 
 			/**
 			 * @brief Returns whether the tracer is writing into the logfile.
@@ -315,13 +315,13 @@ namespace EmEn
 			void disableLogger () noexcept;
 
 			/**
-			 * @brief Reads the application settings.
+			 * @brief Late stage of initialization for the Tracer service as it needs some infos.
 			 * @warning This can't be done at startup because the Tracer service is the first to be set up.
-			 * @param fileSystem A reference to the file system.
-			 * @param settings A reference to the settings.
+			 * @param fileSystem A reference to the filesystem service.
+			 * @param settings A reference to the settings service.
 			 * @return void
 			 */
-			void readSettings (const FileSystem & fileSystem, Settings & settings) noexcept;
+			void lateInitialize (const FileSystem & fileSystem, Settings & settings) noexcept;
 
 			/**
 			 * @brief Creates a log.
@@ -383,11 +383,11 @@ namespace EmEn
 
 			/**
 			 * @brief Generates the name of a log file based on a name.
-			 * @param name A reference to a string
-			 * @return std::string
+			 * @param name A reference to a string.
+			 * @return std::filesystem::path
 			 */
 			[[nodiscard]]
-			std::string generateLogFilename (const std::string & name) const noexcept;
+			std::filesystem::path generateLogFilepath (const std::string & name) const noexcept;
 
 			/**
 			 * @brief Returns the instance of tracer.
@@ -680,11 +680,12 @@ namespace EmEn
 			static constexpr auto ShowLocation{3UL};
 			static constexpr auto ShowThreadInfos{4UL};
 			static constexpr auto EnableTracing{5UL};
-			static constexpr auto EnableLoggerAtStartup{6UL};
+			static constexpr auto LoggerRequestedAtStartup{6UL};
 
 			static Tracer * s_instance;
 
 			const Arguments & m_arguments;
+			std::filesystem::path m_cacheDirectory;
 			std::string m_processName;
 			std::vector< std::string > m_filters;
 			std::unique_ptr< TracerLogger > m_logger;
@@ -699,7 +700,7 @@ namespace EmEn
 				false/*ShowLocation*/,
 				true/*ShowThreadInfos*/,
 				true/*EnableTracing*/,
-				false/*EnableLoggerAtStartup*/,
+				false/*LoggerRequestedAtStartup*/,
 				false/*UNUSED*/
 			};
 	};

@@ -116,16 +116,6 @@ namespace EmEn
 
 			m_flags[EnableTracing] = false;
 		}
-		/* NOTE: Special case to delay the logger start in multi-processes application. */
-		else if ( !m_arguments.get("--disable-log").isPresent() )
-		{
-			argument = m_arguments.get("-l", "--enable-log");
-
-			if ( this->isLoggerRequestedAtStartup() || argument.isPresent() )
-			{
-				this->enableLogger(argument.value());
-			}
-		}
 
 		m_flags[ServiceInitialized] = true;
 
@@ -142,8 +132,8 @@ namespace EmEn
 		return true;
 	}
 
-	std::string
-	Tracer::generateLogFilename (const std::string & name) const noexcept
+	std::filesystem::path
+	Tracer::generateLogFilepath (const std::string & name) const noexcept
 	{
 		std::stringstream filename;
 		filename << "journal-" << name;
@@ -163,36 +153,29 @@ namespace EmEn
 				break;
 		}
 
-		return filename.str();
+		auto cacheDirectory = m_cacheDirectory;
+
+		return cacheDirectory.append(filename.str());
 	}
 
 	bool
-	Tracer::enableLogger (const std::string & filepath) noexcept
+	Tracer::enableLogger (const std::filesystem::path & filepath) noexcept
 	{
-		if ( m_logger != nullptr )
-		{
-			return true;
-		}
-
-		if ( filepath.empty() )
-		{
-			m_logger = std::make_unique< TracerLogger >(this->generateLogFilename(m_processName), m_logFormat);
-		}
-		else
+		if ( m_logger == nullptr )
 		{
 			m_logger = std::make_unique< TracerLogger >(filepath, m_logFormat);
+
+			if ( !m_logger->usable() )
+			{
+				m_logger.reset();
+
+				this->trace(Severity::Error, ClassId, "Unable to enable the tracer logger!");
+
+				return false;
+			}
+
+			m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
 		}
-
-		if ( !m_logger->usable() )
-		{
-			m_logger.reset();
-
-			this->trace(Severity::Error, ClassId, "Unable to enable the tracer logger!");
-
-			return false;
-		}
-
-		m_loggerProcess = std::thread{&TracerLogger::task, m_logger.get()};
 
 		return true;
 	}
@@ -214,16 +197,43 @@ namespace EmEn
 	}
 
 	void
-	Tracer::readSettings (const FileSystem & fileSystem, Settings & settings) noexcept
+	Tracer::lateInitialize (const FileSystem & fileSystem, Settings & settings) noexcept
 	{
+		if ( !this->isTracingEnabled() )
+		{
+			return;
+		}
+
 		this->enablePrintOnlyErrors(settings.get< bool >(TracerPrintOnlyErrorsKey, DefaultPrintOnlyErrors));
 		this->enableShowLocation(settings.get< bool >(TracerShowLocationKey, DefaultShowLocation));
 		this->enableShowThreadInfos(settings.get< bool >(TracerShowThreadInfosKey, DefaultShowThreadInfos));
 
-		//auto cache = fileSystem.cacheDirectory();
-
+		m_cacheDirectory = fileSystem.cacheDirectory();
 		m_logFormat = to_LogFormat(settings.get< std::string >(TracerLogFormatKey, DefaultLogFormat));
-		m_flags[EnableLoggerAtStartup] = settings.get< bool >(TracerEnableLoggerKey, DefaultTracerEnableLogger);
+
+		const auto argument = m_arguments.get("-l", "--enable-log");
+
+		if ( settings.get< bool >(TracerEnableLoggerKey, DefaultTracerEnableLogger) || argument.isPresent() )
+		{
+			m_flags[LoggerRequestedAtStartup] = true;
+
+			/* NOTE: Disable the logger creation at the startup. This is useful for multi-processes application. */
+			if ( m_arguments.get("--disable-log").isPresent() )
+			{
+				return;
+			}
+
+			if ( argument.value().empty() )
+			{
+				const auto logFilepath = this->generateLogFilepath(m_processName);
+
+				this->enableLogger(logFilepath);
+			}
+			else
+			{
+				this->enableLogger(std::filesystem::path{argument.value()});
+			}
+		}
 	}
 
 	void

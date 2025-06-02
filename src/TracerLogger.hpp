@@ -49,10 +49,10 @@ namespace EmEn
 
 			/**
 			 * @brief Constructs the trace logger.
-			 * @param filepath A reference to a path to the log file.
+			 * @param filepath A reference to a path to the log file [std::move].
 			 * @param logFormat The type of log desired. Default Text.
 			 */
-			explicit TracerLogger (const std::filesystem::path & filepath, LogFormat logFormat = LogFormat::Text) noexcept;
+			explicit TracerLogger (std::filesystem::path filepath, LogFormat logFormat = LogFormat::Text) noexcept;
 
 			/**
 			 * @brief Returns whether the logger can write to the log file.

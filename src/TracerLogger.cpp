@@ -39,8 +39,8 @@
 
 namespace EmEn
 {
-	TracerLogger::TracerLogger (const std::filesystem::path & filepath, LogFormat logFormat) noexcept
-		: m_filepath(filepath),
+	TracerLogger::TracerLogger (std::filesystem::path filepath, LogFormat logFormat) noexcept
+		: m_filepath(std::move(filepath)),
 		m_logFormat(logFormat)
 	{
 		std::fstream file{m_filepath, std::ios::out | std::ios::trunc};
@@ -94,7 +94,7 @@ namespace EmEn
 		{
 			std::fstream file{m_filepath, std::ios::out | std::ios::app};
 
-			file << "======" ENGINE_NAME " " ENGINE_VERSION_STRING " execution. Beginning at " << std::chrono::steady_clock::now().time_since_epoch().count() << "======" "\n";
+			file << "====== " ENGINE_NAME " " ENGINE_VERSION_STRING " execution. Beginning at " << std::chrono::steady_clock::now().time_since_epoch().count() << " ======" "\n";
 
 			file.close();
 		}

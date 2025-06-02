@@ -84,7 +84,7 @@ namespace EmEn
 #if IS_WINDOWS
 	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification) noexcept
 		: m_arguments(argc, wargv, false),
-		m_tracer(m_arguments, m_settings, "main", false),
+		m_tracer(m_arguments, "main", false),
 		m_fileSystem(m_arguments, m_userInfo, identification, false),
 		m_settings(m_arguments, m_fileSystem, false)
 	{
@@ -102,7 +102,7 @@ namespace EmEn
 
 	PrimaryServices::PrimaryServices (int argc, wchar_t * * wargv, const Identification & identification, const std::string & processName, const std::vector< std::string > & additionalArguments) noexcept
 		: m_arguments(argc, wargv, true),
-		m_tracer(m_arguments, m_settings, processName, true),
+		m_tracer(m_arguments, processName, true),
 		m_fileSystem(m_arguments, m_userInfo, identification, true),
 		m_settings(m_arguments, m_fileSystem, true)
 	{
@@ -171,7 +171,7 @@ namespace EmEn
 			TraceSuccess{ClassId} << m_settings.name() << " service up !";
 
 			/* NOTE: Now the core settings are initialized, we can update the tracer service configuration. */
-			m_tracer.readSettings(m_fileSystem, m_settings);
+			m_tracer.lateInitialize(m_fileSystem, m_settings);
 		}
 		else
 		{
