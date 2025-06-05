@@ -65,10 +65,10 @@ namespace EmEn
 			 * @param argc The argument count from the standard C/C++ main() function.
 			 * @param argv The argument values it from the standard C/C++ main() function.
 			 * @param identification A reference to the application identification.
-			 * @param processName A reference to a string.
+			 * @param processName A string  [std::move].
 			 * @param additionalArguments A reference to a vector of strings. Default none.
 			 */
-			PrimaryServices (int argc, char * * argv, const Identification & identification, const std::string & processName, const std::vector< std::string > & additionalArguments = {}) noexcept;
+			PrimaryServices (int argc, char * * argv, const Identification & identification, std::string processName, const std::vector< std::string > & additionalArguments = {}) noexcept;
 
 #if IS_WINDOWS
 			/**
@@ -258,6 +258,7 @@ namespace EmEn
 			static constexpr auto ChildProcess{1UL};
 			static constexpr auto ShowInformation{2UL};
 
+			std::string m_processName;
 			PlatformSpecific::SystemInfo m_systemInfo;
 			PlatformSpecific::UserInfo m_userInfo;
 			Arguments m_arguments;
