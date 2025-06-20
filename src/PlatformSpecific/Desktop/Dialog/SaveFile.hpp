@@ -107,7 +107,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			 * @brief Helper function to create a file box to choose file(s) [Shortcut].
 			 * @param title Title of the opened modal.
 			 * @param filters vector of the names of the filters paired to the associated file extension.
-			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned
+			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned.
 			 * @return std::string
 			 */
 			[[nodiscard]]
@@ -127,7 +127,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 			 * @param title Title of the opened modal.
 			 * @param filterName Name of the filter.
 			 * @param extensions Vector of the selectable extensions.
-			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned
+			 * @param window (optional) Handler of the parent window, if left out or nullptr, the created window will be orphaned.
 			 * @return std::string
 			 */
 			[[nodiscard]]

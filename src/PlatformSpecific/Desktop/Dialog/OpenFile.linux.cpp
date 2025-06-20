@@ -83,7 +83,7 @@ namespace EmEn::PlatformSpecific::Desktop::Dialog
 				{
 					for ( const GSList * iterator = files; iterator; iterator = iterator->next )
 					{
-						gchar * filepath = static_cast< gchar * >(iterator->data);
+						auto * filepath = static_cast< gchar * >(iterator->data);
 
 						if ( filepath == nullptr )
 						{
