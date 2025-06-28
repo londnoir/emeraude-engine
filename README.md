@@ -50,9 +50,3 @@ git clone --recurse-submodules https://github.com/londnoir/emeraude-engine.git
 cmake -S ./emeraude-engine -B ./emeraude-engine/cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build ./emeraude-engine/cmake-build-debug --config Debug
 ```
-
-## Rules of development
-
-1. Readability. The code should be easily readable by a 5-year experienced C++ programmer. It makes extensive use of OOP, templates, and metaprogramming.
-2. Performance. Once readability is achieved, the goal is performance. The final program should make the best use of the CPU, RAM, and GPU for what they were designed for.
-3. Maintainability. Finally, the code should be as easily modifiable as possible. It strives to be compartmentalized and organized by functionality and concept.
