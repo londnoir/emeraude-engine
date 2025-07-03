@@ -284,7 +284,7 @@ namespace EmEn::Graphics::Renderable
 		}
 		else
 		{
-			TraceWarning{ClassId} << "Material resource type '" << materialType << "' is not handled !";
+			TraceWarning{ClassId} << "Material resource type '" << materialType << "' for basic floor '" << this->name() << "' is not handled !";
 		}
 
 		/* 3. Use the common func. */

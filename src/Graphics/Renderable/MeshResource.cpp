@@ -216,7 +216,7 @@ namespace EmEn::Graphics::Renderable
 	}
 
 	std::shared_ptr< Material::Interface >
-	MeshResource::parseLayer (const Json::Value & data) noexcept
+	MeshResource::parseLayer (const Json::Value & data) const noexcept
 	{
 		if ( !data.isMember(MaterialTypeKey) || !data[MaterialTypeKey].isString() )
 		{
@@ -251,7 +251,7 @@ namespace EmEn::Graphics::Renderable
 			return materialResource;
 		}
 
-		TraceWarning{ClassId} << "Material resource type '" << materialType << "' is not handled !";
+		TraceWarning{ClassId} << "Material resource type '" << materialType << "' for mesh '" << this->name() << "' is not handled !";
 
 		return StandardResource::getDefault();
 	}
@@ -308,7 +308,7 @@ namespace EmEn::Graphics::Renderable
 		for ( const auto & layerRule : layerRules )
 		{
 			/* Parse material definition and get default if error occurs. */
-			auto materialResource = MeshResource::parseLayer(layerRule);
+			auto materialResource = this->parseLayer(layerRule);
 
 			/* Gets a default material. */
 			if ( materialResource == nullptr )

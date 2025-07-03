@@ -263,7 +263,7 @@ namespace EmEn::Graphics::Renderable
 
 		if ( materialType.empty() || materialType != Material::StandardResource::ClassId )
 		{
-			Tracer::error(ClassId, BlobTrait() << "Material resource type '" << materialType << "' is not handled yet !");
+			TraceError{ClassId} << "Material resource type '" << materialType << "' for terrain '" << this->name() << "' is not handled !";
 
 			return this->setLoadSuccess(false);
 		}

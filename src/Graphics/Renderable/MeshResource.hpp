@@ -259,7 +259,7 @@ namespace EmEn::Graphics::Renderable
 			 * @param data A reference to a JSON node.
 			 * @return std::shared_ptr< Material::Interface >
 			 */
-			static std::shared_ptr< Material::Interface > parseLayer (const Json::Value & data) noexcept;
+			std::shared_ptr< Material::Interface > parseLayer (const Json::Value & data) const noexcept;
 
 			/**
 			 * @brief Parses a JSON stream to get the mesh options.

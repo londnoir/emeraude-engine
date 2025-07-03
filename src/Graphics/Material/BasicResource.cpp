@@ -508,8 +508,6 @@ namespace EmEn::Graphics::Material
 	{
 		if ( !this->isFlagEnabled(BlendingEnabled) )
 		{
-			TraceWarning{ClassId} << "The blending is not enabled with the material resource '" << this->name() << "' !";
-
 			return BlendingMode::None;
 		}
 

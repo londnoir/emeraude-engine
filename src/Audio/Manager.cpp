@@ -168,7 +168,7 @@ namespace EmEn::Audio
 		m_flags[ServiceInitialized] = true;
 		m_flags[Enabled] = true;
 
-		/* NOTE: Be sure of playback frequency allowed by ths OpenAL context. */
+		/* NOTE: Be sure of the playback frequency allowed by this OpenAL context. */
 		m_playbackFrequency = WaveFactory::toFrequency(m_contextAttributes[ALC_FREQUENCY]);
 
 		this->setMetersPerUnit(1.0F);
@@ -796,32 +796,32 @@ namespace EmEn::Audio
 		}
 
 		/* Forgotten device attributes... */
-		constexpr std::array< ALint, 9 > keys{
-			ALC_FORMAT_CHANNELS_SOFT, // Not handled on Linux platform
-			ALC_FORMAT_TYPE_SOFT, // Not handled on Linux platform
-			ALC_NUM_HRTF_SPECIFIERS_SOFT,
-			ALC_CONNECTED,
-			0x1997,//ALC_AMBISONIC_LAYOUT_SOFT, Not handled and tokenized on Linux platform
-			0x1998,//ALC_AMBISONIC_SCALING_SOFT, Not handled and tokenized on Linux platform
-			0x1999,//ALC_AMBISONIC_ORDER_SOFT, Not handled and tokenized on Linux platform
-			0x199B,//ALC_MAX_AMBISONIC_ORDER_SOFT, Not handled and tokenized on Linux platform
-			0x19AC//ALC_OUTPUT_MODE_SOFT, Not handled and tokenized on Linux platform
+		constexpr std::array< std::pair< ALint, const char * >, 9 > keys{
+			std::pair< ALint, const char * >{ALC_FORMAT_CHANNELS_SOFT, "ALC_FORMAT_CHANNELS_SOFT"},
+			std::pair< ALint, const char * >{ALC_FORMAT_TYPE_SOFT, "ALC_FORMAT_TYPE_SOFT"},
+			std::pair< ALint, const char * >{ALC_NUM_HRTF_SPECIFIERS_SOFT, "ALC_NUM_HRTF_SPECIFIERS_SOFT"},
+			std::pair< ALint, const char * >{ALC_CONNECTED, "ALC_CONNECTED"},
+			std::pair< ALint, const char * >{0x1997, "ALC_AMBISONIC_LAYOUT_SOFT"},
+			std::pair< ALint, const char * >{0x1998, "ALC_AMBISONIC_SCALING_SOFT"},
+			std::pair< ALint, const char * >{0x1999, "ALC_AMBISONIC_ORDER_SOFT"},
+			std::pair< ALint, const char * >{0x199B, "ALC_MAX_AMBISONIC_ORDER_SOFT"},
+			std::pair< ALint, const char * >{0x19AC, "ALC_OUTPUT_MODE_SOFT"}
 		};
 
-		for ( auto key : keys )
+		for ( const auto & [token, name] : keys )
 		{
 			ALCint value = 0;
 
-			alcGetIntegerv(m_device, key, 1, &value);
+			alcGetIntegerv(m_device, token, 1, &value);
 
 			if ( alcGetErrors(m_device, "alcGetIntegerv", __FILE__, __LINE__) )
 			{
-				TraceWarning{ClassId} << "Unable to fetch device attribute 0x" << std::hex << key << " !";
+				TraceWarning{ClassId} << "Unable to fetch device attribute '" << name << "' !";
 
 				continue;
 			}
 
-			m_contextAttributes[key] = value;
+			m_contextAttributes[token] = value;
 		}
 
 		return true;
