@@ -52,7 +52,7 @@ namespace EmEn::Saphir::Generator
 	using namespace Vulkan;
 	using namespace Keys;
 
-	static constexpr auto TracerTag{"ShaderGenerator"};
+	constexpr auto TracerTag{"ShaderGenerator"};
 	
 	Abstract::Abstract (Settings & settings, const std::string & name, const std::shared_ptr< const Graphics::RenderTarget::Abstract > & renderTarget) noexcept
 		: NameableTrait(name), m_renderTarget(renderTarget)

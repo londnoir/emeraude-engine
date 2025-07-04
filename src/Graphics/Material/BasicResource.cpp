@@ -136,7 +136,7 @@ namespace EmEn::Graphics::Material
 			{
 				m_textureComponent = std::make_unique< Component::Texture >(Uniform::PrimarySampler, SurfaceColor, componentData, fillingType, *Resources::Manager::instance());
 
-				auto * textureResource = m_textureComponent->textureResource().get();
+				const auto textureResource = m_textureComponent->textureResource();
 
 				if ( !this->addDependency(textureResource) )
 				{
@@ -754,7 +754,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' !";
 

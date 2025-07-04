@@ -413,7 +413,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometry;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -432,7 +432,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_layers.emplace_back(layerName, material, options, flags);
 
-		return this->addDependency(material.get());
+		return this->addDependency(material);
 	}
 
 	float

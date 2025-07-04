@@ -567,9 +567,9 @@ namespace EmEn::Graphics::Material
 				continue;
 			}
 
-			auto textureResource = component->textureResource();
+			const auto textureResource = component->textureResource();
 
-			if ( !this->addDependency(textureResource.get()) )
+			if ( !this->addDependency(textureResource) )
 			{
 				TraceError{ClassId} << "Unable to link the texture '" << textureResource->name() << "' dependency to material '" << this->name() << "' for ambient component !";
 
@@ -1402,7 +1402,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for ambient component !";
 
@@ -1460,7 +1460,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for diffuse component !";
 
@@ -1519,7 +1519,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for specular component !";
 
@@ -1581,7 +1581,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for opacity component !";
 
@@ -1664,7 +1664,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for auto-illumination component !";
 
@@ -1698,7 +1698,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for normal component !";
 
@@ -1732,7 +1732,7 @@ namespace EmEn::Graphics::Material
 			return false;
 		}
 
-		if ( !this->addDependency(texture.get()) )
+		if ( !this->addDependency(texture) )
 		{
 			TraceError{ClassId} << "Unable to link the texture '" << texture->name() << "' dependency to material '" << this->name() << "' for reflection component !";
 

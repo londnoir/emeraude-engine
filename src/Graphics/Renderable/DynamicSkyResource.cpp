@@ -92,7 +92,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometry;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -109,7 +109,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = material;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< DynamicSkyResource >

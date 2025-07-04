@@ -41,7 +41,7 @@ namespace EmEn::Saphir::Declaration
 	using namespace EmEn::Libs;
 	using namespace Keys;
 
-	static constexpr auto TracerTag{"BufferBackedBlock"};
+	constexpr auto TracerTag{"BufferBackedBlock"};
 
 	AbstractBufferBackedBlock::AbstractBufferBackedBlock (uint32_t set, uint32_t binding, MemoryLayout memoryLayout, Key name, Key instanceName, uint32_t arraySize) noexcept
 		: BlockInterface(name, instanceName, arraySize),

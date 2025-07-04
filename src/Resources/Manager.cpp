@@ -133,6 +133,8 @@ namespace EmEn::Resources
 			return false;
 		}
 
+		ResourceTrait::s_quietConversion = m_primaryServices.settings().get< bool >(ResourcesQuietConversionKey, DefaultResourcesQuietConversion);
+
 		/* Initialize every resource managers. */
 		{
 			const std::array< ServiceInterface *, 28 > resourceContainers{

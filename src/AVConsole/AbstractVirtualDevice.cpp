@@ -36,7 +36,7 @@ namespace EmEn::AVConsole
 {
 	using namespace EmEn::Libs;
 
-	static constexpr auto TracerTag{"VirtualDevice"};
+	constexpr auto TracerTag{"VirtualDevice"};
 
 	size_t AbstractVirtualDevice::s_deviceCount{0};
 

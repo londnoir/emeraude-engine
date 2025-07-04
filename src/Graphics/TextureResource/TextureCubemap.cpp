@@ -293,7 +293,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = CubemapResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -334,7 +334,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = cubemapResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the cubemap '" << cubemapResource->name() << "' as dependency !";
 

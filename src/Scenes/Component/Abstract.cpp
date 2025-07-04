@@ -37,7 +37,7 @@ namespace EmEn::Scenes::Component
 	using namespace Graphics;
 	using namespace Physics;
 
-	static constexpr auto TracerTag{"EntityComponent"};
+	constexpr auto TracerTag{"EntityComponent"};
 
 	const size_t Abstract::ClassUID{getClassUID("AbstractEntityComponent")};
 	const Cuboid< float > Abstract::NullBoundingBox{};

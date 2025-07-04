@@ -39,7 +39,7 @@ namespace EmEn::Scenes
 	using namespace Graphics;
 	using namespace Physics;
 
-	static constexpr auto TracerTag{"AbstractEntity"};
+	constexpr auto TracerTag{"AbstractEntity"};
 
 	AbstractEntity::AbstractEntity (const std::string & name, uint32_t sceneTimeMS) noexcept
 		: NameableTrait(name), m_birthTime(sceneTimeMS)

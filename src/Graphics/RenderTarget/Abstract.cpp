@@ -43,7 +43,7 @@ namespace EmEn::Graphics::RenderTarget
 	using namespace EmEn::Libs;
 	using namespace Vulkan;
 
-	static constexpr auto TracerTag{"RenderTarget"};
+	constexpr auto TracerTag{"RenderTarget"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType, AVConsole::ConnexionType allowedConnexionType, bool enableSyncPrimitives) noexcept
 		: AbstractVirtualDevice(name, AVConsole::DeviceType::Video, allowedConnexionType),

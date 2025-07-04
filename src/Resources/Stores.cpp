@@ -100,7 +100,7 @@ namespace EmEn::Resources
 	Stores::onInitialize () noexcept
 	{
 		s_operationVerboseEnabled = m_primaryServices.settings().get< bool >(ResourcesShowInformationKey, DefaultResourcesShowInformation);
-		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultCoreResourcesDownloadEnabled);
+		s_downloadEnabled = m_primaryServices.settings().get< bool >(ResourcesDownloadEnabledKey, DefaultResourcesDownloadEnabled);
 
 		const auto indexes = this->getResourcesIndexFiles();
 

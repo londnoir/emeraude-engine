@@ -39,7 +39,7 @@ namespace EmEn::Graphics::Geometry
 	using namespace EmEn::Libs::Math;
 	using namespace EmEn::Libs::VertexFactory;
 
-	static constexpr auto TracerTag{"GeometryInterface"};
+	constexpr auto TracerTag{"GeometryInterface"};
 
 	Interface::Interface (const std::string & name, uint32_t geometryFlagBits) noexcept
 		: ResourceTrait(name, geometryFlagBits)

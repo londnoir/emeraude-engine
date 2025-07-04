@@ -52,7 +52,7 @@ namespace EmEn::Graphics::RenderableInstance
 	using namespace Saphir;
 	using namespace Keys;
 
-	static constexpr auto TracerTag{"RenderableInstance"};
+	constexpr auto TracerTag{"RenderableInstance"};
 
 	const size_t Abstract::ClassUID{getClassUID("AbstractRenderableInstance")};
 

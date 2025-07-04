@@ -105,8 +105,6 @@ namespace EmEn::Audio
 		/* Sets the music chunk size in bytes. */
 		m_musicChunkSize = m_primaryServices.settings().get< uint32_t >(AudioMusicChunkSizeKey, DefaultAudioMusicChunkSize);
 
-		SoundResource::s_quietConversion = m_primaryServices.settings().get< bool >(AudioQuietConversionKey, DefaultAudioQuietConversion);
-
 		this->queryDevices();
 
 		/* Take the default device. */
@@ -793,35 +791,6 @@ namespace EmEn::Audio
 			}
 
 			m_contextAttributes[attributes[index]] = attributes[index+1];
-		}
-
-		/* Forgotten device attributes... */
-		constexpr std::array< std::pair< ALint, const char * >, 9 > keys{
-			std::pair< ALint, const char * >{ALC_FORMAT_CHANNELS_SOFT, "ALC_FORMAT_CHANNELS_SOFT"},
-			std::pair< ALint, const char * >{ALC_FORMAT_TYPE_SOFT, "ALC_FORMAT_TYPE_SOFT"},
-			std::pair< ALint, const char * >{ALC_NUM_HRTF_SPECIFIERS_SOFT, "ALC_NUM_HRTF_SPECIFIERS_SOFT"},
-			std::pair< ALint, const char * >{ALC_CONNECTED, "ALC_CONNECTED"},
-			std::pair< ALint, const char * >{0x1997, "ALC_AMBISONIC_LAYOUT_SOFT"},
-			std::pair< ALint, const char * >{0x1998, "ALC_AMBISONIC_SCALING_SOFT"},
-			std::pair< ALint, const char * >{0x1999, "ALC_AMBISONIC_ORDER_SOFT"},
-			std::pair< ALint, const char * >{0x199B, "ALC_MAX_AMBISONIC_ORDER_SOFT"},
-			std::pair< ALint, const char * >{0x19AC, "ALC_OUTPUT_MODE_SOFT"}
-		};
-
-		for ( const auto & [token, name] : keys )
-		{
-			ALCint value = 0;
-
-			alcGetIntegerv(m_device, token, 1, &value);
-
-			if ( alcGetErrors(m_device, "alcGetIntegerv", __FILE__, __LINE__) )
-			{
-				TraceWarning{ClassId} << "Unable to fetch device attribute '" << name << "' !";
-
-				continue;
-			}
-
-			m_contextAttributes[token] = value;
 		}
 
 		return true;

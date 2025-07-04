@@ -43,7 +43,7 @@ namespace EmEn::Graphics::RenderTarget::Texture
 	using namespace Vulkan;
 	using namespace Saphir;
 
-	static constexpr auto TracerTag{"AbstractTexture"};
+	constexpr auto TracerTag{"AbstractTexture"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept
 		: RenderTarget::Abstract(name, precisions, extent, renderType, AVConsole::ConnexionType::Both, true),

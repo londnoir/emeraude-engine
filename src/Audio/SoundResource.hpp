@@ -55,8 +55,6 @@ namespace EmEn::Audio
 			/** @brief Observable class unique identifier. */
 			static const size_t ClassUID;
 
-			static bool s_quietConversion;
-
 			/**
 			 * @brief Constructs a sound resource.
 			 * @param name The name of the resource.

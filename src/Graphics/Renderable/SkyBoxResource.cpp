@@ -169,7 +169,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometry;
 
-		if ( !this->addDependency(m_geometry.get()) )
+		if ( !this->addDependency(m_geometry) )
 		{
 			TraceError{ClassId} << "Unable to set geometry for Skybox '" << this->name() << "' !";
 
@@ -193,7 +193,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = material;
 
-		if ( !this->addDependency(m_material.get()) )
+		if ( !this->addDependency(m_material) )
 		{
 			TraceError{ClassId} << "Unable to set material for Skybox '" << this->name() << "' !";
 

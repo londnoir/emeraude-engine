@@ -44,7 +44,7 @@ namespace EmEn::Graphics::RenderTarget::View
 	using namespace Vulkan;
 	using namespace Saphir;
 
-	static constexpr auto TracerTag{"AbstractView"};
+	constexpr auto TracerTag{"AbstractView"};
 
 	Abstract::Abstract (const std::string & name, const FramebufferPrecisions & precisions, const VkExtent3D & extent, RenderTargetType renderType) noexcept
 		: RenderTarget::Abstract(name, precisions, extent, renderType, AVConsole::ConnexionType::Both, true)

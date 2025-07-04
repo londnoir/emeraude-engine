@@ -89,7 +89,9 @@ namespace EmEn
 		constexpr auto ResourcesShowInformationKey{"Core/Resources/ShowInformation"}; // Logs
 		constexpr auto DefaultResourcesShowInformation{false};
 		constexpr auto ResourcesDownloadEnabledKey{"Core/Resources/DownloadEnabled"};
-		constexpr auto DefaultCoreResourcesDownloadEnabled{true};
+		constexpr auto DefaultResourcesDownloadEnabled{true};
+		constexpr auto ResourcesQuietConversionKey{"Core/Resources/QuietConversion"}; // Logs
+		constexpr auto DefaultResourcesQuietConversion{true};
 
 		/* Audio layer */
 		constexpr auto AudioEnableKey{"Core/Audio/Enable"};
@@ -104,8 +106,6 @@ namespace EmEn
 		constexpr auto DefaultAudioMusicVolume{0.5F};
 		constexpr auto AudioMusicChunkSizeKey{"Core/Audio/MusicChunkSize"};
 		constexpr auto DefaultAudioMusicChunkSize{8192};
-		constexpr auto AudioQuietConversionKey{"Core/Audio/QuietConversion"}; // Logs
-		constexpr auto DefaultAudioQuietConversion{true};
 
 			/* Recorder */
 			constexpr auto RecorderFrequencyKey{"Core/Audio/Recorder/Frequency"};

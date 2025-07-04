@@ -46,7 +46,7 @@ namespace EmEn::Graphics::TextureResource
 	using namespace EmEn::Libs::PixelFactory;
 	using namespace Vulkan;
 
-	static constexpr auto TracerTag{"AbstractTextureResource"};
+	constexpr auto TracerTag{"AbstractTextureResource"};
 
 	Abstract::Abstract (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)
@@ -135,7 +135,10 @@ namespace EmEn::Graphics::TextureResource
 		/* TODO: Sometimes gray scale GPU resources is useful ! */
 		if ( pixmap.colorCount() != 4 )
 		{
-			TraceWarning{classId} << "The pixmap for resource '" << resourceName << "' color channel mismatch the system ! Converting to RGBA ...";
+			if ( !s_quietConversion )
+			{
+				TraceWarning{classId} << "The pixmap for resource '" << resourceName << "' color channel mismatch the system ! Converting to RGBA ...";
+			}
 
 			pixmap = Processor< uint8_t >::toRGBA(pixmap);
 		}

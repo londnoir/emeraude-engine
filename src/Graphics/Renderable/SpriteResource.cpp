@@ -81,7 +81,7 @@ namespace EmEn::Graphics::Renderable
 			return this->setLoadSuccess(false);
 		}
 
-		return this->setLoadSuccess(this->addDependency(m_material.get()));
+		return this->setLoadSuccess(this->addDependency(m_material));
 	}
 
 	bool
@@ -312,7 +312,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_geometry = geometryResource;
 
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -331,7 +331,7 @@ namespace EmEn::Graphics::Renderable
 
 		m_material = materialResource;
 
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	bool

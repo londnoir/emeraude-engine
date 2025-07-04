@@ -139,7 +139,7 @@ namespace EmEn::Graphics::Renderable
 		m_geometry = geometryResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_geometry.get());
+		return this->addDependency(m_geometry);
 	}
 
 	bool
@@ -160,7 +160,7 @@ namespace EmEn::Graphics::Renderable
 		m_material = materialResource;
 
 		/* Checks if all is loaded */
-		return this->addDependency(m_material.get());
+		return this->addDependency(m_material);
 	}
 
 	std::shared_ptr< WaterLevelResource >

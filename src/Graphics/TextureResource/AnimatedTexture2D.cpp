@@ -301,7 +301,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = MovieResource::getDefault();
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			return this->setLoadSuccess(false);
 		}
@@ -342,7 +342,7 @@ namespace EmEn::Graphics::TextureResource
 
 		m_localData = movieResource;
 
-		if ( !this->addDependency(m_localData.get()) )
+		if ( !this->addDependency(m_localData) )
 		{
 			TraceError{ClassId} << "Unable to add the movie '" << movieResource->name() << "' as dependency !";
 

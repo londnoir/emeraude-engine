@@ -30,28 +30,26 @@
 #include "emeraude_config.hpp"
 
 /* STL inclusions. */
-#include <algorithm>
 #include <cstring>
+#include <algorithm>
 #include <exception>
 #include <iostream>
 
+/* System inclusions. */
+#if IS_LINUX || IS_MACOS
+#include <unistd.h>
+#endif
+
 /* Local inclusions. */
+#include "Libs/String.hpp"
 #include "Arguments.hpp"
 #include "FileSystem.hpp"
-#include "Libs/BlobTrait.hpp"
-#include "Libs/String.hpp"
-#include "ServiceInterface.hpp"
 #include "SettingKeys.hpp"
 #include "Settings.hpp"
 #include "TracerLogger.hpp"
 #include "Types.hpp"
 #if IS_WINDOWS
 #include "PlatformSpecific/Helpers.hpp"
-#endif
-
-/* System inclusions. */
-#if IS_LINUX || IS_MACOS
-#include <unistd.h>
 #endif
 
 namespace EmEn

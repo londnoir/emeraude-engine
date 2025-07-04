@@ -36,7 +36,7 @@ namespace EmEn::Graphics::Renderable
 	using namespace EmEn::Libs::Math;
 	using namespace Resources;
 
-	static constexpr auto TracerTag{"RenderableInterface"};
+	constexpr auto TracerTag{"RenderableInterface"};
 
 	const Cuboid< float > Interface::NullBoundingBox{};
 	const Sphere< float > Interface::NullBoundingSphere{};

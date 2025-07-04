@@ -685,7 +685,10 @@ namespace EmEn::Input
 
 			if ( !IO::fileExists(filepath) )
 			{
-				TraceWarning{ClassId} << "The file " << filepath << " is not present !";
+				if ( m_flags[ShowInformation] )
+				{
+					TraceInfo{ClassId} << "The file " << filepath << " is not present there !";
+				}
 
 				continue;
 			}
