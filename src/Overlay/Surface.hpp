@@ -38,7 +38,7 @@
 #include "Graphics/TextureResource/Abstract.hpp"
 #include "FramebufferProperties.hpp"
 #include "Libs/Math/Matrix.hpp"
-#include "Libs/Math/Rectangle.hpp"
+#include "Libs/Math/Space2D/AARectangle.hpp"
 
 namespace EmEn::Vulkan
 {
@@ -66,7 +66,7 @@ namespace EmEn::Overlay
 			 * @param depth A depth value to order surface on the screen. Default 0.0.
 			 * @param visible Set visibility state on startup. Default true.
 			 */
-			Surface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Rectangle< float > & geometry = {}, float depth = 0.0F, bool visible = true) noexcept;
+			Surface (const FramebufferProperties & framebufferProperties, const std::string & name, const Libs::Math::Space2D::AARectangle< float > & geometry = {}, float depth = 0.0F, bool visible = true) noexcept;
 
 			/**
 			 * @brief Copy constructor.
@@ -112,10 +112,10 @@ namespace EmEn::Overlay
 
 			/**
 			 * @brief Returns the surface geometry.
-			 * @return const Libs::Math::Rectangle< float > &
+			 * @return const Libs::Math::Space2D::AARectangle< float > &
 			 */
 			[[nodiscard]]
-			const Libs::Math::Rectangle< float > &
+			const Libs::Math::Space2D::AARectangle< float > &
 			geometry () const noexcept
 			{
 				return m_rectangle;
@@ -182,7 +182,7 @@ namespace EmEn::Overlay
 			 * @param rectangle A reference to a rectangle.
 			 * @return void
 			 */
-			void setGeometry (const Libs::Math::Rectangle< float > & rectangle) noexcept;
+			void setGeometry (const Libs::Math::Space2D::AARectangle< float > & rectangle) noexcept;
 
 			/**
 			 * @brief Sets the surface position in the screen.
@@ -764,7 +764,7 @@ namespace EmEn::Overlay
 			static constexpr auto ReadyToSwap{12UL};
 
 			const FramebufferProperties & m_framebufferProperties;
-			Libs::Math::Rectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
+			Libs::Math::Space2D::AARectangle< float > m_rectangle{0.0F, 0.0F, 1.0F, 1.0F};
 			Libs::Math::Matrix< 4, float > m_modelMatrix;
 			Libs::PixelFactory::Pixmap< uint8_t > m_frontLocalData;
 			Libs::PixelFactory::Pixmap< uint8_t > m_backLocalData;

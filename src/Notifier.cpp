@@ -70,7 +70,7 @@ namespace EmEn
 			return false;
 		}
 
-		m_surface = m_screen->createSurface< Overlay::Surface >("Notifier", Math::Rectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
+		m_surface = m_screen->createSurface< Overlay::Surface >("Notifier", Space2D::AARectangle{0.0F, 0.9F, 1.0F, 0.1F}, 0.0F);
 
 		if ( m_surface == nullptr )
 		{

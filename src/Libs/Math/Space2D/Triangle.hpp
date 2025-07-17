@@ -30,6 +30,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <limits>
 
 /* Local inclusions. */
 #include "Point.hpp"
@@ -41,7 +42,7 @@ namespace EmEn::Libs::Math::Space2D
 	 * @tparam precision_t The data precision. Default float.
 	 */
 	template< typename precision_t = float >
-	requires (std::is_floating_point_v< precision_t >)
+	requires (std::is_arithmetic_v< precision_t >)
 	class Triangle final
 	{
 		public:
@@ -49,8 +50,7 @@ namespace EmEn::Libs::Math::Space2D
 			/**
 			 * @brief Constructs a default triangle.
 			 */
-			constexpr
-			Triangle () noexcept = default;
+			constexpr Triangle () noexcept = default;
 
 			/**
 			 * @brief Constructs a triangle.
@@ -73,22 +73,12 @@ namespace EmEn::Libs::Math::Space2D
 			bool
 			isValid () const noexcept
 			{
-				if ( m_points[0] == m_points[1] )
+				if ( m_points[0] == m_points[1] || m_points[0] == m_points[2] || m_points[1] == m_points[2] )
 				{
 					return false;
 				}
 
-				if ( m_points[0] == m_points[2] )
-				{
-					return false;
-				}
-
-				if ( m_points[1] == m_points[2] )
-				{
-					return false;
-				}
-
-				return true;
+				return this->getArea() > std::numeric_limits< precision_t >::epsilon();
 			}
 
 			/**
@@ -119,7 +109,7 @@ namespace EmEn::Libs::Math::Space2D
 			 * @return void
 			 */
 			void
-			setPointA (const Point< precision_t > & point) const noexcept
+			setPointA (const Point< precision_t > & point) noexcept
 			{
 				m_points[0] = point;
 			}
@@ -140,7 +130,7 @@ namespace EmEn::Libs::Math::Space2D
 			 * @return void
 			 */
 			void
-			setPointB (const Point< precision_t > & point) const noexcept
+			setPointB (const Point< precision_t > & point) noexcept
 			{
 				m_points[1] = point;
 			}
@@ -207,29 +197,6 @@ namespace EmEn::Libs::Math::Space2D
 			cycle () noexcept
 			{
 				std::rotate(m_points.begin(), m_points.begin() + 1, m_points.end());
-			}
-			
-			/**
-			 * @brief Checks if a point is inside or on the edge of the circle.
-			 * @param point A reference to a point.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			constexpr
-			bool
-			contains (const Point< precision_t > & point) const noexcept
-			{
-				/* NOTE: This method checks if the point is on the same side of each edge. The side is determined by the sign of the 2D cross product. */
-				const precision_t crossAB = Vector<2, precision_t>::crossProduct(m_points[1] - m_points[0], point - m_points[0]);
-				const precision_t crossBC = Vector<2, precision_t>::crossProduct(m_points[2] - m_points[1], point - m_points[1]);
-				const precision_t crossCA = Vector<2, precision_t>::crossProduct(m_points[0] - m_points[2], point - m_points[2]);
-
-				/* NOTE: If the point is inside, the three cross products will have the same sign (or will be zero if the point is on an edge).
-				 * We check both directions (clockwise and counterclockwise) to be robust. */
-				const bool allNonNegative = (crossAB >= 0) && (crossBC >= 0) && (crossCA >= 0);
-				const bool allNonPositive = (crossAB <= 0) && (crossBC <= 0) && (crossCA <= 0);
-
-				return allNonNegative || allNonPositive;
 			}
 
 			/**

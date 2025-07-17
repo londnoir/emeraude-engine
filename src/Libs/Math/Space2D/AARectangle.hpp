@@ -1,5 +1,5 @@
 /*
- * src/Libs/Math/Rectangle.hpp
+ * src/Libs/Math/Space2D/AARectangle.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -28,27 +28,23 @@
 
 /* STL inclusions. */
 #include <ostream>
-#include <array>
 #include <sstream>
 #include <string>
-#include <type_traits>
-
-/* Local inclusions for inheritances. */
-#include "Shape2DInterface.hpp"
+#include <array>
 
 /* Local inclusions for usages. */
-#include "Vector.hpp"
+#include "Point.hpp"
 
-namespace EmEn::Libs::Math
+namespace EmEn::Libs::Math::Space2D
 {
 	/**
-	 * @brief Defines a geometric rectangle. The origin is top-left (Positive Y goes downward, Positive X goes rightward).
-	 * @tparam data_t The type used for geometric distance and dimensions. Default float.
-	 * @extends EmEn::Libs::Math::Shape2DInterface This is a 2D shape.
+	 * @brief Class for an axis-aligned rectangle in 2D space.
+	 * @note The origin is top-left (Positive Y goes downward, Positive X goes rightward).
+	 * @tparam precision_t The precision type. Default float.
 	 */
-	template< typename data_t = float >
-	requires (std::is_arithmetic_v< data_t >)
-	class Rectangle final : public Shape2DInterface< data_t >
+	template< typename precision_t = float >
+	requires (std::is_arithmetic_v< precision_t >)
+	class AARectangle final
 	{
 		public:
 
@@ -59,9 +55,8 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Constructs a default rectangle.
-			 * @note The position will be 0,0 and width/height will be 1.0.
 			 */
-			Rectangle () noexcept = default;
+			constexpr AARectangle () noexcept = default;
 
 			/**
 			 * @brief Constructs a rectangle with dimensions.
@@ -69,7 +64,8 @@ namespace EmEn::Libs::Math
 			 * @param width The width of the rectangle.
 			 * @param height The height of the rectangle.
 			 */
-			Rectangle (data_t width, data_t height) noexcept
+			constexpr
+			AARectangle (precision_t width, precision_t height) noexcept
 				: m_data({0, 0, width < 0 ? 0 : width, height < 0 ? 0 : height})
 			{
 
@@ -83,28 +79,11 @@ namespace EmEn::Libs::Math
 			 * @param width The width of the rectangle.
 			 * @param height The height of the rectangle.
 			 */
-			Rectangle (data_t positionX, data_t positionY, data_t width, data_t height) noexcept
+			constexpr
+			AARectangle (precision_t positionX, precision_t positionY, precision_t width, precision_t height) noexcept
 				: m_data({positionX, positionY, width < 0 ? 0 : width, height < 0 ? 0 : height})
 			{
 
-			}
-
-			/** @copydoc EmEn::Libs::Math::Shape2DInterface::getPerimeter() */
-			[[nodiscard]]
-			constexpr
-			data_t
-			getPerimeter () const noexcept override
-			{
-				return (this->width() + this->height()) * 2;
-			}
-
-			/** @copydoc EmEn::Libs::Math::Shape2DInterface::getArea() */
-			[[nodiscard]]
-			constexpr
-			data_t
-			getArea () const noexcept override
-			{
-				return this->width() * this->height();
 			}
 
 			/**
@@ -115,7 +94,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator> (const Rectangle< data_t > & operand) const noexcept
+			operator> (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return this->width() * this->height() > operand.width() * operand.height();
 			}
@@ -128,7 +107,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator>= (const Rectangle< data_t > & operand) const noexcept
+			operator>= (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return this->width() * this->height() >= operand.width() * operand.height();
 			}
@@ -141,7 +120,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator< (const Rectangle< data_t > & operand) const noexcept
+			operator< (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return this->width() * this->height() < operand.width() * operand.height();
 			}
@@ -154,7 +133,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator<= (const Rectangle< data_t > & operand) const noexcept
+			operator<= (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return this->width() * this->height() <= operand.width() * operand.height();
 			}
@@ -167,7 +146,7 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator== (const Rectangle< data_t > & operand) const noexcept
+			operator== (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return m_data == operand.m_data;
 			}
@@ -180,9 +159,38 @@ namespace EmEn::Libs::Math
 			[[nodiscard]]
 			constexpr
 			bool
-			operator!= (const Rectangle< data_t > & operand) const noexcept
+			operator!= (const AARectangle< precision_t > & operand) const noexcept
 			{
 				return !(*this == operand);
+			}
+
+			/**
+			 * @brief Returns whether the rectangle is a coherent surface.
+			 * @return bool
+			 */
+			[[nodiscard]]
+			constexpr
+			bool
+			isValid () const noexcept
+			{
+				return this->width() > 0 && this->height() > 0;
+			}
+
+			/**
+			 * @brief Returns the point array.
+			 * @note The layout is  [topLeft, bottomLeft, topRight, bottomRight].
+			 * @return std::array< Point< precision_t >, 4 > &
+			 */
+			[[nodiscard]]
+			std::array< Point< precision_t >, 4 >
+			points () noexcept
+			{
+				return {
+					this->topLeft(),
+					this->bottomLeft(),
+					this->topRight(),
+					this->bottomRight()
+				};
 			}
 
 			/**
@@ -191,7 +199,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setLeft (data_t value) noexcept
+			setLeft (precision_t value) noexcept
 			{
 				m_data[OffsetX] = value;
 			}
@@ -204,7 +212,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setRight (data_t value) noexcept
+			setRight (precision_t value) noexcept
 			{
 				if ( value > this->left() )
 				{
@@ -218,7 +226,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setTop (data_t value) noexcept
+			setTop (precision_t value) noexcept
 			{
 				m_data[OffsetY] = value;
 			}
@@ -231,7 +239,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setBottom (data_t value) noexcept
+			setBottom (precision_t value) noexcept
 			{
 				if ( value > this->top() )
 				{
@@ -245,7 +253,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setPosition (const Vector< 2, data_t > & position) noexcept
+			setPosition (const Point< precision_t > & position) noexcept
 			{
 				m_data[OffsetX] = position.x();
 				m_data[OffsetY] = position.y();
@@ -258,7 +266,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setWidth (data_t value) noexcept
+			setWidth (precision_t value) noexcept
 			{
 				if ( value > 0 )
 				{
@@ -273,7 +281,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			setHeight (data_t value) noexcept
+			setHeight (precision_t value) noexcept
 			{
 				if ( value > 0 )
 				{
@@ -288,7 +296,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			move (data_t x, data_t y) noexcept
+			move (precision_t x, precision_t y) noexcept
 			{
 				m_data[OffsetX] += x;
 				m_data[OffsetY] += y;
@@ -301,7 +309,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			modifyWidthBy (data_t value) noexcept
+			modifyWidthBy (precision_t value) noexcept
 			{
 				m_data[Width] += value;
 
@@ -318,7 +326,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			modifyHeightBy (data_t value) noexcept
+			modifyHeightBy (precision_t value) noexcept
 			{
 				m_data[Height] += value;
 
@@ -326,6 +334,126 @@ namespace EmEn::Libs::Math
 				{
 					m_data[Height] = 0;
 				}
+			}
+
+			/**
+			 * @brief Returns the left coordinate (X-) of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			left () const noexcept
+			{
+				return m_data[OffsetX];
+			}
+
+			/**
+			 * @brief Returns the right coordinate (X+) of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			right () const noexcept
+			{
+				return this->left() + this->width();
+			}
+
+			/**
+			 * @brief Returns the top coordinate (Y-) of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			top () const noexcept
+			{
+				return m_data[OffsetY];
+			}
+
+			/**
+			 * @brief Returns the bottom coordinate (Y+) of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			bottom () const noexcept
+			{
+				return this->top() + this->height();
+			}
+
+			/**
+			 * @brief Returns the width of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			width () const noexcept
+			{
+				return m_data[Width];
+			}
+
+			/**
+			 * @brief Returns the height of the rectangle.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			height () const noexcept
+			{
+				return m_data[Height];
+			}
+
+			/**
+			 * @brief Returns the top-left coordinate of the rectangle as a vector.
+			 * @return Point< precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Point< precision_t >
+			topLeft () const noexcept
+			{
+				return {this->left(), this->top()};
+			}
+
+			/**
+			 * @brief Returns the bottom-left coordinate of the rectangle as a vector.
+			 * @return Point< precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Point< precision_t >
+			bottomLeft () const noexcept
+			{
+				return {this->left(), this->bottom()};
+			}
+
+			/**
+			 * @brief Returns the top-right coordinate of the rectangle as a vector.
+			 * @return Point< precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Point< precision_t >
+			topRight () const noexcept
+			{
+				return {this->right(), this->top()};
+			}
+
+			/**
+			 * @brief Returns the bottom-right coordinate of the rectangle as a vector.
+			 * @return Point< precision_t >
+			 */
+			[[nodiscard]]
+			constexpr
+			Point< precision_t >
+			bottomRight () const noexcept
+			{
+				return {this->right(), this->bottom()};
 			}
 
 			/**
@@ -339,144 +467,12 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the rectangle is a coherent surface.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			constexpr
-			bool
-			isValid () const noexcept
-			{
-				return this->width() > 0 && this->height() > 0;
-			}
-
-			/**
-			 * @brief Returns the left coordinate (X-) of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			left () const noexcept
-			{
-				return m_data[OffsetX];
-			}
-
-			/**
-			 * @brief Returns the right coordinate (X+) of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			right () const noexcept
-			{
-				return this->left() + this->width();
-			}
-
-			/**
-			 * @brief Returns the top coordinate (Y-) of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			top () const noexcept
-			{
-				return m_data[OffsetY];
-			}
-
-			/**
-			 * @brief Returns the bottom coordinate (Y+) of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			bottom () const noexcept
-			{
-				return this->top() + this->height();
-			}
-
-			/**
-			 * @brief Returns the width of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			width () const noexcept
-			{
-				return m_data[Width];
-			}
-
-			/**
-			 * @brief Returns the height of the rectangle.
-			 * @return data_t
-			 */
-			[[nodiscard]]
-			constexpr
-			data_t
-			height () const noexcept
-			{
-				return m_data[Height];
-			}
-
-			/**
-			 * @brief Returns the top-left coordinate of the rectangle as a vector.
-			 * @return Vector< 2, data_t >
-			 */
-			[[nodiscard]]
-			constexpr
-			Vector< 2, data_t >
-			topLeft () const noexcept
-			{
-				return {this->left(), this->top()};
-			}
-
-			/**
-			 * @brief Returns the bottom-left coordinate of the rectangle as a vector.
-			 * @return Vector< 2, data_t >
-			 */
-			[[nodiscard]]
-			constexpr
-			Vector< 2, data_t >
-			bottomLeft () const noexcept
-			{
-				return {this->left(), this->bottom()};
-			}
-
-			/**
-			 * @brief Returns the top-right coordinate of the rectangle as a vector.
-			 * @return Vector< 2, data_t >
-			 */
-			[[nodiscard]]
-			constexpr
-			Vector< 2, data_t >
-			topRight () const noexcept
-			{
-				return {this->right(), this->top()};
-			}
-
-			/**
-			 * @brief Returns the bottom-right coordinate of the rectangle as a vector.
-			 * @return Vector< 2, data_t >
-			 */
-			[[nodiscard]]
-			constexpr
-			Vector< 2, data_t >
-			bottomRight () const noexcept
-			{
-				return {this->right(), this->bottom()};
-			}
-
-			/**
 			 * @brief Merges two rectangles to produce a new one.
 			 * @param rectangle A reference to another rectangle.
 			 * @return void
 			 */
 			void
-			merge (const Rectangle< data_t > & rectangle) noexcept
+			merge (const AARectangle< precision_t > & rectangle) noexcept
 			{
 				if ( !rectangle.isValid() )
 				{
@@ -490,15 +486,92 @@ namespace EmEn::Libs::Math
 					return;
 				}
 
-				const data_t newLeft = std::min(this->left(), rectangle.left());
-				const data_t newTop = std::min(this->top(), rectangle.top());
-				const data_t newRight = std::max(this->right(), rectangle.right());
-				const data_t newBottom = std::max(this->bottom(), rectangle.bottom());
+				const precision_t newLeft = std::min(this->left(), rectangle.left());
+				const precision_t newTop = std::min(this->top(), rectangle.top());
+				const precision_t newRight = std::max(this->right(), rectangle.right());
+				const precision_t newBottom = std::max(this->bottom(), rectangle.bottom());
 
 				m_data[OffsetX] = newLeft;
 				m_data[OffsetY] = newTop;
 				m_data[Width] = newRight - newLeft;
 				m_data[Height] = newBottom - newTop;
+			}
+
+			/**
+			 * @brief Reduces the sizes of the rectangle.
+			 * @param bounds A reference to a rectangle.
+			 * @return bool
+			 */
+			bool
+			cropOnOverflow (const AARectangle< precision_t > & bounds) noexcept
+			{
+				if ( !this->isValid() || !bounds.isValid() )
+				{
+					return false;
+				}
+
+				const precision_t newLeft = std::max(bounds.left(), this->left());
+				const precision_t newTop = std::max(bounds.top(), this->top());
+				precision_t newRight = std::min(bounds.right(), this->right());
+				precision_t newBottom = std::min(bounds.bottom(), this->bottom());
+
+				if ( newRight < newLeft )
+				{
+					newRight = newLeft;
+				}
+
+				if ( newBottom < newTop )
+				{
+					newBottom = newTop;
+				}
+
+				const precision_t newWidth = newRight - newLeft;
+				const precision_t newHeight = newBottom - newTop;
+
+				const bool changed =
+					m_data[OffsetX] != newLeft ||
+					m_data[OffsetY] != newTop ||
+					m_data[Width] != newWidth ||
+					m_data[Height] != newHeight;
+
+				if ( changed )
+				{
+					m_data[OffsetX] = newLeft;
+					m_data[OffsetY] = newTop;
+					m_data[Width] = newWidth;
+					m_data[Height] = newHeight;
+				}
+
+				return changed;
+			}
+
+			/**
+			 * @brief Reduces the sizes of the rectangle.
+			 * @param width The final width.
+			 * @param height The final height.
+			 * @return bool
+			 */
+			bool
+			cropOnOverflow (precision_t width, precision_t height) noexcept
+			{
+				return this->cropOnOverflow({0, 0, width, height});
+			}
+
+			/**
+			 * @brief Returns the aspect ratio of the surface.
+			 * @warning This function will return 0 for an invalid surface.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			precision_t
+			aspectRatio () const noexcept
+			{
+				if ( !this->isValid() )
+				{
+					return 0;
+				}
+
+				return this->width() / this->height();
 			}
 
 			/**
@@ -508,20 +581,20 @@ namespace EmEn::Libs::Math
 			 * @return bool
 			 */
 			bool
-			intersect (const Rectangle< data_t > & rectangle) noexcept
+			intersect (const AARectangle< precision_t > & rectangle) noexcept
 			{
 				if ( !this->isValid() || !rectangle.isValid() || this->isOutside(rectangle) )
 				{
 					return false;
 				}
 
-				const data_t interLeft = std::max(this->left(), rectangle.left());
-				const data_t interTop = std::max(this->top(), rectangle.top());
-				const data_t interRight = std::min(this->right(), rectangle.right());
-				const data_t interBottom = std::min(this->bottom(), rectangle.bottom());
+				const precision_t interLeft = std::max(this->left(), rectangle.left());
+				const precision_t interTop = std::max(this->top(), rectangle.top());
+				const precision_t interRight = std::min(this->right(), rectangle.right());
+				const precision_t interBottom = std::min(this->bottom(), rectangle.bottom());
 
-				const data_t interWidth = interRight - interLeft;
-				const data_t interHeight = interBottom - interTop;
+				const precision_t interWidth = interRight - interLeft;
+				const precision_t interHeight = interBottom - interTop;
 
 				if ( interWidth > 0 && interHeight > 0 )
 				{
@@ -543,7 +616,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isOutside (const Rectangle< data_t > & rectangle) const noexcept
+			isOutside (const AARectangle< precision_t > & rectangle) const noexcept
 			{
 				return
 					this->left() > rectangle.right() ||
@@ -560,7 +633,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isOutside (data_t width, data_t height) const noexcept
+			isOutside (precision_t width, precision_t height) const noexcept
 			{
 				return
 					this->left() >= width ||
@@ -576,7 +649,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isInside (const Rectangle< data_t > & rectangle) const noexcept
+			isInside (const AARectangle< precision_t > & rectangle) const noexcept
 			{
 				if ( this->left() < rectangle.left() )
 				{
@@ -609,7 +682,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isInside (data_t width, data_t height) const noexcept
+			isInside (precision_t width, precision_t height) const noexcept
 			{
 				return this->left() >= 0 && this->right() <= width && this->top() >= 0 && this->bottom() <= height;
 			}
@@ -621,7 +694,7 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isIntersect (const Rectangle< data_t > & rectangle) const noexcept
+			isIntersect (const AARectangle< precision_t > & rectangle) const noexcept
 			{
 				return !this->isOutside(rectangle);
 			}
@@ -634,86 +707,33 @@ namespace EmEn::Libs::Math
 			 */
 			[[nodiscard]]
 			bool
-			isIntersect (data_t width, data_t height) const noexcept
+			isIntersect (precision_t width, precision_t height) const noexcept
 			{
 				return !(this->left() >= width  || this->right() <= 0 || this->top() >= height || this->bottom() <= 0);
 			}
 
 			/**
-			 * @brief Reduces the sizes of the rectangle.
-			 * @param bounds A reference to a rectangle.
-			 * @return bool
-			 */
-			bool
-			cropOnOverflow (const Rectangle< data_t > & bounds) noexcept
-			{
-				if ( !this->isValid() || !bounds.isValid() )
-				{
-					return false;
-				}
-
-				const data_t newLeft = std::max(bounds.left(), this->left());
-				const data_t newTop = std::max(bounds.top(), this->top());
-				data_t newRight = std::min(bounds.right(), this->right());
-				data_t newBottom = std::min(bounds.bottom(), this->bottom());
-
-				if ( newRight < newLeft )
-				{
-					newRight = newLeft;
-				}
-
-				if ( newBottom < newTop )
-				{
-					newBottom = newTop;
-				}
-
-				const data_t newWidth = newRight - newLeft;
-				const data_t newHeight = newBottom - newTop;
-
-				const bool changed =
-					m_data[OffsetX] != newLeft ||
-					m_data[OffsetY] != newTop ||
-					m_data[Width] != newWidth ||
-					m_data[Height] != newHeight;
-
-				if ( changed )
-				{
-					m_data[OffsetX] = newLeft;
-					m_data[OffsetY] = newTop;
-					m_data[Width] = newWidth;
-					m_data[Height] = newHeight;
-				}
-
-				return changed;
-			}
-
-			/**
-			 * @brief Reduces the sizes of the rectangle.
-			 * @param width The final width.
-			 * @param height The final height.
-			 * @return bool
-			 */
-			bool
-			cropOnOverflow (data_t width, data_t height) noexcept
-			{
-				return this->cropOnOverflow({0, 0, width, height});
-			}
-
-			/**
-			 * @brief Returns the aspect ratio of the surface.
-			 * @warning This function will return 0 for an invalid surface.
-			 * @return data_t
+			 * @brief Returns the rectangle perimeter.
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
-			aspectRatio () const noexcept
+			constexpr
+			precision_t
+			getPerimeter () const noexcept
 			{
-				if ( !this->isValid() )
-				{
-					return 0;
-				}
+				return (this->width() + this->height()) * 2;
+			}
 
-				return this->width() / this->height();
+			/**
+			 * @brief Returns the rectangle area.
+			 * @return precision_t
+			 */
+			[[nodiscard]]
+			constexpr
+			precision_t
+			getArea () const noexcept
+			{
+				return this->width() * this->height();
 			}
 
 			/**
@@ -724,10 +744,10 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::ostream &
-			operator<< (std::ostream & out, const Rectangle & obj) noexcept
+			operator<< (std::ostream & out, const AARectangle & obj) noexcept
 			{
 				out <<
-					"Rectangle data :" "\n"
+					"Axis-Aligned rectangle data :" "\n"
 					"Position (top-left) : X " << obj.left() << ", Y " << obj.top() << "\n"
 					"Position (bottom-right) : X " << obj.right() << ", Y " << obj.bottom() << "\n"
 					"Dimensions : " << obj.width() << " X " << obj.height() << '\n';
@@ -742,7 +762,7 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::string
-			to_string (const Rectangle & obj) noexcept
+			to_string (const AARectangle & obj) noexcept
 			{
 				std::stringstream output;
 
@@ -753,6 +773,6 @@ namespace EmEn::Libs::Math
 
 		private:
 
-			std::array< data_t, 4 > m_data{0, 0, 1, 1};
+			std::array< precision_t, 4 > m_data{0, 0, 1, 1};
 	};
 }

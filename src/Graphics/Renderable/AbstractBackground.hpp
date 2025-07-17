@@ -81,7 +81,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > &
+			const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept final
 			{
 				return NullBoundingBox;
@@ -89,7 +89,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > &
+			const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept final
 			{
 				return NullBoundingSphere;

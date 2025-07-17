@@ -91,7 +91,7 @@ namespace EmEn::Libs::PixelFactory
 			 * @return void
 			 */
 			void
-			setRectangle (const Math::Rectangle< int32_t > & rectangle) noexcept
+			setRectangle (const Math::Space2D::AARectangle< int32_t > & rectangle) noexcept
 			{
 				m_rectangle = rectangle;
 
@@ -100,10 +100,10 @@ namespace EmEn::Libs::PixelFactory
 
 			/**
 			 * @brief Returns the rectangle where the text is written onto the pixmap.
-			 * @return const Math::Rectangle< int32_t > &
+			 * @return const Math::Space2D::AARectangle< int32_t > &
 			 */
 			[[nodiscard]]
-			const Math::Rectangle< int32_t > &
+			const Math::Space2D::AARectangle< int32_t > &
 			rectangle () const noexcept
 			{
 				return m_rectangle;
@@ -338,7 +338,7 @@ namespace EmEn::Libs::PixelFactory
 			}
 
 			Pixmap< pixel_data_t > * m_pixmap{nullptr};
-			Math::Rectangle< int32_t > m_rectangle;
+			Math::Space2D::AARectangle< int32_t > m_rectangle;
 			const ASCIIGlyphArray< pixel_data_t > * m_selectedFont{nullptr};
 			Color< float > m_fontColor = White;
 			DrawPixelMode m_mode{DrawPixelMode::Normal};

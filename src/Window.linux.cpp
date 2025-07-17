@@ -46,7 +46,6 @@
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/Surface.hpp"
 #include "PrimaryServices.hpp"
-#include "PlatformManager.hpp"
 
 namespace EmEn
 {
@@ -91,32 +90,19 @@ namespace EmEn
 	void
 	Window::disableTitleBar () noexcept
 	{
-		::Display * display = glfwGetX11Display();
-		::Window window = glfwGetX11Window(m_handle.get());
 
-		XSetWindowAttributes attributes;
-		attributes.override_redirect = True;
-		XChangeWindowAttributes(display, window, CWOverrideRedirect, &attributes);
 	}
 
 	bool
 	Window::initializeNativeWindow () noexcept
 	{
-		m_gtkWindow = nullptr;
-
 		return true;
 	}
 
 	void
 	Window::releaseNativeWindow () noexcept
 	{
-		m_gtkWindow = nullptr;
-	}
 
-	GtkWindow *
-	Window::getGtkWindow () const noexcept
-	{
-		return m_gtkWindow;
 	}
 }
 

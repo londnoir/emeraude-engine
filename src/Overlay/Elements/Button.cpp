@@ -37,7 +37,7 @@ namespace EmEn::Overlay::Elements
 	using namespace EmEn::Libs::PixelFactory;
 	using namespace Graphics;
 
-	Button::Button (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Rectangle< float > & geometry, float depth) noexcept
+	Button::Button (const FramebufferProperties & framebufferProperties, const std::string & name, const Math::Space2D::AARectangle< float > & geometry, float depth) noexcept
 		: ComposedSurface(framebufferProperties, name, geometry, depth)//, m_textWriter(this->pixmap())
 	{
 		m_textWriter.enableWrapping(true);

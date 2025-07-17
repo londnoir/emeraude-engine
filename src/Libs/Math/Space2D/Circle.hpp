@@ -41,7 +41,7 @@ namespace EmEn::Libs::Math::Space2D
 	 * @tparam precision_t The precision type. Default float.
 	 */
 	template< typename precision_t = float >
-	requires (std::is_floating_point_v< precision_t >)
+	requires (std::is_arithmetic_v< precision_t >)
 	class Circle final
 	{
 		public:
@@ -49,7 +49,7 @@ namespace EmEn::Libs::Math::Space2D
 			/**
 			 * @brief Constructs a default circle.
 			 */
-			Circle () noexcept = default;
+			constexpr Circle () noexcept = default;
 
 			/**
 			 * @brief Constructs a circle.
@@ -150,6 +150,17 @@ namespace EmEn::Libs::Math::Space2D
 			}
 
 			/**
+			 * @brief Returns the radius² of the circle in engine metrics.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			precision_t
+			squaredRadius () const noexcept
+			{
+				return m_radius * m_radius;
+			}
+
+			/**
 			 * @brief Reset the circle to null value.
 			 * @return void
 			 */
@@ -158,21 +169,6 @@ namespace EmEn::Libs::Math::Space2D
 			{
 				m_position.reset();
 				m_radius = 0;
-			}
-
-			/**
-			 * @brief Checks if a point is inside or on the edge of the circle.
-			 * @param point A reference to a point.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			constexpr
-			bool
-			contains (const Point< precision_t > & point) const noexcept
-			{
-				const Point< precision_t > distance = point - m_position;
-
-				return distance.lengthSquared() <= m_radius * m_radius;
 			}
 
 			/**

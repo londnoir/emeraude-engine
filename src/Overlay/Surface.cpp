@@ -43,7 +43,7 @@ namespace EmEn::Overlay
 	using namespace EmEn::Graphics;
 	using namespace EmEn::Vulkan;
 
-	Surface::Surface (const FramebufferProperties & framebufferProperties, const std::string & name, const Rectangle< float > & geometry, float depth, bool visible) noexcept
+	Surface::Surface (const FramebufferProperties & framebufferProperties, const std::string & name, const Space2D::AARectangle< float > & geometry, float depth, bool visible) noexcept
 		: NameableTrait(name),
 		m_framebufferProperties(framebufferProperties),
 		m_rectangle(geometry),
@@ -55,7 +55,7 @@ namespace EmEn::Overlay
 	}
 
 	void
-	Surface::setGeometry (const Rectangle< float > & rectangle) noexcept
+	Surface::setGeometry (const Space2D::AARectangle< float > & rectangle) noexcept
 	{
 		m_rectangle = rectangle;
 

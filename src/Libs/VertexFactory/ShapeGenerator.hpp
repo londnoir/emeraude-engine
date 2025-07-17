@@ -33,7 +33,6 @@
 #include <vector>
 
 /* Local inclusions for usages. */
-#include "Libs/Math/Cuboid.hpp"
 #include "TextureCoordinates.hpp"
 #include "ShapeBuilder.hpp"
 #include "ShapeAssembler.hpp"
@@ -605,7 +604,7 @@ namespace EmEn::Libs::VertexFactory::ShapeGenerator
 	template< typename vertex_data_t = float, typename index_data_t = uint32_t >
 	[[nodiscard]]
 	Shape< vertex_data_t, index_data_t >
-	generateCuboid (const Math::Cuboid< vertex_data_t > & box, const ShapeBuilderOptions< vertex_data_t > & options = {}) noexcept requires (std::is_floating_point_v< vertex_data_t > && std::is_unsigned_v< index_data_t > )
+	generateCuboid (const Math::Space3D::AACuboid< vertex_data_t > & box, const ShapeBuilderOptions< vertex_data_t > & options = {}) noexcept requires (std::is_floating_point_v< vertex_data_t > && std::is_unsigned_v< index_data_t > )
 	{
 		return generateCuboid(box.maximum(), box.minimum(), options);
 	}

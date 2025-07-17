@@ -38,8 +38,8 @@ namespace EmEn::Graphics::Renderable
 
 	constexpr auto TracerTag{"RenderableInterface"};
 
-	const Cuboid< float > Interface::NullBoundingBox{};
-	const Sphere< float > Interface::NullBoundingSphere{};
+	const Space3D::AACuboid< float > Interface::NullBoundingBox{};
+	const Space3D::Sphere< float > Interface::NullBoundingSphere{};
 
 	Interface::Interface (const std::string & name, uint32_t resourceFlagBits) noexcept
 		: ResourceTrait(name, resourceFlagBits)

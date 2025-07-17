@@ -140,7 +140,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingBox() const */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > &
+			const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return m_localData.boundingBox();
@@ -148,7 +148,7 @@ namespace EmEn::Graphics::Renderable
 
 			/** @copydoc EmEn::Graphics::Renderable::Interface::boundingSphere() const */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > &
+			const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return m_localData.boundingSphere();

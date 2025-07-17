@@ -234,7 +234,7 @@ namespace EmEn::Graphics
 		const auto width = static_cast< uint32_t >(pixmap.width() / 3);
 		const auto height = static_cast< uint32_t >(pixmap.height() / 2);
 
-		const std::array< Rectangle< uint32_t >, CubemapFaceCount > rectangles{{
+		const std::array< Space2D::AARectangle< uint32_t >, CubemapFaceCount > rectangles{{
 			/* PositiveX */
 			{0, 0, width, height},
 			/* NegativeX */

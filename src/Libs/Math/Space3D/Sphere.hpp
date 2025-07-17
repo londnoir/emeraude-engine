@@ -49,8 +49,7 @@ namespace EmEn::Libs::Math::Space3D
 			/**
 			 * @brief Constructs a default sphere.
 			 */
-			constexpr
-			Sphere () noexcept = default;
+			constexpr Sphere () noexcept = default;
 
 			/**
 			 * @brief Constructs a sphere volume.
@@ -132,6 +131,17 @@ namespace EmEn::Libs::Math::Space3D
 			}
 
 			/**
+			 * @brief Returns the radius² of the sphere.
+			 * @return data_t
+			 */
+			[[nodiscard]]
+			precision_t
+			squaredRadius () const noexcept
+			{
+				return m_radius * m_radius;
+			}
+
+			/**
 			 * @brief Reset the sphere to null value.
 			 * @return void
 			 */
@@ -143,18 +153,52 @@ namespace EmEn::Libs::Math::Space3D
 			}
 
 			/**
-			 * @brief Checks if a point is inside or on the edge of the sphere.
-			 * @param point A reference to a point.
-			 * @return bool
+			 * @brief Extends the volume of this sphere with another one.
+			 * @param other A reference to a sphere.
+			 * @return void
 			 */
-			[[nodiscard]]
-			constexpr
-			bool
-			contains (const Point< precision_t > & point) const noexcept
+			void
+			merge (const Sphere< precision_t > & other) noexcept
 			{
-				const Point< precision_t > distance = point - m_position;
+				if ( this == &other || !other.isValid() )
+				{
+					return;
+				}
 
-				return distance.lengthSquared() <= m_radius * m_radius;
+				if ( !this->isValid() )
+				{
+					*this = other;
+
+					return;
+				}
+
+				const auto centerToCenter = other.m_position - m_position;
+				const precision_t distance_sq = centerToCenter.lengthSquared();
+				const precision_t distance = std::sqrt(distance_sq);
+
+				/* NOTE: One sphere is entirely contained within the other. */
+				if ( distance + other.m_radius <= m_radius )
+				{
+					return;
+				}
+
+				if ( distance + m_radius <= other.m_radius )
+				{
+					*this = other;
+
+					return;
+				}
+
+				/* NOTE: The new radius is half the total distance from one extreme to the other. */
+				const precision_t newRadius = (distance + m_radius + other.m_radius) * static_cast< precision_t >(0.5);
+
+				/* NOTE: The new center is located on the line connecting the old centers.
+				 * It is offset from the center of the 'this' sphere to 'other'. The direction is normalized.
+				 * We handle the case where the distance is almost zero. */
+				const auto direction = centerToCenter / (distance > std::numeric_limits< precision_t >::epsilon() ? distance : 1.0f);
+				m_position = m_position + direction * (newRadius - m_radius);
+
+				m_radius = newRadius;
 			}
 
 			/**
@@ -226,33 +270,7 @@ namespace EmEn::Libs::Math::Space3D
 
 		private:
 
-			/**
-			 * @brief isOverlapping
-			 * @param D
-			 * @param R2
-			 * @return bool
-			 */
-			static
-			bool
-			isOverlapping (precision_t D, precision_t R2)
-			{
-				return D < R2;
-			}
-
-			/**
-			 * @brief overlap
-			 * @param D
-			 * @param R2
-			 * @return data_t
-			 */
-			static
-			precision_t
-			overlap (precision_t D, precision_t R2)
-			{
-				return D < R2 ? R2 - D : 0;
-			}
-
-			Vector< 3, precision_t > m_position{};
+			Vector< 3, precision_t > m_position;
 			precision_t m_radius{0};
 	};
 }

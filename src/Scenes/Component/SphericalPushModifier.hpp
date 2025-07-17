@@ -83,13 +83,13 @@ namespace EmEn::Scenes::Component
 				return false;
 			}
 
-			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Sphere< float > &) */
+			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Space3D::Sphere< float > &) */
 			[[nodiscard]]
-			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Sphere< float > & worldBoundingSphere) const noexcept override;
+			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Space3D::Sphere< float > & worldBoundingSphere) const noexcept override;
 
-			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Cuboid< float > &) */
+			/** @copydoc EmEn::Scenes::Component::AbstractModifier::getForceAppliedToEntity(const Libs::Math::CartesianFrame< float > &, const Libs::Math::Space3D::AACuboid< float > &) */
 			[[nodiscard]]
-			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Cuboid< float > & worldBoundingBox) const noexcept override;
+			Libs::Math::Vector< 3, float > getForceAppliedToEntity (const Libs::Math::CartesianFrame< float > & worldCoordinates, const Libs::Math::Space3D::AACuboid< float > & worldBoundingBox) const noexcept override;
 
 			/**
 			 * @brief Sets the constant push magnitude.

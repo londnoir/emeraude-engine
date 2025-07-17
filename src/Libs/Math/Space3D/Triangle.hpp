@@ -49,8 +49,7 @@ namespace EmEn::Libs::Math::Space3D
 			/**
 			 * @brief Constructs a default triangle.
 			 */
-			constexpr
-			Triangle () noexcept = default;
+			constexpr Triangle () noexcept = default;
 
 			/**
 			 * @brief Constructs a triangle.
@@ -207,29 +206,6 @@ namespace EmEn::Libs::Math::Space3D
 			cycle () noexcept
 			{
 				std::rotate(m_points.begin(), m_points.begin() + 1, m_points.end());
-			}
-			
-			/**
-			 * @brief Checks if a point is inside or on the edge of the circle.
-			 * @param point A reference to a point.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			constexpr
-			bool
-			contains (const Point< precision_t > & point) const noexcept
-			{
-				/* NOTE: This method checks if the point is on the same side of each edge. The side is determined by the sign of the 2D cross product. */
-				const precision_t crossAB = Vector<2, precision_t>::crossProduct(m_points[1] - m_points[0], point - m_points[0]);
-				const precision_t crossBC = Vector<2, precision_t>::crossProduct(m_points[2] - m_points[1], point - m_points[1]);
-				const precision_t crossCA = Vector<2, precision_t>::crossProduct(m_points[0] - m_points[2], point - m_points[2]);
-
-				/* NOTE: If the point is inside, the three cross products will have the same sign (or will be zero if the point is on an edge).
-				 * We check both directions (clockwise and counterclockwise) to be robust. */
-				const bool allNonNegative = (crossAB >= 0) && (crossBC >= 0) && (crossCA >= 0);
-				const bool allNonPositive = (crossAB <= 0) && (crossBC <= 0) && (crossCA <= 0);
-
-				return allNonNegative || allNonPositive;
 			}
 
 			/**

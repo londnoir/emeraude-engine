@@ -1,5 +1,5 @@
 /*
- * src/Libs/Math/Cuboid.hpp
+ * src/Libs/Math/Space3D/AACuboid.hpp
  * This file is part of Emeraude-Engine
  *
  * Copyright (C) 2010-2025 - Sébastien Léon Claude Christian Bémelmans "LondNoir" <londnoir@gmail.com>
@@ -27,40 +27,33 @@
 #pragma once
 
 /* STL inclusions. */
-#include <cmath>
 #include <cstddef>
+#include <cmath>
 #include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include <algorithm>
 
-/* Local inclusions for inheritances. */
-#include "Shape3DInterface.hpp"
-
 /* Local inclusions for usages. */
-#include "Sphere.hpp"
-#include "Vector.hpp"
+#include "Point.hpp"
 
-namespace EmEn::Libs::Math
+namespace EmEn::Libs::Math::Space3D
 {
 	/**
-	 * @brief Defines a cubic volume aligned on axis.
-	 * @tparam data_t The type used for geometric distance and dimensions. Default float.
-	 * @extends EmEn::Libs::Math::Shape3DInterface This is a 3D shape.
+	 * @brief Class for an axis-aligned cuboid in 3D space.
+	 * @tparam precision_t The precision type. Default float.
 	 */
-	template< typename data_t = float >
-	requires (std::is_floating_point_v< data_t >)
-	class Cuboid : public Shape3DInterface< data_t >
+	template< typename precision_t = float >
+	requires (std::is_floating_point_v< precision_t >)
+	class AACuboid
 	{
 		public:
 
 			/**
-			 * @brief Construct a cuboid.
+			 * @brief Construct a default cuboid.
 			 */
-			constexpr
-			Cuboid () noexcept = default;
+			constexpr AACuboid () noexcept = default;
 
 			/**
 			 * @brief Constructs a uniform axis aligned bounding box.
@@ -68,7 +61,7 @@ namespace EmEn::Libs::Math
 			 */
 			explicit
 			constexpr
-			Cuboid (data_t value) noexcept
+			AACuboid (precision_t value) noexcept
 				: m_maximum(value, value, value),
 				m_minimum(-value, -value, -value)
 			{
@@ -81,17 +74,57 @@ namespace EmEn::Libs::Math
 			 * @param minimum The lowest negative XYZ coordinates of the box.
 			 */
 			constexpr
-			Cuboid (const Vector< 3, data_t > & maximum, const Vector< 3, data_t > & minimum) noexcept
+			AACuboid (const Point< precision_t > & maximum, const Point< precision_t > & minimum) noexcept
 			{
 				this->set(maximum, minimum);
 			}
 
-			/** @copydoc EmEn::Libs::Math::Shape3DInterface::getVolume() */
+			/**
+			 * @brief Checks if the box volume consistency.
+			 * @return bool
+			 */
 			[[nodiscard]]
-			data_t
-			getVolume () const noexcept override
+			constexpr
+			bool
+			isValid () const noexcept
 			{
-				return this->width() * this->height() * this->depth();
+				if ( m_maximum[X] <= m_minimum[X] )
+				{
+					return false;
+				}
+
+				if ( m_maximum[Y] <= m_minimum[Y] )
+				{
+					return false;
+				}
+
+				if ( m_maximum[Z] <= m_minimum[Z] )
+				{
+					return false;
+				}
+
+				return true;
+			}
+
+			/**
+			 * @brief Returns the point array.
+			 * @note The layout is [bottomSouthEast, bottomNorthEast, bottomSouthWest, bottomNorthWest, topSouthEast, topNorthEast, topSouthWest, topNorthWest].
+			 * @return std::array< Point< precision_t >, 4 > &
+			 */
+			[[nodiscard]]
+			std::array< Point< precision_t >, 8 >
+			points () noexcept
+			{
+				return {
+					this->bottomSouthEast(),
+					this->bottomNorthEast(),
+					this->bottomSouthWest(),
+					this->bottomNorthWest(),
+					this->topSouthEast(),
+					this->topNorthEast(),
+					this->topSouthWest(),
+					this->topNorthWest()
+				};
 			}
 
 			/**
@@ -100,7 +133,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			set (data_t value) noexcept
+			set (precision_t value) noexcept
 			{
 				m_maximum[X] = value;
 				m_maximum[Y] = value;
@@ -118,7 +151,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			set (const Vector< 3, data_t > & maximum, const Vector< 3, data_t > & minimum) noexcept
+			set (const Point< precision_t > & maximum, const Point< precision_t > & minimum) noexcept
 			{
 				if ( maximum[X] >= minimum[X] )
 				{
@@ -155,37 +188,11 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Checks if the box volume consistency.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isValid () const noexcept
-			{
-				if ( m_maximum[X] <= m_minimum[X] )
-				{
-					return false;
-				}
-
-				if ( m_maximum[Y] <= m_minimum[Y] )
-				{
-					return false;
-				}
-
-				if ( m_maximum[Z] <= m_minimum[Z] )
-				{
-					return false;
-				}
-
-				return true;
-			}
-
-			/**
 			 * @brief Returns the highest positive XYZ coordinates of the box.
-			 * @return Vector3
+			 * @return const Point< precision_t > &
 			 */
 			[[nodiscard]]
-			const Vector< 3, data_t > &
+			const Point< precision_t > &
 			maximum () const noexcept
 			{
 				return m_maximum;
@@ -193,10 +200,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the highest positive coordinates of the box on one axis.
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			maximum (size_t index) const noexcept
 			{
 				return m_maximum[index];
@@ -204,10 +211,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the lowest negative XYZ coordinates of the box.
-			 * @return Vector3
+			 * @return const Point< precision_t > &
 			 */
 			[[nodiscard]]
-			const Vector< 3, data_t > &
+			const Point< precision_t > &
 			minimum () const noexcept
 			{
 				return m_minimum;
@@ -215,10 +222,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the highest lowest negative coordinates of the box on one axis.
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			minimum (size_t index) const noexcept
 			{
 				return m_minimum[index];
@@ -226,10 +233,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the width of the box (X axis).
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			width () const noexcept
 			{
 				return m_maximum[X] - m_minimum[X];
@@ -237,10 +244,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the height of the box (Y axis).
-			 * @return type_t
+			 * @return v
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			height () const noexcept
 			{
 				return m_maximum[Y] - m_minimum[Y];
@@ -248,10 +255,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the depth of the box (Z axis).
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			depth () const noexcept
 			{
 				return m_maximum[Z] - m_minimum[Z];
@@ -259,13 +266,13 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the farthest corner from the center of the box.
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			farthestPoint () const noexcept
 			{
-				data_t distance = 0;
+				precision_t distance = 0;
 
 				if ( m_maximum[X] > distance )
 				{
@@ -302,10 +309,10 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the highest length of every axis.
-			 * @return type_t
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			data_t
+			precision_t
 			highestLength () const noexcept
 			{
 				auto length = this->width();
@@ -329,10 +336,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X+, Y- and Z+.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			bottomSouthEast () const noexcept
 			{
 				return {m_maximum[X], m_maximum[Y], m_maximum[Z]};
@@ -340,10 +348,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X+, Y- and Z-.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			bottomNorthEast () const noexcept
 			{
 				return {m_maximum[X], m_maximum[Y], m_minimum[Z]};
@@ -351,10 +360,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X-, Y- and Z+.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			bottomSouthWest () const noexcept
 			{
 				return {m_minimum[X], m_maximum[Y], m_maximum[Z]};
@@ -362,10 +372,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X-, Y- and Z-.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			bottomNorthWest () const noexcept
 			{
 				return {m_minimum[X], m_maximum[Y], m_minimum[Z]};
@@ -373,10 +384,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X+, Y+ and Z+.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			topSouthEast () const noexcept
 			{
 				return {m_maximum[X], m_minimum[Y], m_maximum[Z]};
@@ -384,10 +396,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X+, Y+ and Z-.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			topNorthEast () const noexcept
 			{
 				return {m_maximum[X], m_minimum[Y], m_minimum[Z]};
@@ -395,10 +408,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X-, Y+ and Z+.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			topSouthWest () const noexcept
 			{
 				return {m_minimum[X], m_minimum[Y], m_maximum[Z]};
@@ -406,10 +420,11 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the point at X-, Y+ and Z-.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			topNorthWest () const noexcept
 			{
 				return {m_minimum[X], m_minimum[Y], m_minimum[Z]};
@@ -417,13 +432,30 @@ namespace EmEn::Libs::Math
 
 			/**
 			 * @brief Returns the center of the bounding box.
-			 * @return Vector< 3, type_t >
+			 * @return Point< precision_t >
 			 */
 			[[nodiscard]]
-			Vector< 3, data_t >
+			constexpr
+			Point< precision_t >
 			centroid () const noexcept
 			{
-				return (m_maximum + m_minimum) * static_cast< data_t >(0.5);
+				return (m_maximum + m_minimum) * static_cast< precision_t >(0.5);
+			}
+
+			/**
+			 * @brief Reset the cuboid to null value.
+			 * @return void
+			 */
+			void
+			reset () noexcept
+			{
+				m_maximum[X] = std::numeric_limits< precision_t >::lowest();
+				m_maximum[Y] = std::numeric_limits< precision_t >::lowest();
+				m_maximum[Z] = std::numeric_limits< precision_t >::lowest();
+
+				m_minimum[X] = std::numeric_limits< precision_t >::max();
+				m_minimum[Y] = std::numeric_limits< precision_t >::max();
+				m_minimum[Z] = std::numeric_limits< precision_t >::max();
 			}
 
 			/**
@@ -432,7 +464,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			merge (const Cuboid & other) noexcept
+			merge (const AACuboid & other) noexcept
 			{
 				/* If the other box is the same or is invalid, we skip it. */
 				if ( this == &other || !other.isValid() )
@@ -450,7 +482,7 @@ namespace EmEn::Libs::Math
 					return;
 				}
 
-				/* Compare and processLogics every axis boundaries. */
+				/* Compare and processLogics every axis boundary. */
 				if ( other.m_maximum[X] > m_maximum[X] )
 				{
 					m_maximum[X] = other.m_maximum[X];
@@ -488,7 +520,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			merge (const Vector< 3, data_t > & point) noexcept
+			merge (const Point< precision_t > & point) noexcept
 			{
 				this->mergeX(point[X]);
 
@@ -503,7 +535,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			merge (const Vector< 4, data_t > & point) noexcept
+			merge (const Vector< 4, precision_t > & point) noexcept
 			{
 				this->mergeX(point[X]);
 
@@ -518,7 +550,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			mergeX (data_t value) noexcept
+			mergeX (precision_t value) noexcept
 			{
 				if ( value > m_maximum[X] )
 				{
@@ -537,7 +569,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			mergeY (data_t value) noexcept
+			mergeY (precision_t value) noexcept
 			{
 				if ( value > m_maximum[Y] )
 				{
@@ -556,7 +588,7 @@ namespace EmEn::Libs::Math
 			 * @return void
 			 */
 			void
-			mergeZ (data_t value) noexcept
+			mergeZ (precision_t value) noexcept
 			{
 				if ( value > m_maximum[Z] )
 				{
@@ -570,246 +602,14 @@ namespace EmEn::Libs::Math
 			}
 
 			/**
-			 * @brief Returns whether the volume is colliding with a cuboid.
-			 * @param cuboid A reference to another cuboid.
-			 * @return bool
+			 * @brief Returns the cuboid volume.
+			 * @return precision_t
 			 */
 			[[nodiscard]]
-			bool
-			isCollidingWith (const Cuboid & cuboid) const noexcept
+			precision_t
+			getVolume () const noexcept
 			{
-				if ( this == &cuboid || !this->isValid() || !cuboid.isValid() )
-				{
-					return false;
-				}
-
-				if ( m_maximum[X] < cuboid.m_minimum[X] || m_minimum[X] > cuboid.m_maximum[X] )
-				{
-					return false;
-				}
-
-				if ( m_maximum[Y] < cuboid.m_minimum[Y] || m_minimum[Y] > cuboid.m_maximum[Y] )
-				{
-					return false;
-				}
-
-				if ( m_maximum[Z] < cuboid.m_minimum[Z] || m_minimum[Z] > cuboid.m_maximum[Z] )
-				{
-					return false;
-				}
-
-				return true;
-			}
-
-			/**
-			 * @brief Returns whether the volume is colliding with a sphere.
-			 * @param sphere A reference to a sphere.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isCollidingWith (const Sphere< data_t > & sphere) const noexcept
-			{
-				const Vector< 3, data_t > closestPoint{
-					std::max(m_minimum[X], std::min(sphere.position()[X], m_maximum[X])),
-					std::max(m_minimum[Y], std::min(sphere.position()[Y], m_maximum[Y])),
-					std::max(m_minimum[Z], std::min(sphere.position()[Z], m_maximum[Z]))
-				};
-
-				const Vector< 3, data_t > delta = sphere.position() - closestPoint;
-
-				return delta.lengthSquared() <= sphere.radius() * sphere.radius();
-			}
-
-			/**
-			 * @brief Returns whether the volume is colliding with a point.
-			 * @param point A reference to a vector.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isCollidingWith (const Vector< 3, data_t > & point) const noexcept
-			{
-				if ( point[X] < m_minimum[X] || point[X] > m_maximum[X] )
-				{
-					return false;
-				}
-
-				if ( point[Y] < m_minimum[Y] || point[Y] > m_maximum[Y] )
-				{
-					return false;
-				}
-
-				if ( point[Z] < m_minimum[Z] || point[Z] > m_maximum[Z] )
-				{
-					return false;
-				}
-
-				return true;
-			}
-
-			/**
-			 * @brief Returns whether the volume is colliding with a point.
-			 * @param point A reference to a vector.
-			 * @return bool
-			 */
-			[[nodiscard]]
-			bool
-			isCollidingWith (const Vector< 4, data_t > & point) const noexcept
-			{
-				return this->isCollidingWith(Vector< 3, data_t >(point));
-			}
-
-			/**
-			 * @brief Returns the penetration distance vector from a point.
-			 * @param lhs A reference to a cuboid.
-			 * @param point A reference to a vector.
-			 * @return Vector< 3, type_t >
-			 */
-			[[nodiscard]]
-			static
-			Vector< 3, data_t >
-			getPointPenetrationDepth (const Cuboid & lhs, const Vector< 3, data_t > & point) noexcept
-			{
-				if (
-					!lhs.isValid() ||
-					point[X] < lhs.minimum()[X] || point[X] > lhs.maximum()[X] ||
-					point[Y] < lhs.minimum()[Y] || point[Y] > lhs.maximum()[Y] ||
-					point[Z] < lhs.minimum()[Z] || point[Z] > lhs.maximum()[Z] )
-				{
-					return {};
-				}
-
-				const data_t distToMaxX = lhs.maximum()[X] - point[X];
-				const data_t distToMinX = point[X] - lhs.minimum()[X];
-
-				const data_t distToMaxY = lhs.maximum()[Y] - point[Y];
-				const data_t distToMinY = point[Y] - lhs.minimum()[Y];
-
-				const data_t distToMaxZ = lhs.maximum()[Z] - point[Z];
-				const data_t distToMinZ = point[Z] - lhs.minimum()[Z];
-
-				return {
-					std::min(distToMaxX, distToMinX),
-					std::min(distToMaxY, distToMinY),
-					std::min(distToMaxZ, distToMinZ)
-				};
-			}
-
-			/**
-			 * @brief Returns the overlap distance vector from the intersection with another cuboid.
-			 * @param lhs A reference to a cuboid.
-			 * @param rhs A reference to a cuboid.
-			 * @return Vector< 3, type_t >
-			 */
-			[[nodiscard]]
-			static
-			Vector< 3, data_t >
-			getIntersectionOverlap (const Cuboid & lhs, const Cuboid & rhs) noexcept
-			{
-				if ( &lhs == &rhs || !lhs.isValid() || !rhs.isValid() )
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[X] < rhs.m_minimum[X] || lhs.m_minimum[X] > rhs.m_maximum[X] )
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[Y] < rhs.m_minimum[Y] || lhs.m_minimum[Y] > rhs.m_maximum[Y] )
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[Z] < rhs.m_minimum[Z] || lhs.m_minimum[Z] > rhs.m_maximum[Z] )
-				{
-					return {};
-				}
-
-				const auto maxX = std::min(lhs.m_maximum[X], rhs.m_maximum[X]);
-				const auto minX = std::max(lhs.m_minimum[X], rhs.m_minimum[X]);
-
-				const auto maxY = std::min(lhs.m_maximum[Y], rhs.m_maximum[Y]);
-				const auto minY = std::max(lhs.m_minimum[Y], rhs.m_minimum[Y]);
-
-				const auto maxZ = std::min(lhs.m_maximum[Z], rhs.m_maximum[Z]);
-				const auto minZ = std::max(lhs.m_minimum[Z], rhs.m_minimum[Z]);
-
-				return {maxX - minX, maxY - minY, maxZ - minZ};
-			}
-
-			/**
-			 * @brief Returns the overlap distance vector from the intersection with a point.
-			 * @param lhs A reference to a cuboid.
-			 * @param point A reference to a vector.
-			 * @return Vector< 3, type_t >
-			 */
-			[[nodiscard]]
-			static
-			Vector< 3, data_t >
-			getIntersectionOverlap (const Cuboid & lhs, const Vector< 4, data_t > & point) noexcept
-			{
-				return Cuboid::getIntersectionOverlap(lhs, Vector< 3, data_t >(point));
-			}
-
-			/**
-			 * @brief Returns the intersection cuboid.
-			 * @param lhs A reference to a cuboid.
-			 * @param rhs A reference to a cuboid.
-			 * @return Cuboid
-			 */
-			[[nodiscard]]
-			static
-			Cuboid
-			getIntersectionCuboid (const Cuboid & lhs, const Cuboid & rhs) noexcept
-			{
-				if ( &lhs == &rhs || !lhs.isValid() || !rhs.isValid())
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[X] < rhs.m_minimum[X] || lhs.m_minimum[X] > rhs.m_maximum[X] )
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[Y] < rhs.m_minimum[Y] || lhs.m_minimum[Y] > rhs.m_maximum[Y] )
-				{
-					return {};
-				}
-
-				if ( lhs.m_maximum[Z] < rhs.m_minimum[Z] || lhs.m_minimum[Z] > rhs.m_maximum[Z] )
-				{
-					return {};
-				}
-
-				Vector< 3, data_t > maximum{};
-				Vector< 3, data_t > minimum{};
-
-				maximum[X] = std::min(lhs.m_maximum[X], rhs.m_maximum[X]);
-				minimum[X] = std::max(lhs.m_minimum[X], rhs.m_minimum[X]);
-
-				maximum[Y] = std::min(lhs.m_maximum[Y], rhs.m_maximum[Y]);
-				minimum[Y] = std::max(lhs.m_minimum[Y], rhs.m_minimum[Y]);
-
-				maximum[Z] = std::min(lhs.m_maximum[Z], rhs.m_maximum[Z]);
-				minimum[Z] = std::max(lhs.m_minimum[Z], rhs.m_minimum[Z]);
-
-				return {maximum, minimum};
-			}
-
-			/** @brief Reset the cuboid to null value. */
-			void
-			reset () noexcept
-			{
-				m_maximum[X] = std::numeric_limits< data_t >::lowest();
-				m_maximum[Y] = std::numeric_limits< data_t >::lowest();
-				m_maximum[Z] = std::numeric_limits< data_t >::lowest();
-
-				m_minimum[X] = std::numeric_limits< data_t >::max();
-				m_minimum[Y] = std::numeric_limits< data_t >::max();
-				m_minimum[Z] = std::numeric_limits< data_t >::max();
+				return this->width() * this->height() * this->depth();
 			}
 
 			/**
@@ -820,10 +620,10 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::ostream &
-			operator<< (std::ostream & out, const Cuboid & obj)
+			operator<< (std::ostream & out, const AACuboid & obj)
 			{
 				return out <<
-					"Cuboid volume data :\n"
+					"Axis-Aligned AACuboid volume data :\n"
 					"Maximum : " << obj.m_maximum << "\n"
 					"Minimum : " << obj.m_minimum << '\n';
 			}
@@ -835,7 +635,7 @@ namespace EmEn::Libs::Math
 			 */
 			friend
 			std::string
-			to_string (const Cuboid & obj)
+			to_string (const AACuboid & obj)
 			{
 				std::stringstream output;
 
@@ -846,7 +646,7 @@ namespace EmEn::Libs::Math
 
 		private:
 
-			Vector< 3, data_t > m_maximum{std::numeric_limits< data_t >::lowest(), std::numeric_limits< data_t >::lowest(), std::numeric_limits< data_t >::lowest()};
-			Vector< 3, data_t > m_minimum{std::numeric_limits< data_t >::max(), std::numeric_limits< data_t >::max(), std::numeric_limits< data_t >::max()};
+			Point< precision_t > m_maximum{std::numeric_limits< precision_t >::lowest(), std::numeric_limits< precision_t >::lowest(), std::numeric_limits< precision_t >::lowest()};
+			Point< precision_t > m_minimum{std::numeric_limits< precision_t >::max(), std::numeric_limits< precision_t >::max(), std::numeric_limits< precision_t >::max()};
 	};
 }

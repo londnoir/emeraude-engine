@@ -157,7 +157,7 @@ namespace EmEn::Graphics::Geometry
 
 			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingBox() */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > &
+			const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return m_boundingBox;
@@ -165,7 +165,7 @@ namespace EmEn::Graphics::Geometry
 
 			/** @copydoc EmEn::Graphics::Geometry::Interface::boundingSphere() */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > &
+			const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return m_boundingSphere;
@@ -321,8 +321,8 @@ namespace EmEn::Graphics::Geometry
 			std::unique_ptr< Vulkan::IndexBufferObject > m_indexBufferObject;
 			std::vector< float > m_localData;
 			std::vector< uint32_t > m_indices;
-			Libs::Math::Cuboid< float > m_boundingBox;
-			Libs::Math::Sphere< float > m_boundingSphere;
+			Libs::Math::Space3D::AACuboid< float > m_boundingBox;
+			Libs::Math::Space3D::Sphere< float > m_boundingSphere;
 			float m_minimalUpdateDistance{DefaultMinimalUpdateDistance};
 			/* Contains the number of quads in on dimension. Grids are always square. */
 			uint32_t m_squareQuadCount{0};

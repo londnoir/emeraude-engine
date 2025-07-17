@@ -27,6 +27,7 @@
 #include "SpotLight.hpp"
 
 /* Local inclusions. */
+#include "Libs/Math/Space3D/Collisions/PointSphere.hpp"
 #include "Saphir/LightGenerator.hpp"
 #include "Scenes/Scene.hpp"
 #include "Tracer.hpp"
@@ -154,11 +155,11 @@ namespace EmEn::Scenes::Component
 	bool
 	SpotLight::touch (const Vector< 3, float > & position) const noexcept
 	{
-		const Sphere< float > boundingSphere{m_radius, this->getWorldCoordinates().position()};
+		const Space3D::Sphere< float > boundingSphere{m_radius, this->getWorldCoordinates().position()};
 
 		/* TODO: Check for the cone ! */
 
-		return boundingSphere.isCollidingWith(position);
+		return Space3D::isColliding(position, boundingSphere);
 	}
 
 	bool

@@ -92,7 +92,7 @@ namespace EmEn::Scenes::Component
 
 			/** @copydoc EmEn::Scenes::Component::Abstract::boundingBox() const */
 			[[nodiscard]]
-			const Libs::Math::Cuboid< float > &
+			const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept override
 			{
 				return m_boundingBox;
@@ -100,7 +100,7 @@ namespace EmEn::Scenes::Component
 
 			/** @copydoc EmEn::Scenes::Component::Abstract::boundingSphere() const */
 			[[nodiscard]]
-			const Libs::Math::Sphere< float > &
+			const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept override
 			{
 				return m_boundingSphere;
@@ -148,7 +148,7 @@ namespace EmEn::Scenes::Component
 			/** @copydoc EmEn::Animations::AnimatableInterface::playAnimation() */
 			bool playAnimation (uint8_t animationID, const Libs::Variant & value, size_t cycle) noexcept override;
 
-			Libs::Math::Cuboid< float > m_boundingBox;
-			Libs::Math::Sphere< float > m_boundingSphere;
+			Libs::Math::Space3D::AACuboid< float > m_boundingBox;
+			Libs::Math::Space3D::Sphere< float > m_boundingSphere;
 	};
 }

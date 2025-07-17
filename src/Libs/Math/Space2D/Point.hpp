@@ -26,6 +26,9 @@
 
 #pragma once
 
+/* STL inclusions. */
+#include <type_traits>
+
 /* Local inclusions. */
 #include "Libs/Math/Vector.hpp"
 
@@ -35,6 +38,6 @@ namespace EmEn::Libs::Math::Space2D
 	 * @brief Vector specialization of a point in 2D space.
 	 */
 	template< typename precisions_t >
-	requires (std::is_floating_point_v< precisions_t >)
+	requires (std::is_arithmetic_v< precisions_t >)
 	using Point = Vector< 2, precisions_t >;
 }

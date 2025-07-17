@@ -41,8 +41,8 @@
 /* Local inclusions. */
 #include "Libs/Algorithms/DiamondSquare.hpp"
 #include "Libs/Algorithms/PerlinNoise.hpp"
-#include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
+#include "Libs/Math/Space3D/AACuboid.hpp"
+#include "Libs/Math/Space3D/Sphere.hpp"
 #include "Libs/Math/Vector.hpp"
 #include "Libs/PixelFactory/Color.hpp"
 #include "Libs/PixelFactory/Pixmap.hpp"
@@ -78,9 +78,9 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Reserves data for a new grid.
-			 * @note All parameter is for one dimension, because a Grid is always a square.
+			 * @note All parameters are for one dimension, because a Grid is always a square.
 			 * @param size The size of the grid or a cell grid depending on the third parameter.
-			 * @param division The number of cell per dimension (square).
+			 * @param division The number of cells per dimension (square).
 			 * @param isSizeForCell Tells if the size parameter is the size of a cell or the whole grid.
 			 * @return bool
 			 */
@@ -466,10 +466,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Returns a bounding box enclosing the whole grid.
-			 * @return const AxisAlignedBoundingBox< vertex_data_t > &
+			 * @return const Math::Space3D::AACuboid< vertex_data_t > &
 			 */
 			[[nodiscard]]
-			const Math::Cuboid< vertex_data_t > &
+			const Math::Space3D::AACuboid< vertex_data_t > &
 			boundingBox () const noexcept
 			{
 				return m_boundingBox;
@@ -477,10 +477,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Returns the bounding radius.
-			 * @return const Sphere< vertex_data_t > &
+			 * @return const Math::Space3D::Sphere< vertex_data_t > &
 			 */
 			[[nodiscard]]
-			const Math::Sphere< vertex_data_t > &
+			const Math::Space3D::Sphere< vertex_data_t > &
 			boundingSphere () const noexcept
 			{
 				return m_boundingSphere;
@@ -1259,7 +1259,7 @@ namespace EmEn::Libs::VertexFactory
 			vertex_data_t m_halfSquaredSize{1};
 			vertex_data_t m_UMultiplier{1};
 			vertex_data_t m_VMultiplier{1};
-			Math::Cuboid< vertex_data_t > m_boundingBox;
-			Math::Sphere< vertex_data_t > m_boundingSphere;
+			Math::Space3D::AACuboid< vertex_data_t > m_boundingBox;
+			Math::Space3D::Sphere< vertex_data_t > m_boundingSphere;
 	};
 }

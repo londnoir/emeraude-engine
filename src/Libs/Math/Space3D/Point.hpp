@@ -26,6 +26,9 @@
 
 #pragma once
 
+/* STL inclusions. */
+#include <type_traits>
+
 /* Local inclusions. */
 #include "Libs/Math/Vector.hpp"
 

@@ -35,8 +35,8 @@
 #include "Resources/ResourceTrait.hpp"
 
 /* Local inclusions for usages. */
-#include "Libs/Math/Cuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
+#include "Libs/Math/Space3D/AACuboid.hpp"
+#include "Libs/Math/Space3D/Sphere.hpp"
 #include "Graphics/Geometry/Interface.hpp"
 #include "Graphics/Material/Interface.hpp"
 #include "Graphics/RasterizationOptions.hpp"
@@ -64,8 +64,8 @@ namespace EmEn::Graphics::Renderable
 	{
 		public:
 
-			static const Libs::Math::Cuboid< float > NullBoundingBox;
-			static const Libs::Math::Sphere< float > NullBoundingSphere;
+			static const Libs::Math::Space3D::AACuboid< float > NullBoundingBox;
+			static const Libs::Math::Space3D::Sphere< float > NullBoundingSphere;
 
 			/**
 			 * @brief Copy constructor.
@@ -174,17 +174,17 @@ namespace EmEn::Graphics::Renderable
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.
-			 * @return const Libs::Math::Cuboid< float > &
+			 * @return const Libs::Math::Space3D::AACuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
+			virtual const Libs::Math::Space3D::AACuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding sphere surrounding the renderable.
-			 * @return const Libs::Math::Sphere< float > &
+			 * @return const Libs::Math::Space3D::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Space3D::Sphere< float > & boundingSphere () const noexcept = 0;
 
 		protected:
 

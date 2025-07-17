@@ -43,9 +43,9 @@
 #include <set>
 
 /* Local inclusions for usages. */
-#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Space3D/AACuboid.hpp"
+#include "Libs/Math/Space3D/Sphere.hpp"
 #include "Libs/Math/Matrix.hpp"
-#include "Libs/Math/Sphere.hpp"
 #include "Libs/Math/Vector.hpp"
 #include "Libs/PixelFactory/Color.hpp"
 #include "ShapeEdge.hpp"
@@ -84,10 +84,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Constructs a shape and reserve space from vertex attributes count.
-			 * @param positionsCount The possible number of position to reserve.
-			 * @param vertexColorsCount The possible number of color vertex to reserve.
-			 * @param facesCount The possible number of face to reserve.
-			 * @param edgesCount The possible number of edge to reserve. Default 0.
+			 * @param positionsCount The possible number of positions to reserve.
+			 * @param vertexColorsCount The possible number of color vertices to reserve.
+			 * @param facesCount The possible number of faces to reserve.
+			 * @param edgesCount The possible number of edges to reserve. Default 0.
 			 */
 			Shape (index_data_t positionsCount, index_data_t vertexColorsCount, index_data_t facesCount, index_data_t edgesCount = 0) noexcept
 			{
@@ -96,7 +96,7 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Reserves data for geometry construction to avoid multiple re-allocations.
-			 * @param triangleCount The possible number of triangle to reserve.
+			 * @param triangleCount The possible number of triangles to reserve.
 			 * @return void
 			 */
 			void
@@ -117,10 +117,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Reserves data vectors for geometry construction to avoid multiple re-allocations. Finer version.
-			 * @param positionsCount The possible number of position to reserve.
-			 * @param vertexColorsCount The possible number of color vertex to reserve.
-			 * @param facesCount The possible number of face to reserve.
-			 * @param edgesCount The possible number of edge to reserve. Default 0.
+			 * @param positionsCount The possible number of positions to reserve.
+			 * @param vertexColorsCount The possible number of color vertices to reserve.
+			 * @param facesCount The possible number of faces to reserve.
+			 * @param edgesCount The possible number of edges to reserve. Default 0.
 			 * @return void
 			 */
 			void
@@ -164,10 +164,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Resizes data vectors for geometry construction to avoid multiple re-allocations. Finer version.
-			 * @param positionsCount The possible number of position to reserve.
-			 * @param vertexColorsCount The possible number of color vertex to reserve.
-			 * @param facesCount The possible number of face to reserve.
-			 * @param edgesCount The possible number of edge to reserve. Default 0.
+			 * @param positionsCount The possible number of positions to reserve.
+			 * @param vertexColorsCount The possible number of color vertices to reserve.
+			 * @param facesCount The possible number of faces to reserve.
+			 * @param edgesCount The possible number of edges to reserve. Default 0.
 			 * @return void
 			 */
 			void
@@ -199,7 +199,7 @@ namespace EmEn::Libs::VertexFactory
 			}
 
 			/**
-			 * @brief Returns the number of vertex.
+			 * @brief Returns the number of vertices.
 			 * @return index_data_t
 			 */
 			[[nodiscard]]
@@ -232,7 +232,7 @@ namespace EmEn::Libs::VertexFactory
 			}
 
 			/**
-			 * @brief Gives access to the triangles list.
+			 * @brief Gives access to the triangle list.
 			 * @return const std::vector< ShapeTriangle< vertex_data_t > > &
 			 */
 			[[nodiscard]]
@@ -267,7 +267,7 @@ namespace EmEn::Libs::VertexFactory
 			}
 
 			/**
-			 * @brief Gives access to the edges list.
+			 * @brief Gives access to the edge list.
 			 * @return const std::vector< ShapeEdge< index_data_t > > &
 			 */
 			[[nodiscard]]
@@ -279,10 +279,10 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Gives access to the bounding box.
-			 * @return const Math::Cuboid< vertex_data_t > &
+			 * @return const Math::Space3D::AACuboid< vertex_data_t > &
 			 */
 			[[nodiscard]]
-			const Math::Cuboid< vertex_data_t > &
+			const Math::Space3D::AACuboid< vertex_data_t > &
 			boundingBox () const noexcept
 			{
 				return m_boundingBox;
@@ -290,17 +290,17 @@ namespace EmEn::Libs::VertexFactory
 
 			/**
 			 * @brief Gives access to the bounding sphere.
-			 * @return const Math::Sphere< vertex_data_t > &
+			 * @return const Math::Space3D::Sphere< vertex_data_t > &
 			 */
 			[[nodiscard]]
-			const Math::Sphere< vertex_data_t > &
+			const Math::Space3D::Sphere< vertex_data_t > &
 			boundingSphere () const noexcept
 			{
 				return m_boundingSphere;
 			}
 
 			/**
-			 * @brief Returns whether the geometry is composed of group.
+			 * @brief Returns whether the geometry is composed of groups.
 			 * @return bool
 			 */
 			[[nodiscard]]
@@ -311,7 +311,7 @@ namespace EmEn::Libs::VertexFactory
 			}
 
 			/**
-			 * @brief Returns the number of group the geometry is composed of.
+			 * @brief Returns the number of groups the geometry is composed of.
 			 * @return index_data_t
 			 */
 			[[nodiscard]]
@@ -385,7 +385,7 @@ namespace EmEn::Libs::VertexFactory
 			bool
 			isOpen () const noexcept
 			{
-				/* NOTE : if only one edge is not shared, then the geometry is open. */
+				/* NOTE: if only one edge is not shared, then the geometry is open. */
 				return std::ranges::any_of(m_edges, [] (const auto & edge) {
 					return !edge.isShared();
 				});
@@ -607,7 +607,7 @@ namespace EmEn::Libs::VertexFactory
 				{
 					Math::Vector< 3, vertex_data_t > normal;
 
-					/* We look for every triangle sharing this vertex, add every vector then normalize. */
+					/* We look for every triangle sharing this vertex, add every vector, then normalize. */
 					for ( const auto & triangle : m_triangles )
 					{
 						for ( index_data_t vertexIndex = 0; vertexIndex < 3; ++vertexIndex )
@@ -651,7 +651,7 @@ namespace EmEn::Libs::VertexFactory
 				{
 					Math::Vector< 3, vertex_data_t > tangent;
 
-					/* We look for every triangle sharing this vertex, add every vector then normalize. */
+					/* We look for every triangle sharing this vertex, add every vector, then normalize. */
 					for ( const auto & triangle : m_triangles )
 					{
 						for ( index_data_t vertexIndex = 0; vertexIndex < 3; ++vertexIndex )
@@ -697,7 +697,7 @@ namespace EmEn::Libs::VertexFactory
 					Math::Vector< 3, vertex_data_t > tangent{};
 					Math::Vector< 3, vertex_data_t > normal{};
 
-					/* We look for every triangle sharing this vertex, add every vector then normalize. */
+					/* We look for every triangle sharing this vertex, add every vector, then normalize. */
 					for ( const auto & triangle : m_triangles )
 					{
 						for ( index_data_t vertexIndex = 0; vertexIndex < 3; ++vertexIndex )
@@ -750,7 +750,7 @@ namespace EmEn::Libs::VertexFactory
 			void
 			transform (const Math::Matrix< 4, vertex_data_t > & transform, bool updateProperties = true) noexcept
 			{
-				/* NOTE : For tangents and normals transformation,
+				/* NOTE: For tangents and normals transformation,
 				 * we don't want to translate the vector. */
 				auto noTranslate(transform);
 				noTranslate.clearTranslation();
@@ -1847,8 +1847,8 @@ namespace EmEn::Libs::VertexFactory
 			std::vector< Math::Vector< 4, vertex_data_t > > m_vertexColors;
 			std::vector< ShapeTriangle< vertex_data_t, index_data_t > > m_triangles;
 			std::vector< ShapeEdge< index_data_t > > m_edges;
-			Math::Cuboid< vertex_data_t > m_boundingBox{};
-			Math::Sphere< vertex_data_t > m_boundingSphere{};
+			Math::Space3D::AACuboid< vertex_data_t > m_boundingBox;
+			Math::Space3D::Sphere< vertex_data_t > m_boundingSphere;
 			/* NOTE: This is the max distance between [0,0,0] and the farthest vertex.
 			 * This is different from the fourth component of the centroid (m_boundingSphere). */
 			vertex_data_t m_farthestDistance{0};

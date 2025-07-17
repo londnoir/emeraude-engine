@@ -74,7 +74,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	Vector< 3, float >
-	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Sphere< float > & worldBoundingSphere) const noexcept
+	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Space3D::Sphere< float > & worldBoundingSphere) const noexcept
 	{
 		if ( !this->isEnabled() )
 		{
@@ -99,7 +99,7 @@ namespace EmEn::Scenes::Component
 	}
 
 	Vector< 3, float >
-	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Cuboid< float > & worldBoundingBox) const noexcept
+	SphericalPushModifier::getForceAppliedToEntity (const CartesianFrame< float > & worldCoordinates, const Space3D::AACuboid< float > & worldBoundingBox) const noexcept
 	{
 		if ( !this->isEnabled() )
 		{

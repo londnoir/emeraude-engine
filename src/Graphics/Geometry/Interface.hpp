@@ -37,8 +37,6 @@
 /* Local inclusions for usages. */
 #include "Libs/VertexFactory/Grid.hpp"
 #include "Libs/VertexFactory/Shape.hpp"
-#include "Libs/Math/Sphere.hpp"
-#include "Libs/Math/Cuboid.hpp"
 #include "Vulkan/VertexBufferObject.hpp"
 #include "Vulkan/IndexBufferObject.hpp"
 #include "Graphics/Types.hpp"
@@ -234,17 +232,17 @@ namespace EmEn::Graphics::Geometry
 
 			/**
 			 * @brief Returns the bounding box surrounding the renderable.
-			 * @return const Libs::Math::Cuboid< float > &
+			 * @return const Libs::Math::Space3D::AACuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Cuboid< float > & boundingBox () const noexcept = 0;
+			virtual const Libs::Math::Space3D::AACuboid< float > & boundingBox () const noexcept = 0;
 
 			/**
 			 * @brief Returns the bounding sphere surrounding the renderable.
-			 * @return const Libs::Math::Sphere< float > &
+			 * @return const Libs::Math::Space3D::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Sphere< float > & boundingSphere () const noexcept = 0;
+			virtual const Libs::Math::Space3D::Sphere< float > & boundingSphere () const noexcept = 0;
 
 			/**
 			 * @brief Returns the vertex buffer object.

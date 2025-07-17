@@ -59,15 +59,16 @@ namespace EmEn
 	class PrimaryServices;
 }
 
-#if IS_LINUX
-using GtkWindow = struct _GtkWindow;
-#elif IS_MACOS
+#if IS_MACOS
+
 using id = struct objc_object *;
+
 #elif IS_WINDOWS
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <Windows.h>
+	#ifndef NOMINMAX
+	#define NOMINMAX
+	#endif
+
+	#include <Windows.h>
 #endif
 
 namespace EmEn
@@ -223,15 +224,7 @@ namespace EmEn
 				return m_handle.get();
 			}
 
-#if IS_LINUX
-			/**
-			 * @brief Returns the application window as a GTK window pointer.
-			 * @note GLFW use X11/Wayland window directly.
-			 * @return GtkWindow *
-			 */
-			[[nodiscard]]
-			GtkWindow * getGtkWindow () const noexcept;
-#elif IS_MACOS
+#if IS_MACOS
 			/**
 			 * @brief Returns the application window as a Cocoa window id.
 			 * @return id
@@ -787,9 +780,6 @@ namespace EmEn
 			std::string m_title;
 			State m_state{};
 			std::unique_ptr< GLFWwindow, std::function< void (GLFWwindow *) > > m_handle;
-#if IS_LINUX
-			GtkWindow * m_gtkWindow{nullptr};
-#endif
 			std::unique_ptr< Vulkan::Surface > m_surface;
 			std::array< bool, 8 > m_flags{
 				false/*ShowInformation*/,

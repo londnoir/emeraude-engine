@@ -41,7 +41,8 @@
 #include "Animations/AnimatableInterface.hpp"
 
 /* Local inclusions for usages. */
-#include "Libs/Math/Cuboid.hpp"
+#include "Libs/Math/Space3D/AACuboid.hpp"
+#include "Libs/Math/Space3D/Sphere.hpp"
 #include "Physics/MovableTrait.hpp"
 
 /* Forward declarations. */
@@ -254,10 +255,10 @@ namespace EmEn::Scenes::Component
 			/**
 			 * @brief Returns the local bounding box of this component.
 			 * @note Can be invalid. On non-overridden method, this will return a null bounding box.
-			 * @return const Libs::Math::Cuboid< float > &
+			 * @return const Libs::Math::Space3D::AACuboid< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Cuboid< float > &
+			virtual const Libs::Math::Space3D::AACuboid< float > &
 			boundingBox () const noexcept
 			{
 				return NullBoundingBox;
@@ -266,10 +267,10 @@ namespace EmEn::Scenes::Component
 			/**
 			 * @brief Returns the local bounding sphere of this component.
 			 * @note Can be invalid. On non-overridden method, this will return a null bounding sphere.
-			 * @return const Libs::Math::Sphere< float > &
+			 * @return const Libs::Math::Space3D::Sphere< float > &
 			 */
 			[[nodiscard]]
-			virtual const Libs::Math::Sphere< float > &
+			virtual const Libs::Math::Space3D::Sphere< float > &
 			boundingSphere () const noexcept
 			{
 				return NullBoundingSphere;
@@ -312,8 +313,8 @@ namespace EmEn::Scenes::Component
 			[[nodiscard]]
 			virtual bool shouldBeRemoved () const noexcept = 0;
 
-			static const Libs::Math::Cuboid< float > NullBoundingBox;
-			static const Libs::Math::Sphere< float > NullBoundingSphere;
+			static const Libs::Math::Space3D::AACuboid< float > NullBoundingBox;
+			static const Libs::Math::Space3D::Sphere< float > NullBoundingSphere;
 
 		protected:
 

@@ -175,7 +175,7 @@ namespace EmEn::Scenes
 	}
 
 	void
-	AbstractEntity::overrideBoundingPrimitives (const Cuboid< float > & box, const Sphere< float > & sphere) noexcept
+	AbstractEntity::overrideBoundingPrimitives (const Space3D::AACuboid< float > & box, const Space3D::Sphere< float > & sphere) noexcept
 	{
 		m_boundingBox = box;
 		m_boundingSphere = sphere;

@@ -27,9 +27,9 @@
 #include "Collider.hpp"
 
 /* Local inclusions. */
+#include "Libs/Math/Space3D/Collisions/SamePrimitive.hpp"
 #include "Libs/Math/CartesianFrame.hpp"
 #include "Libs/Math/OrientedCuboid.hpp"
-#include "Libs/Math/Sphere.hpp"
 #include "Scenes/AbstractEntity.hpp"
 #include "Physics/MovableTrait.hpp"
 
@@ -206,14 +206,19 @@ namespace EmEn::Physics
 		const auto sphereA = sphereEntityA.getWorldBoundingSphere();
 		const auto sphereB = sphereEntityB.getWorldBoundingSphere();
 
-		overflow = Sphere< float >::getIntersectionOverlap(sphereA, sphereB);
+		if ( !Space3D::isColliding(sphereA, sphereB, direction) )
+		{
+			return false;
+		}
+
+		/*overflow = Space3D::Sphere< float >::getIntersectionOverlap(sphereA, sphereB);
 
 		if ( overflow <= 0.0F )
 		{
 			return false;
 		}
 
-		direction = (sphereB.position() - sphereA.position()).normalize();
+		direction = (sphereB.position() - sphereA.position()).normalize();*/
 
 		return true;
 	}
@@ -222,7 +227,7 @@ namespace EmEn::Physics
 	Collider::isBoxCollisionWith (const AbstractEntity & boxEntityA, const AbstractEntity & boxEntityB, float & overflow, Vector< 3, float > & direction) noexcept
 	{
 		/* NOTE: We check first with axis-aligned bounding box ... */
-		if ( !boxEntityA.getWorldBoundingBox().isCollidingWith(boxEntityB.getWorldBoundingBox()) )
+		if ( !Space3D::isColliding(boxEntityA.getWorldBoundingBox(), boxEntityB.getWorldBoundingBox()) )
 		{
 			return false;
 		}
@@ -240,12 +245,7 @@ namespace EmEn::Physics
 	bool
 	Collider::isBoxSphereCollisionWith (const AbstractEntity & /*boxEntity*/, const AbstractEntity & /*sphereEntity*/, float & /*overflow*/, Vector< 3, float > & /*direction*/) noexcept
 	{
-		/*const auto box = boxEntity.getWorldBoundingBox();
-		const auto sphere = sphereEntity.getWorldBoundingSphere();
-
-		overflow = Cuboid< float >::getIntersectionOverlap(box, sphere);
-
-		return overflow > 0.0F;*/
+		// TODO ...
 
 		return false;
 	}

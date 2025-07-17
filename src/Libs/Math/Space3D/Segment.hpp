@@ -49,7 +49,7 @@ namespace EmEn::Libs::Math::Space3D
 			/**
 			 * @brief Constructs a default segment.
 			 */
-			Segment () noexcept = default;
+			constexpr Segment () noexcept = default;
 
 			/**
 			 * @brief Constructs a segment from origin to a point.
@@ -58,7 +58,7 @@ namespace EmEn::Libs::Math::Space3D
 			explicit
 			constexpr
 			Segment (const Point< precision_t > & endPoint) noexcept
-				: m_points({0, 0}, endPoint)
+				: m_points({{}, endPoint})
 			{
 
 			}
@@ -70,7 +70,7 @@ namespace EmEn::Libs::Math::Space3D
 			 */
 			constexpr
 			Segment (const Point< precision_t > & startPoint, const Point< precision_t > & endPoint) noexcept
-				: m_points(startPoint, endPoint)
+				: m_points({startPoint, endPoint})
 			{
 
 			}
@@ -251,7 +251,7 @@ namespace EmEn::Libs::Math::Space3D
 			std::ostream &
 			operator<< (std::ostream & out, const Segment & obj) noexcept
 			{
-				return out << "Segment (2D) data :\n"
+				return out << "Segment (3D) data :\n"
 					"Start point : " << obj.m_points[0] << "\n"
 					"End point : " << obj.m_points[1] << '\n';
 			}

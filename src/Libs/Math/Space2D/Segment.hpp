@@ -41,7 +41,7 @@ namespace EmEn::Libs::Math::Space2D
 	 * @tparam precision_t The data precision. Default float.
 	 */
 	template< typename precision_t = float >
-	requires (std::is_floating_point_v< precision_t >)
+	requires (std::is_arithmetic_v< precision_t >)
 	class Segment final
 	{
 		public:
@@ -49,7 +49,7 @@ namespace EmEn::Libs::Math::Space2D
 			/**
 			 * @brief Constructs a default segment.
 			 */
-			Segment () noexcept = default;
+			constexpr Segment () noexcept = default;
 
 			/**
 			 * @brief Constructs a segment from origin to a point.
